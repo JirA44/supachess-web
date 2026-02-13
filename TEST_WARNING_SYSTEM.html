@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test - Système d'Avertissement</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #board { width: 400px; margin: 20px auto; }
+        #status { text-align: center; font-size: 18px; margin: 20px; }
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Test Système d'Avertissement</h1>
+    <div id="status">C'est à vous de jouer</div>
+    <div id="board"></div>
+    <div id="warnings"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <script>
+        let game = new Chess();
+        let board = null;
+
+        function onDragStart(source, piece) {
+            if (game.game_over()) return false;
+            if (piece.search(/^b/) !== -1) return false; // Ne pas déplacer pièces noires
+            return true;
+        }
+
+        function onDrop(source, target) {
+            console.log('onDrop called:', source, '->', target);
+
+            // Tester le coup
+            const testMove = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (testMove === null) {
+                console.log('Coup illégal');
+                return 'snapback';
+            }
+
+            // Analyser les conséquences
+            const warnings = analyzeConsequences(testMove);
+
+            if (warnings.length > 0) {
+                console.log('Avertissements détectés:', warnings);
+
+                // IMPORTANT: Annuler le coup AVANT le confirm()
+                game.undo();
+
+                const message =
+                    "⚠️ ATTENTION - CONSÉQUENCES:\n\n" +
+                    warnings.join('\n\n') +
+                    "\n\n" +
+                    "Voulez-vous quand même jouer ce coup?";
+
+                const confirmed = confirm(message);
+
+                if (!confirmed) {
+                    console.log('Coup annulé par le joueur');
+                    return 'snapback';
+                }
+
+                // Rejouer le coup si confirmé
+                const finalMove = game.move({
+                    from: source,
+                    to: target,
+                    promotion: 'q'
+                });
+
+                console.log('Coup confirmé malgré avertissements:', finalMove.san);
+            } else {
+                console.log('Aucun avertissement, coup OK:', testMove.san);
+            }
+
+            updateStatus();
+
+            // IMPORTANT: Ne rien retourner (ou retourner undefined) pour accepter le coup
+        }
+
+        function analyzeConsequences(move) {
+            const warnings = [];
+            const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+            // Créer une copie de l'état du jeu APRÈS le coup
+            const testGame = new Chess(game.fen());
+
+            // Le coup a déjà été joué dans 'game', donc on analyse 'game' directement
+            const myColor = testGame.turn(); // C'est maintenant le tour de l'adversaire
+            const board = testGame.board();
+
+            // Vérifier les pièces en prise
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const piece = board[row][col];
+                    // On cherche NOS pièces (couleur opposée au tour actuel)
+                    if (piece && piece.color !== myColor) {
+                        const square = String.fromCharCode(97 + col) + (8 - row);
+
+                        // Vérifier si cette pièce peut être capturée
+                        const attacks = testGame.moves({ square: square, verbose: true });
+                        const canBeCaptured = attacks.some(m => m.captured);
+
+                        if (canBeCaptured && pieceValues[piece.type] >= 3) {
+                            const pieceName = getPieceName(piece.type);
+                            if (piece.type === 'q') {
+                                warnings.push(`🚨 ATTENTION: Ce coup met votre ${pieceName} en prise!`);
+                            } else {
+                                warnings.push(`⚠️ Ce coup met votre ${pieceName} en prise!`);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Vérifier si on permet un échec et mat
+            if (testGame.in_checkmate()) {
+                warnings.push("🚨 ERREUR FATALE: Ce coup permet un ÉCHEC ET MAT!");
+            }
+
+            return warnings;
+        }
+
+        function getPieceName(type) {
+            const names = {
+                'p': 'Pion',
+                'n': 'Cavalier',
+                'b': 'Fou',
+                'r': 'Tour',
+                'q': 'Dame',
+                'k': 'Roi'
+            };
+            return names[type] || type;
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('status');
+            if (game.in_checkmate()) {
+                status.innerHTML = '🎉 Échec et mat!';
+            } else if (game.in_draw()) {
+                status.innerHTML = 'Match nul';
+            } else if (game.in_check()) {
+                status.innerHTML = '⚠️ Échec!';
+            } else {
+                status.innerHTML = game.turn() === 'w' ? "C'est à vous de jouer" : "Tour de l'IA";
+            }
+        }
+
+        const config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+
+        board = Chessboard('board', config);
+
+        console.log('Test chargé. Essayez de:');
+        console.log('1. Jouer e2-e4 (coup normal - aucun avertissement)');
+        console.log('2. Jouer e2-e3, puis d1-h5 (met la dame en prise)');
+    </script>
+</body>
+</html>

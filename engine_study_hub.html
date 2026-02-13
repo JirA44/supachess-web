@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Study Lab | SupaChess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #330066 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* --- Header --- */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+        }
+        .header h1 {
+            font-size: 3.2em;
+            margin-bottom: 12px;
+            background: linear-gradient(120deg, #00ffff, #00ff88, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .subtitle { font-size: 1.2em; opacity: 0.85; line-height: 1.6; }
+        .nav-back {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 12px 28px;
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+        .nav-back:hover { background: rgba(0,255,136,0.2); border-color: #00ff88; transform: translateY(-2px); }
+
+        /* --- Section Titles --- */
+        .section-title {
+            font-size: 2em;
+            margin: 50px 0 25px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(0,255,255,0.3);
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* --- Glass Card Base --- */
+        .glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 28px;
+            transition: all 0.35s ease;
+        }
+        .glass:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+            border-color: rgba(0,255,255,0.35);
+        }
+
+        /* --- Stats Overview Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+        .stat-card h3 {
+            font-size: 1.35em;
+            margin-bottom: 14px;
+            color: #00ffcc;
+        }
+        .stat-card .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .badge-az { background: linear-gradient(135deg, #ff6600, #ff3300); }
+        .badge-scc { background: linear-gradient(135deg, #0088ff, #00ccff); }
+        .badge-tcec { background: linear-gradient(135deg, #8800ff, #cc00ff); }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.92em;
+        }
+        .stat-row .label { opacity: 0.7; }
+        .stat-row .value { font-weight: 700; color: #00ff88; }
+
+        .loading-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffaa00;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+        .loading-dot {
+            width: 6px; height: 6px;
+            background: #ffaa00;
+            border-radius: 50%;
+            animation: pulse-dot 1.2s infinite;
+        }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse-dot {
+            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* --- Insights Grid --- */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
+        .insight-card {
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 16px 16px 0 0;
+        }
+        .insight-card.green::before  { background: linear-gradient(90deg, #00ff88, #00ffcc); }
+        .insight-card.cyan::before   { background: linear-gradient(90deg, #00ccff, #00ffff); }
+        .insight-card.orange::before { background: linear-gradient(90deg, #ff8800, #ffcc00); }
+        .insight-card.pink::before   { background: linear-gradient(90deg, #ff0088, #ff44aa); }
+        .insight-card.purple::before { background: linear-gradient(90deg, #8800ff, #cc44ff); }
+        .insight-card.blue::before   { background: linear-gradient(90deg, #0044ff, #0088ff); }
+
+        .insight-card h4 { font-size: 1.15em; margin-bottom: 8px; }
+        .insight-card .insight-stat { font-size: 1.6em; font-weight: 800; margin: 6px 0; }
+        .insight-card .insight-detail { font-size: 0.88em; opacity: 0.75; line-height: 1.5; }
+
+        .insight-card.green  .insight-stat { color: #00ff88; }
+        .insight-card.cyan   .insight-stat { color: #00ffff; }
+        .insight-card.orange .insight-stat { color: #ffaa00; }
+        .insight-card.pink   .insight-stat { color: #ff4488; }
+        .insight-card.purple .insight-stat { color: #cc44ff; }
+        .insight-card.blue   .insight-stat { color: #4488ff; }
+
+        /* --- Games Gallery --- */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .game-card { text-decoration: none; color: #fff; display: block; }
+        .game-card .game-title { font-size: 1.1em; font-weight: 700; margin-bottom: 6px; color: #00ffcc; }
+        .game-card .game-players { font-size: 0.9em; opacity: 0.8; margin-bottom: 4px; }
+        .game-card .game-result {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+        .result-white { background: rgba(0,255,136,0.2); color: #00ff88; }
+        .result-black { background: rgba(255,68,136,0.2); color: #ff4488; }
+        .result-draw  { background: rgba(255,255,255,0.15); color: #aaa; }
+        .game-card .game-opening { font-size: 0.82em; opacity: 0.6; margin-bottom: 6px; }
+        .game-card .game-moment { font-size: 0.85em; opacity: 0.75; font-style: italic; line-height: 1.4; }
+        .game-card.placeholder { border-style: dashed; opacity: 0.65; }
+        .game-card.placeholder .game-title::after { content: ' (bientot)'; font-size: 0.75em; opacity: 0.5; }
+
+        /* --- Opening Table --- */
+        .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        th, td { padding: 12px 16px; text-align: left; }
+        th {
+            background: rgba(0,255,255,0.1);
+            font-weight: 700;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        th:hover { background: rgba(0,255,255,0.18); }
+        th .sort-arrow { margin-left: 4px; font-size: 0.75em; opacity: 0.5; }
+        td { border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.92em; }
+        tr:hover td { background: rgba(255,255,255,0.04); }
+        .pct-high { color: #00ff88; font-weight: 700; }
+        .pct-mid  { color: #ffcc00; font-weight: 600; }
+        .pct-low  { color: #ff4466; font-weight: 600; }
+
+        /* --- Bar Charts --- */
+        .bar-section { margin-bottom: 30px; }
+        .bar-section h4 { margin-bottom: 14px; font-size: 1.05em; color: #ccc; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 12px;
+        }
+        .bar-label { min-width: 100px; font-size: 0.9em; text-align: right; opacity: 0.8; }
+        .bar-track {
+            flex: 1;
+            height: 26px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 13px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 0.78em;
+            font-weight: 700;
+            animation: bar-grow 1.2s ease-out forwards;
+            width: 0;
+        }
+        @keyframes bar-grow { to { width: var(--w); } }
+        .bar-fill.grad-cyan   { background: linear-gradient(90deg, #006666, #00ffff); }
+        .bar-fill.grad-green  { background: linear-gradient(90deg, #006633, #00ff88); }
+        .bar-fill.grad-orange { background: linear-gradient(90deg, #664400, #ffaa00); }
+        .bar-fill.grad-pink   { background: linear-gradient(90deg, #660033, #ff4488); }
+        .bar-fill.grad-purple { background: linear-gradient(90deg, #330066, #aa44ff); }
+        .bar-value { min-width: 50px; font-size: 0.85em; font-weight: 700; }
+
+        /* --- Lessons Section --- */
+        .lessons-list { list-style: none; counter-reset: lesson; }
+        .lessons-list li {
+            counter-increment: lesson;
+            padding: 16px 20px 16px 60px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border-left: 3px solid rgba(0,255,136,0.4);
+            position: relative;
+            font-size: 0.95em;
+            line-height: 1.5;
+            transition: all 0.3s;
+        }
+        .lessons-list li:hover { background: rgba(0,255,136,0.08); border-left-color: #00ff88; }
+        .lessons-list li::before {
+            content: counter(lesson);
+            position: absolute;
+            left: 18px; top: 50%;
+            transform: translateY(-50%);
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #00ff88, #00ccff);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+            font-size: 0.85em;
+            color: #0a0a0a;
+        }
+        .lessons-list li strong { color: #00ffcc; }
+
+        /* --- Animations --- */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .anim { animation: fade-in-up 0.6s ease-out both; }
+        .anim-d1 { animation-delay: 0.1s; }
+        .anim-d2 { animation-delay: 0.2s; }
+        .anim-d3 { animation-delay: 0.3s; }
+        .anim-d4 { animation-delay: 0.4s; }
+        .anim-d5 { animation-delay: 0.5s; }
+
+        /* --- Responsive --- */
+        @media (max-width: 900px) {
+            .header h1 { font-size: 2em; }
+            .stats-grid, .insights-grid, .games-grid { grid-template-columns: 1fr; }
+            .bar-label { min-width: 70px; font-size: 0.8em; }
+            .section-title { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ===================== HEADER ===================== -->
+    <div class="header anim">
+        <h1>Engine Study Lab</h1>
+        <p class="subtitle">Analyse des meilleures parties des top engines &mdash; TCEC, AlphaZero, SCC 2025</p>
+        <a class="nav-back" href="hub.html">&larr; Retour au Hub</a>
+    </div>
+
+    <!-- ===================== STATS OVERVIEW ===================== -->
+    <h2 class="section-title anim anim-d1">Collections Analysees</h2>
+    <div class="stats-grid">
+
+        <!-- AlphaZero -->
+        <div class="glass stat-card anim anim-d2">
+            <span class="badge badge-az">ALPHAZERO</span>
+            <h3>AlphaZero vs Stockfish &mdash; 31 parties</h3>
+            <div class="stat-row"><span class="label">Parties decisives</span><span class="value">80.6 %</span></div>
+            <div class="stat-row"><span class="label">Avantage Blancs</span><span class="value">84 %</span></div>
+            <div class="stat-row"><span class="label">Sacrifices totaux</span><span class="value">379</span></div>
+            <div class="stat-row"><span class="label">Sacrifices de qualite</span><span class="value">10</span></div>
+            <div class="stat-row"><span class="label">Avancees pion h</span><span class="value">49</span></div>
+            <div class="stat-row"><span class="label">Ouvertures cle</span><span class="value">Reti (100 %), Queen's Indian (100 %)</span></div>
+            <div class="stat-row"><span class="label">Style dominant</span><span class="value">Jeu positionnel agressif</span></div>
+        </div>
+
+        <!-- SCC 2025 -->
+        <div class="glass stat-card anim anim-d3">
+            <span class="badge badge-scc">SCC 2025</span>
+            <h3>SCC 2025 Finals &mdash; London (107 parties)</h3>
+            <div class="stat-row"><span class="label">Carlsen vs Lazavik &mdash; Blancs</span><span class="value">69.2 %</span></div>
+            <div class="stat-row"><span class="label">Carlsen vs Lazavik &mdash; Decisives</span><span class="value">84.6 %</span></div>
+            <div class="stat-row"><span class="label">Firouzja vs Nakamura &mdash; Blancs</span><span class="value">42.9 %</span></div>
+            <div class="stat-row"><span class="label">Firouzja vs Nakamura &mdash; Decisives</span><span class="value">78.6 %</span></div>
+            <div class="stat-row"><span class="label">Sacrifices totaux</span><span class="value">1 209</span></div>
+            <div class="stat-row"><span class="label">Sacrifices de qualite</span><span class="value">32</span></div>
+            <div class="stat-row"><span class="label">Moments critiques</span><span class="value">746</span></div>
+            <div class="stat-row"><span class="label">Top ouverture</span><span class="value">Ruy Lopez Morphy-Anderssen (66.7 %)</span></div>
+            <div class="stat-row"><span class="label">Attention</span><span class="value pct-low" style="color:#ff4466">Catalan = 75 % nulles</span></div>
+        </div>
+
+        <!-- TCEC -->
+        <div class="glass stat-card anim anim-d4">
+            <span class="badge badge-tcec">TCEC</span>
+            <h3>TCEC Superfinals S04&ndash;S28 (2 324 parties)</h3>
+            <div class="stat-row"><span class="label">Saisons couvertes</span><span class="value">25</span></div>
+            <div class="stat-row"><span class="label">Dominance depuis S17</span><span class="value">Stockfish vs Leela</span></div>
+            <div class="stat-row"><span class="label">Moteurs presents</span><span class="value">Houdini, Komodo, Leela, SF</span></div>
+            <div class="stat-row"><span class="label">Analyse complete</span>
+                <span class="loading-indicator">
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                    <span class="loading-dot"></span>
+                    En cours...
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== KEY INSIGHTS ===================== -->
+    <h2 class="section-title anim anim-d2">Enseignements Cles</h2>
+    <div class="insights-grid">
+        <div class="glass insight-card green anim anim-d2">
+            <h4>Exchange Sacrifices Work</h4>
+            <div class="insight-stat">65.7 %</div>
+            <p class="insight-detail">Taux de victoire d'AlphaZero apres un sacrifice de qualite. Pattern reproductible a haut niveau.</p>
+        </div>
+        <div class="glass insight-card cyan anim anim-d3">
+            <h4>H-Pawn Advances</h4>
+            <div class="insight-stat">49 + 98</div>
+            <p class="insight-detail">49 avancees pion h chez AlphaZero, 98 au SCC. Signature tactique des meilleurs joueurs et moteurs.</p>
+        </div>
+        <div class="glass insight-card orange anim anim-d3">
+            <h4>Time Trouble is Real</h4>
+            <div class="insight-stat">968 blunders</div>
+            <p class="insight-detail">Au SCC quand l'horloge passe sous 30 s. Concentration du calcul autour du coup 40 essentielle.</p>
+        </div>
+        <div class="glass insight-card pink anim anim-d4">
+            <h4>Ruy Lopez Dominates</h4>
+            <div class="insight-stat">66.7 %</div>
+            <p class="insight-detail">Meilleure ouverture toutes collections confondues (variante Morphy-Anderssen). Preparation prioritaire.</p>
+        </div>
+        <div class="glass insight-card purple anim anim-d4">
+            <h4>Catalan = Drawish</h4>
+            <div class="insight-stat">75 % nulles</div>
+            <p class="insight-detail">A eviter si on cherche un resultat decisif. Solide en defense, sterile en attaque au plus haut niveau.</p>
+        </div>
+        <div class="glass insight-card blue anim anim-d5">
+            <h4>White Has the Edge</h4>
+            <div class="insight-stat">84 % / 59.5 %</div>
+            <p class="insight-detail">84 % avantage Blancs (AlphaZero), 59.5 % (SCC). Confirme l'initiative du premier coup a tres haut niveau.</p>
+        </div>
+    </div>
+
+    <!-- ===================== BEST GAMES GALLERY ===================== -->
+    <h2 class="section-title anim anim-d2">Galerie des Meilleures Parties</h2>
+    <div class="games-grid">
+
+        <a class="glass game-card anim anim-d2" href="alphazero_vs_stockfish.html">
+            <div class="game-title">AlphaZero vs Stockfish &mdash; Game 10</div>
+            <div class="game-players">AlphaZero (Blanc) vs Stockfish 8</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Reti Opening</div>
+            <div class="game-moment">Sacrifice de qualite e5 transformant la structure. Domination positionnelle totale.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d2" href="alphazero_vs_stockfish_game2.html">
+            <div class="game-title">AlphaZero vs Stockfish &mdash; Game 2</div>
+            <div class="game-players">AlphaZero (Blanc) vs Stockfish 8</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Queen's Indian Defense</div>
+            <div class="game-moment">Attaque de flanc roi avec avancee h4-h5 typique du style AlphaZero.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d3" href="alphazero_sacrificial_masterpiece.html">
+            <div class="game-title">AlphaZero &mdash; Sacrificial Masterpiece</div>
+            <div class="game-players">AlphaZero (Blanc) vs Stockfish 8</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">English Opening</div>
+            <div class="game-moment">Double sacrifice de piece suivi d'une attaque de mat imparable. Chef-d'oeuvre tactique.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d3" href="carlsen_brilliancy_2013.html">
+            <div class="game-title">Carlsen &mdash; Brilliancy 2013</div>
+            <div class="game-players">Magnus Carlsen vs Viswanathan Anand</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Ruy Lopez Berlin</div>
+            <div class="game-moment">Technique de finale magistrale. Zugzwang decisif au 45e coup.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d3" href="kasparov_immortal_1999.html">
+            <div class="game-title">Kasparov &mdash; The Immortal 1999</div>
+            <div class="game-players">Garry Kasparov vs Veselin Topalov</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Pirc Defense</div>
+            <div class="game-moment">Sacrifice de tour en d4 declenchant une combinaison de 15 coups forcee.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d4" href="deep_blue_vs_kasparov.html">
+            <div class="game-title">Deep Blue vs Kasparov</div>
+            <div class="game-players">Deep Blue vs Garry Kasparov</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Caro-Kann Defense</div>
+            <div class="game-moment">Game 6 historique. Premiere defaite d'un champion du monde contre une machine.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d4" href="leela_vs_stockfish_2019.html">
+            <div class="game-title">Leela vs Stockfish &mdash; TCEC 2019</div>
+            <div class="game-players">LeelaChess Zero vs Stockfish</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">King's Indian Attack</div>
+            <div class="game-moment">Jeu positionnel profond rappelant AlphaZero. Sacrifice de pion strategique.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d4" href="stockfish_vs_komodo_2018.html">
+            <div class="game-title">Stockfish vs Komodo &mdash; TCEC S13</div>
+            <div class="game-players">Stockfish vs Komodo</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Sicilian Najdorf</div>
+            <div class="game-moment">Attaque thematique avec sacrifice en h5 et penetration de la tour sur la 7e rangee.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d5" href="tal_masterpiece_1958.html">
+            <div class="game-title">Tal &mdash; Masterpiece 1958</div>
+            <div class="game-players">Mikhail Tal vs NN</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Sicilian Defense</div>
+            <div class="game-moment">Le Magicien de Riga. Sacrifice speculatif suivi d'une attaque incalculable.</div>
+        </a>
+
+        <a class="glass game-card anim anim-d5" href="fischer_game_of_century_interactive_v2.html">
+            <div class="game-title">Fischer &mdash; Game of the Century</div>
+            <div class="game-players">Bobby Fischer vs Donald Byrne</div>
+            <span class="game-result result-black">0-1</span>
+            <div class="game-opening">Gruenfeld Defense</div>
+            <div class="game-moment">Fischer a 13 ans sacrifie sa Dame pour une attaque devastatrice. Coup 17...Be6!!</div>
+        </a>
+
+        <a class="glass game-card anim anim-d5" href="karpov_positional_1978.html">
+            <div class="game-title">Karpov &mdash; Positional Masterclass 1978</div>
+            <div class="game-players">Anatoly Karpov vs Viktor Korchnoi</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Queen's Gambit Declined</div>
+            <div class="game-moment">Boa constricteur. Restriction progressive jusqu'a l'etouffement total.</div>
+        </a>
+
+        <!-- Placeholders -->
+        <a class="glass game-card placeholder anim anim-d5" href="scc_carlsen_vs_lazavik.html">
+            <div class="game-title">SCC 2025 &mdash; Carlsen vs Lazavik</div>
+            <div class="game-players">Magnus Carlsen vs Denis Lazavik</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">Ruy Lopez Morphy-Anderssen</div>
+            <div class="game-moment">Meilleure partie des finales SCC 2025 Londres. Analyse en preparation.</div>
+        </a>
+
+        <a class="glass game-card placeholder anim anim-d5" href="tcec_s28_best_game.html">
+            <div class="game-title">TCEC S28 &mdash; Best Game</div>
+            <div class="game-players">Stockfish vs LeelaChess Zero</div>
+            <span class="game-result result-white">1-0</span>
+            <div class="game-opening">TBD</div>
+            <div class="game-moment">Meilleure partie de la Superfinal TCEC Saison 28. Analyse en preparation.</div>
+        </a>
+    </div>
+
+    <!-- ===================== OPENING ANALYSIS TABLE ===================== -->
+    <h2 class="section-title anim anim-d3">Analyse des Ouvertures</h2>
+    <div class="glass anim anim-d3">
+        <div class="table-wrap">
+            <table id="openings-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Ouverture <span class="sort-arrow">&#9650;&#9660;</span></th>
+                        <th onclick="sortTable(1)">Parties <span class="sort-arrow">&#9650;&#9660;</span></th>
+                        <th onclick="sortTable(2)">Victoire Blancs <span class="sort-arrow">&#9650;&#9660;</span></th>
+                        <th onclick="sortTable(3)">Nulles <span class="sort-arrow">&#9650;&#9660;</span></th>
+                        <th onclick="sortTable(4)">Best For <span class="sort-arrow">&#9650;&#9660;</span></th>
+                        <th onclick="sortTable(5)">Source <span class="sort-arrow">&#9650;&#9660;</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Reti Opening</td><td>6</td><td class="pct-high">100 %</td><td>0 %</td><td>Blancs</td><td>AlphaZero</td></tr>
+                    <tr><td>Queen's Indian Defense</td><td>5</td><td class="pct-high">100 %</td><td>0 %</td><td>Blancs</td><td>AlphaZero</td></tr>
+                    <tr><td>Ruy Lopez Morphy-Anderssen</td><td>12</td><td class="pct-high">66.7 %</td><td>16.7 %</td><td>Blancs</td><td>SCC 2025</td></tr>
+                    <tr><td>Sicilian Najdorf</td><td>18</td><td class="pct-mid">55.6 %</td><td>22.2 %</td><td>Blancs</td><td>SCC / TCEC</td></tr>
+                    <tr><td>English Opening</td><td>8</td><td class="pct-high">62.5 %</td><td>25 %</td><td>Blancs</td><td>AlphaZero</td></tr>
+                    <tr><td>King's Indian Defense</td><td>14</td><td class="pct-mid">50 %</td><td>28.6 %</td><td>Equilibre</td><td>AlphaZero / TCEC</td></tr>
+                    <tr><td>French Defense</td><td>10</td><td class="pct-mid">50 %</td><td>30 %</td><td>Equilibre</td><td>SCC 2025</td></tr>
+                    <tr><td>Queen's Gambit Declined</td><td>22</td><td class="pct-mid">45.5 %</td><td>36.4 %</td><td>Equilibre</td><td>TCEC</td></tr>
+                    <tr><td>Catalan Opening</td><td>8</td><td class="pct-low">25 %</td><td>75 %</td><td>Nulle</td><td>SCC 2025</td></tr>
+                    <tr><td>Berlin Defense</td><td>15</td><td class="pct-low">33.3 %</td><td>53.3 %</td><td>Noirs (solide)</td><td>SCC / TCEC</td></tr>
+                    <tr><td>Pirc Defense</td><td>7</td><td class="pct-mid">57.1 %</td><td>14.3 %</td><td>Blancs</td><td>AlphaZero</td></tr>
+                    <tr><td>Gruenfeld Defense</td><td>11</td><td class="pct-mid">45.5 %</td><td>27.3 %</td><td>Equilibre</td><td>TCEC</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===================== PATTERN STATISTICS ===================== -->
+    <h2 class="section-title anim anim-d3">Statistiques de Patterns</h2>
+    <div class="glass anim anim-d4">
+
+        <div class="bar-section">
+            <h4>Sacrifices par type de piece (toutes collections)</h4>
+            <div class="bar-row">
+                <span class="bar-label">Cavalier</span>
+                <div class="bar-track"><div class="bar-fill grad-cyan" style="--w:100%">140</div></div>
+                <span class="bar-value" style="color:#00ffff">140</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">Fou</span>
+                <div class="bar-track"><div class="bar-fill grad-green" style="--w:70.7%">99</div></div>
+                <span class="bar-value" style="color:#00ff88">99</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">Tour</span>
+                <div class="bar-track"><div class="bar-fill grad-orange" style="--w:69.3%">97</div></div>
+                <span class="bar-value" style="color:#ffaa00">97</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">Dame</span>
+                <div class="bar-track"><div class="bar-fill grad-pink" style="--w:30.7%">43</div></div>
+                <span class="bar-value" style="color:#ff4488">43</span>
+            </div>
+        </div>
+
+        <div class="bar-section">
+            <h4>Taux de reussite des sacrifices de qualite</h4>
+            <div class="bar-row">
+                <span class="bar-label">AlphaZero</span>
+                <div class="bar-track"><div class="bar-fill grad-cyan" style="--w:65.7%">65.7 %</div></div>
+                <span class="bar-value" style="color:#00ffff">7/10</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">SCC 2025</span>
+                <div class="bar-track"><div class="bar-fill grad-green" style="--w:56.3%">56.3 %</div></div>
+                <span class="bar-value" style="color:#00ff88">18/32</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">TCEC (est.)</span>
+                <div class="bar-track"><div class="bar-fill grad-purple" style="--w:48%">~48 %</div></div>
+                <span class="bar-value" style="color:#aa44ff">en cours</span>
+            </div>
+        </div>
+
+        <div class="bar-section">
+            <h4>Frequence d'avancee pion h (par 100 parties)</h4>
+            <div class="bar-row">
+                <span class="bar-label">AlphaZero</span>
+                <div class="bar-track"><div class="bar-fill grad-cyan" style="--w:100%">158 / 100</div></div>
+                <span class="bar-value" style="color:#00ffff">49 / 31</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">SCC 2025</span>
+                <div class="bar-track"><div class="bar-fill grad-green" style="--w:58%">91.6 / 100</div></div>
+                <span class="bar-value" style="color:#00ff88">98 / 107</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== LESSONS FOR SUPAENGINE ===================== -->
+    <h2 class="section-title anim anim-d4">Lecons pour SupaEngine</h2>
+    <div class="glass anim anim-d5" style="padding: 32px;">
+        <ol class="lessons-list">
+            <li><strong>Prioritiser les positions ouvertes et tactiques.</strong> Les parties decisives viennent des desequilibres. AlphaZero evite les structures fermees steriles.</li>
+            <li><strong>Considerer les sacrifices de qualite plus souvent.</strong> 65.7 % de reussite chez AZ. SupaEngine doit baisser le seuil d'evaluation pour accepter Rxe5 type sacrifices.</li>
+            <li><strong>Implementer les patterns d'avancee pion h.</strong> 158 pour 100 parties chez AZ. Pattern h4-h5-h6 ouvre des diagonales et fragilise le roque.</li>
+            <li><strong>Concentrer la profondeur de calcul autour du coup 40.</strong> 968 blunders au SCC sous 30 s. Le zeitnot est exploitable &mdash; recherche plus profonde en milieu de partie.</li>
+            <li><strong>Eviter la Catalane pour chercher la victoire.</strong> 75 % de nulles au SCC. Preferer Ruy Lopez, English ou Queen's Indian avec les Blancs.</li>
+            <li><strong>Renforcer la preparation Ruy Lopez.</strong> Meilleure ouverture toutes collections. Variante Morphy-Anderssen en priorite dans le livre d'ouvertures.</li>
+        </ol>
+    </div>
+
+    <div style="text-align:center; padding:40px 0 20px; opacity:0.4; font-size:0.85em;">
+        Engine Study Lab &mdash; SupaChess &copy; 2025. Donnees: AlphaZero Paper, SCC 2025 London, TCEC S04-S28.
+    </div>
+
+</div>
+
+<!-- ===================== TABLE SORT SCRIPT ===================== -->
+<script>
+function sortTable(colIdx) {
+    const table = document.getElementById('openings-table');
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+    const current = table.getAttribute('data-sort-col');
+    const asc = current == colIdx ? !(table.getAttribute('data-sort-asc') === 'true') : true;
+    table.setAttribute('data-sort-col', colIdx);
+    table.setAttribute('data-sort-asc', asc);
+
+    rows.sort((a, b) => {
+        let va = a.cells[colIdx].textContent.trim();
+        let vb = b.cells[colIdx].textContent.trim();
+        const na = parseFloat(va.replace(/[^0-9.\-]/g, ''));
+        const nb = parseFloat(vb.replace(/[^0-9.\-]/g, ''));
+        if (!isNaN(na) && !isNaN(nb)) {
+            return asc ? na - nb : nb - na;
+        }
+        return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaChess - Entrainement Finales</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="/shared/progress.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a0a1a;
+            --bg-card: rgba(20, 15, 40, 0.92);
+            --bg-card-solid: #140f28;
+            --accent-purple: #a855f7;
+            --accent-gold: #fbbf24;
+            --accent-pink: #ec4899;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --border-purple: rgba(168, 85, 247, 0.3);
+            --border-gold: rgba(251, 191, 36, 0.3);
+            --glow-purple: rgba(168, 85, 247, 0.4);
+            --glow-gold: rgba(251, 191, 36, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* === NAV TOP === */
+        .nav-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .hub-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid var(--border-purple);
+            white-space: nowrap;
+        }
+
+        .hub-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--glow-purple);
+            border-color: var(--accent-purple);
+        }
+
+        .hub-btn-arrow { font-size: 1.2em; }
+
+        .nav-progress-bar {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+
+        /* === HEADER === */
+        header {
+            text-align: center;
+            padding: 35px 30px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-gold);
+            box-shadow: 0 0 40px var(--glow-gold);
+        }
+
+        header h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+        }
+
+        header .completion-summary {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .completion-stat {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(251, 191, 36, 0.1));
+            border: 1px solid var(--border-purple);
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-size: 0.95em;
+        }
+
+        .completion-stat .val {
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        /* === MAIN LAYOUT === */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* === BOARD SECTION === */
+        .board-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid var(--border-purple);
+        }
+
+        .endgame-info {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(168, 85, 247, 0.1));
+            border: 2px solid var(--border-gold);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .endgame-title {
+            font-size: 1.6em;
+            color: var(--accent-gold);
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .endgame-objective {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #fff;
+        }
+
+        .diff-debutant { background: linear-gradient(135deg, #6ee7b7, #34d399); color: #064e3b; }
+        .diff-intermediaire { background: linear-gradient(135deg, var(--accent-blue), #8b5cf6); }
+        .diff-avance { background: linear-gradient(135deg, var(--accent-gold), #f59e0b); color: #451a03; }
+        .diff-expert { background: linear-gradient(135deg, var(--accent-red), #991b1b); }
+
+        #board-wrapper {
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto 20px;
+        }
+
+        #board { width: 100%; }
+
+        .board-label {
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* === FEEDBACK AREA === */
+        .feedback-area {
+            margin-top: 15px;
+            min-height: 80px;
+        }
+
+        .feedback-msg {
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-weight: 600;
+            text-align: center;
+            animation: fadeSlideIn 0.3s ease-out;
+        }
+
+        .feedback-correct {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
+        .feedback-wrong {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        .feedback-hint {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(168, 85, 247, 0.1));
+            border: 2px solid var(--border-gold);
+            color: var(--accent-gold);
+        }
+
+        .feedback-complete {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(251, 191, 36, 0.15));
+            border: 2px solid var(--accent-purple);
+            color: #c4b5fd;
+            font-size: 1.15em;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === CONTROLS === */
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary { background: linear-gradient(135deg, var(--accent-purple), #7c3aed); }
+        .btn-primary:hover { box-shadow: 0 6px 20px var(--glow-purple); }
+
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), #059669); }
+        .btn-success:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+
+        .btn-warning { background: linear-gradient(135deg, var(--accent-gold), #d97706); }
+        .btn-warning:hover { box-shadow: 0 6px 20px var(--glow-gold); }
+
+        .btn-danger { background: linear-gradient(135deg, var(--accent-red), #b91c1c); }
+        .btn-danger:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4); }
+
+        .btn-secondary {
+            background: rgba(100, 100, 140, 0.3);
+            border: 1px solid rgba(100, 100, 140, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* === RIGHT PANEL: ENDGAME LIST === */
+        .list-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid var(--border-purple);
+        }
+
+        .list-panel h2 {
+            font-size: 1.4em;
+            color: var(--accent-purple);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .endgame-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .endgame-item {
+            background: rgba(30, 25, 55, 0.8);
+            border: 2px solid rgba(100, 80, 160, 0.2);
+            border-radius: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .endgame-item:hover {
+            border-color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.1);
+            transform: translateX(4px);
+        }
+
+        .endgame-item.active {
+            border-color: var(--accent-gold);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(168, 85, 247, 0.1));
+            box-shadow: 0 0 15px var(--glow-gold);
+        }
+
+        .endgame-item.completed {
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .endgame-item .item-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+
+        .endgame-item.completed .item-num {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+        }
+
+        .endgame-item .item-text {
+            flex: 1;
+        }
+
+        .endgame-item .item-name {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--text-primary);
+        }
+
+        .endgame-item .item-desc {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .endgame-item .item-status {
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        /* === EXPLANATION BOX === */
+        .explanation-box {
+            background: rgba(30, 25, 55, 0.9);
+            border: 2px solid var(--border-purple);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .explanation-box.visible { display: block; }
+
+        .explanation-box h3 {
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .explanation-box p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .explanation-box .key-concept {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(251, 191, 36, 0.1));
+            border-left: 3px solid var(--accent-gold);
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #c4b5fd;
+        }
+
+        /* === MOVE HISTORY === */
+        .move-history {
+            background: rgba(30, 25, 55, 0.8);
+            border: 1px solid rgba(100, 80, 160, 0.3);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-top: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .move-history::-webkit-scrollbar { width: 6px; }
+        .move-history::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+        .move-history::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 3px; }
+
+        .move-history .move-correct { color: var(--accent-green); font-weight: 600; }
+        .move-history .move-wrong { color: var(--accent-red); }
+
+        /* === ALL COMPLETED BANNER === */
+        .all-complete-banner {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(168, 85, 247, 0.2));
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+
+        .all-complete-banner.visible { display: block; }
+
+        .all-complete-banner h3 {
+            color: var(--accent-gold);
+            font-size: 1.4em;
+            margin-bottom: 8px;
+        }
+
+        .all-complete-banner p {
+            color: var(--text-secondary);
+            font-size: 1em;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 20px var(--glow-gold); }
+            50% { box-shadow: 0 0 40px var(--glow-gold), 0 0 60px var(--glow-purple); }
+        }
+
+        /* === NAV BOTTOM === */
+        .nav-bottom {
+            text-align: center;
+            margin-top: 30px;
+            padding: 25px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 2px solid var(--border-purple);
+        }
+
+        .nav-bottom .hub-btn {
+            padding: 14px 36px;
+            font-size: 1.1em;
+        }
+
+        /* === CHESSBOARD OVERRIDES === */
+        .board-b72b1 {
+            border: 3px solid var(--accent-purple) !important;
+            border-radius: 4px !important;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2em; }
+            .board-section { padding: 15px; }
+            #board-wrapper { max-width: 100%; }
+            .controls { gap: 8px; }
+            .btn { padding: 10px 16px; font-size: 0.9em; }
+        }
+
+        /* === RESET CONFIRM DIALOG === */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.visible { display: flex; }
+
+        .modal-box {
+            background: var(--bg-card-solid);
+            border: 2px solid var(--accent-red);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-box h3 {
+            color: var(--accent-red);
+            margin-bottom: 12px;
+            font-size: 1.3em;
+        }
+
+        .modal-box p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .modal-box .btn { margin: 0 6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- NAV TOP -->
+        <div class="nav-top">
+            <a href="index.html" class="hub-btn">
+                <span class="hub-btn-arrow">&larr;</span> Retour au Hub
+            </a>
+            <div class="nav-progress-bar" id="xp-bar-top"></div>
+        </div>
+
+        <!-- HEADER -->
+        <header>
+            <h1>Entrainement Finales</h1>
+            <p class="subtitle">Maitrisez les finales essentielles pour gagner vos parties</p>
+            <div class="completion-summary">
+                <div class="completion-stat">
+                    Completees : <span class="val" id="count-done">0</span> / 10
+                </div>
+                <div class="completion-stat">
+                    XP gagnes : <span class="val" id="total-xp-earned">0</span>
+                </div>
+                <div class="completion-stat" id="badge-status-container">
+                    Badge : <span class="val" id="badge-status">Non obtenu</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN GRID -->
+        <div class="main-grid">
+            <!-- LEFT: BOARD -->
+            <div class="board-section">
+                <div class="endgame-info" id="endgame-info">
+                    <div class="endgame-title" id="endgame-title">Selectionnez une finale</div>
+                    <div class="endgame-objective" id="endgame-objective">
+                        Choisissez un exercice dans la liste a droite pour commencer.
+                    </div>
+                </div>
+
+                <div id="board-wrapper">
+                    <div id="board"></div>
+                    <div class="board-label" id="board-label">Trait aux Blancs</div>
+                </div>
+
+                <div class="feedback-area" id="feedback-area"></div>
+
+                <div class="move-history" id="move-history" style="display:none;"></div>
+
+                <div class="controls" id="controls">
+                    <button class="btn btn-warning" id="btn-hint" onclick="showHint()" disabled>
+                        Indice
+                    </button>
+                    <button class="btn btn-primary" id="btn-reset-pos" onclick="resetCurrentPosition()" disabled>
+                        Recommencer
+                    </button>
+                    <button class="btn btn-success" id="btn-next" onclick="loadNextEndgame()" style="display:none;">
+                        Suivant &rarr;
+                    </button>
+                    <button class="btn btn-secondary" id="btn-solution" onclick="showFullSolution()" disabled>
+                        Voir solution
+                    </button>
+                </div>
+
+                <!-- EXPLANATION -->
+                <div class="explanation-box" id="explanation-box">
+                    <h3 id="explanation-title">Explication</h3>
+                    <p id="explanation-text"></p>
+                    <div class="key-concept" id="explanation-concept"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT: ENDGAME LIST -->
+            <div class="list-panel">
+                <h2>10 Finales Essentielles</h2>
+                <div class="endgame-list" id="endgame-list"></div>
+
+                <div class="all-complete-banner" id="all-complete-banner">
+                    <h3>Toutes les finales maitrisees !</h3>
+                    <p>Vous avez obtenu le badge <strong>Specialiste Finales</strong> et +150 XP.</p>
+                </div>
+
+                <div style="margin-top: 15px; text-align: center;">
+                    <button class="btn btn-danger" onclick="confirmResetAll()" style="font-size:0.85em; padding:8px 16px;">
+                        Reinitialiser tout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAV BOTTOM -->
+        <div class="nav-bottom">
+            <a href="index.html" class="hub-btn">
+                <span class="hub-btn-arrow">&larr;</span> Retour au Hub Central
+            </a>
+        </div>
+    </div>
+
+    <!-- RESET CONFIRM MODAL -->
+    <div class="modal-overlay" id="modal-reset">
+        <div class="modal-box">
+            <h3>Reinitialiser la progression ?</h3>
+            <p>Toutes les finales completees seront remises a zero. Les XP deja gagnes seront conserves.</p>
+            <button class="btn btn-danger" onclick="doResetAll()">Confirmer</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        </div>
+    </div>
+
+    <!-- FIREBASE & SHARED -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="/shared/community.css">
+    <script src="/shared/i18n.js"></script>
+    <script src="/shared/community.js"></script>
+
+    <script>
+    // ========================================================================
+    //  TRAINING_ENDGAMES - Interactive Endgame Drills
+    //  10 essential endgame positions with move verification
+    // ========================================================================
+    (function() {
+        'use strict';
+
+        // === ENDGAME DATA: 10 positions ===
+        var ENDGAMES = [
+            {
+                id: 'krk',
+                name: 'Roi + Tour vs Roi',
+                shortName: 'R+T vs R',
+                description: 'Matez le roi adverse avec roi et tour',
+                fen: '8/8/8/8/8/5k2/8/4K2R w - - 0 1',
+                difficulty: 'debutant',
+                diffLabel: 'Debutant',
+                keyMoves: ['Rh3+', 'Rh2', 'Rh4'],
+                acceptAny: ['Rh3', 'Rh2', 'Rh4', 'Rh5', 'Rh6', 'Rh7', 'Rh8', 'Ke2'],
+                explanation: 'Dans la finale Roi + Tour contre Roi, la technique consiste a utiliser la tour pour couper le roi adverse sur un bord de l\'echiquier, puis amener votre roi en soutien pour forcer le mat.',
+                concept: 'Coupez le roi adverse avec la tour, puis approchez votre roi progressivement. Le mat se donne toujours sur le bord.',
+                hint: 'Utilisez la tour pour couper le roi noir du centre. Rh3+ gagne un temps en donnant echec.'
+            },
+            {
+                id: 'krk2',
+                name: 'Roi + Tour vs Roi (2)',
+                shortName: 'R+T vs R #2',
+                description: 'Matez avec la tour depuis une position differente',
+                fen: '8/8/8/4k3/8/8/8/R3K3 w - - 0 1',
+                difficulty: 'debutant',
+                diffLabel: 'Debutant',
+                keyMoves: ['Ke2', 'Kd2', 'Ra5+', 'Ra4'],
+                acceptAny: ['Ke2', 'Kd2', 'Kf2', 'Ra5', 'Ra4', 'Ra3', 'Ra6', 'Ra7', 'Ra8'],
+                explanation: 'Meme principe : la tour doit couper le roi noir. Ici, commencer par centraliser votre roi avec Ke2 ou couper directement avec Ra5+ est correct.',
+                concept: 'Centralisez d\'abord votre roi, puis utilisez la tour pour repousser methodiquement le roi adverse vers le bord.',
+                hint: 'Centralisez votre roi vers le centre (Ke2) ou coupez immediatement le roi noir avec Ra5+.'
+            },
+            {
+                id: 'kpk',
+                name: 'Roi + Pion (Promotion)',
+                shortName: 'R+P promotion',
+                description: 'Promouvez le pion en dame',
+                fen: '8/4P3/8/8/8/5k2/8/4K3 w - - 0 1',
+                difficulty: 'debutant',
+                diffLabel: 'Debutant',
+                keyMoves: ['e8=Q', 'e8=R'],
+                acceptAny: ['e8=Q', 'e8=R', 'e8Q', 'e8R'],
+                explanation: 'Quand un pion atteint la 8e rangee, il se transforme. La promotion en Dame est presque toujours le meilleur choix car elle donne la piece la plus puissante.',
+                concept: 'Promouvez toujours en Dame sauf cas de pat. Ici e8=D est immediat et gagnant.',
+                hint: 'Le pion est deja en e7 ! Poussez-le en e8 pour le promouvoir en Dame.'
+            },
+            {
+                id: 'kbbk',
+                name: 'Roi + 2 Fous vs Roi',
+                shortName: 'R+2F vs R',
+                description: 'Matez avec la paire de fous',
+                fen: '8/8/8/4k3/8/8/2BB4/4K3 w - - 0 1',
+                difficulty: 'avance',
+                diffLabel: 'Avance',
+                keyMoves: ['Bc3', 'Bd3', 'Ke2', 'Be3'],
+                acceptAny: ['Bc3', 'Bd3', 'Ke2', 'Be3', 'Bb3', 'Bf4', 'Kd2', 'Kf2', 'Be4'],
+                explanation: 'Le mat avec 2 Fous necessite de repousser le roi adverse dans un coin. Les deux fous cooperent en creant une "barriere diagonale" que le roi ne peut pas traverser.',
+                concept: 'Les 2 fous forment une barriere diagonale. Placez-les sur des diagonales adjacentes pour forcer le roi vers un coin, puis matez avec l\'aide de votre roi.',
+                hint: 'Commencez par activer vos fous au centre : Bc3 ou Bd3 forment une barriere diagonale que le roi noir ne peut pas franchir.'
+            },
+            {
+                id: 'lucena',
+                name: 'Position Lucena',
+                shortName: 'Lucena',
+                description: 'Gagnez avec la technique du pont (Rf4)',
+                fen: '1K1k4/1P6/8/8/8/8/1r6/5R2 w - - 0 1',
+                difficulty: 'intermediaire',
+                diffLabel: 'Intermediaire',
+                keyMoves: ['Rf4', 'Rd1+', 'Re1'],
+                acceptAny: ['Rf4', 'Rd1', 'Re1', 'Rf2', 'Rf3', 'Rf5', 'Rf8+'],
+                explanation: 'La position Lucena est la plus importante des finales Tour + Pion. La cle est la technique du "pont" : la tour va en f4, le roi sort en a7 ou a8, puis si le roi noir donne echec, la tour interpose en f4 en protegeant le roi.',
+                concept: 'Technique du pont : 1.Rf4! prepare l\'interposition. Le roi blanc sort du pion, et la tour "construit un pont" en s\'interposant aux echecs sur la 4e rangee.',
+                hint: 'Rf4 ! C\'est le coup cle de la position Lucena. La tour se place en f4 pour construire un "pont" et bloquer les echecs adverses.'
+            },
+            {
+                id: 'philidor',
+                name: 'Position Philidor',
+                shortName: 'Philidor',
+                description: 'Defense de nulle avec la tour en 6e rangee',
+                fen: '8/3k4/8/3PK3/8/8/8/3r3R w - - 0 1',
+                difficulty: 'intermediaire',
+                diffLabel: 'Intermediaire',
+                keyMoves: ['Rh7+', 'Rh8', 'Rh6', 'd6'],
+                acceptAny: ['Rh7', 'Rh8', 'Rh6', 'd6', 'Rh4', 'Rh3', 'Rh2', 'Ke6'],
+                explanation: 'La position Philidor est la defense classique en finale Tour + Pion. Le defenseur garde sa tour sur la 6e rangee (ou 3e du point de vue des noirs) pour empecher la progression du roi. Si le pion avance, la tour passe derriere pour donner des echecs a distance.',
+                concept: 'Garder la tour sur la 6e rangee tant que le pion n\'avance pas. Des que le pion pousse, la tour passe derriere pour des echecs perpetuels a longue distance.',
+                hint: 'Avancez avec Rh7+ ou poussez le pion avec d6 pour tester la defense noire.'
+            },
+            {
+                id: 'rpvr',
+                name: 'Tour + Pion vs Tour',
+                shortName: 'T+P vs T',
+                description: 'Poussez le pion jusqu\'a promotion',
+                fen: '8/3k1R2/3P4/8/8/8/8/3K1r2 w - - 0 1',
+                difficulty: 'intermediaire',
+                diffLabel: 'Intermediaire',
+                keyMoves: ['Ke2', 'Rf8', 'Kd2', 'Re7'],
+                acceptAny: ['Ke2', 'Rf8', 'Kd2', 'Re7', 'Kc2', 'Rf1', 'Rf2', 'Rf3', 'Rf4'],
+                explanation: 'En finale Tour + Pion contre Tour, la coordination entre votre roi et votre tour est essentielle. Le roi doit soutenir le pion, et la tour doit empecher le roi adverse de bloquer.',
+                concept: 'Approchez votre roi du pion pour le soutenir. Gardez votre tour active pour empecher les echecs et le blocage adverse.',
+                hint: 'Activez votre roi avec Ke2 pour soutenir le pion d6, ou jouez Re7 pour couper le roi noir.'
+            },
+            {
+                id: 'qqend',
+                name: 'Finale de Dames',
+                shortName: 'D vs D',
+                description: 'Technique de finale dame contre dame',
+                fen: '8/3k4/8/3QK3/8/8/3q4/8 w - - 0 1',
+                difficulty: 'avance',
+                diffLabel: 'Avance',
+                keyMoves: ['Qd6+', 'Qb7+', 'Qc6+', 'Qa8+'],
+                acceptAny: ['Qd6', 'Qb7', 'Qc6', 'Qa8', 'Qd4', 'Qd3', 'Qd2', 'Qe6', 'Qf7', 'Qd1', 'Qa2', 'Qb3', 'Qc4'],
+                explanation: 'Les finales de Dames sont complexes. La cle est de centraliser votre dame, donner des echecs pour eloigner le roi adverse de votre pion (s\'il y en a un), et creer une menace d\'echange vers une finale gagnante.',
+                concept: 'En finale de dames, privilegiez les echecs centralises. Une dame centralisee est extremement puissante et peut forcer l\'echange ou le mat.',
+                hint: 'Donnez echec avec Qd6+ ou Qb7+ pour repousser le roi noir et gagner du terrain.'
+            },
+            {
+                id: 'zugzwang',
+                name: 'Zugzwang',
+                shortName: 'Zugzwang',
+                description: 'Utilisez le zugzwang pour gagner',
+                fen: '8/8/1pk5/8/1PK5/8/8/8 w - - 0 1',
+                difficulty: 'expert',
+                diffLabel: 'Expert',
+                keyMoves: ['Kd4', 'Kc3', 'Kb3'],
+                acceptAny: ['Kd4', 'Kc3', 'Kb3', 'b5'],
+                explanation: 'Le zugzwang est une situation ou le joueur au trait est desavantage par l\'obligation de jouer. Dans cette position de pions, les blancs doivent manoeuvrer pour mettre les noirs en zugzwang. Apres Kd4, les noirs sont forces de ceder le controle de la case c5 ou b5.',
+                concept: 'Le zugzwang force l\'adversaire a deteriorer sa position. Dans les finales de pions, la cle est souvent l\'opposition et le timing pour placer l\'adversaire en zugzwang.',
+                hint: 'Kd4 ! Cela met les noirs en difficulte. S\'ils jouent Kd6, b5 gagne. S\'ils jouent Kb5, Kd5 domine.'
+            },
+            {
+                id: 'pawnrace',
+                name: 'Course de Pions Avancee',
+                shortName: 'Course de pions',
+                description: 'Gagnez la course de pions',
+                fen: '8/pp6/8/PP6/8/K7/8/k7 w - - 0 1',
+                difficulty: 'expert',
+                diffLabel: 'Expert',
+                keyMoves: ['b6', 'a6', 'Kb4', 'Ka4'],
+                acceptAny: ['b6', 'a6', 'Kb4', 'Ka4', 'Kb3', 'Kb2', 'Ka2'],
+                explanation: 'Dans les courses de pions, le calcul precis est essentiel. Ici, les blancs doivent decider quand pousser quel pion. b6 est souvent correct car il force une reaction immediate (axb6 ou a6), et le roi blanc est plus avance.',
+                concept: 'Dans les courses de pions, comptez les temps ! Le roi le plus actif et les pions les plus avances ont l\'avantage. Parfois, sacrifier un pion pour faire une dame en premier est gagnant.',
+                hint: 'Poussez b6 ! Cela force une reaction des noirs et ouvre un passage pour vos pions. Le timing est crucial.'
+            }
+        ];
+
+        // === STATE ===
+        var board = null;
+        var game = null;
+        var currentEndgame = null;
+        var currentIndex = -1;
+        var movesMade = [];
+        var hintsUsed = 0;
+        var positionSolved = false;
+        var storageData = loadStorage();
+
+        // === STORAGE ===
+        function loadStorage() {
+            try {
+                var d = JSON.parse(localStorage.getItem('chessnova_training_endgames'));
+                if (d && d.completed) return d;
+            } catch(e) {}
+            return { completed: [], totalXP: 0, sessions: 0 };
+        }
+
+        function saveStorage() {
+            localStorage.setItem('chessnova_training_endgames', JSON.stringify(storageData));
+        }
+
+        function isCompleted(id) {
+            return storageData.completed.indexOf(id) !== -1;
+        }
+
+        function markCompleted(id) {
+            if (storageData.completed.indexOf(id) === -1) {
+                storageData.completed.push(id);
+                storageData.totalXP += 15;
+                saveStorage();
+                return true;
+            }
+            return false;
+        }
+
+        // === INIT ===
+        function init() {
+            renderEndgameList();
+            updateCompletionStats();
+            initBoard();
+
+            // Render XP bar if progress system available
+            if (window.ChessNovaProgress) {
+                ChessNovaProgress.renderProgressBar('xp-bar-top');
+            }
+
+            // Increment session counter
+            storageData.sessions = (storageData.sessions || 0) + 1;
+            saveStorage();
+        }
+
+        // === BOARD INIT ===
+        function initBoard() {
+            var config = {
+                position: 'start',
+                draggable: false,
+                pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
+            };
+            board = Chessboard('board', config);
+            $(window).on('resize', function() {
+                if (board) board.resize();
+            });
+        }
+
+        // === RENDER ENDGAME LIST ===
+        function renderEndgameList() {
+            var container = document.getElementById('endgame-list');
+            var html = '';
+
+            for (var i = 0; i < ENDGAMES.length; i++) {
+                var eg = ENDGAMES[i];
+                var done = isCompleted(eg.id);
+                var active = currentIndex === i;
+                var classes = 'endgame-item';
+                if (done) classes += ' completed';
+                if (active) classes += ' active';
+
+                var statusIcon = done ? '&#10003;' : (active ? '&#9654;' : '&#9675;');
+
+                html += '<div class="' + classes + '" onclick="selectEndgame(' + i + ')">'
+                    + '<div class="item-num">' + (i + 1) + '</div>'
+                    + '<div class="item-text">'
+                    + '<div class="item-name">' + eg.name + '</div>'
+                    + '<div class="item-desc">' + eg.description + '</div>'
+                    + '</div>'
+                    + '<div class="item-status">' + statusIcon + '</div>'
+                    + '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // === UPDATE COMPLETION STATS ===
+        function updateCompletionStats() {
+            document.getElementById('count-done').textContent = storageData.completed.length;
+            document.getElementById('total-xp-earned').textContent = storageData.totalXP || 0;
+
+            // Badge status
+            var badgeEl = document.getElementById('badge-status');
+            if (storageData.completed.length >= 10) {
+                badgeEl.textContent = 'Specialiste Finales';
+                badgeEl.style.color = '#10b981';
+                document.getElementById('all-complete-banner').classList.add('visible');
+            } else {
+                badgeEl.textContent = storageData.completed.length + '/10 pour le badge';
+                document.getElementById('all-complete-banner').classList.remove('visible');
+            }
+        }
+
+        // === SELECT ENDGAME ===
+        window.selectEndgame = function(index) {
+            if (index < 0 || index >= ENDGAMES.length) return;
+
+            currentIndex = index;
+            currentEndgame = ENDGAMES[index];
+            movesMade = [];
+            hintsUsed = 0;
+            positionSolved = false;
+
+            // Update UI
+            document.getElementById('endgame-title').textContent =
+                (index + 1) + '. ' + currentEndgame.name;
+            document.getElementById('endgame-objective').innerHTML =
+                currentEndgame.description +
+                ' <span class="difficulty-badge diff-' + currentEndgame.difficulty + '">' +
+                currentEndgame.diffLabel + '</span>';
+
+            // Reset feedback
+            document.getElementById('feedback-area').innerHTML = '';
+            document.getElementById('explanation-box').classList.remove('visible');
+            document.getElementById('move-history').style.display = 'none';
+            document.getElementById('move-history').innerHTML = '';
+            document.getElementById('btn-next').style.display = 'none';
+
+            // Enable buttons
+            document.getElementById('btn-hint').disabled = false;
+            document.getElementById('btn-reset-pos').disabled = false;
+            document.getElementById('btn-solution').disabled = false;
+
+            // Setup chess game
+            game = new Chess(currentEndgame.fen);
+
+            // Create draggable board
+            if (board) board.destroy();
+
+            var boardConfig = {
+                position: currentEndgame.fen,
+                draggable: true,
+                orientation: 'white',
+                pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd
+            };
+
+            board = Chessboard('board', boardConfig);
+            document.getElementById('board-label').textContent = 'Trait aux Blancs - Trouvez le meilleur coup !';
+
+            // Update list highlight
+            renderEndgameList();
+        };
+
+        // === DRAG START: only allow white pieces ===
+        function onDragStart(source, piece, position, orientation) {
+            if (positionSolved) return false;
+            if (game.game_over()) return false;
+            if (piece.search(/^b/) !== -1) return false; // only white
+            if (game.turn() !== 'w') return false;
+            return true;
+        }
+
+        // === DROP: validate move ===
+        function onDrop(source, target) {
+            if (positionSolved) return 'snapback';
+
+            // Try the move (with possible promotion)
+            var moveObj = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // always promote to queen
+            });
+
+            if (moveObj === null) return 'snapback';
+
+            var moveSan = moveObj.san;
+            movesMade.push(moveSan);
+
+            // Log in move history
+            logMove(moveSan, true);
+
+            // Check if this is a key move (first move check)
+            if (movesMade.length === 1) {
+                if (isKeyMove(moveSan)) {
+                    handleCorrectMove(moveSan);
+                } else if (isAcceptableMove(moveSan)) {
+                    showFeedback('Bon coup (' + moveSan + '), mais il y a un coup plus precis. Continuez !', 'hint');
+                    // Let them continue playing - make a "response" move for black
+                    setTimeout(function() { makeBlackResponse(); }, 500);
+                } else {
+                    handleWrongMove(moveSan);
+                }
+            } else {
+                // After first move, any legal move is accepted
+                showFeedback('Vous jouez ' + moveSan + '. Continuez...', 'hint');
+                setTimeout(function() { makeBlackResponse(); }, 500);
+            }
+
+            return undefined; // accept
+        }
+
+        function onSnapEnd() {
+            if (board && game) {
+                board.position(game.fen());
+            }
+        }
+
+        // === CHECK KEY MOVES ===
+        function isKeyMove(san) {
+            if (!currentEndgame) return false;
+            var km = currentEndgame.keyMoves;
+            for (var i = 0; i < km.length; i++) {
+                // Normalize: remove + and # for comparison
+                var normalized = san.replace(/[+#]/g, '');
+                var keyNorm = km[i].replace(/[+#]/g, '');
+                if (normalized === keyNorm) return true;
+            }
+            return false;
+        }
+
+        function isAcceptableMove(san) {
+            if (!currentEndgame) return false;
+            var am = currentEndgame.acceptAny;
+            if (!am) return false;
+            for (var i = 0; i < am.length; i++) {
+                var normalized = san.replace(/[+#]/g, '');
+                var accNorm = am[i].replace(/[+#]/g, '');
+                if (normalized === accNorm) return true;
+            }
+            return false;
+        }
+
+        // === CORRECT MOVE ===
+        function handleCorrectMove(san) {
+            positionSolved = true;
+
+            // Award XP
+            var isNew = markCompleted(currentEndgame.id);
+            if (isNew && window.ChessNovaProgress) {
+                ChessNovaProgress.addXP(15, 'Finale: ' + currentEndgame.name);
+            }
+
+            // Check for badge
+            if (storageData.completed.length >= 10 && window.ChessNovaProgress) {
+                ChessNovaProgress.unlockBadge('endgame-specialist');
+                ChessNovaProgress.checkTrainingBadges();
+            }
+
+            // Show feedback
+            showFeedback('Excellent ! ' + san + ' est le coup cle. Position gagnante !', 'correct');
+
+            // Show explanation
+            showExplanation();
+
+            // Update stats
+            updateCompletionStats();
+            renderEndgameList();
+
+            // Update XP bar
+            if (window.ChessNovaProgress) {
+                ChessNovaProgress.renderProgressBar('xp-bar-top');
+            }
+
+            // Show next button
+            if (currentIndex < ENDGAMES.length - 1) {
+                document.getElementById('btn-next').style.display = 'inline-flex';
+            }
+
+            // Disable interaction
+            document.getElementById('btn-hint').disabled = true;
+            document.getElementById('btn-solution').disabled = true;
+            document.getElementById('board-label').textContent =
+                'Position resolue ! +15 XP' + (isNew ? '' : ' (deja completee)');
+        }
+
+        // === WRONG MOVE ===
+        function handleWrongMove(san) {
+            showFeedback('Ce n\'est pas le meilleur coup (' + san + '). Essayez encore !', 'wrong');
+
+            // Undo the move
+            game.undo();
+            movesMade.pop();
+
+            setTimeout(function() {
+                if (board && game) {
+                    board.position(game.fen());
+                }
+            }, 600);
+
+            // Update move history
+            logMove(san + ' (annule)', false);
+        }
+
+        // === BLACK RESPONSE (simple) ===
+        function makeBlackResponse() {
+            if (!game || game.game_over() || positionSolved) {
+                if (game && game.game_over()) {
+                    if (game.in_checkmate()) {
+                        handleCorrectMove(movesMade[movesMade.length - 1]);
+                    } else {
+                        showFeedback('Partie terminee (pat ou nulle). Recommencez pour trouver le coup optimal.', 'hint');
+                    }
+                }
+                return;
+            }
+            if (game.turn() !== 'b') return;
+
+            // Simple: pick a random legal move for black
+            var moves = game.moves();
+            if (moves.length === 0) return;
+
+            var randomMove = moves[Math.floor(Math.random() * moves.length)];
+            var moveObj = game.move(randomMove);
+            if (moveObj) {
+                logMove('...' + moveObj.san, true);
+                if (board) board.position(game.fen());
+
+                // Check if game is over after black's move
+                if (game.game_over()) {
+                    if (game.in_checkmate()) {
+                        showFeedback('Les noirs sont mats ! Bien joue.', 'correct');
+                    } else {
+                        showFeedback('Partie terminee.', 'hint');
+                    }
+                } else {
+                    document.getElementById('board-label').textContent = 'Trait aux Blancs - Continuez...';
+                }
+            }
+        }
+
+        // === FEEDBACK ===
+        function showFeedback(text, type) {
+            var area = document.getElementById('feedback-area');
+            var cssClass = 'feedback-msg';
+            if (type === 'correct') cssClass += ' feedback-correct';
+            else if (type === 'wrong') cssClass += ' feedback-wrong';
+            else if (type === 'hint') cssClass += ' feedback-hint';
+            else if (type === 'complete') cssClass += ' feedback-complete';
+
+            area.innerHTML = '<div class="' + cssClass + '">' + text + '</div>';
+        }
+
+        // === MOVE HISTORY LOG ===
+        function logMove(san, valid) {
+            var hist = document.getElementById('move-history');
+            hist.style.display = 'block';
+            var cls = valid ? 'move-correct' : 'move-wrong';
+            hist.innerHTML += '<span class="' + cls + '">' + san + '</span> ';
+            hist.scrollTop = hist.scrollHeight;
+        }
+
+        // === SHOW EXPLANATION ===
+        function showExplanation() {
+            if (!currentEndgame) return;
+            var box = document.getElementById('explanation-box');
+            document.getElementById('explanation-title').textContent =
+                'Explication : ' + currentEndgame.name;
+            document.getElementById('explanation-text').textContent =
+                currentEndgame.explanation;
+            document.getElementById('explanation-concept').textContent =
+                currentEndgame.concept;
+            box.classList.add('visible');
+        }
+
+        // === HINT ===
+        window.showHint = function() {
+            if (!currentEndgame || positionSolved) return;
+            hintsUsed++;
+
+            if (hintsUsed === 1) {
+                showFeedback('Indice : ' + currentEndgame.hint, 'hint');
+            } else if (hintsUsed === 2) {
+                var moves = currentEndgame.keyMoves;
+                showFeedback('Le meilleur coup est : ' + moves[0], 'hint');
+            } else {
+                showFeedback('Essayez ' + currentEndgame.keyMoves[0] + ' ! Deplacez la piece correspondante.', 'hint');
+            }
+        };
+
+        // === RESET CURRENT POSITION ===
+        window.resetCurrentPosition = function() {
+            if (currentIndex >= 0) {
+                selectEndgame(currentIndex);
+            }
+        };
+
+        // === LOAD NEXT ENDGAME ===
+        window.loadNextEndgame = function() {
+            var next = currentIndex + 1;
+            // Find next uncompleted, or just go to next
+            while (next < ENDGAMES.length && isCompleted(ENDGAMES[next].id)) {
+                next++;
+            }
+            // If all remaining are completed, just go to next index
+            if (next >= ENDGAMES.length) {
+                next = currentIndex + 1;
+                if (next >= ENDGAMES.length) next = 0;
+            }
+            selectEndgame(next);
+        };
+
+        // === SHOW FULL SOLUTION ===
+        window.showFullSolution = function() {
+            if (!currentEndgame || positionSolved) return;
+
+            showFeedback(
+                'Solution : le coup cle est <strong>' + currentEndgame.keyMoves[0] + '</strong>. ' +
+                currentEndgame.explanation, 'hint'
+            );
+
+            // Show explanation
+            showExplanation();
+
+            // Mark as seen but NOT completed (no XP)
+            document.getElementById('btn-solution').disabled = true;
+            document.getElementById('board-label').textContent =
+                'Solution affichee - Rejouez pour valider et gagner les XP !';
+        };
+
+        // === RESET ALL ===
+        window.confirmResetAll = function() {
+            document.getElementById('modal-reset').classList.add('visible');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('modal-reset').classList.remove('visible');
+        };
+
+        window.doResetAll = function() {
+            storageData = { completed: [], totalXP: 0, sessions: storageData.sessions || 0 };
+            saveStorage();
+            closeModal();
+            currentIndex = -1;
+            currentEndgame = null;
+            renderEndgameList();
+            updateCompletionStats();
+
+            // Reset board to empty
+            if (board) board.destroy();
+            initBoard();
+
+            // Reset UI
+            document.getElementById('endgame-title').textContent = 'Selectionnez une finale';
+            document.getElementById('endgame-objective').textContent =
+                'Choisissez un exercice dans la liste a droite pour commencer.';
+            document.getElementById('feedback-area').innerHTML = '';
+            document.getElementById('explanation-box').classList.remove('visible');
+            document.getElementById('move-history').style.display = 'none';
+            document.getElementById('move-history').innerHTML = '';
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('btn-hint').disabled = true;
+            document.getElementById('btn-reset-pos').disabled = true;
+            document.getElementById('btn-solution').disabled = true;
+            document.getElementById('board-label').textContent = 'Trait aux Blancs';
+
+            showFeedback('Progression reinitialise. Selectionnez une finale pour recommencer.', 'hint');
+        };
+
+        // === START ===
+        $(document).ready(function() {
+            init();
+        });
+
+    })();
+    </script>
+</body>
+</html>

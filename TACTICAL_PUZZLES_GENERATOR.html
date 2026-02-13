@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessNova - Generateur de Puzzles Tactiques</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="/shared/progress.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-card: #1a1f2e;
+            --accent-gold: #ffd700;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #16213e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* === NAV TOP - Retour au Hub === */
+        .nav-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .hub-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            white-space: nowrap;
+        }
+
+        .hub-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            border-color: rgba(102, 126, 234, 0.8);
+        }
+
+        .hub-btn-arrow { font-size: 1.2em; }
+
+        .nav-top-elo {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px 18px;
+            font-size: 1em;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* === NAV BOTTOM === */
+        .nav-bottom {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-bottom .hub-btn {
+            padding: 16px 40px;
+            font-size: 1.2em;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle { color: var(--text-secondary); font-size: 1.3em; }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 600px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .board-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        #board { width: 540px; margin: 0 auto 20px; }
+
+        .puzzle-info {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .puzzle-title {
+            font-size: 1.8em;
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .puzzle-objective {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .difficulty-debutant { background: linear-gradient(135deg, #6ee7b7, #34d399); }
+        .difficulty-easy { background: linear-gradient(135deg, var(--accent-green), #059669); }
+        .difficulty-medium { background: linear-gradient(135deg, var(--accent-blue), #8b5cf6); }
+        .difficulty-hard { background: linear-gradient(135deg, var(--accent-gold), #f59e0b); }
+        .difficulty-expert { background: linear-gradient(135deg, var(--accent-red), #991b1b); }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        button.success { background: linear-gradient(135deg, var(--accent-green), #059669); }
+        button.warning { background: linear-gradient(135deg, var(--accent-gold), #f59e0b); }
+        button.danger { background: linear-gradient(135deg, var(--accent-red), #991b1b); }
+
+        .solution-panel {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card.elo-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(245, 158, 11, 0.15));
+            border: 2px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-value.elo-value {
+            font-size: 3em;
+            background: linear-gradient(135deg, var(--accent-gold), #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .elo-delta {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .elo-delta.positive { color: var(--accent-green); }
+        .elo-delta.negative { color: var(--accent-red); }
+
+        .move-list {
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .move-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .move-item.correct { border-left-color: var(--accent-green); }
+        .move-item.incorrect { border-left-color: var(--accent-red); }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            text-align: center;
+            display: none;
+        }
+
+        .feedback.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .feedback.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(153, 27, 27, 0.2));
+            border: 2px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .timer {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.9); }
+        }
+
+        .solved { animation: pulse-gold 2s infinite; }
+
+        .hint-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(245, 158, 11, 0.1));
+            border: 2px solid var(--accent-gold);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .hint-title {
+            color: var(--accent-gold);
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .theme-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+            border: 1px solid rgba(139, 92, 246, 0.5);
+        }
+
+        /* === PROFILE SECTION === */
+        .profile-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .profile-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-login-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .profile-login-btn:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        /* === PGN LINKS === */
+        .pgn-section {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(245, 158, 11, 0.05));
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .pgn-section h3 {
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .pgn-link {
+            display: block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .pgn-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        /* === RATING BADGE === */
+        .rating-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-left: 8px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--accent-gold);
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            #board { width: 100%; max-width: 540px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- NAV TOP -->
+        <div class="nav-top">
+            <a href="index.html" class="hub-btn">
+                <span class="hub-btn-arrow">&larr;</span> Retour au Hub
+            </a>
+            <div class="nav-top-elo" id="nav-elo-display">Puzzle ELO: 1200</div>
+        </div>
+
+        <header>
+            <h1>Generateur de Puzzles Tactiques</h1>
+            <p class="subtitle">Entrainement adaptatif - Puzzles ELO selon votre niveau</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Section Echiquier -->
+            <div class="board-section">
+                <div class="puzzle-info">
+                    <div class="puzzle-title" id="puzzle-title">Puzzle Tactique #1</div>
+                    <div class="puzzle-objective" id="puzzle-objective">Trouvez le meilleur coup!</div>
+                    <div id="difficulty-badge" class="difficulty-badge difficulty-medium">ELO 1400</div>
+                    <span class="rating-badge" id="puzzle-rating-badge">1400</span>
+
+                    <div style="margin-top: 15px;">
+                        <span class="theme-badge" id="theme-1">Sacrifice</span>
+                        <span class="theme-badge" id="theme-2">Attaque sur le Roi</span>
+                    </div>
+                </div>
+
+                <div class="timer" id="timer">&#x23F1; 00:00</div>
+
+                <div id="board"></div>
+
+                <div class="controls">
+                    <button onclick="giveHint()" class="warning">Indice</button>
+                    <button onclick="showSolution()" class="danger">Solution</button>
+                    <button onclick="undoMove()" class="success">&#x21A9; Annuler</button>
+                    <button onclick="nextPuzzle()">&#x27A1; Suivant</button>
+                </div>
+
+                <div class="feedback" id="feedback"></div>
+                <div class="hint-box" id="hint-box">
+                    <div class="hint-title">Indice</div>
+                    <div id="hint-content"></div>
+                </div>
+            </div>
+
+            <!-- Section Solution -->
+            <div class="solution-panel">
+                <h2 style="color: var(--accent-gold); margin-bottom: 20px; text-align: center;">Statistiques</h2>
+
+                <!-- ELO Card -->
+                <div class="stats-grid">
+                    <div class="stat-card elo-card">
+                        <div class="stat-label">Votre Puzzle ELO</div>
+                        <div class="stat-value elo-value" id="player-elo">1200</div>
+                        <div class="elo-delta" id="elo-delta"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Puzzles Resolus</div>
+                        <div class="stat-value" id="solved-count">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Taux de Reussite</div>
+                        <div class="stat-value" id="success-rate">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Temps Moyen</div>
+                        <div class="stat-value" id="avg-time">0:00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Serie Actuelle</div>
+                        <div class="stat-value" id="streak">0</div>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--accent-blue); margin: 30px 0 15px;">Puzzle Actuel</h3>
+                <div id="puzzle-description" style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; line-height: 1.8;">
+                    Trouvez le coup tactique decisif!
+                </div>
+
+                <h3 style="color: var(--accent-blue); margin: 30px 0 15px;">Historique des Coups</h3>
+                <div class="move-list" id="move-list">
+                    <p style="text-align: center; color: var(--text-secondary);">Commencez a jouer...</p>
+                </div>
+
+                <!-- PROFILE SECTION -->
+                <div class="profile-section" id="profile-section">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Mon Profil</h3>
+                    <div id="profile-content">
+                        <button class="profile-login-btn" id="profile-login-btn">Se connecter</button>
+                    </div>
+                </div>
+
+                <!-- PGN / PARTIES LINKS -->
+                <div class="pgn-section">
+                    <h3>Parties & PGN</h3>
+                    <a href="partie_1_analysee.html" class="pgn-link">&#x265F; Partie #1 Analysee</a>
+                    <a href="partie_2_analysee.html" class="pgn-link">&#x265F; Partie #2 Analysee</a>
+                    <a href="partie_3_analysee.html" class="pgn-link">&#x265F; Partie #3 Analysee</a>
+                    <hr style="border-color: rgba(255,215,0,0.1); margin: 10px 0;">
+                    <a href="fischer_game_of_century_interactive_v2.html" class="pgn-link">&#x1F451; Fischer - Game of the Century</a>
+                    <a href="kasparov_immortal_1999.html" class="pgn-link">&#x1F525; Kasparov - Immortal Game</a>
+                    <a href="tal_masterpiece_1958.html" class="pgn-link">&#x1F3AF; Tal - Masterpiece</a>
+                    <a href="alphazero_vs_stockfish.html" class="pgn-link">&#x1F916; AlphaZero vs Stockfish</a>
+                    <a href="zup_victory_detailed.html" class="pgn-link">&#x1F3C6; ZUP vs Stockfish MAX</a>
+                    <hr style="border-color: rgba(255,215,0,0.1); margin: 10px 0;">
+                    <a href="data/rapport_apprentissage.html" class="pgn-link">&#x1F4C2; Archives completes</a>
+                </div>
+
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 15px; border: 2px solid var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 15px;">Source des Puzzles</h3>
+                    <p style="line-height: 1.8; color: var(--text-secondary);">
+                        Ces puzzles sont generes a partir des <strong style="color: var(--accent-gold);">100+ positions de sacrifices tactiques</strong>
+                        decouvertes par Zup lors de son entrainement contre Stockfish 17.1 FULL (3676 ELO).
+                        <br><br>
+                        Chaque position represente une opportunite tactique reelle ou un sacrifice decisif mene a un avantage significatif.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAV BOTTOM -->
+        <div class="nav-bottom">
+            <a href="index.html" class="hub-btn">
+                <span class="hub-btn-arrow">&larr;</span> Retour au Hub Central
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // DONNEES DES PUZZLES (avec ELO rating)
+        // ============================================
+        var PUZZLES = [
+            // === DEBUTANT (400-800) ===
+            {
+                fen: "2k5/8/2K5/8/8/8/8/R7 w - - 0 1",
+                solution: ["Ra8"],
+                continuation: [],
+                themes: ["Mat en 1", "Finale Tour"],
+                difficulty: "debutant",
+                rating: 400,
+                description: "Mat en 1 avec la tour. Le roi noir est piege au bord de l'echiquier.",
+                hint: "La tour peut mater sur la 8eme rangee."
+            },
+            {
+                fen: "5k2/8/5K2/8/8/8/8/7Q w - - 0 1",
+                solution: ["Qh8"],
+                continuation: [],
+                themes: ["Mat en 1", "Finale Dame"],
+                difficulty: "debutant",
+                rating: 500,
+                description: "Mat en 1 avec la dame. Le roi est emprisonne au bord.",
+                hint: "La dame mate sur h8."
+            },
+            {
+                fen: "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1",
+                solution: ["Re8"],
+                continuation: [],
+                themes: ["Mat du couloir"],
+                difficulty: "debutant",
+                rating: 600,
+                description: "Mat du couloir classique. Les pions noirs emprisonnent leur propre roi.",
+                hint: "Tour sur la 8eme rangee pour le mat."
+            },
+            {
+                fen: "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2",
+                solution: ["Qh4"],
+                continuation: [],
+                themes: ["Mat en 1", "Mat du Fou"],
+                difficulty: "debutant",
+                rating: 650,
+                description: "Les blancs ont gravement affaibli leur position avec f3 et g4. Mat immediat!",
+                hint: "La dame noire exploite la grande diagonale ouverte vers e1."
+            },
+            {
+                fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+                solution: ["Qxf7"],
+                continuation: [],
+                themes: ["Mat du Berger"],
+                difficulty: "debutant",
+                rating: 700,
+                description: "Le Mat du Berger. Le point f7 est fatalement faible.",
+                hint: "La dame peut capturer f7 avec l'appui du fou c4."
+            },
+            {
+                fen: "6k1/5N2/6K1/7p/8/8/8/R7 w - - 0 1",
+                solution: ["Ra8"],
+                continuation: [],
+                themes: ["Mat Arabe"],
+                difficulty: "debutant",
+                rating: 800,
+                description: "Le Mat Arabe. Tour et cavalier collaborent pour mater dans le coin.",
+                hint: "La tour mate sur la 8eme rangee, le cavalier controle les cases de fuite."
+            },
+            // === INTERMEDIAIRE (850-1250) ===
+            {
+                fen: "r4r1k/6pp/7N/8/8/8/Q7/6K1 w - - 0 1",
+                solution: ["Qg8"],
+                continuation: ["Rxg8", "Nf7"],
+                themes: ["Mat etouffe", "Sacrifice Dame"],
+                difficulty: "easy",
+                rating: 850,
+                description: "Le celebre mat etouffe! Sacrifiez la dame pour permettre au cavalier de mater.",
+                hint: "La dame peut se sacrifier sur g8 pour ouvrir la voie au cavalier."
+            },
+            {
+                fen: "6k1/5p1p/5PpP/8/8/8/6Q1/6K1 w - - 0 1",
+                solution: ["Qa8"],
+                continuation: [],
+                themes: ["Mat en 1", "Dame dominante"],
+                difficulty: "easy",
+                rating: 950,
+                description: "La dame mate directement sur la 8eme rangee! Les pions avances verrouillent toutes les fuites du roi.",
+                hint: "La dame peut mater en une seule case sur la derniere rangee."
+            },
+            {
+                fen: "rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 0 7",
+                solution: ["Nd5"],
+                continuation: [],
+                themes: ["Mat de Legal", "Mat en 1"],
+                difficulty: "medium",
+                rating: 1250,
+                description: "Le Mat de Legal! Apres le sacrifice de dame, les deux cavaliers et le fou collaborent pour un mat spectaculaire.",
+                hint: "Un cavalier peut delivrer le coup fatal avec l'aide de l'autre cavalier et du fou."
+            },
+            // === INTERMEDIAIRE-HAUT (1550) ===
+            {
+                fen: "r1bq1rk1/pppnnppp/4p3/3pP3/1b1P4/2NB1N2/PPP2PPP/R1BQ1RK1 w - - 0 9",
+                solution: ["Bxh7"],
+                continuation: ["Kxh7", "Ng5+", "Kg8", "Qh5"],
+                themes: ["Sacrifice Grec", "Attaque sur le Roi"],
+                difficulty: "hard",
+                rating: 1550,
+                description: "Le Sacrifice Grec classique! Le fou se sacrifie sur h7 pour demolir le roque noir.",
+                hint: "Le fou d3 peut se sacrifier sur h7 pour ouvrir des lignes d'attaque devastatrices."
+            },
+            // === PUZZLES ORIGINAUX ===
+            {
+                fen: "r4rk1/pp1qbppp/2npbn2/2p3N1/P1B1Pp2/2NP3P/1PP3P1/R1BQ1RK1 w - - 0 11",
+                solution: ["Nxe6"],
+                continuation: ["fxe6", "Bxe6+", "Kh8", "Bxd7"],
+                themes: ["Sacrifice", "Attaque Roi"],
+                difficulty: "medium",
+                rating: 1400,
+                description: "Les blancs ont une opportunite de sacrifice tactique. Le cavalier en g5 peut capturer le pion en e6, ouvrant des lignes d'attaque vers le roi noir.",
+                hint: "Regardez le cavalier en g5. Il peut atteindre une case cle pres du roi adverse."
+            },
+            {
+                fen: "r4rk1/pp1qb1pp/2n1p3/2pn4/P1B2BQ1/2NP3P/1PP3P1/R4RK1 b - - 1 14",
+                solution: ["Nxf4"],
+                continuation: ["Qxf4", "Rxf4", "Rxf4", "Ne5"],
+                themes: ["Fourchette", "Gain materiel"],
+                difficulty: "easy",
+                rating: 1000,
+                description: "Le cavalier noir peut effectuer une fourchette devastatrice.",
+                hint: "Le cavalier en d5 peut attaquer deux pieces a la fois."
+            },
+            {
+                fen: "r4rk1/pp1qb1pp/2n1p3/2p5/P1B2RQ1/2NP3P/1PP3P1/R5K1 b - - 0 15",
+                solution: ["Rxf4"],
+                continuation: ["Qxf4", "Rf8", "Qg3", "Bf6"],
+                themes: ["Capture", "Gain materiel"],
+                difficulty: "hard",
+                rating: 1800,
+                description: "La tour noire peut capturer la tour blanche en f4, gagnant du materiel.",
+                hint: "Regardez la tour blanche non protegee en f4."
+            },
+            {
+                fen: "3r2k1/1b3p2/1q3bp1/4N2p/ppBP4/4B3/PP3PPP/3RQ1K1 b - - 19 31",
+                solution: ["Bxe5"],
+                continuation: ["dxe5", "Qxe3", "Qxe3", "Rxd1+"],
+                themes: ["Echange favorable", "Tactique"],
+                difficulty: "medium",
+                rating: 1350,
+                description: "Le fou noir en f6 peut capturer le cavalier blanc en e5.",
+                hint: "Le fou en f6 a acces a une piece blanche centrale importante."
+            },
+            {
+                fen: "6k1/5p2/3r2p1/2qP3p/ppBQ4/8/PP3PbP/3R2K1 b - - 4 36",
+                solution: ["Qxd5"],
+                continuation: ["Qxd5", "Rxd5", "Bxd5"],
+                themes: ["Attaque Dame", "Gain materiel"],
+                difficulty: "easy",
+                rating: 900,
+                description: "Capture simple avec la dame pour gain materiel.",
+                hint: "La dame noire peut capturer le pion central dangereux."
+            },
+            {
+                fen: "r2qr1k1/1bp2ppp/5b2/pp1n4/3P4/1BP5/PP1B1PPP/RN1QR1K1 w - - 0 15",
+                solution: ["Rxe8+"],
+                continuation: ["Qxe8", "Bxd5", "Bxd5", "c4"],
+                themes: ["Sacrifice Tour", "Echec"],
+                difficulty: "hard",
+                rating: 1700,
+                description: "Sacrifice de la tour pour obtenir une position gagnante.",
+                hint: "La tour peut se sacrifier avec echec pour ouvrir les lignes."
+            },
+            {
+                fen: "3r2k1/1b3p2/3q2p1/4Q2p/ppBP4/8/PP3PPP/3R2K1 b - - 0 33",
+                solution: ["Qxe5"],
+                continuation: ["dxe5", "Rxd1+", "Bf1", "Bd5"],
+                themes: ["Echange Dames", "Simplification"],
+                difficulty: "medium",
+                rating: 1500,
+                description: "Echange de dames pour simplifier la position.",
+                hint: "Echanger les dames mene a une finale plus simple."
+            },
+            {
+                fen: "r3r1k1/1p3pp1/2pn4/p1Np1q1p/P2Pbb2/1QP4P/1P2RPPB/R4BK1 w - - 10 25",
+                solution: ["Nxe4"],
+                continuation: ["Nxe4", "Rxe4", "Qf6"],
+                themes: ["Capture", "Gain materiel"],
+                difficulty: "easy",
+                rating: 1100,
+                description: "Simple capture du fou pour avantage materiel.",
+                hint: "Le cavalier en c5 peut capturer une piece non defendue."
+            },
+            {
+                fen: "r4rk1/1p1q3p/1np2pb1/p2p2p1/P1PPbb2/1P5P/5BBB/R2QR1K1 b - - 0 33",
+                solution: ["Bxg2"],
+                continuation: ["Kxg2", "Qxh3+", "Kg1", "Qxh2+"],
+                themes: ["Sacrifice Fou", "Attaque Roi"],
+                difficulty: "expert",
+                rating: 2100,
+                description: "Sacrifice du fou pour ouvrir le roque blanc.",
+                hint: "Un des fous peut se sacrifier pour exposer le roi blanc."
+            },
+            {
+                fen: "3q2k1/1p3pp1/2pnr1bp/p2pN3/P2P2Pb/2P2P1P/1P2R2B/2Q2BK1 w - - 0 32",
+                solution: ["Nxg6"],
+                continuation: ["fxg6", "Rxe6", "Qf8", "Re8"],
+                themes: ["Sacrifice Cavalier", "Gain de pions"],
+                difficulty: "medium",
+                rating: 1450,
+                description: "Le cavalier peut capturer un pion important.",
+                hint: "Le cavalier en e5 peut atteindre une case cle."
+            },
+            // === EXPERT (2200-3000) ===
+            {
+                fen: "2r2r1k/6pp/1n6/6N1/8/8/Q2B1PPP/6K1 w - - 0 1",
+                solution: ["Qg8"],
+                continuation: ["Rxg8", "Nf7"],
+                themes: ["Mat etouffe avance", "Sacrifice Dame"],
+                difficulty: "expert",
+                rating: 2200,
+                description: "Mat etouffe cache parmi les pieces! Le cavalier noir en b6 et le fou blanc en d2 sont des distracteurs.",
+                hint: "Cherchez le schema de mat etouffe classique malgre les pieces supplementaires."
+            },
+            {
+                fen: "1K1R4/1P6/8/4k3/8/8/8/r7 w - - 0 1",
+                solution: ["Rd4"],
+                continuation: ["Ra8+", "Kc7", "Ra7+", "Kc6"],
+                themes: ["Position de Lucena", "Technique de finale"],
+                difficulty: "expert",
+                rating: 2400,
+                description: "La celebre Position de Lucena! Construisez le pont avec la tour pour promouvoir le pion.",
+                hint: "La tour doit aller sur la 4eme rangee pour preparer le pont contre les echecs perpetuels."
+            },
+            {
+                fen: "5rk1/p4p1p/1p4pB/8/8/1P1Q4/P4PPP/6K1 w - - 0 1",
+                solution: ["Qd5"],
+                continuation: ["Kh8", "Qxf7", "Rg8", "Bg7"],
+                themes: ["Coup tranquille", "Menace de mat"],
+                difficulty: "expert",
+                rating: 2600,
+                description: "Coup tranquille devastateur! La dame se place en d5 pour menacer Df7+ suivi de Fg7 mat.",
+                hint: "La dame doit se repositionner pour creer une menace de mat imparable avec le fou h6."
+            },
+            {
+                fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1",
+                solution: ["Kd3"],
+                continuation: ["Kd5", "e4+", "Ke5", "Ke3"],
+                themes: ["Opposition", "Finale de pions"],
+                difficulty: "expert",
+                rating: 3000,
+                description: "Finale de pions critique! Le roi doit prendre le chemin indirect pour gagner l'opposition et escorter le pion.",
+                hint: "Le coup direct n'est pas le meilleur. Le roi doit manoeuvrer pour prendre l'opposition."
+            },
+            // === MATS SUPPLEMENTAIRES (450-550) ===
+            {
+                fen: "k7/8/K7/8/8/8/8/R6R w - - 0 1",
+                solution: ["Rh8"],
+                continuation: [],
+                themes: ["Mat en 1", "Mat echelle"],
+                difficulty: "debutant",
+                rating: 450,
+                description: "Mat echelle avec deux tours. Le roi ennemi est au bord.",
+                hint: "Une des tours peut mater sur la 8eme rangee."
+            },
+            {
+                fen: "1k6/1p6/1K6/8/8/8/8/7R w - - 0 1",
+                solution: ["Rh8"],
+                continuation: [],
+                themes: ["Mat en 1", "Tour + Roi"],
+                difficulty: "debutant",
+                rating: 550,
+                description: "Mat en 1 avec tour et roi. Les pions noirs bloquent la fuite de leur roi.",
+                hint: "La tour mate sur la derniere rangee, le roi blanc controle les cases de fuite."
+            },
+            // === FOURCHETTE (750) ===
+            {
+                fen: "q1b1k2r/pp3ppp/2n5/3Np3/4P3/8/PPP2PPP/R3K2R w KQk - 0 1",
+                solution: ["Nc7"],
+                continuation: ["Kd8", "Nxa8"],
+                themes: ["Fourchette Cavalier", "Gain Dame"],
+                difficulty: "easy",
+                rating: 750,
+                description: "Le cavalier peut sauter sur une case magique qui attaque le roi ET la dame simultanement!",
+                hint: "Cherchez une case ou le cavalier donne echec tout en attaquant la dame."
+            },
+            // === SACRIFICE BRILLANT (1050) ===
+            {
+                fen: "5rk1/5ppp/8/8/8/4Q3/5PPP/4R1K1 w - - 0 1",
+                solution: ["Qe8"],
+                continuation: ["Rxe8", "Rxe8"],
+                themes: ["Sacrifice Dame", "Mat du couloir"],
+                difficulty: "easy",
+                rating: 1050,
+                description: "Sacrifice de dame brillant! La dame s'offre pour attirer la tour, permettant le mat du couloir.",
+                hint: "Sacrifiez la dame sur la 8eme rangee pour forcer la tour a quitter sa position."
+            },
+            // === SACRIFICE + MAT (1150) ===
+            {
+                fen: "1n2kb1r/p4ppp/8/4p1B1/4P3/8/PPP2PPP/3R2K1 w - - 0 1",
+                solution: ["Rd8"],
+                continuation: [],
+                themes: ["Mat en 1", "Fou controle la fuite"],
+                difficulty: "easy",
+                rating: 1150,
+                description: "La tour mate sur la 8eme rangee! Le fou en g5 controle la case de fuite e7.",
+                hint: "Regardez quelles cases le fou controle. La tour peut exploiter la derniere rangee."
+            },
+            // === FINALE ROI + PION (1900) ===
+            {
+                fen: "3k4/8/3K4/3P4/8/8/8/8 w - - 0 1",
+                solution: ["Ke6"],
+                continuation: ["Ke8", "d6", "Kd8", "d7"],
+                themes: ["Cases cles", "Finale de pions"],
+                difficulty: "hard",
+                rating: 1900,
+                description: "Le roi doit occuper la case cle e6 pour escorter le pion jusqu'a la promotion.",
+                hint: "Le roi doit avancer sur une case cle (c6, d6 ou e6) pour gagner."
+            },
+            // === FINALE TOUR (2050) ===
+            {
+                fen: "8/4k3/R7/4P3/4K3/8/8/8 w - - 0 1",
+                solution: ["Kf5"],
+                continuation: ["Kf7", "e6+", "Ke7", "Ra7+"],
+                themes: ["Finale de tour", "Roi actif"],
+                difficulty: "expert",
+                rating: 2050,
+                description: "Le roi doit marcher vers l'avant! La tour coupe le roi noir sur la 7eme rangee pendant que le roi blanc escorte le pion.",
+                hint: "Avancez le roi pour soutenir le pion. La tour maintient le roi adverse a distance."
+            },
+            // === PERCEE DE PIONS (2700) ===
+            {
+                fen: "8/ppp5/8/PPP5/8/8/5k2/7K w - - 0 1",
+                solution: ["b6"],
+                continuation: ["cxb6", "a6", "bxa6", "c6"],
+                themes: ["Percee de pions", "Sacrifice"],
+                difficulty: "expert",
+                rating: 2700,
+                description: "La percee de pions! Sacrifiez un pion pour creer un pion passe imparable. Peu importe comment les noirs capturent, un pion blanc passe a la promotion.",
+                hint: "Poussez le pion central en sacrifice. Apres la capture, un des deux pions restants est libre."
+            },
+            // === ETUDE DE RETI (2900) ===
+            {
+                fen: "7K/8/k1P5/7p/8/8/8/8 w - - 0 1",
+                solution: ["Kg7"],
+                continuation: ["h4", "Kf6", "h3", "Ke7"],
+                themes: ["Etude celebre", "Approche diagonale"],
+                difficulty: "expert",
+                rating: 2900,
+                description: "La celebre etude de Reti (1921)! Le roi blanc semble trop loin pour arreter le pion h ET soutenir le pion c. La solution: l'approche diagonale permet de poursuivre les deux objectifs simultanement.",
+                hint: "Le roi doit se rapprocher des DEUX pions en meme temps. Pensez en diagonale!"
+            },
+            // === PIN GAGNANTE (1650) ===
+            {
+                fen: "rnbqk2r/ppp1ppbp/5np1/3p2B1/3PP3/2N5/PPP2PPP/R2QKBNR w KQkq - 0 5",
+                solution: ["e5"],
+                continuation: ["Ne4", "Bxe7"],
+                themes: ["Clouage", "Gain de piece"],
+                difficulty: "hard",
+                rating: 1650,
+                description: "Le cavalier f6 est cloue par le fou g5 sur la dame d8. Avancez le pion pour attaquer le cavalier cloue - il ne peut pas bouger!",
+                hint: "Le cavalier est immobilise par le clouage. Un pion peut l'attaquer sans crainte."
+            },
+            // === SACRIFICE BRILLANT DOUBLE (2000) ===
+            {
+                fen: "r1b1k2r/ppppqppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5",
+                solution: ["Bxf7"],
+                continuation: ["Kxf7", "Ng5+", "Kg8", "Ne6"],
+                themes: ["Sacrifice Fou", "Fourchette"],
+                difficulty: "hard",
+                rating: 2000,
+                description: "Sacrifice du fou sur f7 pour attirer le roi, suivi d'un echec au cavalier qui recupere largement le materiel.",
+                hint: "Le point f7 est le talon d'Achille des noirs. Sacrifiez pour ouvrir la position."
+            },
+            // === ETUDE PION LOINTAIN (1750) ===
+            {
+                fen: "8/p4k2/8/P3K3/8/8/8/8 w - - 0 1",
+                solution: ["Kd6"],
+                continuation: ["Ke8", "Kc7", "Ke7", "Kb7"],
+                themes: ["Finale Roi", "Pion lointain"],
+                difficulty: "hard",
+                rating: 1750,
+                description: "Le roi blanc doit se diriger vers le pion adverse pour le capturer, puis promouvoir son propre pion.",
+                hint: "Le roi doit penetrer dans le camp adverse. Visez le pion a7."
+            },
+            // === SACRIFICES BRILLANTS ===
+            {
+                fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4",
+                solution: ["Bxf7", "Qxf7"],
+                continuation: ["Ke7", "Bc4"],
+                themes: ["Sacrifice Fou", "Attaque sur f7"],
+                difficulty: "easy",
+                rating: 1050,
+                description: "Sacrifice du fou sur f7! Le roi est force de bouger et perd le droit de roquer.",
+                hint: "Le point f7 n'est defendu que par le roi. Exploitez-le!"
+            },
+            {
+                fen: "r2qk2r/ppp1bppp/2n5/3np1N1/2B5/8/PPPP1PPP/RNBQR1K1 w kq - 0 8",
+                solution: ["Nxf7"],
+                continuation: ["Kxf7", "Bxd5+", "Ke8", "Bxc6+"],
+                themes: ["Sacrifice Cavalier", "Attaque double"],
+                difficulty: "hard",
+                rating: 1600,
+                description: "Le cavalier se sacrifie sur f7 pour ouvrir la position du roi noir et enchainer avec un echec du fou qui recupere largement le materiel.",
+                hint: "f7 est le point faible. Sacrifiez pour ouvrir les lignes vers le roi."
+            },
+            {
+                fen: "r1b2rk1/2q1bppp/p1n1pn2/1p6/3NP3/1BN1BP2/PPPQ2PP/R4RK1 w - - 0 12",
+                solution: ["Ndxb5"],
+                continuation: ["axb5", "Nxb5", "Qb8", "Qd7"],
+                themes: ["Sacrifice positionnel", "Gain de pion"],
+                difficulty: "hard",
+                rating: 1850,
+                description: "Sacrifice de cavalier pour demolir la structure de pions et envahir avec la dame.",
+                hint: "Un des cavaliers peut capturer un pion qui semble protege. Calculez les consequences!"
+            },
+            // === MATS EN 2 (calcul profond) ===
+            {
+                fen: "6k1/5ppp/8/8/8/4B3/5PPP/2Q3K1 w - - 0 1",
+                solution: ["Qc8"],
+                continuation: [],
+                themes: ["Mat en 1", "Mat du couloir"],
+                difficulty: "medium",
+                rating: 1300,
+                description: "Mat en 1! La dame s'infiltre sur la 8eme rangee. Les pions noirs emprisonnent leur propre roi.",
+                hint: "La dame peut mater sur la derniere rangee. Les pions bloquent toute fuite."
+            },
+            {
+                fen: "r4Bk1/5p1p/6pQ/8/8/8/5PPP/6K1 w - - 0 1",
+                solution: ["Qg7"],
+                continuation: [],
+                themes: ["Mat en 1", "Dame infiltree"],
+                difficulty: "easy",
+                rating: 950,
+                description: "La dame est deja infiltree en h6. Un seul coup pour conclure!",
+                hint: "La dame peut se deplacer vers une case ou elle mate immediatement."
+            },
+            {
+                fen: "2r3k1/6pp/8/1N6/8/8/1Q3PPP/6K1 w - - 0 1",
+                solution: ["Nd6"],
+                continuation: ["Rc7", "Qb8+", "Rc8", "Nf7"],
+                themes: ["Mat en 3", "Cavalier bloque la fuite"],
+                difficulty: "expert",
+                rating: 2150,
+                description: "Le cavalier doit se repositionner pour bloquer les cases de fuite du roi, permettant un mat force en 3 coups.",
+                hint: "Le cavalier doit trouver une case qui controle les cases critiques autour du roi."
+            },
+            // === DEFLEXION / ATTRACTION ===
+            {
+                fen: "3r2k1/pp3ppp/8/2b5/8/8/PPP2PPP/3RR1K1 w - - 0 1",
+                solution: ["Rxd8"],
+                continuation: ["Bf8", "Rxf8#"],
+                themes: ["Deflexion", "Mat du couloir"],
+                difficulty: "medium",
+                rating: 1400,
+                description: "Echangez les tours pour attirer le fou loin de la protection, puis exploitez le mat du couloir!",
+                hint: "Apres l'echange de tours, le fou ne peut plus proteger la 8eme rangee."
+            },
+            {
+                fen: "3qr1k1/5ppp/8/8/8/5N2/5PPP/3QR1K1 w - - 0 1",
+                solution: ["Rxe8"],
+                continuation: ["Qxe8", "Qd5"],
+                themes: ["Echange tactique", "Menace de mat"],
+                difficulty: "medium",
+                rating: 1350,
+                description: "Echangez les tours pour affaiblir la 8eme rangee. Apres l'echange, la dame et le cavalier menacent un mat force.",
+                hint: "Apres l'echange, f7 et g7 deviennent vulnerables."
+            },
+            // === FINALES AVANCEES ===
+            {
+                fen: "8/8/8/8/2k5/8/1K1P4/8 w - - 0 1",
+                solution: ["Kc2"],
+                continuation: ["Kd5", "Kd3", "Ke5", "Ke3"],
+                themes: ["Finale de pions", "Opposition"],
+                difficulty: "hard",
+                rating: 1850,
+                description: "Le roi doit prendre l'opposition pour escorter le pion. Le coup direct echoue!",
+                hint: "Ne poussez pas le pion tout de suite. Le roi doit ouvrir le chemin en premier."
+            },
+            {
+                fen: "8/8/8/2k5/1p6/1P6/1K6/8 w - - 0 1",
+                solution: ["Ka2"],
+                continuation: ["Kb5", "Ka1", "Ka5", "Ka2"],
+                themes: ["Finale de pions", "Triangulation"],
+                difficulty: "expert",
+                rating: 2300,
+                description: "Triangulation! Le roi doit perdre un tempo pour forcer l'adversaire a ceder du terrain.",
+                hint: "Vous devez perdre un temps. Le roi peut faire un triangle pour reprendre la meme position avec les noirs au trait."
+            },
+            {
+                fen: "8/8/4k3/8/4KP2/8/8/8 w - - 0 1",
+                solution: ["f5"],
+                continuation: ["Kf6", "Kd5", "Kxf5", "Kd6"],
+                themes: ["Finale de pions", "Zugzwang"],
+                difficulty: "hard",
+                rating: 1950,
+                description: "Poussez le pion pour forcer un zugzwang! Les noirs doivent bouger et perdent la position.",
+                hint: "Le pion avance et met l'adversaire en position ou tout coup est mauvais."
+            },
+            {
+                fen: "4k3/8/4K3/2P5/8/8/8/8 w - - 0 1",
+                solution: ["c6"],
+                continuation: ["Kd8", "c7+", "Kc8", "Ke7"],
+                themes: ["Finale de pions", "Promotion forcee"],
+                difficulty: "medium",
+                rating: 1500,
+                description: "Le pion avance et le roi est deja en position ideale pour soutenir la promotion.",
+                hint: "Poussez le pion. Le roi est deja sur la case cle."
+            },
+            {
+                fen: "8/R7/2k5/8/2K5/8/8/1r6 w - - 0 1",
+                solution: ["Ra6"],
+                continuation: ["Kd7", "Ra7+", "Ke8", "Kc5"],
+                themes: ["Finale de tours", "Coupure"],
+                difficulty: "expert",
+                rating: 2250,
+                description: "Finale de tours technique. La tour doit couper le roi noir sur la 6eme rangee pour gagner.",
+                hint: "Coupez le roi adverse avec votre tour le long d'une rangee."
+            },
+            // === SUPER EXPERT (3100-3800) ===
+            {
+                fen: "8/8/p7/Pp6/1P6/2k5/8/2K5 w - - 0 1",
+                solution: ["Kb1"],
+                continuation: ["Kd4", "Ka2", "Kc4", "Ka3"],
+                themes: ["Finale de pions", "Manoeuvre"],
+                difficulty: "expert",
+                rating: 3100,
+                description: "Position subtile! Le roi blanc doit manoeuvrer vers le flanc dame pour capturer les pions noirs. La methode directe echoue.",
+                hint: "Le roi doit contourner par le flanc dame. Le chemin direct est bloque."
+            },
+            {
+                fen: "8/6pp/3k4/3P4/3K4/8/6PP/8 w - - 0 1",
+                solution: ["Ke4"],
+                continuation: ["Ke7", "Ke5", "Kd7", "d6"],
+                themes: ["Percee", "Finale de pions"],
+                difficulty: "expert",
+                rating: 3200,
+                description: "Le roi doit marcher vers les pions adverses sur l'autre flanc! Le pion d5 sert de diversion pendant que le roi envahit.",
+                hint: "Ne vous focalisez pas sur votre pion passe. Votre roi a une mission sur l'autre flanc."
+            },
+            {
+                fen: "5B2/6P1/5K1k/8/8/1b6/8/8 w - - 0 1",
+                solution: ["g8=Q"],
+                continuation: ["Kh5", "Qg5"],
+                themes: ["Promotion", "Echec a la decouverte"],
+                difficulty: "expert",
+                rating: 3400,
+                description: "Promotion avec echec a la decouverte! Le pion promu degage la diagonale f8-h6 du fou, donnant echec. Apres Rh5, Dg5 est mat!",
+                hint: "Promouvez le pion. Le fou donne echec a la decouverte en liberant la diagonale."
+            },
+            {
+                fen: "8/8/1KP1k3/8/8/8/8/8 w - - 0 1",
+                solution: ["c7"],
+                continuation: ["Kd7", "Kb7"],
+                themes: ["Finale de pions", "Promotion"],
+                difficulty: "expert",
+                rating: 3500,
+                description: "Poussez le pion immediatement! Le roi blanc est deja en position optimale pour soutenir la promotion. Si les noirs attaquent le pion, le roi le protege.",
+                hint: "Avancez le pion sans hesiter. Le roi est deja la ou il faut."
+            },
+            {
+                fen: "6k1/8/6K1/4B3/8/8/7P/8 w - - 0 1",
+                solution: ["h4"],
+                continuation: ["Kf8", "h5", "Ke8", "h6"],
+                themes: ["Finale Fou + Pion", "Promotion"],
+                difficulty: "expert",
+                rating: 3600,
+                description: "Le pion avance pendant que le fou et le roi collaborent pour forcer la promotion. Le roi noir est trop passif.",
+                hint: "Le pion marche. Le fou controlera les cases cles au bon moment."
+            },
+            {
+                fen: "8/8/7p/3KNN1k/2P5/8/8/8 w - - 0 1",
+                solution: ["Nf7"],
+                continuation: ["Kg4", "Ke4", "h5", "Ng5"],
+                themes: ["Finale 2 Cavaliers", "Coordination"],
+                difficulty: "expert",
+                rating: 3800,
+                description: "Finale rarissime: deux cavaliers et un pion vs pion. Les cavaliers doivent coordonner parfaitement pour forcer le mat ou la promotion. Puzzle de niveau GM!",
+                hint: "Un cavalier doit controler la fuite du roi pendant que l'autre soutient le pion."
+            },
+            // === ATTAQUE A LA DECOUVERTE ===
+            {
+                fen: "rn1qkb1r/ppp2ppp/5n2/3pp1B1/3PP1b1/2N2N2/PPP2PPP/R2QKB1R w KQkq - 0 5",
+                solution: ["dxe5"],
+                continuation: ["Bxf3", "exf6", "Bxd1", "fxg7"],
+                themes: ["Attaque decouverte", "Pion empoisonne"],
+                difficulty: "hard",
+                rating: 1650,
+                description: "Le pion capture en e5 avec decouverte! Le fou g5 attaque le cavalier f6, et apres les echanges, les blancs gagnent du materiel grace au pion g7.",
+                hint: "Capturez au centre. La piece derriere le pion a une ligne ouverte."
+            },
+            {
+                fen: "r1bq1rk1/pppp1ppp/2n2n2/2b5/2BNP3/2N5/PPP2PPP/R1BQ1RK1 w - - 0 7",
+                solution: ["Nxc6"],
+                continuation: ["bxc6", "e5"],
+                themes: ["Elimination du defenseur", "Centre"],
+                difficulty: "medium",
+                rating: 1450,
+                description: "Eliminez le defenseur! Le cavalier capture en c6 pour detruire la structure de pions et ouvrir les lignes centrales.",
+                hint: "Eliminez un defenseur cle du centre noir."
+            },
+            // === ZWISCHENZUG (coup intermediaire) ===
+            {
+                fen: "r1bqr1k1/ppp2ppp/2n5/3Np3/1bB5/8/PPP1QPPP/R1B2RK1 w - - 0 9",
+                solution: ["Nf6"],
+                continuation: ["gxf6", "Qg4+", "Kh8", "Bxf7"],
+                themes: ["Zwischenzug", "Echec intermediaire"],
+                difficulty: "expert",
+                rating: 2100,
+                description: "Le cavalier saute en f6 avec echec (zwischenzug) avant de recuperer du materiel! Le coup intermediaire change tout le calcul.",
+                hint: "Ne capturez pas directement. Inserez un coup intermediaire devastateur."
+            },
+            // === SACRIFICE DE QUALITE ===
+            {
+                fen: "r4rk1/1bq1bppp/p1n1pn2/1p6/3BP3/1BN2N2/PPPQ1PPP/R4RK1 w - - 0 12",
+                solution: ["Bxf6"],
+                continuation: ["Bxf6", "e5", "Be7", "Nd5"],
+                themes: ["Sacrifice positionnel", "Domination"],
+                difficulty: "expert",
+                rating: 2500,
+                description: "Sacrifice positionnel du fou pour ruiner la structure noire et installer un cavalier dominant en d5. Le centre blanc devient ecrasant.",
+                hint: "Parfois, detruire la structure ennemie vaut plus qu'une piece."
+            },
+            // === DOUBLE SACRIFICE SUR LE ROQUE ===
+            {
+                fen: "r1bq1rk1/ppp2ppp/2nb1n2/3Np3/2B1P3/8/PPPP1PPP/R1BQK2R w KQ - 0 7",
+                solution: ["Nxf6"],
+                continuation: ["gxf6", "Bxf7+", "Kh8"],
+                themes: ["Sacrifice Cavalier", "Attaque sur le Roi"],
+                difficulty: "hard",
+                rating: 1800,
+                description: "Le cavalier se sacrifie en f6 pour ouvrir la colonne g, puis le fou frappe en f7 avec echec. La position du roi noir est fatalement affaiblie.",
+                hint: "Sacrifiez le cavalier pour demolir le roque noir et ouvrir des lignes d'attaque."
+            },
+            // === MOULIN (WINDMILL) ===
+            {
+                fen: "r5k1/1b3ppp/8/2rN4/8/8/5PPP/R1R3K1 w - - 0 1",
+                solution: ["Ne7"],
+                continuation: ["Kf8", "Nc8"],
+                themes: ["Fourchette", "Gain materiel"],
+                difficulty: "hard",
+                rating: 1950,
+                description: "Le cavalier saute avec fourchette sur le roi et la tour c8! Apres le gain de la qualite, les blancs ont un avantage decisif.",
+                hint: "Le cavalier a une case magique qui attaque deux pieces majeures."
+            },
+            // === PUZZLES DE CALCUL PROFOND ===
+            {
+                fen: "2r1r1k1/5ppp/p7/1p6/1PnN4/P4N2/5PPP/2RR2K1 w - - 0 1",
+                solution: ["Ne2"],
+                continuation: ["Nxa3", "Rxc8", "Rxc8"],
+                themes: ["Tactique intermediaire", "Echange force"],
+                difficulty: "expert",
+                rating: 2350,
+                description: "Le cavalier recule pour defendre c1 et menacer le cavalier adverse. La suite forcee mene a un gain materiel apres les echanges.",
+                hint: "Parfois reculer est le meilleur coup. Protegez tout en attaquant."
+            },
+            // === ZUGZWANG PUR ===
+            {
+                fen: "8/8/6p1/5pP1/5P2/4k3/8/4K3 b - - 0 1",
+                solution: ["Kf3"],
+                continuation: ["Kd2", "Kf2", "Kd3", "Kf3"],
+                themes: ["Zugzwang", "Finale de pions"],
+                difficulty: "expert",
+                rating: 2800,
+                description: "Zugzwang mutuel! Chaque camp doit bouger mais chaque coup affaiblit la position. La cle est de forcer l'adversaire a etre au trait au mauvais moment.",
+                hint: "Forcez l'adversaire a bouger quand il ne le veut pas."
+            }
+        ];
+
+        // ============================================
+        // SYSTEME ELO
+        // ============================================
+        var playerElo = 1200;
+
+        function loadPlayerElo() {
+            var saved = localStorage.getItem('puzzle_elo');
+            if (saved) {
+                playerElo = parseInt(saved, 10);
+                if (isNaN(playerElo) || playerElo < 400) playerElo = 400;
+            }
+            updateEloDisplay();
+        }
+
+        function savePlayerElo() {
+            localStorage.setItem('puzzle_elo', String(playerElo));
+            updateEloDisplay();
+        }
+
+        function updateEloDisplay() {
+            var els = [
+                document.getElementById('player-elo'),
+                document.getElementById('nav-elo-display')
+            ];
+            if (els[0]) els[0].textContent = playerElo;
+            if (els[1]) els[1].textContent = 'Puzzle ELO: ' + playerElo;
+        }
+
+        function showEloDelta(delta) {
+            var el = document.getElementById('elo-delta');
+            if (!el) return;
+            if (delta > 0) {
+                el.textContent = '+' + delta + ' ELO';
+                el.className = 'elo-delta positive';
+            } else if (delta < 0) {
+                el.textContent = delta + ' ELO';
+                el.className = 'elo-delta negative';
+            } else {
+                el.textContent = '';
+            }
+        }
+
+        // Standard ELO calculation (K=32)
+        // result: 1 = win, 0.5 = draw (hint used), 0 = loss
+        function calculateElo(playerRating, puzzleRating, result) {
+            var K = 32;
+            var expected = 1 / (1 + Math.pow(10, (puzzleRating - playerRating) / 400));
+            var delta = Math.round(K * (result - expected));
+            return delta;
+        }
+
+        // Sort puzzles by proximity to player ELO
+        function getSortedPuzzleOrder() {
+            var indices = [];
+            for (var i = 0; i < PUZZLES.length; i++) {
+                indices.push(i);
+            }
+            var elo = playerElo;
+            indices.sort(function(a, b) {
+                return Math.abs(PUZZLES[a].rating - elo) - Math.abs(PUZZLES[b].rating - elo);
+            });
+            return indices;
+        }
+
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        var game = new Chess();
+        var board = null;
+        var currentPuzzleIndex = 0;
+        var puzzleOrder = [];
+        var puzzleOrderPosition = 0;
+        var puzzleStats = {
+            solved: 0,
+            attempted: 0,
+            totalTime: 0,
+            streak: 0,
+            bestStreak: 0
+        };
+        var startTime = null;
+        var timerInterval = null;
+        var movesHistory = [];
+        var hintsUsed = 0;
+        var puzzleSolved = false;
+
+        // Load stats from localStorage
+        if (localStorage.getItem('puzzle_stats')) {
+            try {
+                puzzleStats = JSON.parse(localStorage.getItem('puzzle_stats'));
+            } catch(e) {}
+            updateStatsDisplay();
+        }
+        loadPlayerElo();
+
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        function initBoard() {
+            var config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+            board = Chessboard('board', config);
+
+            // Sort puzzles by ELO proximity and start with closest
+            puzzleOrder = getSortedPuzzleOrder();
+            puzzleOrderPosition = 0;
+            loadPuzzle(puzzleOrder[0]);
+        }
+
+        function loadPuzzle(index) {
+            currentPuzzleIndex = index;
+            var puzzle = PUZZLES[index];
+            puzzleSolved = false;
+
+            game = new Chess(puzzle.fen);
+            board.position(puzzle.fen);
+
+            // v3.1 FIX: Orient board from player's perspective
+            board.orientation(game.turn() === 'w' ? 'white' : 'black');
+
+            document.getElementById('puzzle-title').textContent = 'Puzzle Tactique #' + (index + 1);
+            document.getElementById('puzzle-objective').textContent =
+                (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' au trait - Trouvez le meilleur coup!';
+
+            // Difficulty badge with ELO
+            var difficultyBadge = document.getElementById('difficulty-badge');
+            difficultyBadge.className = 'difficulty-badge difficulty-' + puzzle.difficulty;
+            var diffLabels = {debutant: 'Debutant', easy: 'Facile', medium: 'Intermediaire', hard: 'Difficile', expert: 'Expert'};
+            difficultyBadge.textContent = (diffLabels[puzzle.difficulty] || puzzle.difficulty) + ' - ELO ' + puzzle.rating;
+
+            // Rating badge
+            var ratingBadge = document.getElementById('puzzle-rating-badge');
+            if (ratingBadge) ratingBadge.textContent = puzzle.rating;
+
+            // Themes
+            document.getElementById('theme-1').textContent = puzzle.themes[0];
+            document.getElementById('theme-2').textContent = puzzle.themes[1] || '';
+
+            // Description
+            document.getElementById('puzzle-description').innerHTML =
+                '<strong>Description:</strong><br>' + puzzle.description +
+                '<br><br><strong>ELO Puzzle:</strong> ' + puzzle.rating +
+                ' | <strong>Votre ELO:</strong> ' + playerElo;
+
+            // Reset
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('hint-box').style.display = 'none';
+            document.getElementById('move-list').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Commencez a jouer...</p>';
+            showEloDelta(0);
+
+            movesHistory = [];
+            hintsUsed = 0;
+            startTimer();
+        }
+
+        // ============================================
+        // GESTION DES COUPS
+        // ============================================
+        function onDragStart(source, piece) {
+            if (game.game_over() || puzzleSolved) return false;
+
+            var puzzle = PUZZLES[currentPuzzleIndex];
+            var playerColor = puzzle.fen.includes(' w ') ? 'w' : 'b';
+
+            if ((playerColor === 'w' && piece.search(/^b/) !== -1) ||
+                (playerColor === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
+
+        function onDrop(source, target) {
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (move === null) return 'snapback';
+
+            movesHistory.push(move);
+            updateMoveList();
+            checkSolution();
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        function checkSolution() {
+            var puzzle = PUZZLES[currentPuzzleIndex];
+            var lastMove = movesHistory[movesHistory.length - 1];
+            var lastMoveSAN = lastMove.san;
+
+            // v3.1 FIX: Strip check/mate symbols for comparison
+            // chess.js adds + and # but puzzle solutions may not include them
+            var sanClean = lastMoveSAN.replace(/[+#]/g, '');
+            var solutionClean = puzzle.solution.map(function(s) { return s.replace(/[+#]/g, ''); });
+
+            var feedback = document.getElementById('feedback');
+
+            if (solutionClean.includes(sanClean)) {
+                // Correct!
+                puzzleSolved = true;
+                feedback.className = 'feedback success';
+                feedback.innerHTML = '<strong>Excellent!</strong> Vous avez trouve la solution!';
+                feedback.style.display = 'block';
+
+                stopTimer();
+                puzzleStats.solved++;
+                puzzleStats.attempted++;
+                puzzleStats.streak++;
+                puzzleStats.bestStreak = Math.max(puzzleStats.streak, puzzleStats.bestStreak);
+
+                // XP integration with central progress system
+                if (typeof ChessNovaProgress !== 'undefined') {
+                    ChessNovaProgress.addXP(10, 'Puzzle resolu');
+                    var p = ChessNovaProgress.load();
+                    p.puzzlesSolved = (p.puzzlesSolved || 0) + 1;
+                    if (hintsUsed === 0) {
+                        p.puzzlePerfectStreak = (p.puzzlePerfectStreak || 0) + 1;
+                    } else {
+                        p.puzzlePerfectStreak = 0;
+                    }
+                    ChessNovaProgress.save(p);
+                    // Check puzzle badges
+                    if (p.puzzlesSolved >= 10) ChessNovaProgress.unlockBadge('puzzle-10');
+                    if (p.puzzlesSolved >= 50) ChessNovaProgress.unlockBadge('puzzle-50');
+                    if (p.puzzlesSolved >= 100) ChessNovaProgress.unlockBadge('puzzle-100');
+                    if (p.puzzlePerfectStreak >= 5) ChessNovaProgress.unlockBadge('perfect-streak-5');
+                    if (playerElo >= 1400) ChessNovaProgress.unlockBadge('puzzle-elo-1400');
+                    if (playerElo >= 1600) ChessNovaProgress.unlockBadge('puzzle-elo-1600');
+                    if (playerElo >= 1800) ChessNovaProgress.unlockBadge('puzzle-elo-1800');
+                }
+
+                // ELO calculation: win (no hint) or draw (with hint)
+                var result = hintsUsed > 0 ? 0.5 : 1;
+                var delta = calculateElo(playerElo, puzzle.rating, result);
+                playerElo += delta;
+                if (playerElo < 400) playerElo = 400;
+                savePlayerElo();
+                showEloDelta(delta);
+
+                if (delta > 0) {
+                    feedback.innerHTML += '<br><span style="color: #10b981;">+' + delta + ' ELO</span>';
+                }
+
+                saveStats();
+                updateStatsDisplay();
+
+                document.querySelector('.board-section').classList.add('solved');
+                setTimeout(function() {
+                    document.querySelector('.board-section').classList.remove('solved');
+                }, 2000);
+
+                // Play continuation moves
+                if (puzzle.continuation && puzzle.continuation.length > 0) {
+                    feedback.innerHTML += '<br><em>Suite de la partie...</em>';
+                    puzzle.continuation.forEach(function(moveStr, index) {
+                        setTimeout(function() {
+                            var move = game.move(moveStr, {sloppy: true});
+                            if (move) {
+                                board.position(game.fen());
+                                movesHistory.push(move);
+                                updateMoveList();
+                            }
+                        }, (index + 1) * 700);
+                    });
+                }
+            } else {
+                // Incorrect — show what was expected
+                var allExpected = puzzle.solution.concat(puzzle.continuation || []);
+                feedback.className = 'feedback error';
+                feedback.innerHTML = 'Ce n\'est pas le meilleur coup. Essayez encore!' +
+                    '<br><small style="opacity:0.7;">Votre coup: <strong>' + lastMoveSAN + '</strong> | Solution attendue: <strong>' + puzzle.solution.join(' / ') + '</strong>' +
+                    (puzzle.continuation && puzzle.continuation.length > 0 ? ' puis ' + puzzle.continuation.join(', ') : '') + '</small>';
+                feedback.style.display = 'block';
+
+                setTimeout(function() {
+                    game.undo();
+                    board.position(game.fen());
+                    movesHistory.pop();
+                    updateMoveList();
+                    feedback.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // ============================================
+        // FONCTIONS UTILITAIRES
+        // ============================================
+        function giveHint() {
+            var puzzle = PUZZLES[currentPuzzleIndex];
+            document.getElementById('hint-content').textContent = puzzle.hint;
+            document.getElementById('hint-box').style.display = 'block';
+            hintsUsed++;
+        }
+
+        function showSolution() {
+            var puzzle = PUZZLES[currentPuzzleIndex];
+            var feedback = document.getElementById('feedback');
+
+            // Combine solution + continuation
+            var allMoves = puzzle.solution.concat(puzzle.continuation || []);
+
+            feedback.className = 'feedback error';
+            feedback.innerHTML = '<strong>Solution:</strong> ' + puzzle.solution.join(', ') + '<br><em>Demonstration en cours...</em>';
+            feedback.style.display = 'block';
+
+            // Play all moves on the board
+            allMoves.forEach(function(moveStr, index) {
+                setTimeout(function() {
+                    var move = game.move(moveStr, {sloppy: true});
+                    if (move) {
+                        board.position(game.fen());
+                        movesHistory.push(move);
+                        updateMoveList();
+                    }
+                }, (index + 1) * 700);
+            });
+
+            stopTimer();
+
+            // ELO loss for showing solution
+            if (!puzzleSolved) {
+                puzzleSolved = true;
+                puzzleStats.attempted++;
+                puzzleStats.streak = 0;
+
+                var delta = calculateElo(playerElo, puzzle.rating, 0);
+                playerElo += delta;
+                if (playerElo < 400) playerElo = 400;
+                savePlayerElo();
+                showEloDelta(delta);
+
+                feedback.innerHTML += '<br><span style="color: #ef4444;">' + delta + ' ELO</span>';
+            }
+
+            saveStats();
+            updateStatsDisplay();
+        }
+
+        function undoMove() {
+            if (movesHistory.length > 0 && !puzzleSolved) {
+                game.undo();
+                board.position(game.fen());
+                movesHistory.pop();
+                updateMoveList();
+                document.getElementById('feedback').style.display = 'none';
+            }
+        }
+
+        function nextPuzzle() {
+            puzzleOrderPosition++;
+            if (puzzleOrderPosition >= puzzleOrder.length) {
+                // Re-sort based on updated ELO
+                puzzleOrder = getSortedPuzzleOrder();
+                puzzleOrderPosition = 0;
+            }
+            loadPuzzle(puzzleOrder[puzzleOrderPosition]);
+        }
+
+        function updateMoveList() {
+            var moveList = document.getElementById('move-list');
+            if (movesHistory.length === 0) {
+                moveList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Commencez a jouer...</p>';
+                return;
+            }
+
+            var html = '';
+            movesHistory.forEach(function(move, index) {
+                html += '<div class="move-item">' +
+                    '<strong>#' + (index + 1) + '</strong>: ' + move.san +
+                    (move.captured ? ' (capture ' + move.captured + ')' : '') +
+                    '</div>';
+            });
+            moveList.innerHTML = html;
+        }
+
+        // ============================================
+        // TIMER
+        // ============================================
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                var elapsed = Math.floor((Date.now() - startTime) / 1000);
+                puzzleStats.totalTime += elapsed;
+            }
+        }
+
+        function updateTimer() {
+            var elapsed = Math.floor((Date.now() - startTime) / 1000);
+            var minutes = Math.floor(elapsed / 60);
+            var seconds = elapsed % 60;
+            document.getElementById('timer').textContent =
+                '&#x23F1; ' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+
+        // ============================================
+        // STATISTIQUES
+        // ============================================
+        function updateStatsDisplay() {
+            document.getElementById('solved-count').textContent = puzzleStats.solved;
+
+            var successRate = puzzleStats.attempted > 0
+                ? (puzzleStats.solved / puzzleStats.attempted * 100).toFixed(1)
+                : 0;
+            document.getElementById('success-rate').textContent = successRate + '%';
+
+            var avgTime = puzzleStats.solved > 0
+                ? Math.floor(puzzleStats.totalTime / puzzleStats.solved)
+                : 0;
+            var avgMinutes = Math.floor(avgTime / 60);
+            var avgSeconds = avgTime % 60;
+            document.getElementById('avg-time').textContent =
+                avgMinutes + ':' + String(avgSeconds).padStart(2, '0');
+
+            document.getElementById('streak').textContent = puzzleStats.streak;
+        }
+
+        function saveStats() {
+            localStorage.setItem('puzzle_stats', JSON.stringify(puzzleStats));
+        }
+
+        // ============================================
+        // PROFIL (Firebase integration)
+        // ============================================
+        function updateProfileSection() {
+            var profileContent = document.getElementById('profile-content');
+            if (!profileContent) return;
+
+            // Check if community.js has loaded and user is authenticated
+            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+                var user = firebase.auth().currentUser;
+                var name = user.displayName || user.email || 'Joueur';
+                var initials = name.charAt(0).toUpperCase();
+                if (name.indexOf(' ') > 0) {
+                    initials += name.split(' ')[1].charAt(0).toUpperCase();
+                }
+
+                profileContent.innerHTML =
+                    '<div class="profile-header">' +
+                        '<div class="profile-avatar">' + initials + '</div>' +
+                        '<div class="profile-name">' + name + '</div>' +
+                    '</div>' +
+                    '<div style="font-size: 0.95em; color: var(--text-secondary); line-height: 1.8;">' +
+                        'Puzzle ELO: <strong style="color: var(--accent-gold);">' + playerElo + '</strong><br>' +
+                        'Puzzles resolus: <strong>' + puzzleStats.solved + '</strong><br>' +
+                        'Meilleure serie: <strong>' + puzzleStats.bestStreak + '</strong>' +
+                    '</div>';
+            } else {
+                profileContent.innerHTML =
+                    '<p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95em;">Connectez-vous pour sauvegarder votre progression</p>' +
+                    '<button class="profile-login-btn" id="profile-login-btn" onclick="triggerLogin()">Se connecter</button>';
+            }
+        }
+
+        function triggerLogin() {
+            // Open the community.js auth modal if available
+            var loginBtn = document.getElementById('cn-auth-bar-login');
+            if (loginBtn) {
+                loginBtn.click();
+            }
+        }
+
+        // ============================================
+        // DEMARRAGE
+        // ============================================
+        window.onload = function() {
+            initBoard();
+            // Delay profile check to let Firebase load
+            setTimeout(updateProfileSection, 1500);
+        };
+
+        // Listen for auth changes to update profile
+        var _profileInterval = setInterval(function() {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged(function() {
+                    updateProfileSection();
+                });
+                clearInterval(_profileInterval);
+            }
+        }, 500);
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GO - Déployer ChessNova Maintenant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h1 {
+            font-size: 5em;
+            margin-bottom: 30px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .step {
+            background: rgba(255,255,255,0.2);
+            padding: 40px;
+            border-radius: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            font-size: 1.5em;
+            line-height: 2;
+        }
+        .number {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            line-height: 60px;
+            font-size: 2em;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 30px 60px;
+            border-radius: 15px;
+            font-size: 2em;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 30px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        .files {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9em;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 GO!</h1>
+
+    <div class="step">
+        <span class="number">1</span>
+        <strong>Ouvrir Cloudflare</strong>
+        <br><br>
+        <a href="https://dash.cloudflare.com/" target="_blank" class="btn">
+            🌐 CLOUDFLARE
+        </a>
+        <br><br>
+        <small>Pages → chessnova-chess → Deployments → Create deployment</small>
+    </div>
+
+    <div class="step">
+        <span class="number">2</span>
+        <strong>Sélectionner les fichiers</strong>
+        <br><br>
+        <div class="files">
+            Dossier: C:\Users\Hugop\chessnova-cloudflare\
+            <br><br>
+            Fichiers (Ctrl+Clic pour sélectionner tous):<br>
+            • ChessNova_TEACHER_ENHANCED.html<br>
+            • index.html<br>
+            • _headers<br>
+            • _redirects<br>
+            • README.md<br>
+            • wrangler.toml
+        </div>
+        <button onclick="openFolder()" class="btn">📁 OUVRIR DOSSIER</button>
+    </div>
+
+    <div class="step">
+        <span class="number">3</span>
+        <strong>Glisser-Déposer dans Cloudflare</strong>
+        <br><br>
+        Glissez les 6 fichiers dans la zone Cloudflare
+        <br><br>
+        Branch: <strong>production</strong>
+        <br><br>
+        Cliquez: <strong>"Save and Deploy"</strong>
+    </div>
+
+    <div style="margin-top: 50px; font-size: 3em; animation: pulse 2s ease-in-out infinite;">
+        ⏱️ 10 SECONDES
+    </div>
+
+    <div style="margin-top: 30px; font-size: 1.5em; opacity: 0.8;">
+        Votre site sera sur:<br>
+        <strong>https://chessnova-chess.pages.dev</strong>
+    </div>
+
+    <script>
+        function openFolder() {
+            alert('Ouvrez le dossier:\nC:\\Users\\Hugop\\chessnova-cloudflare\\\n\nSélectionnez les 6 fichiers listés!');
+        }
+
+        // Auto-ouvrir Cloudflare
+        setTimeout(() => {
+            if (confirm('Ouvrir Cloudflare Dashboard maintenant?')) {
+                window.open('https://dash.cloudflare.com/', '_blank');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

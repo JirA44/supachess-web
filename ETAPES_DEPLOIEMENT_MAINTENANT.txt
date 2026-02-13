@@ -1,0 +1,125 @@
+=====================================================
+  DEPLOIEMENT AIMIX PRO - ETAPES IMMEDIATES
+=====================================================
+
+Le projet "aimix-chess" existe sur Cloudflare mais est VIDE.
+Voici comment uploader les fichiers MAINTENANT:
+
+=====================================================
+ETAPE 1: OUVRIR LE PROJET
+=====================================================
+
+1. Allez sur: https://dash.cloudflare.com/
+2. Connexion avec votre compte
+3. Menu lateral gauche > Cliquez sur "Pages"
+4. Vous devriez voir: aimix-chess
+5. Cliquez dessus
+
+=====================================================
+ETAPE 2: CREER UN NOUVEAU DEPLOIEMENT
+=====================================================
+
+Dans la page du projet aimix-chess:
+
+1. Cliquez sur l'onglet "Deployments" (ou "Deploiements")
+2. Cliquez sur le bouton "Create deployment" (ou "Creer un deploiement")
+3. Vous verrez une zone pour uploader des fichiers
+
+=====================================================
+ETAPE 3: UPLOADER LES FICHIERS
+=====================================================
+
+IMPORTANT: Selectionnez CES 6 FICHIERS depuis:
+C:\Users\Hugop\aimix-cloudflare\
+
+Fichiers a uploader:
+  [X] AIMIX_TEACHER_ENHANCED.html
+  [X] index.html
+  [X] _headers
+  [X] _redirects
+  [X] README.md
+  [X] wrangler.toml
+
+Comment faire:
+1. Ouvrir l'explorateur Windows: C:\Users\Hugop\aimix-cloudflare\
+2. Selectionner les 6 fichiers ci-dessus (Ctrl+Clic)
+3. Glisser-deposer dans la zone Cloudflare
+   OU cliquer "Select from computer" et les choisir
+
+=====================================================
+ETAPE 4: VALIDER LE DEPLOIEMENT
+=====================================================
+
+1. Branch: production (ou main)
+2. Cliquer "Save and Deploy"
+3. Attendre 2-3 minutes...
+
+=====================================================
+ETAPE 5: VERIFIER
+=====================================================
+
+Une fois le deploiement termine:
+
+1. Allez sur: https://aimix-chess.pages.dev
+2. L'echiquier devrait s'afficher!
+3. Testez en jouant quelques coups
+
+=====================================================
+SI CA NE FONCTIONNE TOUJOURS PAS
+=====================================================
+
+Option alternative: SUPPRIMER et RECREER le projet
+
+1. Dashboard > Pages > aimix-chess
+2. Settings (en bas) > Delete project
+3. Confirmer la suppression
+4. Pages > Create a project > Upload assets
+5. Project name: aimix-chess
+6. Uploader les 6 fichiers
+7. Deployer
+
+=====================================================
+FICHIERS A UPLOADER (rappel)
+=====================================================
+
+Dossier source: C:\Users\Hugop\aimix-cloudflare\
+
+Fichiers OBLIGATOIRES:
+  1. AIMIX_TEACHER_ENHANCED.html  (35 KB - fichier principal)
+  2. index.html                    (1 KB - redirection)
+  3. _headers                      (1 KB - securite)
+  4. _redirects                    (0.5 KB - redirections)
+
+Fichiers OPTIONNELS mais recommandes:
+  5. README.md                     (5 KB - documentation)
+  6. wrangler.toml                 (0.3 KB - config)
+
+TOTAL: ~43 KB
+
+=====================================================
+VERIFICATION POST-DEPLOIEMENT
+=====================================================
+
+Tests a faire:
+  [ ] https://aimix-chess.pages.dev s'ouvre
+  [ ] L'echiquier s'affiche
+  [ ] L'IA repond quand vous jouez
+  [ ] Les stats se sauvegardent (F5 pour tester)
+  [ ] Les animations fonctionnent
+
+=====================================================
+SUPPORT
+=====================================================
+
+En cas de probleme:
+- Verifiez la console (F12) pour les erreurs
+- Allez dans Dashboard > Pages > aimix-chess > Deployments
+- Regardez les logs du dernier deploiement
+- Verifiez que TOUS les fichiers sont bien uploades
+
+=====================================================
+BONNE CHANCE!
+=====================================================
+
+Version: 2.0
+Date: 20 Janvier 2025

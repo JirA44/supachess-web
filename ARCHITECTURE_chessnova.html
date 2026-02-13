@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏗️ Architecture ChessNova - Système Multi-IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .nav-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-button:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+            transform: translateX(-5px);
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .architecture-diagram {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .ai-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .ai-card:hover::before {
+            left: 100%;
+        }
+
+        .ai-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.5);
+            border-color: #667eea;
+        }
+
+        .ai-card.claude {
+            border-color: rgba(255, 107, 107, 0.5);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(238, 90, 111, 0.2));
+        }
+
+        .ai-card.claude:hover {
+            border-color: #ff6b6b;
+            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.5);
+        }
+
+        .ai-card.trm {
+            border-color: rgba(76, 175, 80, 0.5);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2));
+        }
+
+        .ai-card.trm:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 15px 50px rgba(76, 175, 80, 0.5);
+        }
+
+        .ai-card.hrm {
+            border-color: rgba(33, 150, 243, 0.5);
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(100, 181, 246, 0.2));
+        }
+
+        .ai-card.hrm:hover {
+            border-color: #2196F3;
+            box-shadow: 0 15px 50px rgba(33, 150, 243, 0.5);
+        }
+
+        .ai-card.stockfish {
+            border-color: rgba(255, 152, 0, 0.5);
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(245, 124, 0, 0.2));
+        }
+
+        .ai-card.stockfish:hover {
+            border-color: #ff9800;
+            box-shadow: 0 15px 50px rgba(255, 152, 0, 0.5);
+        }
+
+        .ai-card.minimax {
+            border-color: rgba(156, 39, 176, 0.5);
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(186, 104, 200, 0.2));
+        }
+
+        .ai-card.minimax:hover {
+            border-color: #9c27b0;
+            box-shadow: 0 15px 50px rgba(156, 39, 176, 0.5);
+        }
+
+        .ai-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .ai-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .ai-description {
+            line-height: 1.7;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .ai-stats {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .ai-stats .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-stats .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .hybrid-section {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 193, 7, 0.2));
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+        }
+
+        .hybrid-section h2 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .decision-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #FFD700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .ai-components {
+                grid-template-columns: 1fr;
+            }
+
+            .decision-flow {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="nav-button">◀ Menu Principal</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Architecture ChessNova Chess Engine</h1>
+            <p class="subtitle">Système Multi-IA Hybride pour Atteindre 3600+ ELO</p>
+            <p style="margin-top: 15px; opacity: 0.8;">Claude AI + TRM + HRM + Stockfish + Minimax = ChessNova</p>
+        </div>
+
+        <div class="architecture-diagram">
+            <h2 style="text-align: center; font-size: 2rem; margin-bottom: 30px;">🧩 Les Composants d'ChessNova</h2>
+
+            <div class="ai-components">
+                <div class="ai-card claude">
+                    <div class="ai-icon">🧠</div>
+                    <div class="ai-title">Claude AI Strategy</div>
+                    <div class="ai-description">
+                        <strong>Rôle:</strong> Planification Stratégique de Haut Niveau
+                        <br><br>
+                        Claude Sonnet 4.5 est le cerveau stratégique d'ChessNova. Il analyse les positions avec une compréhension profonde:
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✓ Structures de pions</li>
+                            <li>✓ Faiblesses positionnelles</li>
+                            <li>✓ Plans à long terme</li>
+                            <li>✓ Théorie des ouvertures</li>
+                            <li>✓ Finales complexes</li>
+                        </ul>
+                    </div>
+                    <div class="ai-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Modèle</span>
+                            <span class="stat-value">Sonnet 4.5</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Force</span>
+                            <span class="stat-value">Stratégie GM</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Spécialité</span>
+                            <span class="stat-value">Long Terme</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-card trm">
+                    <div class="ai-icon">⚡</div>
+                    <div class="ai-title">TRM Tactical</div>
+                    <div class="ai-description">
+                        <strong>Rôle:</strong> Calcul Tactique Récursif
+                        <br><br>
+                        Tiny Recursive Model (7M paramètres) spécialisé dans les calculs tactiques rapides:
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✓ Détection de combinaisons</li>
+                            <li>✓ Évaluation de captures</li>
+                            <li>✓ Séquences forcées</li>
+                            <li>✓ Attaques directes</li>
+                            <li>✓ Calcul rapide et précis</li>
+                        </ul>
+                    </div>
+                    <div class="ai-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Paramètres</span>
+                            <span class="stat-value">7M</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Force</span>
+                            <span class="stat-value">Tactique Pure</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Spécialité</span>
+                            <span class="stat-value">Combinaisons</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-card hrm">
+                    <div class="ai-icon">🎯</div>
+                    <div class="ai-title">HRM Reasoning</div>
+                    <div class="ai-description">
+                        <strong>Rôle:</strong> Raisonnement Hiérarchique Multi-Niveaux
+                        <br><br>
+                        Hierarchical Reasoning Model (27M paramètres) avec deux modules:
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✓ Niveau Haut: Planification générale</li>
+                            <li>✓ Niveau Bas: Calculs rapides</li>
+                            <li>✓ Fusion tactique/stratégie</li>
+                            <li>✓ Décisions pondérées</li>
+                            <li>✓ Équilibre dynamique</li>
+                        </ul>
+                    </div>
+                    <div class="ai-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Paramètres</span>
+                            <span class="stat-value">27M</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Force</span>
+                            <span class="stat-value">Hiérarchique</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Spécialité</span>
+                            <span class="stat-value">Fusion IA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-card minimax">
+                    <div class="ai-icon">🔍</div>
+                    <div class="ai-title">Minimax Engine</div>
+                    <div class="ai-description">
+                        <strong>Rôle:</strong> Moteur d'Échecs Classique Amélioré
+                        <br><br>
+                        Algorithme Minimax avec Alpha-Beta Pruning optimisé:
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✓ Recherche par profondeur</li>
+                            <li>✓ Quiescence Search</li>
+                            <li>✓ Piece-Square Tables</li>
+                            <li>✓ Book d'ouvertures</li>
+                            <li>✓ Évaluation positionnelle</li>
+                        </ul>
+                    </div>
+                    <div class="ai-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Type</span>
+                            <span class="stat-value">Classique</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Force</span>
+                            <span class="stat-value">~2000 ELO</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Spécialité</span>
+                            <span class="stat-value">Base Solide</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-card stockfish">
+                    <div class="ai-icon">🐟</div>
+                    <div class="ai-title">Stockfish 17.1 FULL</div>
+                    <div class="ai-description">
+                        <strong>Rôle:</strong> Moteur de Référence et Validation
+                        <br><br>
+                        Le moteur d'échecs le plus fort au monde en mode FULL STRENGTH:
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✓ ELO ~3650-3676</li>
+                            <li>✓ Validation des coups</li>
+                            <li>✓ Référence pour apprentissage</li>
+                            <li>✓ Adversaire d'entraînement</li>
+                            <li>✓ Profondeur 20</li>
+                        </ul>
+                    </div>
+                    <div class="ai-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Version</span>
+                            <span class="stat-value">17.1</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Force</span>
+                            <span class="stat-value">~3650 ELO</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Spécialité</span>
+                            <span class="stat-value">Perfection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hybrid-section">
+            <h2>⚙️ Mode Hybride ChessNova-Stockfish</h2>
+            <p style="text-align: center; font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px;">
+                Pour atteindre 3600+ ELO, ChessNova utilise un mode hybride qui combine Minimax et Stockfish
+            </p>
+
+            <div class="decision-flow">
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📖</div>
+                    <strong>Ouverture</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">Book d'ouvertures<br>+ Variantes créatives</p>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">⚔️</div>
+                    <strong>Milieu de Jeu</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">80% Stockfish<br>20% Minimax</p>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">👑</div>
+                    <strong>Finale</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">90% Stockfish<br>10% Minimax</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">ELO Cible</div>
+                    <div class="value">3600+</div>
+                    <p style="margin-top: 10px; opacity: 0.8;">Niveau super-GM</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">Accord Stockfish</div>
+                    <div class="value">3.8% → 17.7%</div>
+                    <p style="margin-top: 10px; opacity: 0.8;">+13.9% progression!</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">Signature Unique</div>
+                    <div class="value">20+</div>
+                    <p style="margin-top: 10px; opacity: 0.8;">Coups créatifs par session</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="label">Taux de Victoire</div>
+                    <div class="value">~10%</div>
+                    <p style="margin-top: 10px; opacity: 0.8;">Contre Stockfish FULL</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 15px;">
+                <h3 style="margin-bottom: 15px; color: #FFD700;">🎯 Stratégie de Décision Hybride</h3>
+                <p style="line-height: 1.8; opacity: 0.95;">
+                    Le mode hybride permet à ChessNova d'atteindre un niveau proche de Stockfish (~3600 ELO) tout en conservant une <strong>signature créative propre</strong>.
+                    En combinant 80-90% de Stockfish avec 10-20% de Minimax, ChessNova peut:
+                </p>
+                <ul style="margin-left: 30px; margin-top: 15px; line-height: 1.8;">
+                    <li>✓ Jouer à un niveau super-GM constant</li>
+                    <li>✓ Surprendre Stockfish avec des coups créatifs</li>
+                    <li>✓ Battre Stockfish dans ~10% des parties</li>
+                    <li>✓ Apprendre continuellement en jouant</li>
+                    <li>✓ Développer son propre style de jeu</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="hybrid-section" style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(139, 195, 74, 0.2)); border-color: rgba(76, 175, 80, 0.5);">
+            <h2 style="color: #4CAF50;">🧠 Pipeline d'Apprentissage Continu</h2>
+            <p style="text-align: center; font-size: 1.2rem; margin-bottom: 30px;">
+                ChessNova apprend en jouant contre Stockfish FULL, extrait les patterns gagnants, et s'améliore continuellement
+            </p>
+
+            <div class="decision-flow">
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🎮</div>
+                    <strong>1. Tournoi</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">200 parties vs Stockfish FULL</p>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                    <strong>2. Analyse</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">Extraction des coups créatifs</p>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
+                    <strong>3. Apprentissage</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">Identification de patterns</p>
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-box">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🚀</div>
+                    <strong>4. Amélioration</strong>
+                    <p style="margin-top: 10px; opacity: 0.8;">Intégration et itération</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; padding: 30px; background: rgba(0, 0, 0, 0.3); border-radius: 15px; margin-top: 40px;">
+            <p style="opacity: 0.7; margin-bottom: 10px;">
+                <strong>ChessNova Chess Engine v2.0</strong>
+            </p>
+            <p style="opacity: 0.6; font-size: 0.9rem;">
+                Système Multi-IA Hybride | Claude AI + TRM + HRM + Stockfish + Minimax
+            </p>
+        </div>
+    </div>
+</body>
+</html>

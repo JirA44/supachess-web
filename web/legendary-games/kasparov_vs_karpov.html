@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ Kasparov vs Karpov 1985 - Battle of Titans</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8e0e00 0%, #1f1c18 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.5);
+            padding: 45px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, #ff0000, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(255,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #f0f0f0;
+            margin: 12px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 12px 20px;
+            margin: 6px;
+            border-radius: 25px;
+            background: rgba(255, 0, 0, 0.25);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #ff0000, #ff6600);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 25px 0;
+            font-size: 1.1em;
+        }
+
+        .back-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255, 0, 0, 0.7);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 670px 1fr;
+            gap: 45px;
+            margin-top: 35px;
+        }
+
+        .board-section {
+            background: rgba(0,0,0,0.6);
+            padding: 40px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            border: 3px solid rgba(255,0,0,0.3);
+        }
+
+        #board {
+            width: 590px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(255,0,0,0.4);
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            margin: 18px 0;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(255,0,0,0.3), rgba(255,100,0,0.2));
+            border: 3px solid rgba(255,0,0,0.5);
+        }
+
+        .player-info.black {
+            background: linear-gradient(135deg, rgba(20,20,20,0.6), rgba(50,50,50,0.4));
+            border-color: rgba(200,200,200,0.4);
+        }
+
+        .player-name {
+            font-size: 1.7em;
+            font-weight: bold;
+        }
+
+        .player-rating {
+            font-size: 1.05em;
+            opacity: 0.9;
+            margin-top: 6px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255,0,0,0.5);
+        }
+
+        .btn-first { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .btn-prev { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .btn-next { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .btn-last { background: linear-gradient(135deg, #30cfd0, #330867); }
+
+        .move-info {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-top: 22px;
+            font-size: 1.2em;
+        }
+
+        .moves-section {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+
+        .move-card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 7px solid #ff0000;
+            backdrop-filter: blur(15px);
+            cursor: pointer;
+            transition: all 0.35s;
+        }
+
+        .move-card:hover {
+            transform: translateX(15px);
+            background: rgba(255,0,0,0.15);
+            border-left-color: #ffd700;
+        }
+
+        .move-card.active {
+            border-left-color: #ffff00;
+            background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,0,0,0.2));
+            box-shadow: 0 0 30px rgba(255,215,0,0.4);
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .move-number {
+            font-size: 2.1em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .move-rating {
+            font-size: 1.7em;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ffd700, #ff0000);
+            color: #1a1a2e;
+        }
+
+        .move-notation {
+            font-size: 2.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+
+        .move-comment {
+            font-size: 1.1em;
+            line-height: 1.9;
+            color: #f0f0f0;
+            margin-top: 14px;
+        }
+
+        .move-analysis {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255,0,0,0.3);
+        }
+
+        .analysis-section {
+            margin-bottom: 16px;
+        }
+
+        .analysis-title {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .analysis-item {
+            padding: 10px 16px;
+            margin: 6px 0;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            font-size: 1em;
+        }
+
+        .advantage { border-left: 5px solid #4caf50; }
+        .benefit { border-left: 5px solid #2196f3; }
+        .weakness { border-left: 5px solid #ff5252; }
+
+        .game-info-box {
+            background: rgba(0,0,0,0.5);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 3px solid rgba(255,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-info-box h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+        }
+
+        .game-info-box p {
+            line-height: 2;
+            margin-bottom: 14px;
+            color: #f5f5f5;
+            font-size: 1.08em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 14px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ff0000, #ffd700);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔️ Kasparov vs Karpov - World Championship 1985</h1>
+            <div class="subtitle">Garry Kasparov vs Anatoly Karpov - La Plus Grande Rivalité de l'Histoire</div>
+            <div>
+                <span class="badge">🔥 Défense Sicilienne</span>
+                <span class="badge">👑 Championnat du Monde</span>
+                <span class="badge">1-0 Victoire Kasparov!</span>
+            </div>
+            <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+        </header>
+
+        <div class="game-info-box">
+            <h3>📖 À Propos de Cette Partie Historique</h3>
+            <p><strong>Contexte:</strong> Championnat du Monde 1985 à Moscou. Kasparov, 22 ans, défie Karpov, Champion du Monde depuis 10 ans. Partie 16, score 7.5-7.5.</p>
+            <p><strong>Importance:</strong> PARTIE DÉCISIVE! Après 5 mois de match marathon en 1984-85 (abandonné à 5-3 pour Karpov), ce nouveau match est la revanche. Cette victoire lance Kasparov vers le titre.</p>
+            <p><strong>Tactique:</strong> Kasparov démontre son style agressif légendaire. Attaque dévastatrice sur le roque noir. Sacrifice positionnel brillant au coup 22.</p>
+            <p><strong>Legacy:</strong> Kasparov devient le plus jeune Champion du Monde à 22 ans! Il dominera pendant 15 ans. Début d'une rivalité qui durera 20 ans et 144 parties.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div class="player-info black">
+                    <div>
+                        <div class="player-name">♚ Anatoly Karpov</div>
+                        <div class="player-rating">ELO: 2720 | Champion du Monde 1975-1985</div>
+                    </div>
+                    <div style="font-size: 3.8em;">♚</div>
+                </div>
+
+                <div id="board"></div>
+
+                <div class="player-info">
+                    <div style="font-size: 3.8em;">♔</div>
+                    <div style="text-align: right;">
+                        <div class="player-name">♔ Garry Kasparov</div>
+                        <div class="player-rating">ELO: 2700 | Challenger - Futur Champion</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-first" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn btn-prev" onclick="goToPrevious()">◀ Préc</button>
+                    <button class="btn btn-next" onclick="goToNext()">Suiv ▶</button>
+                    <button class="btn btn-last" onclick="goToEnd()">⏭ Fin</button>
+                </div>
+
+                <div class="move-info" id="moveInfo">Position de départ</div>
+            </div>
+
+            <div class="moves-section" id="movesSection"></div>
+        </div>
+    </div>
+
+    <script>
+        const gamePGN = `[Event "World Championship Match"]
+[Site "Moscow URS"]
+[Date "1985.10.15"]
+[Round "16"]
+[White "Garry Kasparov"]
+[Black "Anatoly Karpov"]
+[Result "1-0"]
+[WhiteElo "2700"]
+[BlackElo "2720"]
+[ECO "B44"]
+
+1.e4 c5 2.Nf3 e6 3.d4 cxd4 4.Nxd4 Nc6 5.Nb5 d6 6.c4 Nf6 7.N1c3 a6
+8.Na3 Be7 9.Be2 O-O 10.O-O b6 11.Be3 Bb7 12.Rc1 Re8 13.Qb3 Nd7
+14.Rfd1 Bf6 15.Bf1 Na5 16.Qb4 Bxc3 17.Rxc3 Qf6 18.Rc2 Qh4 19.g3 Qh3
+20.Bg2 Qh6 21.f4 Rac8 22.Qe1 Qf6 23.Nb5 axb5 24.cxb5 Nc5 25.Rc3 Rc7
+26.b3 Rec8 27.Rdc1 Ba8 28.Bf1 Qe7 29.a4 Nab7 30.Bd4 Na5 31.Qd2 Nb7
+32.Rxc5 bxc5 33.Bxc5 Nxc5 34.Rxc5 Rxc5 35.Qxc5 dxc5 36.Bxa5 Rc7
+37.Bc3 c4 38.bxc4 Rxc4 39.Bd2 Rxa4 40.Bc3 f6 41.Kf2 Kf7 42.g4 h5
+43.h3 hxg4 44.hxg4 Bd5 45.Ke3 Ra1 46.Kd4 Rh1 47.g5 fxg5 48.fxg5 Rh5
+49.Ke5 Rxg5+ 50.Kd6 Kf6 51.b6 Rg1 52.b7 Rb1 53.Kc7 1-0`;
+
+        const moveAnnotations = {
+            1: { rating: 8.0, comment: "e4! Kasparov ouvre agressivement, son style naturel.", advantages: ["✓ Initiative immédiate"], benefits: ["✓ Contrôle centre"], weaknesses: [] },
+            2: { rating: 8.0, comment: "Sicilienne! Karpov accepte le combat théorique.", advantages: ["✓ Contre-attaque"], benefits: ["✓ Jeu dynamique"], weaknesses: [] },
+            11: { rating: 7.5, comment: "Be3 - développement naturel, préparant la pression.", advantages: ["✓ Pièces actives"], benefits: ["✓ Roque sûr"], weaknesses: [] },
+            16: { rating: 8.5, comment: "Bxc3! Karpov échange le cavalier, cherche à neutraliser.", advantages: ["✓ Simplifie"], benefits: ["✓ Réduit pression"], weaknesses: ["✗ Donne paire de fous"] },
+            18: { rating: 7.0, comment: "Qh4 - Karpov cherche contre-jeu sur le flanc roi.", advantages: ["✓ Dame active"], benefits: ["✓ Menaces"], weaknesses: ["✗ Dame exposée"] },
+            22: { rating: 9.5, comment: "Qe1!! COUP BRILLANT! Kasparov repositionne subtilement la dame!", advantages: ["✓ Prépare Nb5", "✓ Connexion tours", "✓ Contrôle e-file"], benefits: ["✓ Initiative stratégique", "✓ Avantage positionnel clair"], weaknesses: [] },
+            23: { rating: 9.0, comment: "Nb5!! Le cavalier saute! Menace dévastatrice!", advantages: ["✓ Attaque a7 et d6", "✓ Force faiblesses"], benefits: ["✓ Avantage décisif"], weaknesses: [] },
+            32: { rating: 9.0, comment: "Rxc5! Kasparov gagne le pion c5, la position s'effondre.", advantages: ["✓ Gagne pion", "✓ Tours dominantes"], benefits: ["✓ Avantage matériel"], weaknesses: [] },
+            36: { rating: 8.5, comment: "Bxa5! Continue à gagner du matériel, technique parfaite.", advantages: ["✓ +2 pions"], benefits: ["✓ Victoire assurée"], weaknesses: [] },
+            48: { rating: 9.0, comment: "fxg5! Les pions avancent, finale technique parfaite!", advantages: ["✓ Pions passés"], benefits: ["✓ Domination totale"], weaknesses: [] },
+            52: { rating: 10.0, comment: "b7!! Le pion couronne! VICTOIRE MAGISTRALE! 1-0", advantages: ["✓ Promotion imminente"], benefits: ["✓ KASPAROV CHAMPION DU MONDE!"], weaknesses: [] }
+        };
+
+        let game = new Chess();
+        let board = null;
+        let moveHistory = [];
+        let currentMoveIndex = 0;
+
+        function parsePGN() {
+            game.load_pgn(gamePGN);
+            moveHistory = game.history({ verbose: true });
+            game.reset();
+        }
+
+        function init() {
+            parsePGN();
+
+            board = Chessboard('board', {
+                draggable: false,
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+
+            drawMovesList();
+            updateMoveInfo();
+        }
+
+        function drawMovesList() {
+            const movesDiv = $('#movesSection');
+            movesDiv.html('<h2 style="margin-bottom: 30px; font-size: 2.2em; color: #ffd700;">⚔️ Coups de la Bataille Épique</h2>');
+
+            moveHistory.forEach((move, index) => {
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const isBlackMove = index % 2 === 1;
+
+                const annotation = moveAnnotations[moveNum] || {
+                    rating: 7.5,
+                    comment: "Coup de qualité."
+                };
+
+                let cardHTML = `
+                    <div class="move-card" data-move="${index + 1}">
+                        <div class="move-header">
+                            <div class="move-number">${color} ${moveNum}.</div>
+                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
+                        </div>
+                        <div class="move-notation">${move.san}</div>
+                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                    </div>
+                `;
+
+                const $card = $(cardHTML);
+                $card.on('click', () => goToMoveNumber(index + 1));
+                movesDiv.append($card);
+            });
+        }
+
+        function updateMoveInfo() {
+            if (currentMoveIndex === 0) {
+                $('#moveInfo').text('Position de départ');
+            } else {
+                const moveNum = Math.floor((currentMoveIndex - 1) / 2) + 1;
+                const move = moveHistory[currentMoveIndex - 1];
+                $('#moveInfo').text(`Coup ${moveNum}: ${move.san}`);
+            }
+
+            $('.move-card').removeClass('active');
+            if (currentMoveIndex > 0) {
+                const activeCard = $(`.move-card[data-move="${currentMoveIndex}"]`);
+                activeCard.addClass('active');
+                // Scroll active move into view centered
+                if (activeCard.length > 0) {
+                    activeCard[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function goToNext() {
+            if (currentMoveIndex < moveHistory.length) {
+                game.move(moveHistory[currentMoveIndex].san);
+                currentMoveIndex++;
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToPrevious() {
+            if (currentMoveIndex > 0) {
+                currentMoveIndex--;
+                game.reset();
+                for (let i = 0; i < currentMoveIndex; i++) {
+                    game.move(moveHistory[i].san);
+                }
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = 0;
+            game.reset();
+            board.position('start');
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            while (currentMoveIndex < moveHistory.length) {
+                goToNext();
+            }
+        }
+
+        function goToMoveNumber(moveIndex) {
+            goToStart();
+            for (let i = 0; i < moveIndex && i < moveHistory.length; i++) {
+                goToNext();
+            }
+        }
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                goToNext();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToPrevious();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToStart();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToEnd();
+            }
+        });
+
+        $(document).ready(init);
+    </script>
+
+    <!-- Bouton retour en bas -->
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+    </div>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

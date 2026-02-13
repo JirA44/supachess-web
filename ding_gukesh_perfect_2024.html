@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100% Accuracy - Ding Liren vs Gukesh 2024</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            text-align: center; margin-bottom: 30px; padding: 20px;
+            background: rgba(255, 215, 0, 0.08); border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,215,0,0.2);
+        }
+        h1 {
+            font-size: 2.5em; margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { color: #aaa; font-size: 1.2em; }
+        .accuracy-badge {
+            display: inline-block; padding: 8px 24px; margin-top: 10px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000;
+            border-radius: 20px; font-weight: bold; font-size: 1.1em;
+            animation: goldPulse 2s ease-in-out infinite;
+        }
+        @keyframes goldPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 25px rgba(255,215,0,0.9), 0 0 40px rgba(255,165,0,0.4); }
+        }
+        .main-content {
+            display: grid; grid-template-columns: 1fr 560px 1fr;
+            gap: 25px; align-items: start;
+        }
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05); padding: 25px;
+            border-radius: 15px; backdrop-filter: blur(10px);
+        }
+        .info-panel h2 { color: #ffd700; margin-bottom: 15px; font-size: 1.4em; }
+        .stat-item {
+            margin: 12px 0; padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 8px;
+            border-left: 3px solid #ffd700;
+        }
+        .stat-label { color: #888; font-size: 0.9em; margin-bottom: 4px; }
+        .stat-value { font-size: 1.1em; font-weight: bold; color: #fff; }
+        .board-container {
+            background: rgba(255, 255, 255, 0.05); padding: 20px;
+            border-radius: 15px; backdrop-filter: blur(10px);
+        }
+        #chessboard {
+            display: grid; grid-template-columns: repeat(8, 65px);
+            grid-template-rows: repeat(8, 65px); gap: 0; margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); border-radius: 8px; overflow: hidden;
+        }
+        .square {
+            width: 65px; height: 65px; display: flex; align-items: center;
+            justify-content: center; font-size: 42px; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .square.light { background: #f0d9b5; }
+        .square.dark { background: #b58863; }
+        .piece-black {
+            color: #000 !important; background: rgba(0,0,0,0.7);
+            padding: 2px 5px; border-radius: 4px; display: inline-block;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.8), -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8), -1px 1px 0 rgba(255,255,255,0.8);
+        }
+        .piece-white {
+            color: #000 !important; background: rgba(255,255,255,0.95);
+            padding: 2px 5px; border-radius: 4px; display: inline-block;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5), -1px -1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+        .square:hover { filter: brightness(1.2); transform: scale(1.05); }
+        .controls {
+            display: flex; justify-content: center; gap: 12px;
+            margin-top: 18px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            font-size: 1em; cursor: pointer; transition: all 0.3s ease;
+            font-weight: bold; color: #000;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,215,0,0.4); }
+        .move-info {
+            margin-top: 18px; padding: 18px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 10px; min-height: 100px;
+        }
+        .move-number { font-size: 1.1em; color: #ffd700; margin-bottom: 8px; }
+        .move-comment { color: #ccc; line-height: 1.6; font-size: 0.95em; }
+        .timeline {
+            margin-top: 15px; padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 10px;
+            max-height: 350px; overflow-y: auto;
+        }
+        .timeline-move {
+            padding: 6px 8px; margin: 3px 0;
+            background: rgba(255, 255, 255, 0.05); border-radius: 5px;
+            cursor: pointer; transition: all 0.2s ease; font-size: 0.9em;
+        }
+        .timeline-move:hover { background: rgba(255,215,0,0.3); transform: translateX(5px); }
+        .timeline-move.active { background: rgba(255,215,0,0.5); border-left: 3px solid #ffd700; }
+        .back-btn {
+            position: fixed; top: 20px; left: 20px; padding: 10px 20px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; color: white; text-decoration: none;
+            transition: all 0.3s ease; backdrop-filter: blur(10px); z-index: 100;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.2); transform: translateX(-5px); }
+        .highlight-box {
+            margin-top: 15px; padding: 15px; border-radius: 8px;
+            border-left: 3px solid #ffd700;
+            background: rgba(255,215,0,0.08);
+        }
+        .highlight-box strong { color: #ffd700; }
+        .highlight-box p { margin-top: 8px; color: #ccc; line-height: 1.5; }
+        @media (max-width: 1200px) {
+            .main-content { grid-template-columns: 1fr; justify-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <a href="hub.html" class="back-btn">&larr; Retour au Hub</a>
+
+    <div class="container">
+        <header>
+            <h1>Ding Liren vs Gukesh D</h1>
+            <p class="subtitle">Championnat du Monde 2024 - La partie parfaite</p>
+            <div class="accuracy-badge">LES DEUX JOUEURS : 100% ACCURACY</div>
+        </header>
+
+        <div class="main-content">
+            <div class="info-panel">
+                <h2>Informations</h2>
+                <div class="stat-item">
+                    <div class="stat-label">Blancs</div>
+                    <div class="stat-value">Ding Liren (2728)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Gukesh D (2783)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Tournoi</div>
+                    <div class="stat-value">WCC 2024 - Game 4</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Lieu</div>
+                    <div class="stat-value">Singapour, 29 Nov 2024</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Ouverture</div>
+                    <div class="stat-value">Zukertort / Reti (A06)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Resultat</div>
+                    <div class="stat-value">1/2-1/2 (Nulle par repetition)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Precision</div>
+                    <div class="stat-value" style="color:#ffd700">Ding: 100% | Gukesh: 100%</div>
+                </div>
+                <div class="highlight-box">
+                    <strong>Record historique :</strong>
+                    <p>Premiere fois dans l'histoire du Championnat du Monde que les DEUX joueurs atteignent 100% de precision sur 41 coups. Chaque coup joue est le meilleur coup selon Stockfish.</p>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">&#9198; Debut</button>
+                    <button class="btn" onclick="previousMove()">&#9664; Precedent</button>
+                    <button class="btn" onclick="nextMove()">Suivant &#9654;</button>
+                    <button class="btn" onclick="goToEnd()">Fin &#9197;</button>
+                </div>
+                <div class="move-info">
+                    <div class="move-number" id="moveNumber">Position initiale</div>
+                    <div class="move-comment" id="moveComment">Deux joueurs, 41 coups, 100% de precision chacun. Un evenement unique dans l'histoire des echecs. Cliquez sur "Suivant" pour decouvrir cette partie parfaite.</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>Timeline</h2>
+                <div class="timeline" id="timeline"></div>
+                <div class="highlight-box">
+                    <strong>Pourquoi cette partie est unique :</strong>
+                    <p>Sur 41 coups, aucun des deux joueurs n'a devie du meilleur coup de l'engine. La partie est un chef-d'oeuvre de precision, ou chaque decision est optimale. La nulle par repetition triple est la conclusion logique d'un jeu parfait des deux cotes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script>
+        const chess = new Chess();
+        const gameMoves = [
+            { move: 'Nf3', comment: '1.Cf3 - Ding surprend avec l\'ouverture Zukertort/Reti, evitant les preparations theoriques profondes de Gukesh. Un choix strategique pour une partie de Championnat du Monde.' },
+            { move: 'd5', comment: '1...d5 - Gukesh repond de facon classique et solide. Le pion central occupe d5 immediatement.' },
+            { move: 'e3', comment: '2.e3 - Ding opte pour un systeme tranquille. Le fou de cases blanches pourra se developper en c4 ou d3.' },
+            { move: 'Nf6', comment: '2...Cf6 - Developpement naturel. Le cavalier controle e4 et d5.' },
+            { move: 'b3', comment: '3.b3 - Fianchetto du fou dame. Ding vise une pression sur la grande diagonale a1-h8.' },
+            { move: 'Bf5', comment: '3...Ff5 - Gukesh developpe son fou en dehors de la chaine de pions AVANT de jouer e6. Decision precise qui evite d\'enfermer le fou.' },
+            { move: 'Be2', comment: '4.Fe2 - Developpement modeste mais flexible. Le fou pourra supporter c4 ou se rediriger.' },
+            { move: 'h6', comment: '4...h6 - Coup prophylactique! Gukesh empeche Fg5 qui clouerait le cavalier. Subtil mais precis.' },
+            { move: 'Ba3', comment: '5.Fa3 - Le fou se developpe en a3 pour echanger le fou de cases noires de Gukesh. Ding vise la paire de fous a long terme.' },
+            { move: 'Nbd7', comment: '5...Cbd7 - Developpement naturel du cavalier dame. Il soutient e5 et peut aller en f8 pour la defense.' },
+            { move: 'O-O', comment: '6.O-O - Ding roque rapidement. Le roi est en securite et la tour est prete a jouer.' },
+            { move: 'e6', comment: '6...e6 - Gukesh solidifie le centre. La chaine de pions d5-e6 est tres solide.' },
+            { move: 'Bxf8', comment: '7.Fxf8 - Ding echange le fou! Il elimine le fou de cases noires pour creer un leger desequilibre.' },
+            { move: 'Nxf8', comment: '7...Cxf8 - Le cavalier reprend. Il peut se redevelopper en d7 ou g6.' },
+            { move: 'c4', comment: '8.c4 - Ding frappe au centre. Attaque sur d5 pour ouvrir la position.' },
+            { move: 'N8d7', comment: '8...C8d7 - Le cavalier revient en d7, une case plus active. Il soutient les cases centrales.' },
+            { move: 'Nc3', comment: '9.Cc3 - Le cavalier se developpe en c3, attaquant d5 une deuxieme fois.' },
+            { move: 'O-O', comment: '9...O-O - Gukesh roque. Les deux rois sont maintenant en securite. La position est symetrique et equilibree.' },
+            { move: 'cxd5', comment: '10.cxd5 - Ding echange au centre. Il ouvre des lignes pour ses pieces.' },
+            { move: 'exd5', comment: '10...exd5 - Reprise au centre. La structure est maintenant symetrique avec pions isoles potentiels.' },
+            { move: 'b4', comment: '11.b4 - Ding gagne de l\'espace au flanc dame. Il prepare une expansion et limite le cavalier noir.' },
+            { move: 'c6', comment: '11...c6 - Gukesh solidifie d5. Le pion c6 soutient le centre et empeche Cb5.' },
+            { move: 'Nd4', comment: '12.Cd4 - Le cavalier saute au centre! Case dominante qui attaque f5 et controle e6/c6.' },
+            { move: 'Bh7', comment: '12...Fh7 - Le fou recule en h7 pour eviter l\'echange force. Il reste actif sur la diagonale b1-h7.' },
+            { move: 'Qb3', comment: '13.Db3 - La dame se place en b3, appuyant b4-b5 et visant d5 et f7.' },
+            { move: 'Ne5', comment: '13...Ce5 - Le cavalier noir se centralise magnifiquement! Il controle c4, d3, f3 et menace des fourchettes.' },
+            { move: 'a4', comment: '14.a4 - Ding avance sur le flanc dame. Il prepare a5 pour fixer les pions noirs.' },
+            { move: 'Rc8', comment: '14...Tc8 - La tour occupe la colonne c semi-ouverte. Piece active et bien placee.' },
+            { move: 'a5', comment: '15.a5 - Ding fixe le flanc dame. Le pion a5 restreint les pions noirs et prepare un eventuel a6.' },
+            { move: 'b6', comment: '15...b6 - Gukesh ouvre la colonne b et cree des contre-jeux. Coup precis pour maintenir l\'equilibre.' },
+            { move: 'Nf3', comment: '16.Cf3 - Le cavalier recule pour echanger le cavalier centralise e5. Ding refuse de laisser le cavalier dominer.' },
+            { move: 'Nxf3+', comment: '16...Cxf3+ - Gukesh echange le cavalier puissant avec echec. Les pieces s\'equilibrent.' },
+            { move: 'Bxf3', comment: '17.Fxf3 - Le fou reprend, visant la diagonale a8-h1 et d5.' },
+            { move: 'd4', comment: '17...d4! - Coup brillant de Gukesh! Le pion avance au centre, ouvrant des lignes et creant un pion passe potentiel.' },
+            { move: 'Ne2', comment: '18.Ce2 - Le cavalier recule pour bloquer le pion d4 et maintenir la structure intacte.' },
+            { move: 'dxe3', comment: '18...dxe3 - Gukesh capture en e3, eliminant le pion central blanc.' },
+            { move: 'dxe3', comment: '19.dxe3 - Ding reprend. La position reste parfaitement equilibree.' },
+            { move: 'Be4', comment: '19...Fe4 - Le fou vient au centre! Il attaque la tour a1 et controle des cases cles. Coup actif de Gukesh.' },
+            { move: 'Rfd1', comment: '20.Tfd1 - La tour occupe la colonne d ouverte. Centralisation parfaite.' },
+            { move: 'Qe7', comment: '20...De7 - La dame se centralise et protege le flanc roi. Position harmonieuse pour les noirs.' },
+            { move: 'Bxe4', comment: '21.Fxe4 - Ding echange le fou. Les fous sont elimines, simplifiant la position.' },
+            { move: 'Nxe4', comment: '21...Cxe4 - Le cavalier reprend au centre. Il est puissamment place en e4.' },
+            { move: 'Nc3', comment: '22.Cc3 - Ding attaque le cavalier centralise. Il force l\'echange ou le recul.' },
+            { move: 'Rfd8', comment: '22...Tfd8 - La tour rejoint la colonne d. Pression maximale sur la colonne ouverte.' },
+            { move: 'Nxe4', comment: '23.Cxe4 - Echange des cavaliers. La simplification continue vers une finale equilibree.' },
+            { move: 'Qxe4', comment: '23...Dxe4 - La dame reprend en e4, centralisee et active.' },
+            { move: 'h3', comment: '24.h3 - Coup prophylactique. Ding donne une case de fuite a son roi et empeche toute intrusion en g4.' },
+            { move: 'c5', comment: '24...c5 - Gukesh pousse pour activer son jeu. Le pion vise c4 pour restreindre la dame blanche.' },
+            { move: 'Rxd8+', comment: '25.Txd8+ - Ding echange les tours. Simplification vers la finale.' },
+            { move: 'Rxd8', comment: '25...Txd8 - Reprise forcee.' },
+            { move: 'bxc5', comment: '26.bxc5 - Ding capture le pion c5.' },
+            { move: 'bxc5', comment: '26...bxc5 - Gukesh reprend. La position est maintenant tres simplifiee.' },
+            { move: 'Rc1', comment: '27.Tc1 - La tour blanche attaque le pion c5.' },
+            { move: 'Qe5', comment: '27...De5 - La dame defendet centralise en meme temps. Elle protege c5 tout en etant active.' },
+            { move: 'Qc2', comment: '28.Dc2 - Ding repositionne sa dame pour viser c5 et potentiellement h7.' },
+            { move: 'Rd5', comment: '28...Td5 - La tour se centralise en d5. Position solide et active pour Gukesh.' },
+            { move: 'g3', comment: '29.g3 - Ding securise son roi. Aucune faiblesse ne doit etre laissee.' },
+            { move: 'f5', comment: '29...f5 - Gukesh avance le pion f pour gagner de l\'espace et soutenir sa dame en e5.' },
+            { move: 'Kg2', comment: '30.Rg2 - Le roi blanc se rapproche du centre. Preparation pour une eventuelle finale.' },
+            { move: 'Kh7', comment: '30...Rh7 - Le roi noir aussi se degage de la 8eme rangee. Securite accrue.' },
+            { move: 'Qc4', comment: '31.Dc4 - La dame blanche attaque la tour d5. Pression continue.' },
+            { move: 'Qd6', comment: '31...Dd6 - La dame noire protege la tour et reste active. Position tendue mais equilibree.' },
+            { move: 'e4', comment: '32.e4! - Ding frappe au centre! Ce coup ouvre des lignes et active ses pieces.' },
+            { move: 'Re5', comment: '32...Te5 - La tour s\'active sur la 5eme rangee, maintenant la pression.' },
+            { move: 'exf5', comment: '33.exf5 - Ding capture et simplifie. Les pions s\'echangent.' },
+            { move: 'Rxf5', comment: '33...Txf5 - Gukesh reprend avec la tour. Position egale.' },
+            { move: 'Qe4', comment: '34.De4 - La dame blanche se centralise puissamment, visant le roi et la tour.' },
+            { move: 'Qd5', comment: '34...Dd5 - Gukesh propose l\'echange de dames. Position completement equilibree.' },
+            { move: 'Qxd5', comment: '35.Dxd5 - Ding accepte l\'echange. La finale de tour est clairement nulle.' },
+            { move: 'Rxd5', comment: '35...Txd5 - Finale de tour pure. Les deux joueurs ont joue parfaitement.' },
+            { move: 'Kf3', comment: '36.Rf3 - Le roi se centralise. En finale, le roi est une piece forte!' },
+            { move: 'Kg6', comment: '36...Rg6 - Meme idee pour Gukesh. Roi actif au centre.' },
+            { move: 'Ke4', comment: '37.Re4 - Le roi blanc avance agressivement au centre.' },
+            { move: 'Rd4+', comment: '37...Td4+ - Echec! Gukesh force le roi a reculer.' },
+            { move: 'Ke3', comment: '38.Re3 - Le roi recule. La position est un forteresse de nulle.' },
+            { move: 'Rd5', comment: '38...Td5 - La tour revient. La repetition commence.' },
+            { move: 'Ke4', comment: '39.Re4 - Le roi retourne en e4. Deuxieme repetition de la position.' },
+            { move: 'Rd4+', comment: '39...Td4+ - Deuxieme echec identique.' },
+            { move: 'Ke3', comment: '40.Re3 - Meme reponse. Les deux joueurs savent que c\'est nulle.' },
+            { move: 'Rd5', comment: '40...Td5 - La tour revient encore.' },
+            { move: 'Ke4', comment: '41.Re4 - Troisieme repetition. NULLE par triple repetition! 41 coups de precision absolue des deux cotes. Un moment unique dans l\'histoire des Championnats du Monde.' }
+        ];
+
+        let currentMoveIndex = -1;
+        const pieces = {
+            'r': '\u2656', 'n': '\u2658', 'b': '\u2657', 'q': '\u2655', 'k': '\u2654', 'p': '\u2659',
+            'R': '\u2656', 'N': '\u2658', 'B': '\u2657', 'Q': '\u2655', 'K': '\u2654', 'P': '\u2659'
+        };
+
+        function renderBoard() {
+            const board = chess.board();
+            const el = document.getElementById('chessboard');
+            el.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = 'square ' + ((r+c)%2===0 ? 'light' : 'dark');
+                    const p = board[r][c];
+                    if (p) {
+                        const sp = document.createElement('span');
+                        sp.textContent = pieces[p.type.toUpperCase()];
+                        sp.className = p.color === 'w' ? 'piece-white' : 'piece-black';
+                        sq.appendChild(sp);
+                    }
+                    el.appendChild(sq);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            const mn = document.getElementById('moveNumber');
+            const mc = document.getElementById('moveComment');
+            if (currentMoveIndex === -1) {
+                mn.textContent = 'Position initiale';
+                mc.textContent = 'Deux joueurs, 41 coups, 100% de precision chacun. Cliquez sur "Suivant" pour decouvrir cette partie parfaite.';
+            } else {
+                const num = Math.floor(currentMoveIndex / 2) + 1;
+                const col = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                mn.textContent = 'Coup ' + num + '. ' + col + ': ' + gameMoves[currentMoveIndex].move;
+                mc.textContent = gameMoves[currentMoveIndex].comment;
+            }
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            const tl = document.getElementById('timeline');
+            tl.innerHTML = '';
+            gameMoves.forEach(function(m, i) {
+                const d = document.createElement('div');
+                d.className = 'timeline-move' + (i === currentMoveIndex ? ' active' : '');
+                const num = Math.floor(i / 2) + 1;
+                const col = i % 2 === 0 ? 'W' : 'B';
+                d.textContent = num + '.' + col + ' ' + m.move;
+                d.onclick = function() { goToMove(i); };
+                tl.appendChild(d);
+            });
+            var active = tl.querySelector('.active');
+            if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                chess.move(gameMoves[currentMoveIndex].move, { sloppy: true });
+                renderBoard(); updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                chess.undo(); currentMoveIndex--;
+                renderBoard(); updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            chess.reset(); currentMoveIndex = -1;
+            renderBoard(); updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            for (var i = 0; i < gameMoves.length; i++) nextMove();
+        }
+
+        function goToMove(index) {
+            chess.reset(); currentMoveIndex = -1;
+            for (var i = 0; i <= index; i++) {
+                currentMoveIndex++;
+                chess.move(gameMoves[currentMoveIndex].move, { sloppy: true });
+            }
+            renderBoard(); updateMoveInfo();
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') nextMove();
+            else if (e.key === 'ArrowLeft') previousMove();
+            else if (e.key === 'Home') goToStart();
+            else if (e.key === 'End') goToEnd();
+        });
+
+        renderBoard();
+        updateMoveInfo();
+    </script>
+</body>
+</html>

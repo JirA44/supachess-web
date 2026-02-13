@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCEC S28 Superfinal - Game 83 | Stockfish vs LCZero - Falkbeer Counter-Gambit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #330066 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(120deg, #00ffff, #00ff00, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .nav-back {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-5px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .board-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .board-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        #chessboard {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 3px solid #00ffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        /* Forcer toutes les pieces a avoir des couleurs contrastees */
+        .square {
+            font-weight: bold;
+        }
+
+        /* Pieces noires en noir pur avec contour blanc */
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        /* Pieces blanches avec fond blanc complet */
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square.highlight {
+            background: rgba(0, 255, 255, 0.5) !important;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .square.last-move {
+            background: rgba(0, 255, 0, 0.4) !important;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00ffff 0%, #00ff00 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .move-info {
+            text-align: center;
+            font-size: 1.3em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .moves-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.5);
+            padding-bottom: 10px;
+        }
+
+        .move-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #00ffff;
+            transform: translateX(5px);
+        }
+
+        .move-item.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-left-color: #00ffff;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+
+        .move-number {
+            font-weight: bold;
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .move-notation {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .move-comment {
+            margin-top: 8px;
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Retour au Hub</a>
+
+        <div class="header">
+            <h1>TCEC S28 Superfinal - Game 83</h1>
+            <p class="subtitle">LCZero vs Stockfish | Falkbeer Counter-Gambit | 10 Septembre 2025</p>
+            <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
+                "Stockfish mate Leela dans un Contre-Gambit Falkbeer epique - promotions mutuelles et mat avec tour" - TCEC Season 28
+            </p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Blanc (IA)</div>
+                <div class="stat-value" style="font-size: 1.3em;">LCZero</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Noir (Engine)</div>
+                <div class="stat-value" style="font-size: 1.3em;">Stockfish</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Date</div>
+                <div class="stat-value" style="font-size: 1.3em;">10 Sep 2025</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ouverture</div>
+                <div class="stat-value" style="font-size: 1.3em;">Falkbeer CG</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Coups</div>
+                <div class="stat-value">124</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Resultat</div>
+                <div class="stat-value">0-1</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.8em;">Position Actuelle</h2>
+                <div class="board-container">
+                    <div id="chessboard"></div>
+                </div>
+                <div class="move-info" id="moveInfo">
+                    Position initiale
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">Debut</button>
+                    <button class="btn" onclick="previousMove()">Precedent</button>
+                    <button class="btn" onclick="nextMove()">Suivant</button>
+                    <button class="btn" onclick="goToEnd()">Fin</button>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2>Coups de la Partie</h2>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotheque chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // Initialisation du moteur chess.js
+        const chess = new Chess();
+
+        // TCEC Season 28 Superfinal - Game 83
+        // LCZero vs Stockfish - King's Gambit Declined, Falkbeer Counter-Gambit (C31)
+        // 10 September 2025 - Result: 0-1 (Black mates)
+        const gameMoves = [
+            // === OUVERTURE : Le Gambit du Roi et le Contre-Gambit Falkbeer ===
+            { move: 'e4', comment: 'LCZero ouvre avec 1.e4 - le coup du roi! Debut classique et ambitieux.' },
+            { move: 'e5', comment: 'Stockfish repond symetriquement. Le centre est dispute des le premier coup.' },
+            { move: 'f4', comment: '🔥 LE GAMBIT DU ROI! LCZero sacrifie un pion pour ouvrir la colonne f et attaquer! Un choix audacieux au plus haut niveau.' },
+            { move: 'd5', comment: '⚡ LE CONTRE-GAMBIT FALKBEER! Stockfish refuse le gambit et contre-attaque immediatement au centre. Agressif et theorique!' },
+            { move: 'exd5', comment: 'LCZero accepte le pion central. Le centre est maintenant ouvert et les tensions augmentent.' },
+            { move: 'e4', comment: '💥 Le pion noir avance en e4! Stockfish gagne de l\'espace et bloque le developpement du cavalier blanc en f3.' },
+            { move: 'Bb5+', comment: 'Echec du fou! LCZero developpe avec tempo en forcant les Noirs a reagir.' },
+            { move: 'c6', comment: 'Stockfish bloque l\'echec et attaque le pion d5. Coup double thematique dans le Falkbeer.' },
+            { move: 'dxc6', comment: 'LCZero capture en c6. Le pion blanc est avance en territoire ennemi.' },
+            { move: 'Nxc6', comment: 'Le cavalier reprend et se developpe naturellement. Stockfish a un excellent developpement en compensation du pion.' },
+            { move: 'Ne2', comment: 'Book exit. Le cavalier se developpe en e2 au lieu de f3 (bloque par e4). Preparation du roque.' },
+            // === MILIEU DE JEU : Attaque et complications tactiques ===
+            { move: 'Qh4+', comment: '⚡ ECHEC DE LA DAME! Stockfish lance une attaque immediate sur le roi blanc non-roque!' },
+            { move: 'g3', comment: 'LCZero bloque avec g3, affaiblissant son roque. Le prix a payer pour eviter l\'echec.' },
+            { move: 'Qh3', comment: 'La dame noire s\'infiltre en h3, menacant le pion g2 et perturbant le roque blanc.' },
+            { move: 'd4', comment: 'LCZero avance au centre, gagnant de l\'espace et ouvrant des lignes pour ses pieces.' },
+            { move: 'Nf6', comment: 'Developpement du cavalier roi. Stockfish ameliore sa coordination de pieces.' },
+            { move: 'f5', comment: 'LCZero pousse f5! Le pion avance agressivement mais cree des faiblesses.' },
+            { move: 'Qxf5', comment: 'Stockfish capture le pion f5 avec la dame. Gain materiel et pression continue.' },
+            { move: 'Nbc3', comment: 'Developpement du cavalier dame. LCZero attaque le pion e4 et ameliore sa position.' },
+            { move: 'Bb4', comment: 'Le fou cloue le cavalier c3! Pression sur la structure blanche et menace de doubler les pions.' },
+            { move: 'a3', comment: 'LCZero pousse le fou. Gain de temps mais perte de pion potentielle.' },
+            { move: 'Ba5', comment: 'Le fou recule mais reste actif sur la diagonale, maintenant la pression sur c3.' },
+            { move: 'b4', comment: 'LCZero gagne de l\'espace sur l\'aile dame. Le fou noir est repousse.' },
+            { move: 'Bb6', comment: 'Le fou se repositionne sur b6, visant la diagonale a7-g1 et le pion d4.' },
+            { move: 'Rf1', comment: 'La tour entre en jeu sur la colonne f semi-ouverte. LCZero vise la dame noire.' },
+            { move: 'Qh5', comment: 'La dame noire se repositionne en h5, restant active et evitant les menaces.' },
+            { move: 'Rxf6', comment: '🔥 SACRIFICE DE LA QUALITE! LCZero capture le cavalier avec la tour! Un sacrifice spectaculaire pour detruire la defense noire.' },
+            { move: 'gxf6', comment: 'Stockfish reprend avec le pion g. La structure de pions est deformee mais les Noirs gardent du materiel.' },
+            { move: 'Nxe4', comment: '💎 Le cavalier capture le pion e4 central! LCZero recupere du materiel avec une piece tres active au centre.' },
+            { move: 'Ke7', comment: 'Le roi noir ne peut plus roquer et sort au centre. Position inhabituelle mais les Noirs restent solides avec l\'avantage materiel.' },
+            { move: 'Qd2', comment: 'La dame blanche se centralise, se preparant a des actions sur les deux ailes.' },
+            { move: 'Nxd4', comment: '⚡ Stockfish capture le pion central d4 avec le cavalier! Gain materiel decisif - les Noirs ont maintenant un cavalier et un pion de plus.' },
+            { move: 'Nxd4', comment: 'LCZero reprend avec le cavalier. Les echanges continuent au centre.' },
+            { move: 'Qe5', comment: 'La dame noire centralise en e5, attaquant le cavalier d4 et dominant le centre.' },
+            { move: 'Qd3', comment: 'La dame blanche defend le cavalier et garde le controle de cases cles.' },
+            { move: 'Qxd4', comment: 'Stockfish capture le cavalier d4! Les Noirs gagnent encore du materiel dans cette position complexe.' },
+            { move: 'Bb2', comment: 'LCZero developpe le fou en fianchetto. Pression sur la grande diagonale a1-h8.' },
+            { move: 'Qg1+', comment: '⚡ ECHEC! La dame noire donne echec en g1! Le roi blanc est force de fuir.' },
+            { move: 'Qf1', comment: 'LCZero interpose la dame. Echange force.' },
+            { move: 'Qxf1+', comment: 'Stockfish echange les dames. Simplification vers une finale favorable pour les Noirs.' },
+            { move: 'Bxf1', comment: 'Le fou reprend. Position simplifiee - les Noirs ont un avantage materiel clair.' },
+            // === TRANSITION : Du milieu de jeu a la finale ===
+            { move: 'Rg8', comment: 'La tour s\'active sur la colonne g ouverte. Stockfish vise le pion g3.' },
+            { move: 'Bxf6+', comment: 'LCZero capture le pion f6 avec echec! Recuperation de materiel avec tempo.' },
+            { move: 'Kf8', comment: 'Le roi noir se met a l\'abri sur f8. Les Noirs gardent toujours l\'avantage.' },
+            { move: 'Bd3', comment: 'Le fou se developpe activement en d3, visant le roque noir.' },
+            { move: 'Rg6', comment: 'La tour noire attaque le fou f6. Stockfish chasse les pieces actives de LCZero.' },
+            { move: 'Bc3', comment: 'Le fou recule en c3, restant sur une diagonale active.' },
+            { move: 'Rc6', comment: 'La tour attaque le fou c3! Stockfish continue a mettre la pression.' },
+            { move: 'Kd2', comment: 'Le roi blanc tente de s\'activer en finale. Centralisation necessaire.' },
+            { move: 'Bf5', comment: '💎 Le fou se developpe activement en f5! Stockfish active sa derniere piece mineure avec force.' },
+            { move: 'Rf1', comment: 'La tour blanche vise le fou f5 et protege f2.' },
+            { move: 'Bxe4', comment: 'Stockfish capture le cavalier e4 avec le fou! Les Noirs gagnent encore du materiel.' },
+            { move: 'Bxe4', comment: 'LCZero reprend avec le fou. Position materiellement equilibree maintenant.' },
+            { move: 'Rd8+', comment: '⚡ ECHEC DE LA TOUR! Stockfish ouvre une deuxieme tour dans l\'action avec un echec devastateur.' },
+            { move: 'Bd3', comment: 'Le fou interpose sur d3. LCZero defend mais perd de l\'activite.' },
+            { move: 'Bd4', comment: 'Le fou noir se centralise magnifiquement en d4, dominant la position.' },
+            { move: 'Bxd4', comment: 'LCZero est force d\'echanger le fou dominant.' },
+            { move: 'Rxd4', comment: 'La tour reprend. Stockfish a deux tours tres actives et un avantage clair.' },
+            { move: 'Ke3', comment: 'Le roi blanc avance au centre, essayant de participer au combat.' },
+            { move: 'Rd5', comment: 'La tour se place sur la 5eme rangee, controlant l\'espace et limitant le roi blanc.' },
+            { move: 'Rf4', comment: 'La tour blanche s\'active sur la 4eme rangee.' },
+            { move: 'Rh6', comment: 'La tour noire vise le pion h2. Stockfish cree des menaces sur les deux ailes.' },
+            { move: 'h4', comment: 'LCZero avance le pion h pour le sauver. Mais cela cree de nouvelles faiblesses.' },
+            { move: 'b5', comment: 'Stockfish avance sur l\'aile dame! Gain d\'espace et creation de pions passes potentiels.' },
+            // === FINALE : Manoeuvres et bataille de pions ===
+            { move: 'Ke2', comment: 'Le roi blanc recule. LCZero essaie de reorganiser sa defense.' },
+            { move: 'a6', comment: 'Stockfish prepare l\'avance de ses pions sur l\'aile dame. Structure solide.' },
+            { move: 'Ke3', comment: 'Le roi revient au centre. LCZero ne trouve pas de plan clair.' },
+            { move: 'Rd8', comment: 'La tour se repositionne pour de nouvelles attaques.' },
+            { move: 'Rf5', comment: 'La tour blanche vise le pion b5. Contre-attaque de LCZero.' },
+            { move: 'Rb6', comment: 'La tour noire protege le pion b et reste active.' },
+            { move: 'Kd2', comment: 'Le roi blanc recule encore. Position defensive difficile.' },
+            { move: 'Rg6', comment: 'La tour vise le pion g3. Stockfish attaque les faiblesses blanches.' },
+            { move: 'Kc3', comment: 'Le roi avance vers l\'aile dame. LCZero essaie de bloquer les pions noirs.' },
+            { move: 'Rdd6', comment: 'Les deux tours noires sont parfaitement coordonnees sur la 6eme rangee!' },
+            { move: 'Rh5', comment: 'La tour blanche attaque le pion h7. Contre-jeu de LCZero.' },
+            { move: 'Rxg3', comment: '🔥 Stockfish capture le pion g3! Les pions blancs tombent un par un.' },
+            { move: 'Rxh7', comment: 'LCZero reprend le pion h7. Echange de pions sur les deux flancs.' },
+            { move: 'Rc6+', comment: '⚡ ECHEC! La tour donne echec et force le roi blanc a bouger.' },
+            { move: 'Kb2', comment: 'Le roi fuit vers b2. Position inconfortable pour les Blancs.' },
+            { move: 'Rd6', comment: 'La tour se repositionne. Stockfish maintient la pression.' },
+            { move: 'Rh8+', comment: 'LCZero donne echec avec la tour. Tentative de creer des menaces.' },
+            { move: 'Kg7', comment: 'Le roi noir avance vers g7. Activation du roi en finale.' },
+            { move: 'Rh7+', comment: 'Un autre echec. LCZero essaie de perturber la coordination noire.' },
+            { move: 'Kg8', comment: 'Le roi se replace. Stockfish reste patient et solide.' },
+            { move: 'Rh5', comment: 'La tour se repositionne. LCZero cherche une bonne case.' },
+            { move: 'Rg4', comment: 'La tour noire attaque le pion h4. Stockfish cible les faiblesses.' },
+            { move: 'Ka2', comment: 'Le roi blanc se met a l\'abri en a2. Position defensive.' },
+            { move: 'Kg7', comment: 'Le roi noir s\'active. En finale, le roi doit participer!' },
+            { move: 'Rh7+', comment: 'Encore un echec. LCZero essaie de garder l\'initiative avec les echecs.' },
+            { move: 'Kg8', comment: 'Le roi retourne. Stockfish ne craint pas les echecs perpetuels.' },
+            { move: 'Rh5', comment: 'La tour se replace. Repetition de position approchante.' },
+            { move: 'Kg7', comment: 'Le roi avance a nouveau. Stockfish evite soigneusement la repetition triple.' },
+            { move: 'Rh7+', comment: 'LCZero tente encore un echec. La repetition est proche.' },
+            { move: 'Kf8', comment: 'Le roi fuit vers f8, evitant la repetition! Stockfish veut gagner!' },
+            { move: 'Rh8+', comment: 'Echec en h8. LCZero continue les echecs.' },
+            { move: 'Rg8', comment: 'La tour bloque l\'echec! Stockfish couvre avec la tour et prepare l\'avancee.' },
+            { move: 'Rh5', comment: 'La tour blanche se retire. Plus d\'echecs possibles.' },
+            { move: 'Rg2', comment: '💎 La tour s\'infiltre en 2eme rangee! Invasion decisive dans le camp blanc.' },
+            { move: 'Kb3', comment: 'Le roi blanc tente de rester actif.' },
+            { move: 'Rg4', comment: 'La tour noire reste agressive, controlant la 4eme rangee.' },
+            { move: 'Rh8+', comment: 'LCZero donne echec. Derniere tentative.' },
+            { move: 'Kg7', comment: 'Le roi se replace.' },
+            { move: 'Rh7+', comment: 'Echec!' },
+            { move: 'Kg8', comment: 'Le roi s\'abrite.' },
+            { move: 'Rh5', comment: 'La tour se replace.' },
+            { move: 'Rgd4', comment: 'Les deux tours noires se coordonnent sur la colonne d. Pression maximale!' },
+            { move: 'Be2', comment: 'Le fou blanc se repositionne. LCZero essaie de maintenir la defense.' },
+            { move: 'Kf8', comment: 'Le roi noir se replace strategiquement.' },
+            { move: 'Rh8+', comment: 'Echec.' },
+            { move: 'Kg7', comment: 'Le roi avance.' },
+            { move: 'Rh5', comment: 'La tour se replace.' },
+            { move: 'Kg6', comment: '⚡ LE ROI AVANCE! Stockfish active son roi agressivement vers g6!' },
+            { move: 'a4', comment: 'LCZero tente la contre-attaque sur l\'aile dame! Avance du pion a.' },
+            { move: 'bxa4+', comment: 'Stockfish capture avec echec! Ouverture de lignes.' },
+            { move: 'Kxa4', comment: 'Le roi blanc capture le pion. Mais il est maintenant decentre.' },
+            { move: 'f5', comment: '🔥 LE PION PASSE! Stockfish lance son pion f vers la promotion! La course commence.' },
+            { move: 'Rg5+', comment: 'LCZero donne echec pour gagner du temps.' },
+            { move: 'Kf6', comment: 'Le roi noir avance avec le pion. Coordination parfaite roi + pion.' },
+            { move: 'Bd3', comment: 'Le fou se replace, ciblant le pion f5.' },
+            { move: 'Rf4', comment: 'La tour noire protege le pion f. Stockfish avance methodiquement.' },
+            { move: 'Rg8', comment: 'La tour blanche se place en g8, essayant de creer des menaces.' },
+            { move: 'Rb6', comment: 'La tour noire active sur la 6eme rangee.' },
+            { move: 'Rf8+', comment: 'Echec! LCZero essaie de perturber.' },
+            { move: 'Ke6', comment: 'Le roi noir continue son avance! Centralisation puissante.' },
+            { move: 'Ka3', comment: 'Le roi blanc se repositionne.' },
+            { move: 'Rf3', comment: 'La tour noire attaque le fou d3! Menace directe.' },
+            { move: 'h5', comment: 'LCZero pousse son pion passe! La course aux promotions s\'intensifie.' },
+            { move: 'Ke5', comment: 'Le roi noir avance vers le centre. Position dominante.' },
+            { move: 'Ka4', comment: 'Le roi blanc se replace.' },
+            { move: 'f4', comment: '💥 LE PION F AVANCE! Stockfish pousse vers la promotion. Le pion est maintenant en f4!' },
+            { move: 'Bg6', comment: 'Le fou se place en g6, tentant de bloquer ou de creer du contre-jeu.' },
+            { move: 'Rf6', comment: 'La tour noire attaque le fou g6.' },
+            { move: 'Re8+', comment: 'LCZero donne echec avec la tour.' },
+            { move: 'Re6', comment: 'La tour noire interpose et reste active.' },
+            { move: 'Rf8', comment: 'La tour blanche manoeuvre.' },
+            { move: 'Rf1', comment: 'La tour noire s\'infiltre en premiere rangee! Menace de promotion.' },
+            { move: 'Bd3', comment: 'Le fou revient en d3, bloquant la tour.' },
+            { move: 'Rf2', comment: 'La tour se repositionne en deuxieme rangee.' },
+            { move: 'Ka5', comment: 'Le roi blanc avance.' },
+            { move: 'Rf3', comment: 'La tour noire reste active.' },
+            { move: 'Rf5+', comment: 'Echec! LCZero donne echec au roi noir.' },
+            { move: 'Kd4', comment: '👑 Le roi noir avance en d4! Position dominante au centre.' },
+            { move: 'Rf8', comment: 'La tour blanche se repositionne.' },
+            { move: 'Rd6', comment: 'La tour noire controle la colonne d.' },
+            { move: 'Ka4', comment: 'Le roi blanc recule.' },
+            { move: 'Ke5', comment: 'Le roi noir avance encore! Centralisation absolue.' },
+            { move: 'Rf5+', comment: 'Echec en f5.' },
+            { move: 'Ke6', comment: 'Le roi se replace.' },
+            { move: 'Rg5', comment: 'La tour se place en g5.' },
+            { move: 'Kf6', comment: 'Le roi avance vers les pions blancs.' },
+            { move: 'Rg4', comment: 'La tour blanche manoeuvre sur la 4eme rangee.' },
+            { move: 'Ke5', comment: 'Le roi recule strategiquement.' },
+            { move: 'Rg5+', comment: 'Echec!' },
+            { move: 'Kd4', comment: 'Le roi retourne au centre dominant.' },
+            { move: 'Rf5', comment: 'La tour vise le pion f4.' },
+            { move: 'Ke3', comment: '⚡ Le roi noir avance en e3! Il escorte le pion f vers la promotion.' },
+            { move: 'Re5+', comment: 'Echec de la tour. LCZero essaie de repousser le roi.' },
+            { move: 'Kf2', comment: 'Le roi noir continue d\'avancer vers f2! Il est maintenant au bord de la promotion.' },
+            { move: 'Rf5', comment: 'La tour continue de viser le pion f.' },
+            { move: 'Kg3', comment: 'Le roi attaque le pion g par derriere.' },
+            { move: 'Rg5+', comment: 'Echec! LCZero essaie desesperement de garder le roi loin.' },
+            { move: 'Kh4', comment: 'Le roi se dirige vers h4, mettant la pression sur les pions blancs.' },
+            // === CLIMAX : Double promotion et mat! ===
+            { move: 'Rg6', comment: 'La tour se place en g6.' },
+            { move: 'Rxg6', comment: '🔥 ECHANGE DE TOURS! Stockfish echange une tour pour eliminer la derniere tour active de LCZero.' },
+            { move: 'hxg6', comment: 'Le pion h reprend. LCZero a maintenant un pion passe en g6!' },
+            { move: 'Rg3', comment: 'La tour noire reste en jeu, controlant la 3eme rangee.' },
+            { move: 'Ka5', comment: 'Le roi blanc avance vers les pions de l\'aile dame.' },
+            { move: 'f3', comment: '💥 LE PION F EN F3! Stockfish avance son pion passe. Menace de promotion imminente!' },
+            { move: 'c4', comment: 'LCZero cree un pion passe sur la colonne c. Course aux promotions!' },
+            { move: 'f2', comment: '⚡ LE PION ATTEINT F2! A un pas de la promotion! LCZero est en danger critique.' },
+            { move: 'g7', comment: '💥 LE PION G ATTEINT G7! LCZero aussi est a un pas de la promotion! Tension maximale!' },
+            { move: 'Rxd3', comment: '🔥 LA TOUR CAPTURE LE FOU! Stockfish elimine le fou d3 et menace toujours f1=Q!' },
+            { move: 'g8=Q', comment: '👑 PROMOTION! LCZero promeut en dame! La course a la promotion est gagnee par les Blancs... mais Stockfish a encore f2!' },
+            { move: 'f1=Q', comment: '👑 DOUBLE PROMOTION! Stockfish promeut aussi en dame! Dame contre Dame + Tour - position critique!' },
+            // === FINALE DAME + TOUR vs DAME : Stockfish demontre la technique ===
+            { move: 'Qh8+', comment: 'Echec! La dame blanche donne echec en h8.' },
+            { move: 'Kg3', comment: 'Le roi noir se dirige vers le centre.' },
+            { move: 'Qg7+', comment: 'Echec en g7. LCZero poursuit les echecs.' },
+            { move: 'Kf2', comment: 'Le roi noir fuit vers f2.' },
+            { move: 'Qb2+', comment: 'Echec sur la deuxieme rangee.' },
+            { move: 'Kg1', comment: 'Le roi se cache en g1.' },
+            { move: 'Qg7+', comment: 'Echec en g7. LCZero essaie l\'echec perpetuel!' },
+            { move: 'Kh1', comment: 'Le roi noir se cache dans le coin h1! Stockfish evite l\'echec perpetuel avec precision.' },
+            { move: 'Qh6+', comment: 'Echec en h6.' },
+            { move: 'Rh3', comment: '💎 LA TOUR INTERPOSE! Rh3 bloque l\'echec et prepare la contre-attaque. Coup technique magistral!' },
+            { move: 'Qc6+', comment: 'Echec en c6. LCZero continue les echecs.' },
+            { move: 'Kh2', comment: 'Le roi avance en h2.' },
+            { move: 'Qc7+', comment: 'Echec en c7.' },
+            { move: 'Rg3', comment: 'La tour interpose a nouveau. Stockfish progresse coup par coup.' },
+            { move: 'Qh7+', comment: 'Echec en h7. LCZero est a court d\'echecs efficaces.' },
+            { move: 'Kg2', comment: 'Le roi noir s\'echappe vers g2.' },
+            { move: 'Qb7+', comment: 'Echec en b7.' },
+            { move: 'Kf2', comment: 'Le roi fuit vers f2.' },
+            { move: 'Qb6+', comment: 'Echec en b6.' },
+            { move: 'Ke1', comment: '⚡ Le roi noir trouve une case sure en e1! Plus d\'echecs utiles pour LCZero.' },
+            { move: 'Qd4', comment: 'La dame blanche se centralise. Derniere tentative de defense.' },
+            { move: 'Rg5+', comment: 'ECHEC DE LA TOUR! Stockfish force le roi blanc a bouger.' },
+            { move: 'Kb6', comment: 'Le roi blanc fuit vers b6.' },
+            { move: 'Rg6+', comment: 'Echec en g6! Stockfish continue la pression.' },
+            { move: 'Ka5', comment: 'Le roi blanc va en a5.' },
+            { move: 'Qe2', comment: '💎 Qe2! La dame noire se centralise avec des menaces de mat. Position dominante pour Stockfish.' },
+            { move: 'Qa1+', comment: 'Echec en a1! LCZero donne echec.' },
+            { move: 'Kf2', comment: 'Le roi noir avance en f2.' },
+            { move: 'Qd4+', comment: 'Echec en d4!' },
+            { move: 'Kg2', comment: 'Le roi se dirige vers g2.' },
+            { move: 'Qd5+', comment: 'Echec en d5. LCZero cherche desesperement un echec perpetuel.' },
+            { move: 'Kg3', comment: 'Le roi avance en g3. Stockfish evite methodiquement la repetition.' },
+            { move: 'b5', comment: 'LCZero pousse son pion passe! Derniere carte a jouer.' },
+            { move: 'axb5', comment: 'Stockfish capture. Le pion passe est elimine.' },
+            { move: 'c5', comment: 'Un autre pion passe pour LCZero! Tentative desespere de creer des complications.' },
+            { move: 'Qe6', comment: '🔥 LA DAME DOMINE! Qe6 force l\'echange des dames dans une position gagnante pour les Noirs.' },
+            { move: 'Qxe6', comment: 'LCZero est force d\'echanger les dames. La finale tour + pions est perdue.' },
+            { move: 'Rxe6', comment: 'Stockfish reprend avec la tour. Finale T+P contre pions - technique gagnante.' },
+            { move: 'Kxb5', comment: 'Le roi blanc capture le pion b5. Mais c\'est trop tard.' },
+            { move: 'Kf4', comment: 'Le roi noir avance vers les pions blancs. Activite maximale du roi en finale!' },
+            { move: 'c6', comment: 'Le pion c avance. Derniere chance pour LCZero.' },
+            { move: 'Re8', comment: 'La tour stoppe le pion de derriere! Technique classique de finale.' },
+            { move: 'Kc5', comment: 'Le roi blanc soutient son pion passe.' },
+            { move: 'Ke5', comment: 'Le roi noir centralise. Domination totale de Stockfish.' },
+            { move: 'c7', comment: 'Le pion c atteint la 7eme rangee! Si proche de la promotion...' },
+            { move: 'Rc8', comment: '💎 TOUR DERRIERE LE PION! La tour bloque le pion sur la case de promotion. Technique parfaite!' },
+            { move: 'Kc6', comment: 'Le roi blanc avance pour soutenir la promotion.' },
+            { move: 'Ke6', comment: 'Le roi noir avance aussi. Opposition et zugzwang approchent.' },
+            { move: 'Kc5', comment: 'Le roi recule. LCZero ne peut pas avancer.' },
+            { move: 'Rxc7+', comment: '⚡ LA TOUR CAPTURE LE PION! Le dernier espoir de LCZero est detruit. Victoire ineluctable.' },
+            { move: 'Kd4', comment: 'Le roi blanc tente de rester actif.' },
+            { move: 'Rd7+', comment: 'Echec de la tour. Stockfish repousse le roi.' },
+            { move: 'Ke4', comment: 'Le roi avance.' },
+            { move: 'Kf6', comment: 'Le roi noir avance. Finale technique en cours.' },
+            { move: 'Kf4', comment: 'Le roi blanc essaie de rester a proximite.' },
+            { move: 'Re7', comment: 'La tour se replace.' },
+            { move: 'Kg4', comment: 'Le roi blanc va vers g4.' },
+            { move: 'Ke5', comment: 'Le roi noir continue d\'avancer.' },
+            { move: 'Kf3', comment: 'Le roi blanc recule.' },
+            { move: 'Kf5', comment: 'Centralisation parfaite du roi noir.' },
+            { move: 'Kg3', comment: 'Le roi blanc manoeuvre.' },
+            { move: 'Re3+', comment: 'Echec! La tour force le roi blanc a reculer.' },
+            { move: 'Kg2', comment: 'Le roi recule en g2.' },
+            { move: 'Kg4', comment: 'Le roi noir avance. Le mat approche.' },
+            { move: 'Kf2', comment: 'Le roi blanc fuit.' },
+            { move: 'Re8', comment: 'La tour se place en e8, preparant le coup final.' },
+            { move: 'Kg2', comment: 'Le roi blanc tourne en rond.' },
+            { move: 'Rf8', comment: 'La tour se place sur la colonne f.' },
+            { move: 'Kh2', comment: 'Le roi se cache en h2.' },
+            { move: 'Kf3', comment: 'Le roi noir avance en f3. Le filet se resserre autour du roi blanc.' },
+            { move: 'Kg1', comment: 'Le roi fuit vers g1. Derniere case.' },
+            { move: 'Rh8', comment: '🔥 LA TOUR SE PLACE EN H8! Preparation du mat final. Le roi blanc est pris au piege.' },
+            { move: 'Kf1', comment: 'Le roi blanc est force en f1. Aucune echappatoire.' },
+            { move: 'Rh1#', comment: '👑 ECHEC ET MAT! Rh1# - La tour mate le roi blanc coince en f1! Victoire magistrale de Stockfish dans un Contre-Gambit Falkbeer epique! 0-1' }
+        ];
+
+        // Mapping des pieces chess.js vers Unicode
+        const pieceSymbols = {
+            'p': '\u2659', 'r': '\u2656', 'n': '\u2658', 'b': '\u2657', 'q': '\u2655', 'k': '\u2654',
+            'P': '\u2659', 'R': '\u2656', 'N': '\u2658', 'B': '\u2657', 'Q': '\u2655', 'K': '\u2654'
+        };
+
+        let currentMoveIndex = -1;
+        let gameHistory = [];
+
+        function initBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            const position = chess.board();
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    const piece = position[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function createMovesList() {
+            const movesList = document.getElementById('movesList');
+            movesList.innerHTML = '';
+
+            const brilliantEmojis = /[\u{1F31F}\u{2B50}\u{1F48E}\u{1F525}\u{26A1}\u{1F4A5}\u{1F451}\u{1F3C6}]/u;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveItem.classList.add('brilliant');
+                }
+
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? 'W' : 'B';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+
+                moveItem.innerHTML = `
+                    <div>
+                        <span class="move-number">${color} ${moveNumber}.</span>
+                        <span class="move-notation">${moveNotation}</span>
+                    </div>
+                    <div class="move-comment">${moveData.comment}</div>
+                `;
+
+                moveItem.onclick = () => goToMove(index);
+                movesList.appendChild(moveItem);
+            });
+        }
+
+        function updateMoveInfo() {
+            const info = document.getElementById('moveInfo');
+            if (currentMoveIndex === -1) {
+                info.textContent = 'Position initiale';
+            } else {
+                const moveNumber = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'LCZero (Blanc)' : 'Stockfish (Noir)';
+                info.innerHTML = `<strong>Coup ${moveNumber}</strong> - ${color}: ${gameMoves[currentMoveIndex].move}`;
+            }
+
+            // Highlight active move
+            document.querySelectorAll('.move-item').forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === currentMoveIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const move = gameMoves[currentMoveIndex].move;
+                let success = false;
+
+                // Essayer plusieurs variations
+                const variations = [
+                    move,
+                    move.replace('+', '').replace('#', ''),
+                    move.replace('x', ''),
+                    move.toLowerCase()
+                ];
+
+                for (const v of variations) {
+                    try {
+                        const result = chess.move(v, { sloppy: true });
+                        if (result) { success = true; break; }
+                    } catch (e) {}
+                }
+
+                if (!success) {
+                    console.warn('Coup echoue:', move, 'index:', currentMoveIndex);
+                }
+
+                initBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                currentMoveIndex--;
+                rebuildGame();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = -1;
+            chess.reset();
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            while (currentMoveIndex < gameMoves.length - 1) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            goToStart();
+            for (let i = 0; i <= index; i++) {
+                nextMove();
+            }
+        }
+
+        function rebuildGame() {
+            chess.reset();
+            for (let i = 0; i <= currentMoveIndex; i++) {
+                const move = gameMoves[i].move;
+                const variations = [move, move.replace('+', '').replace('#', ''), move.replace('x', '')];
+                for (const v of variations) {
+                    try {
+                        const result = chess.move(v, { sloppy: true });
+                        if (result) break;
+                    } catch (e) {}
+                }
+            }
+            initBoard();
+        }
+
+        // Initialisation
+        initBoard();
+        createMovesList();
+        updateMoveInfo();
+
+        // Navigation au clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

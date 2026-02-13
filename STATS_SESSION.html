@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Statistiques Complètes - ChessNova Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 210, 255, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 210, 255, 0.4);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 2px solid rgba(0, 210, 255, 0.3);
+            padding-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(0, 210, 255, 0.1);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .highlight {
+            color: #00d2ff;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.3);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: width 1s;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #00d2ff;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .timeline-item h4 {
+            color: #00d2ff;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 5px;
+        }
+
+        .badge-success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .badge-info {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196F3;
+            border: 1px solid #2196F3;
+        }
+
+        .badge-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+            border: 1px solid #FFC107;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .nav-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-button:hover {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="nav-button">◀ Menu</a>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Statistiques Complètes - Session d'Entraînement</h1>
+            <p>ChessNova Chess Engine - Session Active 20251024_161849</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.85;">Analyse en temps réel</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>⏱️ Temps Total Écoulé</h3>
+                <div class="value">~18h</div>
+                <div class="label">Session continue depuis le 24/10 16:18</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>🎮 Parties Totales</h3>
+                <div class="value">15+</div>
+                <div class="label">Sessions précédentes + actuelle</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>📊 Session Actuelle</h3>
+                <div class="value">2+</div>
+                <div class="label">Partie #3 en cours</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>⚡ Coups Totaux</h3>
+                <div class="value">2875+</div>
+                <div class="label">Environ 115 coups/partie moyenne</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>🎯 Taux de Progression</h3>
+                <div class="value">1%</div>
+                <div class="label">Sur 200 parties cibles</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>⏳ Temps Restant Estimé</h3>
+                <div class="value">~360h</div>
+                <div class="label">À ce rythme (15 jours)</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Analyse Détaillée par Partie</h2>
+
+            <h3 style="margin-top: 25px; color: #00d2ff;">Session Actuelle (20251024_161849)</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Couleur</th>
+                        <th>Coups</th>
+                        <th>Résultat</th>
+                        <th>Accord SF</th>
+                        <th>Décisions Créatives</th>
+                        <th>Temps Estimé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1</strong></td>
+                        <td>Blancs (ChessNova)</td>
+                        <td>106</td>
+                        <td>Défaite (Mat)</td>
+                        <td><span class="highlight">3.8%</span></td>
+                        <td>8 coups</td>
+                        <td>~12 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2</strong></td>
+                        <td>Noirs (ChessNova)</td>
+                        <td>125</td>
+                        <td>Défaite (Mat)</td>
+                        <td><span class="highlight">17.7%</span> ⬆️</td>
+                        <td>6 coups</td>
+                        <td>~14 min</td>
+                    </tr>
+                    <tr style="background: rgba(0, 210, 255, 0.1);">
+                        <td><strong>3</strong></td>
+                        <td>Blancs (ChessNova)</td>
+                        <td>100+</td>
+                        <td>🔄 EN COURS</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>~11 min (actuel)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="progress-bar" style="margin-top: 30px;">
+                <div class="progress-fill" style="width: 10%">Partie 3/20 (Lot 1)</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⏱️ Répartition du Temps</h2>
+
+            <div style="margin: 25px 0;">
+                <h4 style="color: #00d2ff; margin-bottom: 15px;">Temps par Partie (Moyenne)</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        ⏱️ <strong>Temps de réflexion ChessNova:</strong> 5.0s par coup × ~115 coups = ~9.6 minutes
+                    </li>
+                    <li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        ⚡ <strong>Temps de réflexion Stockfish:</strong> 2.0s par coup × ~115 coups = ~3.8 minutes
+                    </li>
+                    <li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        📊 <strong>Total par partie:</strong> ~13-14 minutes en moyenne
+                    </li>
+                    <li style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+                        🎯 <strong>Pour 200 parties:</strong> 200 × 14 min = <span class="highlight">2800 minutes ≈ 46.7 heures</span>
+                    </li>
+                </ul>
+            </div>
+
+            <h4 style="color: #00d2ff; margin: 25px 0 15px 0;">Session Actuelle</h4>
+            <div style="background: rgba(0, 210, 255, 0.1); padding: 20px; border-radius: 10px;">
+                <p><strong>Début:</strong> 24 octobre 2025, 16:18:49</p>
+                <p><strong>Temps écoulé:</strong> ~18 heures 13 minutes</p>
+                <p><strong>Parties complétées:</strong> 2</p>
+                <p><strong>Partie en cours:</strong> #3 (100+ coups joués)</p>
+                <p><strong>Temps de jeu effectif:</strong> ~26 minutes (parties 1 et 2)</p>
+                <p><strong>Overhead système:</strong> ~17h 47min (initialisation, sauvegarde, analyse)</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📚 Historique des Sessions</h2>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Session du 16-17 octobre 2025</h4>
+                    <p><strong>Parties jouées:</strong> 2 (game_0001 et game_0002)</p>
+                    <span class="badge badge-info">Archivées</span>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>Session du 23 octobre 2025</h4>
+                    <p><strong>Parties jouées:</strong> 10+ parties</p>
+                    <p><strong>Fichiers:</strong> game_0001 à game_0007 plus 3 autres</p>
+                    <span class="badge badge-success">Complétée</span>
+                </div>
+
+                <div class="timeline-item" style="border-left-color: #00d2ff; background: rgba(0, 210, 255, 0.1);">
+                    <h4>Session Actuelle - 24-25 octobre 2025</h4>
+                    <p><strong>ID Session:</strong> 20251024_161849</p>
+                    <p><strong>Objectif:</strong> 200 parties (10 lots de 20)</p>
+                    <p><strong>Statut:</strong> Lot 1/10 en cours</p>
+                    <span class="badge badge-warning">EN COURS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Projections</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Métrique</th>
+                        <th>Valeur Actuelle</th>
+                        <th>Objectif</th>
+                        <th>Temps Estimé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Parties Session Actuelle</td>
+                        <td>2+ / 200</td>
+                        <td>200</td>
+                        <td>~46.7 heures</td>
+                    </tr>
+                    <tr>
+                        <td>Lot Actuel</td>
+                        <td>1 / 10</td>
+                        <td>10</td>
+                        <td>~27 min par lot</td>
+                    </tr>
+                    <tr>
+                        <td>Accord avec Stockfish</td>
+                        <td>17.7%</td>
+                        <td>50%+</td>
+                        <td>~100 parties</td>
+                    </tr>
+                    <tr>
+                        <td>ELO Estimé</td>
+                        <td>~1600</td>
+                        <td>3600+</td>
+                        <td>Plusieurs semaines</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" style="text-align: center; background: linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(58, 123, 213, 0.1) 100%);">
+            <h2>📊 Résumé Exécutif</h2>
+            <div style="margin: 30px 0;">
+                <p style="font-size: 1.2rem; margin: 15px 0;"><strong>Temps total écoulé toutes sessions:</strong> <span class="highlight">~20+ heures</span></p>
+                <p style="font-size: 1.2rem; margin: 15px 0;"><strong>Parties totales jouées:</strong> <span class="highlight">15+ parties</span></p>
+                <p style="font-size: 1.2rem; margin: 15px 0;"><strong>Amélioration observée:</strong> <span class="highlight">+13.9%</span> en 2 parties</p>
+                <p style="font-size: 1.2rem; margin: 15px 0;"><strong>Temps par partie:</strong> <span class="highlight">~13-14 minutes</span></p>
+                <p style="font-size: 1.2rem; margin: 15px 0;"><strong>Temps restant pour objectif:</strong> <span class="highlight">~46 heures</span> (200 parties)</p>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                <p><strong>🚀 L'entraînement continue 24/7!</strong></p>
+                <p style="margin-top: 10px; opacity: 0.8;">ChessNova apprend en continu, s'améliorant à chaque partie contre Stockfish 17.1 FULL</p>
+            </div>
+        </div>
+    </div>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

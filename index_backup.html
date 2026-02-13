@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessNova Chess Engine - Hub Central</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            text-align: center;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+            background: linear-gradient(90deg, #fff, #4CAF50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .status-card .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .status-card .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .status-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-card:hover::before {
+            left: 100%;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            border-color: #4CAF50;
+        }
+
+        .menu-card .icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .menu-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: #4CAF50;
+        }
+
+        .menu-card p {
+            opacity: 0.85;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .menu-card .badge {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.3);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            border: 1px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .badge.new {
+            background: rgba(255, 107, 107, 0.3);
+            border-color: rgba(255, 107, 107, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .badge.live {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: rgba(33, 150, 243, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(90deg, #2196F3, #1976D2);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(90deg, #f44336, #da190b);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>♟️ ChessNova Chess Engine</h1>
+            <p class="subtitle">Hybrid Intelligence System - Training Dashboard</p>
+            <p style="margin-top: 10px; opacity: 0.8;">5 AI Components | Current ELO: ~3150 | Target: 3600+</p>
+            <p style="margin-top: 5px; opacity: 0.9; color: #4CAF50; font-weight: bold;">🔥 +13.9% Amélioration en 2 parties!</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-card">
+                <div class="icon">🎮</div>
+                <div class="label">Session Active</div>
+                <div class="value">EN COURS</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">📊</div>
+                <div class="label">ELO Actuel</div>
+                <div class="value">~3150</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">🔥</div>
+                <div class="label">Amélioration</div>
+                <div class="value">+13.9%</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">⏱️</div>
+                <div class="label">Temps Total</div>
+                <div class="value">20h+</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="action-btn" onclick="window.location.href='TRAINING_DASHBOARD.html'">
+                🔴 LIVE Training
+            </button>
+            <button class="action-btn danger" onclick="window.location.href='SUIVI_PARTIES_LIVE.html'">
+                🎮 Partie EN COURS
+            </button>
+            <button class="action-btn secondary" onclick="window.location.href='VICTOIRES_TRACKER.html'">
+                🏆 Victoires
+            </button>
+            <button class="action-btn secondary" onclick="window.location.href='PARTIES_CREATIVES.html'">
+                🎮 Galerie Parties
+            </button>
+            <button class="action-btn secondary" onclick="window.location.href='ENSEIGNEMENTS_ECHECS.html'">
+                📚 Enseignements
+            </button>
+        </div>
+
+        <h2 style="text-align: center; margin: 40px 0 30px; font-size: 2rem;">📁 Hub de Visualisation</h2>
+
+        <h2 style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;">
+            👑 Bibliothèque des Parties Légendaires
+        </h2>
+        <p style="text-align: center; margin-bottom: 30px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;">
+            Collection de parties historiques analysées et commentées avec échiquiers interactifs
+        </p>
+
+        <div class="menu-grid" id="legendary-games">
+            <a href="fischer_game_of_century_interactive_v2.html">
+                <div class="menu-card" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 152, 0, 0.1));">
+                    <span class="icon">👑</span>
+                    <h3>Fischer - Game of the Century</h3>
+                    <p><strong>Bobby Fischer (13 ans!) vs Donald Byrne</strong><br>New York, 1956 | Défense Grünfeld<br>Sacrifice de Dame légendaire au coup 17 (Be6!!). 41 coups commentés, navigation interactive complète.</p>
+                    <span class="badge" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">⭐ DISPONIBLE</span>
+                </div>
+            </a>
+
+            <a href="kasparov_immortal_1999.html">
+                <div class="menu-card" style="border: 2px solid #ff6b6b; background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 111, 0.1));">
+                    <span class="icon">🔥</span>
+                    <h3>Kasparov - Immortal Game</h3>
+                    <p><strong>Garry Kasparov vs Veselin Topalov</strong><br>Wijk aan Zee, 1999 | Défense Pirc<br>Combinaison spectaculaire avec sacrifice de tour. Considérée comme une des plus belles parties modernes.</p>
+                    <span class="badge" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5);">⭐ DISPONIBLE</span>
+                </div>
+            </a>
+
+            <a href="tal_masterpiece_1958.html">
+                <div class="menu-card" style="border: 2px solid #9b59b6; background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(142, 68, 173, 0.1));">
+                    <span class="icon">🎯</span>
+                    <h3>Tal - Masterpiece</h3>
+                    <p><strong>Mikhail Tal vs Vasiukov</strong><br>USSR Championship, 1958 | Sicilienne<br>Le Magicien de Riga démontre son art du sacrifice et de l'attaque.</p>
+                    <span class="badge" style="background: rgba(155, 89, 182, 0.3); border-color: rgba(155, 89, 182, 0.5);">⭐ DISPONIBLE</span>
+                </div>
+            </a>
+
+            <a href="karpov_positional_1978.html">
+                <div class="menu-card" style="border: 2px solid #3498db; background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));">
+                    <span class="icon">🏰</span>
+                    <h3>Karpov - Positional Masterpiece</h3>
+                    <p><strong>Anatoly Karpov vs Viktor Korchnoi</strong><br>World Championship, 1978<br>Chef-d'œuvre positionnel du 12e Champion du Monde. Technique et précision absolues.</p>
+                    <span class="badge" style="background: rgba(52, 152, 219, 0.3); border-color: rgba(52, 152, 219, 0.5);">⭐ DISPONIBLE</span>
+                </div>
+            </a>
+
+            <a href="carlsen_brilliancy_2013.html">
+                <div class="menu-card" style="border: 2px solid #2ecc71; background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));">
+                    <span class="icon">⚡</span>
+                    <h3>Carlsen - Modern Brilliancy</h3>
+                    <p><strong>Magnus Carlsen vs Viswanathan Anand</strong><br>World Championship, 2013<br>Le Champion du Monde moderne démontre sa compréhension profonde. Finale technique parfaite.</p>
+                    <span class="badge" style="background: rgba(46, 204, 113, 0.3); border-color: rgba(46, 204, 113, 0.5);">⭐ DISPONIBLE</span>
+                </div>
+            </a>
+
+            <a href="alphazero_vs_stockfish.html">
+                <div class="menu-card" style="border: 2px solid #00ffff; background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 0, 0.1));">
+                    <span class="icon">🤖</span>
+                    <h3>AlphaZero vs Stockfish - Game 10</h3>
+                    <p><strong>AlphaZero (DeepMind) vs Stockfish 8</strong><br>Londres, Décembre 2017 | English Opening<br>La révolution de l'IA : AlphaZero apprend en 4h et bat le meilleur moteur du monde! Attaque h5-Rh3 spectaculaire!</p>
+                    <span class="badge new" style="background: rgba(0, 255, 255, 0.3); border-color: rgba(0, 255, 255, 0.5);">🤖 NOUVEAU</span>
+                </div>
+            </a>
+
+            <a href="zup_victory_detailed.html">
+                <div class="menu-card" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 152, 0, 0.15)); box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
+                    <span class="icon">🏆</span>
+                    <h3>ZUP ULTIMATE vs Stockfish MAX</h3>
+                    <p><strong>ZUP ULTIMATE (8 AI) vs Stockfish MAX (3600 ELO)</strong><br>2025 | Défense Française - Variante d'Avance<br>VICTOIRE HISTORIQUE! Architecture Multi-AI bat Stockfish MAX. 91 coups commentés, 5 moments décisifs, 2 sacrifices brillants!</p>
+                    <span class="badge new" style="background: rgba(255, 215, 0, 0.4); border-color: rgba(255, 215, 0, 0.7); animation: pulse 1.5s infinite;">🔥 NOUVEAU - VICTOIRE!</span>
+                </div>
+            </a>
+
+            <a href="leela_vs_stockfish_2019.html">
+                <div class="menu-card" style="border: 2px solid #00ff88; background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));">
+                    <span class="icon">🧠</span>
+                    <h3>Leela Chess Zero vs Stockfish 11</h3>
+                    <p><strong>Leela Chess Zero vs Stockfish 11</strong><br>TCEC Season 16, 2019 | Sicilian Defense<br>Leela (réseau neuronal open-source) vs Stockfish: guerre des titans modernes! Style positionnel profond contre calcul brute force.</p>
+                    <span class="badge new" style="background: rgba(0, 255, 136, 0.3); border-color: rgba(0, 255, 136, 0.5);">🤖 IA vs IA</span>
+                </div>
+            </a>
+
+            <a href="deep_blue_kasparov_1997.html">
+                <div class="menu-card" style="border: 2px solid #0088ff; background: linear-gradient(135deg, rgba(0, 136, 255, 0.1), rgba(0, 100, 200, 0.1));">
+                    <span class="icon">🖥️</span>
+                    <h3>Deep Blue vs Kasparov - Game 6</h3>
+                    <p><strong>Deep Blue (IBM) vs Garry Kasparov</strong><br>New York, 11 mai 1997 | Caro-Kann Defense<br>Le match qui a changé l'histoire! Première victoire d'une IA contre un Champion du Monde en match officiel. Deep Blue 3½-2½.</p>
+                    <span class="badge" style="background: rgba(0, 136, 255, 0.3); border-color: rgba(0, 136, 255, 0.5);">🏆 HISTORIQUE</span>
+                </div>
+            </a>
+
+            <a href="alphazero_vs_stockfish_game2.html">
+                <div class="menu-card" style="border: 2px solid #ff00ff; background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(200, 0, 200, 0.1));">
+                    <span class="icon">⚛️</span>
+                    <h3>AlphaZero vs Stockfish - Game 2</h3>
+                    <p><strong>AlphaZero vs Stockfish 8</strong><br>Décembre 2017 | Ruy Lopez<br>Sacrifice de pion positionnel spectaculaire! AlphaZero démontre une compréhension stratégique surhumaine avec 28...g5!!.</p>
+                    <span class="badge new" style="background: rgba(255, 0, 255, 0.3); border-color: rgba(255, 0, 255, 0.5);">🤖 SACRIFICES</span>
+                </div>
+            </a>
+
+            <a href="stockfish_vs_komodo_2018.html">
+                <div class="menu-card" style="border: 2px solid #ffaa00; background: linear-gradient(135deg, rgba(255, 170, 0, 0.1), rgba(255, 140, 0, 0.1));">
+                    <span class="icon">⚔️</span>
+                    <h3>Stockfish vs Komodo - TCEC Final</h3>
+                    <p><strong>Stockfish 9 vs Komodo MCTS</strong><br>TCEC Season 13, 2018 | Queen's Gambit<br>Bataille épique des meilleurs moteurs traditionnels! Finale du championnat mondial des moteurs d'échecs.</p>
+                    <span class="badge" style="background: rgba(255, 170, 0, 0.3); border-color: rgba(255, 170, 0, 0.5);">⚔️ TCEC</span>
+                </div>
+            </a>
+
+            <a href="alphazero_sacrificial_masterpiece.html">
+                <div class="menu-card" style="border: 2px solid #ff0088; background: linear-gradient(135deg, rgba(255, 0, 136, 0.1), rgba(200, 0, 100, 0.1));">
+                    <span class="icon">💎</span>
+                    <h3>AlphaZero - Sacrificial Masterpiece</h3>
+                    <p><strong>AlphaZero vs Stockfish 8</strong><br>Décembre 2017 | Italian Game<br>Triple sacrifice de pièces! AlphaZero sacrifie cavalier, fou, et qualité pour un mat forcé digne des romantiques du 19e siècle!</p>
+                    <span class="badge new" style="background: rgba(255, 0, 136, 0.3); border-color: rgba(255, 0, 136, 0.5);">💎 CHEF-D'ŒUVRE</span>
+                </div>
+            </a>
+
+            <div class="menu-card" style="background: rgba(76, 175, 80, 0.15); cursor: default;">
+                <span class="icon">➕</span>
+                <h3>Proposer une Partie</h3>
+                <p>Vous avez une suggestion de partie légendaire à ajouter à la bibliothèque? Les parties historiques avec des coups brillants et des enseignements tactiques sont privilégiées!</p>
+                <span class="badge">💡 Suggestions</span>
+            </div>
+        </div>
+
+        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">📊 Dashboards & Analytics</h2>
+
+        <div class="menu-grid">
+            <a href="TRAINING_DASHBOARD.html">
+                <div class="menu-card">
+                    <span class="icon">📺</span>
+                    <h3>Training Dashboard LIVE</h3>
+                    <p>Suivi en temps réel de l'entraînement en cours. Rafraîchissement automatique toutes les 30 secondes. Visualisez la progression batch par batch.</p>
+                    <span class="badge live">🔴 LIVE</span>
+                </div>
+            </a>
+
+            <a href="SUIVI_PARTIES_LIVE.html">
+                <div class="menu-card">
+                    <span class="icon">🎮</span>
+                    <h3>Suivi Parties LIVE</h3>
+                    <p>Suivez la partie en cours EN TEMPS RÉEL! Partie #3 (Krejcik Attack 2.h4!?) avec 100+ coups déjà joués. Échiquier interactif, position actuelle, coups notables. Auto-refresh 15s.</p>
+                    <span class="badge live">🔥 EN COURS</span>
+                </div>
+            </a>
+
+            <a href="PARTIES_CREATIVES.html">
+                <div class="menu-card">
+                    <span class="icon">🎮</span>
+                    <h3>Galerie des Parties Créatives</h3>
+                    <p>Explorez TOUTES les parties d'ChessNova avec échiquiers interactifs! Partie #1 (English Opening - 8 coups créatifs), #2 (Scotch Game - +13.9% progression), #3 (Krejcik Attack - 2.h4!?). Coups créatifs mis en évidence!</p>
+                    <span class="badge new">✨ 3 PARTIES</span>
+                </div>
+            </a>
+
+            <a href="ENSEIGNEMENTS_ECHECS.html">
+                <div class="menu-card">
+                    <span class="icon">🎓</span>
+                    <h3>Enseignements d'Échecs</h3>
+                    <p>Découvrez ce qu'ChessNova a appris en jouant contre Stockfish FULL. Leçons stratégiques, tactiques créatives, et patterns gagnants identifiés.</p>
+                    <span class="badge">📖 Éducation</span>
+                </div>
+            </a>
+
+            <a href="STATS_SESSION.html">
+                <div class="menu-card">
+                    <span class="icon">📊</span>
+                    <h3>Statistiques Complètes</h3>
+                    <p>Statistiques détaillées de toutes les sessions: nombre de parties, temps total écoulé, temps par session, timeline historique, et projections.</p>
+                    <span class="badge">📈 Analytics</span>
+                </div>
+            </a>
+
+            <a href="RAPPORT_APPRENTISSAGE_ACTUEL.html">
+                <div class="menu-card">
+                    <span class="icon">📝</span>
+                    <h3>Rapport d'Apprentissage</h3>
+                    <p>Rapport complet sur l'évolution d'ChessNova: progression de l'accord avec Stockfish, décisions créatives, et amélioration continue mesurée.</p>
+                    <span class="badge">🧠 Analyse</span>
+                </div>
+            </a>
+
+            <a href="ARCHITECTURE_ChessNova.html">
+                <div class="menu-card">
+                    <span class="icon">🏗️</span>
+                    <h3>Architecture d'ChessNova</h3>
+                    <p>Découvrez comment ChessNova est composé! Claude AI + TRM (7M) + HRM (27M) + Stockfish 17.1 + Minimax = Système Multi-IA Hybride 3600+ ELO. Visualisation interactive des 5 composants.</p>
+                    <span class="badge new">✨ NOUVEAU</span>
+                </div>
+            </a>
+
+            <a href="VICTOIRES_TRACKER.html">
+                <div class="menu-card">
+                    <span class="icon">🏆</span>
+                    <h3>Tracker de Victoires</h3>
+                    <p>Suivez les victoires d'ChessNova contre Stockfish FULL! Graphique d'amélioration (+13.9%), timeline des parties, et progression vers l'objectif de 10-20 victoires sur 200 parties.</p>
+                    <span class="badge new">✨ NOUVEAU</span>
+                </div>
+            </a>
+
+            <a href="EVOLUTION_ELO.html">
+                <div class="menu-card">
+                    <span class="icon">📈</span>
+                    <h3>Évolution ELO</h3>
+                    <p>Graphiques interactifs d'évolution ELO! Accord avec Stockfish, progression partie par partie, projection vers 3600+, et jalons atteints. Visualisation complète avec Chart.js.</p>
+                    <span class="badge new">✨ NOUVEAU</span>
+                </div>
+            </a>
+
+            <a href="web/STYLE_ChessNova.html">
+                <div class="menu-card" style="border: 2px solid #ffd700;">
+                    <span class="icon">🎨</span>
+                    <h3>Le Style d'ChessNova ⭐</h3>
+                    <p><strong>ULTRA-AGRESSIF et CRÉATIF!</strong> Découvrez la personnalité unique d'ChessNova: coups signature (h4/h5, Na4), ouvertures ultra-rares (Krejcik Attack <0.1%), style Tal/Nezhmetdinov. Analyse complète avec graphiques radar!</p>
+                    <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">🌟 GÉNIAL!</span>
+                </div>
+            </a>
+
+            <a href="web/ChessNova_TEACHER.html">
+                <div class="menu-card" style="border: 2px solid #4facfe;">
+                    <span class="icon">🎓</span>
+                    <h3>ChessNova Teacher - Mode Pédagogique 🆕</h3>
+                    <p><strong>Professeur IA Gratuit!</strong> Jouez contre ChessNova avec 6 niveaux (Débutant→Grand Master). Suggestions "Sûr/Créatif/Agressif", explications naturelles ("ce coup bloque notre fou"), calcul puissance multi-tours. Stats sauvegardées!</p>
+                    <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">🎓 NOUVEAU!</span>
+                </div>
+            </a>
+
+            <a href="web/PUZZLES.html">
+                <div class="menu-card" style="border: 2px solid #f093fb;">
+                    <span class="icon">🧩</span>
+                    <h3>Position Puzzle Generator 🆕</h3>
+                    <p><strong>1000+ Puzzles Auto-Générés!</strong> Tactiques extraites des parties: Mat, Fourchette, Clouage, Sacrifice... Rating Lichess-style. Base de données qui grandit automatiquement!</p>
+                    <span class="badge new" style="background: rgba(240, 147, 251, 0.3); border-color: rgba(240, 147, 251, 0.5);">🧩 NOUVEAU!</span>
+                </div>
+            </a>
+
+            <a href="CARTE_CAPACITES_RADAR.html">
+                <div class="menu-card" style="border: 2px solid #00f2fe;">
+                    <span class="icon">🎯</span>
+                    <h3>Carte Radar des Capacités 🆕</h3>
+                    <p><strong>Analyse Comparative Ultime!</strong> Visualisation radar interactive comparant Stockfish 17.1 vs ChessNova sur 10 dimensions: Précision 10/10, Tactique 10/10, Créativité 9.5/10, Agressivité 9.2/10. Graphiques détaillés + tableau comparatif complet!</p>
+                    <span class="badge new" style="background: rgba(0, 242, 254, 0.3); border-color: rgba(0, 242, 254, 0.5);">🎯 NOUVEAU!</span>
+                </div>
+            </a>
+
+            <a href="COMPTEURS_LIVE.html">
+                <div class="menu-card">
+                    <span class="icon">⏱️</span>
+                    <h3>Compteurs en Direct</h3>
+                    <p>Compteurs live de toutes les métriques importantes: coups joués, temps de réflexion, positions analysées, et plus encore.</p>
+                    <span class="badge live">🔴 LIVE</span>
+                </div>
+            </a>
+
+            <a href="data/rapport_apprentissage.html" style="opacity: 0.7;">
+                <div class="menu-card" style="border-color: rgba(255, 255, 255, 0.1);">
+                    <span class="icon">📂</span>
+                    <h3>Archives de Données</h3>
+                    <p>Accédez aux rapports d'apprentissage archivés et aux fichiers PGN des parties jouées. Historique complet disponible.</p>
+                    <span class="badge">🗄️ Archives</span>
+                </div>
+            </a>
+
+            <div class="menu-card" style="background: rgba(76, 175, 80, 0.15); cursor: default;">
+                <span class="icon">🚀</span>
+                <h3>À Venir Prochainement</h3>
+                <p>
+                    • Bibliothèque d'ouvertures apprises<br>
+                    • Comparaison de parties côte à côte<br>
+                    • Export & partage de parties<br>
+                    • Intégration ModelsLab IA
+                </p>
+                <span class="badge">🔮 Futur</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>ChessNova Chess Engine</strong> - Hybrid Intelligence System</p>
+            <p>Minimax + Alpha-Beta Pruning + Stockfish 17.1 FULL</p>
+            <p style="margin-top: 15px; font-size: 0.9rem;">
+                Session ID: 20251024_161849 | Auto-Learning Pipeline Active
+            </p>
+            <p style="margin-top: 10px; opacity: 0.6; font-size: 0.85rem;">
+                Dernière mise à jour: <span id="lastUpdate"></span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Update timestamp
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleString('fr-FR');
+
+        // Auto-refresh every 2 minutes to update stats
+        setTimeout(() => {
+            location.reload();
+        }, 120000);
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

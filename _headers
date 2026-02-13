@@ -1,0 +1,13 @@
+# Headers pour Cloudflare Pages - Google Auth Fix
+
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+
+  # CSP permissif pour Google Auth
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.gstatic.com https://*.googleapis.com https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline' https://unpkg.com https://*.googleapis.com; img-src 'self' https: data:; font-src 'self' https://*.gstatic.com data:; connect-src 'self' https://*.google.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://aimix-api.hugo-padilla-pro.workers.dev https://aimix-engine-server.onrender.com https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com wss://*.firebaseio.com; worker-src 'self' blob:; frame-src https://*.google.com https://*.firebaseapp.com
+
+  Cache-Control: public, max-age=60
+
+/*.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0

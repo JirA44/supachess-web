@@ -1,0 +1,21 @@
+# SupaChess Lichess BOT Worker
+# Cloudflare Worker configuration
+
+name = "supachess-lichess-bot"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# KV namespace for token storage
+[[kv_namespaces]]
+binding = "LICHESS_TOKENS"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-id"
+
+# Environment variables
+[vars]
+ENGINE_URL = "https://aimix-engine-server.onrender.com"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"

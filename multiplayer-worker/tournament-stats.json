@@ -1,0 +1,596 @@
+{
+  "global": {
+    "totalGames": 28,
+    "totalMoves": 2581,
+    "totalTime": 3843,
+    "whiteWins": 2,
+    "blackWins": 2,
+    "draws": 24,
+    "errors": 0,
+    "shortestGame": 36,
+    "longestGame": 100,
+    "fastestGame": 76,
+    "slowestGame": 227
+  },
+  "perAI": {
+    "Random Bot": {
+      "games": 7,
+      "wins": 0,
+      "losses": 1,
+      "draws": 6,
+      "totalMoves": 682,
+      "totalTime": 1151,
+      "avgTimePerMove": 2,
+      "winRate": 0,
+      "asWhite": {
+        "games": 7,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 0,
+        "wins": 0
+      },
+      "opponents": {
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 1,
+          "draws": 0
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 800,
+      "type": "random",
+      "level": 5,
+      "drawRate": 86
+    },
+    "Aggressive AI": {
+      "games": 7,
+      "wins": 2,
+      "losses": 0,
+      "draws": 5,
+      "totalMoves": 642,
+      "totalTime": 1034,
+      "avgTimePerMove": 2,
+      "winRate": 29,
+      "asWhite": {
+        "games": 6,
+        "wins": 1
+      },
+      "asBlack": {
+        "games": 1,
+        "wins": 1
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 1,
+          "losses": 0,
+          "draws": 0
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 1,
+          "losses": 0,
+          "draws": 0
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 1200,
+      "type": "aggressive",
+      "level": 10,
+      "drawRate": 71
+    },
+    "Defensive AI": {
+      "games": 7,
+      "wins": 1,
+      "losses": 1,
+      "draws": 5,
+      "totalMoves": 581,
+      "totalTime": 842,
+      "avgTimePerMove": 1,
+      "winRate": 14,
+      "asWhite": {
+        "games": 5,
+        "wins": 1
+      },
+      "asBlack": {
+        "games": 2,
+        "wins": 0
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 1,
+          "losses": 0,
+          "draws": 0
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 1,
+          "draws": 0
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 1100,
+      "type": "defensive",
+      "level": 10,
+      "drawRate": 71
+    },
+    "Positional AI": {
+      "games": 7,
+      "wins": 0,
+      "losses": 0,
+      "draws": 7,
+      "totalMoves": 658,
+      "totalTime": 913,
+      "avgTimePerMove": 1,
+      "winRate": 0,
+      "asWhite": {
+        "games": 4,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 3,
+        "wins": 0
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 1300,
+      "type": "positional",
+      "level": 10,
+      "drawRate": 100
+    },
+    "Minimax Lv5": {
+      "games": 7,
+      "wins": 0,
+      "losses": 2,
+      "draws": 5,
+      "totalMoves": 566,
+      "totalTime": 889,
+      "avgTimePerMove": 2,
+      "winRate": 0,
+      "asWhite": {
+        "games": 3,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 4,
+        "wins": 0
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 1,
+          "draws": 0
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 1,
+          "draws": 0
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 1400,
+      "type": "minimax",
+      "level": 5,
+      "drawRate": 71
+    },
+    "Minimax Lv10": {
+      "games": 7,
+      "wins": 0,
+      "losses": 0,
+      "draws": 7,
+      "totalMoves": 697,
+      "totalTime": 964,
+      "avgTimePerMove": 1,
+      "winRate": 0,
+      "asWhite": {
+        "games": 2,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 5,
+        "wins": 0
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 1800,
+      "type": "minimax",
+      "level": 10,
+      "drawRate": 100
+    },
+    "Minimax Lv15": {
+      "games": 7,
+      "wins": 1,
+      "losses": 0,
+      "draws": 6,
+      "totalMoves": 636,
+      "totalTime": 952,
+      "avgTimePerMove": 1,
+      "winRate": 14,
+      "asWhite": {
+        "games": 1,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 6,
+        "wins": 1
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 1,
+          "losses": 0,
+          "draws": 0
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Pro": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 2200,
+      "type": "minimax",
+      "level": 15,
+      "drawRate": 86
+    },
+    "Minimax Pro": {
+      "games": 7,
+      "wins": 0,
+      "losses": 0,
+      "draws": 7,
+      "totalMoves": 700,
+      "totalTime": 941,
+      "avgTimePerMove": 1,
+      "winRate": 0,
+      "asWhite": {
+        "games": 0,
+        "wins": 0
+      },
+      "asBlack": {
+        "games": 7,
+        "wins": 0
+      },
+      "opponents": {
+        "Random Bot": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Aggressive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Defensive AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Positional AI": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv5": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv10": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        },
+        "Minimax Lv15": {
+          "games": 1,
+          "wins": 0,
+          "losses": 0,
+          "draws": 1
+        }
+      },
+      "elo": 2600,
+      "type": "minimax",
+      "level": 20,
+      "drawRate": 100
+    }
+  },
+  "availableAIs": [
+    {
+      "type": "random",
+      "level": 5,
+      "name": "Random Bot",
+      "elo": 800
+    },
+    {
+      "type": "aggressive",
+      "level": 10,
+      "name": "Aggressive AI",
+      "elo": 1200
+    },
+    {
+      "type": "defensive",
+      "level": 10,
+      "name": "Defensive AI",
+      "elo": 1100
+    },
+    {
+      "type": "positional",
+      "level": 10,
+      "name": "Positional AI",
+      "elo": 1300
+    },
+    {
+      "type": "minimax",
+      "level": 5,
+      "name": "Minimax Lv5",
+      "elo": 1400
+    },
+    {
+      "type": "minimax",
+      "level": 10,
+      "name": "Minimax Lv10",
+      "elo": 1800
+    },
+    {
+      "type": "minimax",
+      "level": 15,
+      "name": "Minimax Lv15",
+      "elo": 2200
+    },
+    {
+      "type": "minimax",
+      "level": 20,
+      "name": "Minimax Pro",
+      "elo": 2600
+    }
+  ],
+  "timestamp": "2025-12-17T21:38:04.597Z"
+}

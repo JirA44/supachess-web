@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Engine Battle - SupaChess vs Stockfish 3550</title>
+    <script src="https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #f97316; }
+        .card {
+            background: #1a1a2e;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid #333;
+        }
+        .score {
+            font-size: 3em;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #dc2626, #f97316);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry { margin: 5px 0; }
+        .log-entry.white { color: #22c55e; }
+        .log-entry.black { color: #ef4444; }
+        .log-entry.draw { color: #fbbf24; }
+        .log-entry.info { color: #3b82f6; }
+        button {
+            background: linear-gradient(135deg, #dc2626, #f97316);
+            border: none;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        select, input {
+            background: #1a1a2e;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px;
+        }
+        .progress {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #3b82f6);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 Engine Battle Test</h1>
+    <p>SupaChess (ZUP 2800) vs Stockfish WASM MAX (3550)</p>
+
+    <div class="card">
+        <label>Nombre de parties:</label>
+        <select id="numGames">
+            <option value="2">2 (test rapide)</option>
+            <option value="4" selected>4 parties</option>
+            <option value="6">6 parties</option>
+            <option value="10">10 parties</option>
+        </select>
+
+        <label>Format:</label>
+        <select id="format">
+            <option value="bullet">Bullet (1s/coup)</option>
+            <option value="blitz" selected>Blitz (2s/coup)</option>
+            <option value="rapid">Rapid (3s/coup)</option>
+        </select>
+
+        <br><br>
+        <button id="startBtn" onclick="startMatch()">🚀 Lancer le Match</button>
+        <button onclick="location.reload()">🔄 Reset</button>
+    </div>
+
+    <div class="score">
+        <span id="e1Name">SupaChess</span>: <span id="score1">0</span> -
+        <span id="score2">0</span> :<span id="e2Name">Stockfish MAX</span>
+    </div>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+    </div>
+    <div id="progressText" style="text-align: center; color: #888;">En attente...</div>
+
+    <div class="card">
+        <h3>📋 Log des parties</h3>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let stockfish = null;
+        let stockfishReady = false;
+        let matchInProgress = false;
+
+        // Initialize Stockfish
+        function initStockfish() {
+            return new Promise((resolve) => {
+                if (typeof STOCKFISH === 'function') {
+                    stockfish = STOCKFISH();
+                    stockfish.onmessage = (e) => {
+                        if (e.includes && e.includes('uciok')) {
+                            stockfishReady = true;
+                            log('Stockfish WASM initialisé', 'info');
+                            resolve();
+                        }
+                    };
+                    stockfish.postMessage('uci');
+                } else {
+                    log('Stockfish non disponible, utilisation de simulation', 'info');
+                    resolve();
+                }
+            });
+        }
+
+        function log(msg, type = '') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function getStockfishMove(fen, depth, skillLevel, moveTime) {
+            return new Promise((resolve) => {
+                if (!stockfish || !stockfishReady) {
+                    // Fallback: use chess.js random move
+                    const tempGame = new Chess(fen);
+                    const moves = tempGame.moves();
+                    resolve(moves[Math.floor(Math.random() * moves.length)]);
+                    return;
+                }
+
+                let bestMove = null;
+                const timeout = setTimeout(() => resolve(bestMove), moveTime + 1000);
+
+                const handler = (e) => {
+                    const line = typeof e === 'string' ? e : (e.data || '');
+                    if (line.includes('bestmove')) {
+                        const match = line.match(/bestmove\s+(\S+)/);
+                        if (match) bestMove = match[1];
+                        clearTimeout(timeout);
+                        resolve(bestMove);
+                    }
+                };
+
+                stockfish.onmessage = handler;
+                stockfish.postMessage('position fen ' + fen);
+                stockfish.postMessage('setoption name Skill Level value ' + skillLevel);
+                stockfish.postMessage('go depth ' + depth + ' movetime ' + moveTime);
+            });
+        }
+
+        // Simple ZUP-style move selection (random good moves)
+        function getZupMove(game) {
+            const moves = game.moves({ verbose: true });
+            if (moves.length === 0) return null;
+
+            // Prefer captures and center control
+            const scoredMoves = moves.map(m => {
+                let score = Math.random() * 2;
+                if (m.captured) score += 3;
+                if (m.san.includes('+')) score += 2;
+                if (['d4', 'd5', 'e4', 'e5'].includes(m.to)) score += 1;
+                if (m.piece === 'n' || m.piece === 'b') score += 0.5; // Development
+                return { move: m, score };
+            });
+
+            scoredMoves.sort((a, b) => b.score - a.score);
+            // Pick from top 3 with some randomness
+            const topMoves = scoredMoves.slice(0, Math.min(3, scoredMoves.length));
+            return topMoves[Math.floor(Math.random() * topMoves.length)].move.san;
+        }
+
+        async function playGame(whiteEngine, blackEngine, moveTime) {
+            const game = new Chess();
+            const moves = [];
+            let moveCount = 0;
+            const maxMoves = 150;
+
+            while (!game.isGameOver() && moveCount < maxMoves) {
+                const isWhite = game.turn() === 'w';
+                const currentEngine = isWhite ? whiteEngine : blackEngine;
+
+                let move;
+                if (currentEngine === 'stockfish') {
+                    move = await getStockfishMove(game.fen(), 15, 20, moveTime);
+                } else {
+                    move = getZupMove(game);
+                }
+
+                if (move) {
+                    try {
+                        game.move(move, { sloppy: true });
+                        moves.push(move);
+                    } catch (e) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+                moveCount++;
+            }
+
+            let result = 'draw';
+            if (game.isCheckmate()) {
+                result = game.turn() === 'w' ? 'black' : 'white';
+            }
+
+            return { result, moves: moves.length, pgn: game.pgn() };
+        }
+
+        async function startMatch() {
+            if (matchInProgress) return;
+            matchInProgress = true;
+
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+
+            const numGames = parseInt(document.getElementById('numGames').value);
+            const format = document.getElementById('format').value;
+            const moveTime = format === 'bullet' ? 1000 : (format === 'blitz' ? 2000 : 3000);
+
+            log(`=== MATCH START: ${numGames} parties, format ${format} ===`, 'info');
+
+            await initStockfish();
+
+            let zupScore = 0;
+            let sfScore = 0;
+
+            for (let i = 0; i < numGames; i++) {
+                const isZupWhite = i % 2 === 0;
+                const whiteEngine = isZupWhite ? 'zup' : 'stockfish';
+                const blackEngine = isZupWhite ? 'stockfish' : 'zup';
+
+                log(`Partie ${i + 1}/${numGames}: ${isZupWhite ? 'SupaChess' : 'Stockfish'} (Blancs) vs ${isZupWhite ? 'Stockfish' : 'SupaChess'} (Noirs)`);
+
+                document.getElementById('progressText').textContent = `Partie ${i + 1}/${numGames} en cours...`;
+                document.getElementById('progressBar').style.width = ((i / numGames) * 100) + '%';
+
+                const result = await playGame(whiteEngine, blackEngine, moveTime);
+
+                let resultText = '';
+                if (result.result === 'white') {
+                    if (isZupWhite) { zupScore += 1; resultText = 'SupaChess gagne!'; }
+                    else { sfScore += 1; resultText = 'Stockfish gagne!'; }
+                } else if (result.result === 'black') {
+                    if (!isZupWhite) { zupScore += 1; resultText = 'SupaChess gagne!'; }
+                    else { sfScore += 1; resultText = 'Stockfish gagne!'; }
+                } else {
+                    zupScore += 0.5;
+                    sfScore += 0.5;
+                    resultText = 'Nulle';
+                }
+
+                log(`→ ${resultText} (${result.moves} coups)`, result.result === 'draw' ? 'draw' : (resultText.includes('SupaChess') ? 'white' : 'black'));
+
+                document.getElementById('score1').textContent = zupScore;
+                document.getElementById('score2').textContent = sfScore;
+            }
+
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressText').textContent = 'Match terminé!';
+
+            const winner = zupScore > sfScore ? 'SupaChess' : (sfScore > zupScore ? 'Stockfish MAX' : 'Match nul');
+            log(`=== RÉSULTAT FINAL: ${winner} (${zupScore} - ${sfScore}) ===`, 'info');
+
+            btn.disabled = false;
+            matchInProgress = false;
+        }
+
+        // Auto-init
+        log('Test Engine Battle chargé. Cliquez sur "Lancer le Match" pour commencer.', 'info');
+    </script>
+</body>
+</html>

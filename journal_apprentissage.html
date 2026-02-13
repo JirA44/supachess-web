@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaEngine - Journal d'Apprentissage</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff; min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px; border-radius: 15px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.5rem; color: #9b59b6; margin-bottom: 10px; }
+        .back-btn {
+            display: inline-block; padding: 8px 20px; background: rgba(255,255,255,0.1);
+            border-radius: 8px; color: #4CAF50; text-decoration: none; margin-bottom: 15px;
+            border: 1px solid rgba(76,175,80,0.3);
+        }
+        .back-btn:hover { background: rgba(76,175,80,0.2); }
+        .timeline { position: relative; padding-left: 40px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 15px; top: 0; bottom: 0;
+            width: 2px; background: rgba(155,89,182,0.4);
+        }
+        .entry {
+            position: relative; margin-bottom: 25px;
+            background: rgba(255,255,255,0.05); border-radius: 12px;
+            padding: 20px 25px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .entry::before {
+            content: ''; position: absolute; left: -33px; top: 25px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #9b59b6; border: 2px solid #1a1a2e;
+        }
+        .entry .date { color: #9b59b6; font-size: 0.85rem; margin-bottom: 8px; }
+        .entry h3 { color: #4CAF50; margin-bottom: 8px; }
+        .entry .stats { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        .entry .stat {
+            background: rgba(0,0,0,0.3); padding: 5px 12px; border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .win-tag { color: #4CAF50; }
+        .loss-tag { color: #ff6b6b; }
+        .draw-tag { color: #ffd700; }
+        .empty-state { text-align: center; padding: 60px; opacity: 0.5; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="hub.html" class="back-btn">< Hub</a>
+        <div class="header">
+            <h1>Journal d'Apprentissage</h1>
+            <p>Timeline des sessions d'entrainement de SupaEngine</p>
+        </div>
+
+        <div id="content"><div class="empty-state">Chargement...</div></div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const resp = await fetch('data/supaengine_elo.json');
+                if (!resp.ok) throw new Error('No data');
+                const data = await resp.json();
+                render(data);
+            } catch(e) {
+                document.getElementById('content').innerHTML = `
+                    <div class="empty-state">
+                        <p>Pas encore de sessions. Lancez un entrainement pour commencer.</p>
+                        <code style="display:block;margin-top:15px;color:#9b59b6">python supaengine_train.py 10 --progressive</code>
+                    </div>`;
+            }
+        }
+
+        function render(data) {
+            const games = data.games || [];
+            const curve = data.learning_curve || [];
+
+            if (games.length === 0 && curve.length === 0) {
+                document.getElementById('content').innerHTML = '<div class="empty-state">Aucune session enregistree.</div>';
+                return;
+            }
+
+            // Group games by day
+            const byDay = {};
+            games.forEach(g => {
+                const day = g.date ? g.date.substring(0, 10) : 'unknown';
+                if (!byDay[day]) byDay[day] = [];
+                byDay[day].push(g);
+            });
+
+            let html = '<div class="timeline">';
+
+            // Learning curve entries
+            curve.forEach(c => {
+                const date = c.date ? new Date(c.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : '';
+                html += `<div class="entry">
+                    <div class="date">${date}</div>
+                    <h3>Niveau Skill ${c.skill}</h3>
+                    <p>Session d'entrainement progressif contre Stockfish Skill ${c.skill}</p>
+                    <div class="stats">
+                        <span class="stat win-tag">W: ${c.wins}</span>
+                        <span class="stat draw-tag">D: ${c.draws}</span>
+                        <span class="stat loss-tag">L: ${c.losses}</span>
+                        <span class="stat">Win Rate: ${c.win_rate}%</span>
+                        <span class="stat">Q-Table: ${c.qtable_size} pos.</span>
+                    </div>
+                </div>`;
+            });
+
+            // Daily game summaries
+            const days = Object.keys(byDay).sort().reverse();
+            days.forEach(day => {
+                const dayGames = byDay[day];
+                const w = dayGames.filter(g => g.result === 'WIN').length;
+                const d = dayGames.filter(g => g.result === 'DRAW').length;
+                const l = dayGames.filter(g => g.result === 'LOSS').length;
+                const skills = [...new Set(dayGames.map(g => g.opponent_skill))];
+                const dateStr = new Date(day).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+
+                html += `<div class="entry">
+                    <div class="date">${dateStr}</div>
+                    <h3>${dayGames.length} parties jouees</h3>
+                    <p>Adversaires: Skill ${skills.join(', ')}</p>
+                    <div class="stats">
+                        <span class="stat win-tag">W: ${w}</span>
+                        <span class="stat draw-tag">D: ${d}</span>
+                        <span class="stat loss-tag">L: ${l}</span>
+                        <span class="stat">${dayGames.length} parties</span>
+                    </div>
+                </div>`;
+            });
+
+            html += '</div>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        loadData();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

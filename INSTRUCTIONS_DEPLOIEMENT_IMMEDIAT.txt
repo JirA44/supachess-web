@@ -1,0 +1,130 @@
+========================================
+  DEPLOIEMENT IMMEDIAT - AIMIX PRO V2.0
+========================================
+
+METHODE SIMPLE (5 MINUTES)
+========================================
+
+Le dashboard Cloudflare devrait s'ouvrir automatiquement.
+Sinon, allez sur: https://dash.cloudflare.com/
+
+
+ETAPES A SUIVRE:
+========================================
+
+1. CONNEXION
+   - Connectez-vous a votre compte Cloudflare
+   - Si vous n'avez pas de compte, creez-en un (gratuit)
+
+2. CREER UN PROJET PAGES
+   - Dans le menu lateral, cliquez sur "Pages"
+   - Cliquez sur "Create a project" (ou "Creer un projet")
+   - Selectionnez "Upload assets" (ou "Telecharger des fichiers")
+
+3. SELECTIONNER LES FICHIERS
+   - Cliquez sur "Select from computer"
+   - Naviguez vers: C:\Users\Hugop\aimix-cloudflare\
+   - Selectionnez TOUS les fichiers:
+     ✓ AIMIX_TEACHER_ENHANCED.html
+     ✓ index.html
+     ✓ _headers
+     ✓ _redirects
+     ✓ README.md
+     ✓ wrangler.toml
+
+   OU glissez-deposez tous les fichiers directement
+
+4. CONFIGURER LE PROJET
+   - Project name: aimix-chess
+   - Production branch: production (ou master)
+   - Laissez les autres parametres par defaut
+
+5. DEPLOYER
+   - Cliquez sur "Save and Deploy"
+   - Attendez 2-3 minutes...
+   - ✓ TERMINE!
+
+6. VOTRE SITE EST EN LIGNE!
+   - URL: https://aimix-chess.pages.dev
+   - Copier cette URL et testez-la dans votre navigateur
+
+
+METHODE ALTERNATIVE: WRANGLER CLI
+========================================
+
+Si vous preferez la ligne de commande:
+
+1. Ouvrir PowerShell dans ce dossier
+2. Executer:
+   npx wrangler login
+3. Suivre les instructions d'authentification
+4. Puis:
+   npx wrangler pages deploy . --project-name=aimix-chess
+
+
+VERIFICATION DU DEPLOIEMENT
+========================================
+
+Une fois deploye, verifiez:
+✓ https://aimix-chess.pages.dev s'ouvre
+✓ L'echiquier s'affiche correctement
+✓ L'IA repond quand vous jouez un coup
+✓ Les statistiques se sauvegardent (rechargez la page)
+✓ Les animations fonctionnent
+
+
+DOMAINE PERSONNALISE (OPTIONNEL)
+========================================
+
+Pour utiliser votre propre domaine:
+1. Dashboard Cloudflare > Pages > aimix-chess
+2. Onglet "Custom domains"
+3. Cliquez "Set up a domain"
+4. Entrez votre domaine (ex: chess.monsite.com)
+5. Cloudflare configure automatiquement le DNS
+
+
+PROBLEMES?
+========================================
+
+Erreur "Project already exists":
+→ Le projet existe deja. Allez dans Pages > aimix-chess > Settings > Delete project
+
+Erreur "Authentication required":
+→ Executez: npx wrangler login
+
+Fichiers _headers non appliques:
+→ Verifiez que _headers est bien a la racine (pas dans un sous-dossier)
+
+Page blanche:
+→ Ouvrez la console (F12) pour voir les erreurs
+→ Verifiez que tous les fichiers ont ete uploades
+
+
+SUPPORT
+========================================
+
+Documentation complete:
+- README.md (guide complet)
+- RAPPORT_AMELIORATIONS.md (details techniques)
+- GUIDE_DEPLOIEMENT_RAPIDE.md (troubleshooting)
+
+Documentation Cloudflare:
+https://developers.cloudflare.com/pages/
+
+
+========================================
+BON DEPLOIEMENT!
+========================================
+
+Votre plateforme AIMix Pro v2.0 est prete a etre deployee.
+Suivez simplement les etapes ci-dessus et vous serez en ligne en quelques minutes!
+
+Une fois deploye, partagez votre URL:
+https://aimix-chess.pages.dev
+
+Et collectez les feedbacks pour continuer a ameliorer!
+
+Version: 2.0
+Date: 20 Janvier 2025
+Status: Production Ready ✓

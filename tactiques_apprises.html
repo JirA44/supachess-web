@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaEngine - Tactiques Apprises</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff; min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px; border-radius: 15px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.5rem; color: #ff6b6b; margin-bottom: 10px; }
+        .back-btn {
+            display: inline-block; padding: 8px 20px; background: rgba(255,255,255,0.1);
+            border-radius: 8px; color: #4CAF50; text-decoration: none; margin-bottom: 15px;
+            border: 1px solid rgba(76,175,80,0.3);
+        }
+        .back-btn:hover { background: rgba(76,175,80,0.2); }
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.08); padding: 20px; border-radius: 12px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #4CAF50; }
+        .stat-card .label { font-size: 0.85rem; opacity: 0.7; margin-top: 5px; }
+        .tactic-group {
+            background: rgba(255,255,255,0.05); border-radius: 12px;
+            padding: 25px; margin-bottom: 20px;
+            border-left: 4px solid #ff6b6b;
+        }
+        .tactic-group h3 { color: #ff6b6b; margin-bottom: 15px; font-size: 1.3rem; }
+        .tactic-item {
+            background: rgba(0,0,0,0.3); padding: 12px 15px; border-radius: 8px;
+            margin-bottom: 8px; font-family: monospace; font-size: 0.9rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .tactic-item .ply { color: #4CAF50; font-weight: bold; }
+        .tactic-item .move { color: #ffd700; }
+        .empty-state {
+            text-align: center; padding: 60px; opacity: 0.5;
+            font-size: 1.2rem;
+        }
+        #loading { text-align: center; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="hub.html" class="back-btn">< Hub</a>
+        <div class="header">
+            <h1>Tactiques Apprises</h1>
+            <p>Sacrifices, mats et fourchettes extraits des parties d'entrainement</p>
+        </div>
+
+        <div class="stats-row" id="stats">
+            <div class="stat-card"><div class="value" id="totalTactics">-</div><div class="label">Tactiques totales</div></div>
+            <div class="stat-card"><div class="value" id="sacrifices">-</div><div class="label">Sacrifices avec echec</div></div>
+            <div class="stat-card"><div class="value" id="checkmates">-</div><div class="label">Mats trouves</div></div>
+            <div class="stat-card"><div class="value" id="forks">-</div><div class="label">Fourchettes</div></div>
+            <div class="stat-card"><div class="value" id="pins">-</div><div class="label">Clouages</div></div>
+            <div class="stat-card"><div class="value" id="discovered">-</div><div class="label">Attaques decouvertes</div></div>
+        </div>
+
+        <div id="content"><div id="loading">Chargement des donnees...</div></div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const resp = await fetch('data/supaengine_knowledge.json');
+                if (!resp.ok) throw new Error('No data');
+                const data = await resp.json();
+                render(data);
+            } catch(e) {
+                document.getElementById('content').innerHTML = `
+                    <div class="empty-state">
+                        <p>Pas encore de donnees. Lancez un entrainement:</p>
+                        <code style="display:block;margin-top:15px;color:#4CAF50">python supaengine_train.py 10 --skill 10 --time 1.5</code>
+                        <p style="margin-top:15px;font-size:0.9rem">Les tactiques apparaitront ici apres l'entrainement.</p>
+                    </div>`;
+            }
+        }
+
+        function render(data) {
+            const tactics = data.successful_tactics || data.tactics || [];
+            const grouped = {};
+            tactics.forEach(t => {
+                if (!grouped[t.type]) grouped[t.type] = [];
+                grouped[t.type].push(t);
+            });
+
+            const typeNames = {
+                'sacrifice_with_check': 'Sacrifices avec Echec',
+                'checkmate': 'Mats',
+                'fork': 'Fourchettes',
+                'pin': 'Clouages',
+                'discovered_attack': 'Attaques Decouvertes',
+                'skewer': 'Enfilades',
+            };
+            const typeIcons = {
+                'sacrifice_with_check': '💎',
+                'checkmate': '♚',
+                'fork': '🍴',
+                'pin': '📌',
+                'discovered_attack': '💥',
+                'skewer': '🗡️',
+            };
+
+            document.getElementById('totalTactics').textContent = tactics.length;
+            document.getElementById('sacrifices').textContent = (grouped['sacrifice_with_check'] || []).length;
+            document.getElementById('checkmates').textContent = (grouped['checkmate'] || []).length;
+            document.getElementById('forks').textContent = (grouped['fork'] || []).length;
+            document.getElementById('pins').textContent = (grouped['pin'] || []).length;
+            document.getElementById('discovered').textContent = (grouped['discovered_attack'] || []).length;
+
+            if (tactics.length === 0) {
+                document.getElementById('content').innerHTML = '<div class="empty-state">Aucune tactique apprise pour le moment.</div>';
+                return;
+            }
+
+            let html = '';
+            for (const [type, items] of Object.entries(grouped)) {
+                const name = typeNames[type] || type;
+                const icon = typeIcons[type] || '?';
+                html += `<div class="tactic-group"><h3>${icon} ${name} (${items.length})</h3>`;
+                items.slice(0, 50).forEach(t => {
+                    html += `<div class="tactic-item">
+                        <span>FEN: ${t.fen ? t.fen.substring(0, 30) + '...' : 'N/A'}</span>
+                        <span class="move">${t.move}</span>
+                        <span class="ply">Coup #${t.ply}</span>
+                    </div>`;
+                });
+                if (items.length > 50) html += `<p style="opacity:0.5;margin-top:10px">... et ${items.length - 50} de plus</p>`;
+                html += '</div>';
+            }
+            document.getElementById('content').innerHTML = html;
+        }
+
+        loadData();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

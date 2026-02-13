@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse de Style - SupaChess</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d0d2b 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0,0,0,0.4);
+            border-bottom: 2px solid rgba(255,107,107,0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.4rem; }
+        .header h1 span { color: #ff6b6b; }
+        .header a {
+            color: #00d9ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 14px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #888;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+        }
+        .tab:hover { color: #ccc; background: rgba(255,255,255,0.05); }
+        .tab.active {
+            color: #ff6b6b;
+            border-bottom-color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+        }
+        .tab-content { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+
+        /* Style Profile */
+        .style-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        .style-tactical { background: linear-gradient(90deg, #ff6b6b, #ee5a6f); color: #fff; }
+        .style-positional { background: linear-gradient(90deg, #3498db, #2980b9); color: #fff; }
+        .style-universal { background: linear-gradient(90deg, #2ecc71, #27ae60); color: #fff; }
+        .style-aggressive { background: linear-gradient(90deg, #e74c3c, #c0392b); color: #fff; }
+        .style-defensive { background: linear-gradient(90deg, #9b59b6, #8e44ad); color: #fff; }
+
+        .gm-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .gm-card .gm-icon { font-size: 2.5rem; }
+        .gm-card .gm-name { font-size: 1.1rem; font-weight: 700; color: #ffd700; }
+        .gm-card .gm-desc { font-size: 0.85rem; color: #ccc; margin-top: 4px; }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-box .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d9ff;
+        }
+        .stat-box .label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Forces / Faiblesses */
+        .strength-item, .weakness-item {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        .strength-item {
+            background: rgba(46,204,113,0.1);
+            border-left-color: #2ecc71;
+        }
+        .weakness-item {
+            background: rgba(231,76,60,0.1);
+            border-left-color: #e74c3c;
+        }
+        .item-title { font-weight: 700; font-size: 1rem; margin-bottom: 5px; }
+        .item-detail { font-size: 0.85rem; color: #aaa; }
+        .item-score {
+            float: right;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .score-good { color: #2ecc71; }
+        .score-bad { color: #e74c3c; }
+
+        .phase-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .phase-label {
+            width: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .phase-track {
+            flex: 1;
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .phase-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.8s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Training */
+        .training-card {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid;
+        }
+        .priority-critical {
+            background: rgba(231,76,60,0.15);
+            border-left-color: #e74c3c;
+        }
+        .priority-important {
+            background: rgba(243,156,18,0.15);
+            border-left-color: #f39c12;
+        }
+        .priority-improvement {
+            background: rgba(52,152,219,0.15);
+            border-left-color: #3498db;
+        }
+        .priority-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .tag-critical { background: rgba(231,76,60,0.3); color: #e74c3c; }
+        .tag-important { background: rgba(243,156,18,0.3); color: #f39c12; }
+        .tag-improvement { background: rgba(52,152,219,0.3); color: #3498db; }
+
+        .exercise-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 12px;
+        }
+        .exercise-title {
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        .tip-box {
+            background: rgba(46,204,113,0.1);
+            border: 1px solid rgba(46,204,113,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .weekly-plan {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .day-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .day-card .day-name {
+            font-weight: 700;
+            color: #00d9ff;
+            margin-bottom: 6px;
+        }
+        .day-card .day-task {
+            font-size: 0.8rem;
+            color: #bbb;
+        }
+
+        /* History */
+        .game-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            gap: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .game-row:hover { background: rgba(255,255,255,0.08); }
+        .game-result {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        .game-info { flex: 1; }
+        .game-info .opponent { font-weight: 700; font-size: 0.95rem; }
+        .game-info .meta { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .game-rating {
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+        .rating-high { background: rgba(46,204,113,0.2); color: #2ecc71; }
+        .rating-mid { background: rgba(243,156,18,0.2); color: #f39c12; }
+        .rating-low { background: rgba(231,76,60,0.2); color: #e74c3c; }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
+        .filter-btn.active { background: rgba(255,107,107,0.2); border-color: #ff6b6b; color: #ff6b6b; }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .no-data .icon { font-size: 4rem; margin-bottom: 15px; }
+        .no-data h3 { color: #888; margin-bottom: 10px; }
+        .no-data a { color: #00d9ff; }
+
+        .mini-board { width: 280px; margin: 10px auto; }
+
+        .trend-up { color: #2ecc71; }
+        .trend-down { color: #e74c3c; }
+        .trend-flat { color: #888; }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .tab { padding: 10px 14px; font-size: 0.85rem; }
+            .mini-board { width: 100%; max-width: 280px; }
+            .training-card [style*="grid-template-columns:1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>SupaChess</span> | Analyse de Style</h1>
+        <a href="index.html">Hub</a>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('style')">Profil de Style</button>
+        <button class="tab" onclick="switchTab('strengths')">Forces & Faiblesses</button>
+        <button class="tab" onclick="switchTab('training')">Programme</button>
+        <button class="tab" onclick="switchTab('thinking')">Reflexion</button>
+        <button class="tab" onclick="switchTab('history')">Historique</button>
+    </div>
+
+    <!-- TAB 1: PROFIL DE STYLE -->
+    <div class="tab-content active" id="tab-style">
+        <div id="no-data-style" class="no-data" style="display:none;">
+            <div class="icon">???</div>
+            <h3>Pas encore de parties analysees</h3>
+            <p>Jouez des parties dans <a href="CHESSNOVA.html">SupaChess</a> ou analysez des parties dans <a href="CHESS_COACH.html">Chess Coach</a> pour generer votre profil.</p>
+        </div>
+
+        <div id="style-content">
+            <div class="grid-3" style="margin-bottom: 20px;">
+                <div class="stat-box">
+                    <div class="value" id="stat-games">0</div>
+                    <div class="label">Parties analysees</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="stat-elo">1200</div>
+                    <div class="label">ELO estime</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="stat-accuracy">0%</div>
+                    <div class="label">Precision moyenne</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Radar de Competences</h3>
+                    <canvas id="radarChart" height="300"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Votre Style</h3>
+                    <div id="style-result">
+                        <div id="style-badge-container"></div>
+                        <p id="style-description" style="margin-top: 12px; color: #ccc; line-height: 1.6;"></p>
+                        <div id="gm-comparison"></div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <h3>Repartition des Coups</h3>
+                        <canvas id="moveDistChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: FORCES & FAIBLESSES -->
+    <div class="tab-content" id="tab-strengths">
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="color: #2ecc71;">Forces</h3>
+                <div id="strengths-list"></div>
+            </div>
+            <div class="card">
+                <h3 style="color: #e74c3c;">Faiblesses</h3>
+                <div id="weaknesses-list"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Precision par Phase</h3>
+            <div id="phase-bars">
+                <div class="phase-bar">
+                    <div class="phase-label">Ouverture</div>
+                    <div class="phase-track">
+                        <div class="phase-fill" id="phase-opening" style="width:0%; background: linear-gradient(90deg, #3498db, #2980b9);"></div>
+                    </div>
+                </div>
+                <div class="phase-bar">
+                    <div class="phase-label">Milieu</div>
+                    <div class="phase-track">
+                        <div class="phase-fill" id="phase-middle" style="width:0%; background: linear-gradient(90deg, #e67e22, #d35400);"></div>
+                    </div>
+                </div>
+                <div class="phase-bar">
+                    <div class="phase-label">Finale</div>
+                    <div class="phase-track">
+                        <div class="phase-fill" id="phase-endgame" style="width:0%; background: linear-gradient(90deg, #9b59b6, #8e44ad);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Types d'Erreurs</h3>
+            <canvas id="errorTypeChart" height="250"></canvas>
+        </div>
+    </div>
+
+    <!-- TAB 3: PROGRAMME D'ENTRAINEMENT -->
+    <div class="tab-content" id="tab-training">
+        <div class="card">
+            <h3>Programme Personnalise</h3>
+            <p style="color: #aaa; margin-bottom: 15px;">Base sur vos <span id="training-games-count">0</span> dernieres parties</p>
+            <div id="training-exercises"></div>
+        </div>
+
+        <div class="card">
+            <h3>Plan Hebdomadaire Suggere</h3>
+            <div class="weekly-plan" id="weekly-plan"></div>
+        </div>
+
+        <div class="card">
+            <h3>Position a Travailler</h3>
+            <p style="color: #aaa; margin-bottom: 10px;">Position extraite de vos erreurs recurrentes. Trouvez le meilleur coup!</p>
+            <div class="grid-2">
+                <div>
+                    <div id="puzzleBoard" class="mini-board"></div>
+                    <div style="text-align:center; margin-top:10px;">
+                        <button onclick="showPuzzleSolution()" style="padding:8px 20px; background:rgba(255,107,107,0.3); border:1px solid #ff6b6b; border-radius:8px; color:#ff6b6b; cursor:pointer; font-weight:600;">Voir la solution</button>
+                        <button onclick="nextPuzzle()" style="padding:8px 20px; background:rgba(0,217,255,0.3); border:1px solid #00d9ff; border-radius:8px; color:#00d9ff; cursor:pointer; font-weight:600; margin-left:8px;">Suivant</button>
+                    </div>
+                </div>
+                <div>
+                    <div id="puzzle-info" class="exercise-box">
+                        <p style="color: #888;">Selectionnez un exercice...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: REFLEXION & METHODE -->
+    <div class="tab-content" id="tab-thinking">
+        <!-- METHODE POUR TROUVER LE MEILLEUR COUP -->
+        <div class="card" style="border: 2px solid rgba(255,215,0,0.3); background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,152,0,0.05));">
+            <h3 style="color: #ffd700; font-size: 1.3rem;">Methode: Comment Trouver le Meilleur Coup</h3>
+            <p style="color: #aaa; margin-bottom: 15px;">Suivez ces 5 etapes AVANT chaque coup. Avec la pratique, ca devient automatique.</p>
+
+            <div id="method-steps">
+                <div style="display:flex; gap:15px; padding:15px; background:rgba(231,76,60,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #e74c3c;">
+                    <div style="font-size:2rem; font-weight:900; color:#e74c3c; min-width:40px;">1</div>
+                    <div>
+                        <div style="font-weight:700; color:#ff6b6b; font-size:1.05rem;">MENACES ADVERSES</div>
+                        <div style="color:#ccc; margin-top:4px;">Demandez-vous: <em>"Que menace le dernier coup adverse?"</em></div>
+                        <ul style="margin-top:8px; padding-left:18px; color:#aaa; font-size:0.9rem;">
+                            <li>Y a-t-il un echec possible?</li>
+                            <li>Une de mes pieces est-elle attaquee?</li>
+                            <li>Est-ce qu'il prepare quelque chose (double attaque, clouage)?</li>
+                        </ul>
+                        <div style="margin-top:8px; padding:8px 12px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:0.85rem;">
+                            <strong style="color:#ff6b6b;">Si oui:</strong> Repondez a la menace EN PREMIER avant de chercher votre plan.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; padding:15px; background:rgba(243,156,18,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #f39c12;">
+                    <div style="font-size:2rem; font-weight:900; color:#f39c12; min-width:40px;">2</div>
+                    <div>
+                        <div style="font-weight:700; color:#f39c12; font-size:1.05rem;">COUPS CANDIDATS (CCT)</div>
+                        <div style="color:#ccc; margin-top:4px;">Listez 3-4 coups possibles en cherchant dans cet ordre:</div>
+                        <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; text-align:center;">
+                                <div style="font-weight:700; color:#e74c3c;">C = Checks</div>
+                                <div style="font-size:0.8rem; color:#aaa;">Echecs possibles</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; text-align:center;">
+                                <div style="font-weight:700; color:#f39c12;">C = Captures</div>
+                                <div style="font-size:0.8rem; color:#aaa;">Prises possibles</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; text-align:center;">
+                                <div style="font-weight:700; color:#3498db;">T = Threats</div>
+                                <div style="font-size:0.8rem; color:#aaa;">Menaces que JE cree</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:6px; text-align:center;">
+                                <div style="font-weight:700; color:#2ecc71;">+ Plans</div>
+                                <div style="font-size:0.8rem; color:#aaa;">Coups strategiques</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; padding:15px; background:rgba(52,152,219,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #3498db;">
+                    <div style="font-size:2rem; font-weight:900; color:#3498db; min-width:40px;">3</div>
+                    <div>
+                        <div style="font-weight:700; color:#3498db; font-size:1.05rem;">CALCULER CHAQUE CANDIDAT</div>
+                        <div style="color:#ccc; margin-top:4px;">Pour chaque coup candidat, visualisez mentalement:</div>
+                        <ul style="margin-top:8px; padding-left:18px; color:#aaa; font-size:0.9rem;">
+                            <li><strong>Mon coup</strong> → <strong>Sa reponse</strong> → <strong>Mon coup suivant</strong> (minimum 3 demi-coups)</li>
+                            <li>Considerer ses MEILLEURES reponses, pas ce que vous esperez qu'il joue</li>
+                            <li>Si c'est un echange: compter le materiel des 2 cotes</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; padding:15px; background:rgba(46,204,113,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #2ecc71;">
+                    <div style="font-size:2rem; font-weight:900; color:#2ecc71; min-width:40px;">4</div>
+                    <div>
+                        <div style="font-weight:700; color:#2ecc71; font-size:1.05rem;">COMPARER & CHOISIR</div>
+                        <div style="color:#ccc; margin-top:4px;">Comparez les resultats de chaque candidat:</div>
+                        <ul style="margin-top:8px; padding-left:18px; color:#aaa; font-size:0.9rem;">
+                            <li>Lequel me donne la meilleure position finale?</li>
+                            <li>Lequel cree le plus de problemes a l'adversaire?</li>
+                            <li>Lequel est le plus sur (moins de risques)?</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; padding:15px; background:rgba(155,89,182,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #9b59b6;">
+                    <div style="font-size:2rem; font-weight:900; color:#9b59b6; min-width:40px;">5</div>
+                    <div>
+                        <div style="font-weight:700; color:#9b59b6; font-size:1.05rem;">VERIFICATION FINALE (BLUNDER CHECK)</div>
+                        <div style="color:#ccc; margin-top:4px;">AVANT de jouer, verifiez une derniere fois:</div>
+                        <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <div style="padding:8px; background:rgba(231,76,60,0.15); border-radius:6px;">
+                                <div style="color:#e74c3c; font-weight:600; font-size:0.85rem;">Mon coup laisse-t-il une piece en prise?</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(231,76,60,0.15); border-radius:6px;">
+                                <div style="color:#e74c3c; font-weight:600; font-size:0.85rem;">Y a-t-il un echec/mat que je ne vois pas?</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(231,76,60,0.15); border-radius:6px;">
+                                <div style="color:#e74c3c; font-weight:600; font-size:0.85rem;">Mon roi est-il en securite apres ce coup?</div>
+                            </div>
+                            <div style="padding:8px; background:rgba(231,76,60,0.15); border-radius:6px;">
+                                <div style="color:#e74c3c; font-weight:600; font-size:0.85rem;">Est-ce que ca cree une fourchette/clouage adverse?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ERREURS DE REFLEXION DETECTEES -->
+        <div class="card">
+            <h3 style="color: #ff6b6b;">Vos Erreurs de Reflexion Detectees</h3>
+            <p style="color: #aaa; margin-bottom: 15px;">Analyse de VOS patterns de pensee bases sur vos parties</p>
+            <div id="thinking-errors-list"></div>
+        </div>
+
+        <!-- RADAR DES HABITUDES DE REFLEXION -->
+        <div class="card">
+            <h3>Profil de Reflexion</h3>
+            <div class="grid-2">
+                <div>
+                    <canvas id="thinkingRadarChart" height="280"></canvas>
+                </div>
+                <div id="thinking-summary" style="display:flex; flex-direction:column; justify-content:center;">
+                </div>
+            </div>
+        </div>
+
+        <!-- EXERCICE: SIMULER LA METHODE -->
+        <div class="card" style="border: 1px solid rgba(0,217,255,0.3);">
+            <h3 style="color: #00d9ff;">Exercice Mental</h3>
+            <p style="color:#aaa; margin-bottom:12px;">Prenez vos 3 pires erreurs ci-dessous et rejouez-les mentalement avec la methode en 5 etapes.</p>
+            <div id="thinking-worst-moves"></div>
+        </div>
+    </div>
+
+    <!-- TAB 5: HISTORIQUE -->
+    <div class="tab-content" id="tab-history">
+        <div class="card">
+            <h3>Evolution de la Precision</h3>
+            <canvas id="accuracyChart" height="200"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Historique des Parties</h3>
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterGames('all')">Toutes</button>
+                <button class="filter-btn" onclick="filterGames('best')">Meilleures</button>
+                <button class="filter-btn" onclick="filterGames('worst')">A travailler</button>
+            </div>
+            <div id="games-list"></div>
+        </div>
+    </div>
+
+<script>
+// ==========================================
+// DATA LOADING
+// ==========================================
+let allGames = [];
+let playerMovesByGame = [];
+let analysisResult = null;
+let puzzleBoard = null;
+let puzzles = [];
+let currentPuzzleIndex = 0;
+
+function loadAllData() {
+    // Source 1: chessnova_pro_data (main game data)
+    try {
+        const proData = JSON.parse(localStorage.getItem('chessnova_pro_data'));
+        if (proData && proData.allGamesHistory) {
+            allGames = proData.allGamesHistory;
+        }
+    } catch(e) { console.warn('Pro data load failed:', e); }
+
+    // Source 2: chessnova_coach_progress (coach analyzed games)
+    let coachProgress = null;
+    try {
+        coachProgress = JSON.parse(localStorage.getItem('chessnova_coach_progress'));
+    } catch(e) {}
+
+    // Source 3: chessnova_progress (XP/badges)
+    let gameProgress = null;
+    try {
+        gameProgress = JSON.parse(localStorage.getItem('chessnova_progress'));
+    } catch(e) {}
+
+    // Extract player moves from each game (filter out AI moves)
+    playerMovesByGame = allGames.map(game => {
+        if (!game.history) return [];
+        return game.history.filter(m => !m.isOpponent);
+    }).filter(moves => moves.length > 0);
+
+    return { allGames, playerMovesByGame, coachProgress, gameProgress };
+}
+
+// ==========================================
+// STYLE ANALYSIS ENGINE
+// ==========================================
+function analyzeStyle(playerMovesByGame) {
+    if (playerMovesByGame.length === 0) return null;
+
+    const scores = {
+        tactical: 0,
+        positional: 0,
+        opening: 0,
+        endgame: 0,
+        defense: 0,
+        aggression: 0
+    };
+
+    let totalGames = playerMovesByGame.length;
+    let totalMoves = 0;
+    let totalRating = 0;
+    let brilliantCount = 0;
+    let blunderCount = 0;
+    let mistakeCount = 0;
+    let inaccuracyCount = 0;
+    let goodCount = 0;
+    let excellentCount = 0;
+
+    // Phase accuracy accumulators
+    let openingRatings = [];
+    let middleRatings = [];
+    let endgameRatings = [];
+
+    // Per-game analysis
+    let gameAnalyses = [];
+
+    for (const moves of playerMovesByGame) {
+        let gameTactical = 0;
+        let gamePositional = 0;
+        let gameRecoveries = 0;
+        let wasLosing = false;
+        let gameSacrifices = 0;
+
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            const rating = m.rating || 5;
+            totalRating += rating;
+            totalMoves++;
+
+            // Count move types
+            if (rating >= 10) brilliantCount++;
+            else if (rating >= 9) excellentCount++;
+            else if (rating >= 7) goodCount++;
+            else if (rating >= 5) inaccuracyCount++;
+            else if (rating >= 3) mistakeCount++;
+            else blunderCount++;
+
+            // Phase classification (by move number in the game)
+            const moveIdx = i;
+            if (moveIdx < 8) openingRatings.push(rating);      // ~first 15 plies = 8 player moves
+            else if (moveIdx < 20) middleRatings.push(rating);  // ~moves 16-40
+            else endgameRatings.push(rating);                    // finale
+
+            // Tactical detection
+            if (m.tactical && m.tactical.length > 0) {
+                gameTactical++;
+            }
+
+            // Aggression: sacrifices that work (negative evalDiff = gained advantage)
+            if (m.evalDiff && m.evalDiff < -20 && rating >= 8) {
+                gameSacrifices++;
+            }
+
+            // Defense tracking: was losing then recovered
+            if (m.eval && m.eval < -2.0) {
+                wasLosing = true;
+            }
+            if (wasLosing && m.eval && m.eval > -0.5) {
+                gameRecoveries++;
+                wasLosing = false;
+            }
+
+            // Positional: steady moves without big swings
+            if (m.evalDiff !== undefined && Math.abs(m.evalDiff) < 30 && rating >= 6) {
+                gamePositional++;
+            }
+        }
+
+        const moveCount = moves.length || 1;
+        gameAnalyses.push({
+            tacticalRate: gameTactical / moveCount,
+            positionalRate: gamePositional / moveCount,
+            recoveries: gameRecoveries,
+            sacrifices: gameSacrifices,
+            avgRating: moves.reduce((a, m) => a + (m.rating || 5), 0) / moveCount
+        });
+    }
+
+    // Calculate scores (0-100)
+    const avgTactical = gameAnalyses.reduce((a, g) => a + g.tacticalRate, 0) / totalGames;
+    const avgPositional = gameAnalyses.reduce((a, g) => a + g.positionalRate, 0) / totalGames;
+    const avgRecoveries = gameAnalyses.reduce((a, g) => a + g.recoveries, 0) / totalGames;
+    const avgSacrifices = gameAnalyses.reduce((a, g) => a + g.sacrifices, 0) / totalGames;
+
+    scores.tactical = Math.min(100, Math.round(avgTactical * 300 + (brilliantCount / totalMoves) * 500));
+    scores.positional = Math.min(100, Math.round(avgPositional * 150));
+    scores.opening = Math.min(100, Math.round(average(openingRatings) * 10));
+    scores.endgame = Math.min(100, Math.round(average(endgameRatings) * 10));
+    scores.defense = Math.min(100, Math.round(avgRecoveries * 40 + 30));
+    scores.aggression = Math.min(100, Math.round(avgSacrifices * 60 + avgTactical * 200));
+
+    // Ensure minimum scores
+    for (const key of Object.keys(scores)) {
+        scores[key] = Math.max(10, scores[key]);
+    }
+
+    // Determine dominant style
+    const style = determineStyle(scores);
+
+    // Move distribution
+    const moveDistribution = {
+        brilliant: brilliantCount,
+        excellent: excellentCount,
+        good: goodCount,
+        inaccuracy: inaccuracyCount,
+        mistake: mistakeCount,
+        blunder: blunderCount
+    };
+
+    // Phase accuracy
+    const phaseAccuracy = {
+        opening: average(openingRatings),
+        middle: average(middleRatings),
+        endgame: average(endgameRatings)
+    };
+
+    // Overall accuracy
+    const overallAccuracy = totalMoves > 0 ? (totalRating / totalMoves / 10) * 100 : 0;
+
+    return {
+        scores,
+        style,
+        moveDistribution,
+        phaseAccuracy,
+        overallAccuracy,
+        totalGames,
+        totalMoves,
+        gameAnalyses
+    };
+}
+
+function average(arr) {
+    if (!arr || arr.length === 0) return 5;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function determineStyle(scores) {
+    const { tactical, positional, aggression, defense } = scores;
+
+    if (tactical > 70 && aggression > 60) {
+        return {
+            name: 'Attaquant Tactique',
+            class: 'style-aggressive',
+            description: 'Vous privilegiez les combinaisons et les attaques directes. Votre jeu est dynamique et dangereux. Vous excellez dans les positions compliquees ou la tactique prime.',
+            gm: { name: 'Mikhail Tal', icon: '🔥', desc: 'Le Magicien de Riga - Style agressif et tactique, sacrifices spectaculaires' }
+        };
+    }
+    if (positional > 65 && defense > 55 && aggression < 50) {
+        return {
+            name: 'Stratege Positionnel',
+            class: 'style-positional',
+            description: 'Vous construisez patiemment des avantages positionnels. Votre force reside dans la comprehension strategique et la technique. Vous evitez les complications inutiles.',
+            gm: { name: 'Anatoly Karpov', icon: '🏰', desc: 'Le Boa Constrictor - Maitrise positionnelle absolue, etouffement progressif' }
+        };
+    }
+    if (defense > 65 && positional > 55) {
+        return {
+            name: 'Defenseur Solide',
+            class: 'style-defensive',
+            description: 'Votre jeu est base sur la solidite et la patience. Vous defendez remarquablement et attendez les erreurs adverses. Votre technique de conversion est votre arme.',
+            gm: { name: 'Tigran Petrosian', icon: '🛡️', desc: 'L\'Iron Tigran - Defense prophylactique legendaire, echanges strategiques' }
+        };
+    }
+    if (tactical > 60 && positional > 55 && aggression > 40 && aggression < 65) {
+        return {
+            name: 'Joueur Universel',
+            class: 'style-universal',
+            description: 'Vous avez un profil equilibre qui s\'adapte a toutes les positions. Vous savez quand attaquer et quand temporiser. Cette polyvalence est une grande force.',
+            gm: { name: 'Magnus Carlsen', icon: '⚡', desc: 'Le Mozart des Echecs - Style universel, excellence dans toutes les phases' }
+        };
+    }
+    if (aggression > 65) {
+        return {
+            name: 'Attaquant Agressif',
+            class: 'style-aggressive',
+            description: 'Votre jeu est resolument offensif. Vous cherchez l\'initiative et les sacrifices. Les positions fermees ne sont pas votre terrain de predilection.',
+            gm: { name: 'Garry Kasparov', icon: '🔥', desc: 'La Bete de Baku - Dynamisme maximal, preparation et puissance' }
+        };
+    }
+
+    return {
+        name: 'En Developpement',
+        class: 'style-universal',
+        description: 'Votre style est encore en formation. Continuez a jouer pour affiner votre profil. Explorez differentes approches pour trouver votre identite echiquenne.',
+        gm: { name: 'Bobby Fischer', icon: '👑', desc: 'Le Genie - Perfectionniste absolu, le meilleur coup dans chaque position' }
+    };
+}
+
+// ==========================================
+// STRENGTHS & WEAKNESSES ANALYSIS
+// ==========================================
+function analyzeStrengthsWeaknesses(playerMovesByGame, analysisResult) {
+    if (!analysisResult) return { strengths: [], weaknesses: [], errorTypes: {} };
+
+    const { phaseAccuracy, scores, moveDistribution } = analysisResult;
+
+    // Build strength/weakness candidates
+    const candidates = [
+        {
+            category: 'Ouverture',
+            score: phaseAccuracy.opening,
+            icon: '📖',
+            goodDesc: 'Excellente preparation d\'ouverture. Vos premiers coups sont solides et principiels.',
+            badDesc: 'Les ouvertures sont votre point faible. Vous perdez souvent de l\'avantage dans les 15 premiers coups.',
+            tip: 'Etudiez 2-3 ouvertures principales et leurs variantes. Concentrez-vous sur les principes: developpement, centre, securite du roi.'
+        },
+        {
+            category: 'Milieu de jeu',
+            score: phaseAccuracy.middle,
+            icon: '⚔️',
+            goodDesc: 'Forte comprehension du milieu de jeu. Vous trouvez les bons plans et manoeuvres.',
+            badDesc: 'Le milieu de jeu est votre zone a risque. Les erreurs strategiques s\'y accumulent.',
+            tip: 'Travaillez les plans typiques des ouvertures que vous jouez. Identifiez les structures de pions et les pieces cles.'
+        },
+        {
+            category: 'Finales',
+            score: phaseAccuracy.endgame,
+            icon: '🏁',
+            goodDesc: 'Technique de finale remarquable. Vous convertissez bien vos avantages.',
+            badDesc: 'Les finales sont a travailler. Vous laissez echapper des avantages en fin de partie.',
+            tip: 'Etudiez les finales de base: Roi+Pion, Tours, et les principes d\'opposition et triangulation.'
+        },
+        {
+            category: 'Tactique',
+            score: scores.tactical,
+            icon: '🎯',
+            goodDesc: 'Vision tactique aigue. Vous trouvez les combinaisons et les motifs.',
+            badDesc: 'La tactique est a renforcer. Vous manquez des combinaisons et des motifs importants.',
+            tip: 'Resolvez des puzzles tactiques quotidiennement (20 min/jour). Concentrez-vous sur les fourchettes, clouages et decouvertes.'
+        },
+        {
+            category: 'Positionnement',
+            score: scores.positional,
+            icon: '🏰',
+            goodDesc: 'Bon sens positionnel. Vous comprenez bien les nuances strategiques.',
+            badDesc: 'Le jeu positionnel est a developper. Travaillez la structure de pions et le placement des pieces.',
+            tip: 'Etudiez les parties de Karpov et Carlsen. Apprenez a evaluer les positions sans calculer.'
+        },
+        {
+            category: 'Defense',
+            score: scores.defense,
+            icon: '🛡️',
+            goodDesc: 'Excellente capacite defensive. Vous tenez bien les positions difficiles.',
+            badDesc: 'La defense est votre talon d\'Achille. Les positions perdantes le restent souvent.',
+            tip: 'Pratiquez les positions defensives. Apprenez a creer des forteresses et a compliquer la tache de l\'adversaire.'
+        }
+    ];
+
+    // Sort by score
+    const sorted = [...candidates].sort((a, b) => b.score - a.score);
+    const strengths = sorted.slice(0, 3).map(c => ({
+        ...c,
+        description: c.goodDesc,
+        scoreNormalized: Math.round(c.score)
+    }));
+    const weaknesses = sorted.slice(-3).reverse().map(c => ({
+        ...c,
+        description: c.badDesc,
+        scoreNormalized: Math.round(c.score)
+    }));
+
+    // Error type analysis
+    const errorTypes = {
+        'Pieces en prise': 0,
+        'Tactiques manquees': 0,
+        'Mauvais echanges': 0,
+        'Securite du Roi': 0,
+        'Erreurs de plan': 0,
+        'Finales ratees': 0
+    };
+
+    for (const moves of playerMovesByGame) {
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            if ((m.rating || 5) > 4) continue; // Only errors
+
+            const comment = (m.comment || '').toLowerCase();
+            const quality = (m.quality || '').toLowerCase();
+
+            if (comment.includes('prise') || comment.includes('pendu') || comment.includes('hanging')) {
+                errorTypes['Pieces en prise']++;
+            } else if (m.tactical && m.tactical.length > 0 || comment.includes('tactiq') || comment.includes('combinaison')) {
+                errorTypes['Tactiques manquees']++;
+            } else if (comment.includes('échange') || comment.includes('echange') || comment.includes('capture')) {
+                errorTypes['Mauvais echanges']++;
+            } else if (comment.includes('roi') || comment.includes('king') || comment.includes('roque') || comment.includes('castle')) {
+                errorTypes['Securite du Roi']++;
+            } else if (i >= 20) {
+                errorTypes['Finales ratees']++;
+            } else {
+                errorTypes['Erreurs de plan']++;
+            }
+        }
+    }
+
+    return { strengths, weaknesses, errorTypes };
+}
+
+// ==========================================
+// TRAINING PROGRAM GENERATOR
+// ==========================================
+function generateTrainingProgram(weaknesses, playerMovesByGame) {
+    const exercises = [];
+    const weeklyPlan = [
+        { day: 'Lundi', tasks: [] },
+        { day: 'Mardi', tasks: [] },
+        { day: 'Mercredi', tasks: [] },
+        { day: 'Jeudi', tasks: [] },
+        { day: 'Vendredi', tasks: [] },
+        { day: 'Samedi', tasks: [] },
+        { day: 'Dimanche', tasks: [] }
+    ];
+
+    // Generate exercises for each weakness
+    weaknesses.forEach((w, idx) => {
+        const priority = idx === 0 ? 'critical' : idx === 1 ? 'important' : 'improvement';
+
+        // Find worst examples
+        const worstMoves = findWorstMoves(playerMovesByGame, w.category);
+
+        const exercise = {
+            priority,
+            category: w.category,
+            icon: w.icon,
+            description: w.description,
+            tip: w.tip,
+            score: w.scoreNormalized,
+            worstMoves: worstMoves.slice(0, 3),
+            drills: getDrills(w.category),
+            doAndDont: getDoAndDont(w.category)
+        };
+
+        exercises.push(exercise);
+    });
+
+    // Build weekly plan from weaknesses
+    const categories = weaknesses.map(w => w.category);
+    const dayAssignments = [
+        { focus: categories[0] || 'Tactique', duration: '25 min', type: 'Exercices intensifs' },
+        { focus: 'Parties analysees', duration: '20 min', type: 'Rejouer vos erreurs' },
+        { focus: categories[1] || 'Positionnement', duration: '20 min', type: 'Etude thematique' },
+        { focus: categories[0] || 'Tactique', duration: '25 min', type: 'Puzzles' },
+        { focus: categories[2] || 'Finales', duration: '20 min', type: 'Etude + pratique' },
+        { focus: 'Partie libre', duration: '30 min', type: 'Appliquer les acquis' },
+        { focus: 'Repos / Revision', duration: '15 min', type: 'Revoir la semaine' }
+    ];
+
+    dayAssignments.forEach((d, i) => {
+        weeklyPlan[i].tasks = [d];
+    });
+
+    return { exercises, weeklyPlan };
+}
+
+function findWorstMoves(playerMovesByGame, category) {
+    const worst = [];
+
+    for (let g = 0; g < playerMovesByGame.length; g++) {
+        const moves = playerMovesByGame[g];
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            const rating = m.rating || 5;
+            if (rating > 4) continue;
+
+            let isRelevant = false;
+            if (category === 'Ouverture' && i < 8) isRelevant = true;
+            else if (category === 'Milieu de jeu' && i >= 8 && i < 20) isRelevant = true;
+            else if (category === 'Finales' && i >= 20) isRelevant = true;
+            else if (category === 'Tactique' && m.tactical && m.tactical.length > 0) isRelevant = true;
+            else if (category === 'Defense' && m.eval && m.eval < -1.5) isRelevant = true;
+            else if (category === 'Positionnement' && m.evalDiff && m.evalDiff > 80) isRelevant = true;
+
+            if (isRelevant) {
+                worst.push({
+                    san: m.san,
+                    rating: rating,
+                    quality: m.quality,
+                    comment: m.comment,
+                    eval: m.eval,
+                    evalDiff: m.evalDiff,
+                    moveNum: m.moveNum,
+                    gameIndex: g
+                });
+            }
+        }
+    }
+
+    return worst.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+}
+
+function getDrills(category) {
+    const drills = {
+        'Ouverture': [
+            'Rejouez vos 10 premiers coups de chaque partie et comparez au meilleur coup',
+            'Apprenez les 5 premiers coups de 3 ouvertures principales',
+            'Pratiquez les principes: 1 piece par coup, controlez le centre, roquez tot'
+        ],
+        'Milieu de jeu': [
+            'Identifiez le plan dans chaque position avant de jouer',
+            'Travaillez les structures de pions typiques de vos ouvertures',
+            'Pratiquez les manoeuvres de pieces (cavalier en d5, fou sur grande diagonale)'
+        ],
+        'Finales': [
+            'Etudiez les finales Roi+Pion vs Roi (opposition, cases cles)',
+            'Pratiquez les finales de Tours (Lucena, Philidor)',
+            'Apprenez la regle du carre et le principe de Reti'
+        ],
+        'Tactique': [
+            'Resolvez 10 puzzles par jour sur les motifs de base',
+            'Etudiez: fourchette, clouage, enfilade, decouverte, attraction',
+            'Pratiquez le calcul: visualisez 3 coups a l\'avance'
+        ],
+        'Positionnement': [
+            'Analysez des parties de GM positionnels (Karpov, Carlsen)',
+            'Travaillez les avant-postes, colonnes ouvertes, paires de fous',
+            'Pratiquez l\'evaluation de position sans calculer'
+        ],
+        'Defense': [
+            'Etudiez les parties ou le defenseur gagne (Petrosian, Lasker)',
+            'Pratiquez les positions de forteresse',
+            'Apprenez a compliquer: echangez les pieces d\'attaque, pas les defensives'
+        ]
+    };
+    return drills[category] || drills['Tactique'];
+}
+
+function getDoAndDont(category) {
+    const rules = {
+        'Ouverture': {
+            doList: [
+                'Developpez une piece par coup (cavaliers et fous en premier)',
+                'Controlez le centre avec des pions (e4/d4 ou e5/d5)',
+                'Roquez avant le coup 10 pour proteger votre roi',
+                'Connectez vos tours en developpant toutes vos pieces'
+            ],
+            dontList: [
+                'Ne deplacez PAS la meme piece 2 fois en ouverture',
+                'Ne sortez PAS la dame trop tot (avant le coup 6-7)',
+                'Ne jouez PAS des coups de pions sur les ailes avant de developper',
+                'Ne negligez PAS le roque - un roi au centre = danger permanent'
+            ]
+        },
+        'Milieu de jeu': {
+            doList: [
+                'Cherchez un PLAN avant chaque coup (quel est mon objectif?)',
+                'Ameliorez la position de votre pire piece',
+                'Placez vos cavaliers sur des avant-postes proteges par des pions',
+                'Doublez vos tours sur les colonnes ouvertes'
+            ],
+            dontList: [
+                'Ne jouez PAS de coups "automatiques" sans reflexion',
+                'Ne capturez PAS sans compter les echanges (pieces prises des 2 cotes)',
+                'N\'echangez PAS vos fous actifs contre des cavaliers passifs',
+                'Ne creez PAS de faiblesses de pions sans compensation'
+            ]
+        },
+        'Finales': {
+            doList: [
+                'Activez votre roi! En finale le roi est une piece offensive',
+                'Poussez vos pions passes le plus vite possible',
+                'Centralisez vos pieces (roi au centre, tours derriere les pions passes)',
+                'Apprenez l\'opposition: roi face a face, celui qui ne joue pas a l\'avantage'
+            ],
+            dontList: [
+                'Ne gardez PAS votre roi dans un coin en finale',
+                'N\'echangez PAS tous les pions si vous avez l\'avantage materiel',
+                'Ne laissez PAS les pions adverses avancer sans les bloquer',
+                'Ne precipitez PAS les prises - en finale la patience paie'
+            ]
+        },
+        'Tactique': {
+            doList: [
+                'AVANT chaque coup: verifiez les menaces adverses (echec, capture, attaque)',
+                'Cherchez les motifs: fourchette, clouage, decouverte, enfilade',
+                'Quand l\'adversaire fait un coup louche, cherchez POURQUOI',
+                'Calculez au moins 2-3 coups a l\'avance pour chaque candidate'
+            ],
+            dontList: [
+                'Ne jouez JAMAIS un coup sans verifier si votre piece est en prise apres',
+                'Ne laissez PAS de pieces non protegees (hanging pieces = 1er danger)',
+                'N\'ignorez PAS les echecs et captures adverses possibles',
+                'Ne vous fiez PAS a l\'intuition seule - CALCULEZ'
+            ]
+        },
+        'Positionnement': {
+            doList: [
+                'Evaluez la structure de pions avant de choisir un plan',
+                'Occupez les colonnes ouvertes avec vos tours',
+                'Cherchez les cases faibles dans le camp adverse pour y poser des pieces',
+                'Gardez la paire de fous si possible - ils dominent en position ouverte'
+            ],
+            dontList: [
+                'Ne creez PAS de pions isoles ou doubles sans raison tactique',
+                'N\'echangez PAS sans raison strategique (chaque echange change l\'equilibre)',
+                'Ne placez PAS vos pions sur la meme couleur que votre fou',
+                'N\'ouvrez PAS la position si votre adversaire a les 2 fous'
+            ]
+        },
+        'Defense': {
+            doList: [
+                'Quand vous etes attaque, cherchez les echanges de pieces (simplifier)',
+                'Gardez vos pieces coordinaees pour la defense',
+                'Creez des contre-menaces plutot que de defendre passivement',
+                'En position perdue, compliquez! Plus de pieces = plus de chances d\'erreur adverse'
+            ],
+            dontList: [
+                'Ne paniquez PAS en position inferieure - gardez votre calme',
+                'N\'abandonnez PAS de materiel supplementaire par nervousite',
+                'Ne jouez PAS passivement - cherchez toujours de l\'activite',
+                'Ne laissez PAS l\'adversaire attaquer sans contrepartie sur l\'autre aile'
+            ]
+        }
+    };
+    return rules[category] || rules['Tactique'];
+}
+
+// ==========================================
+// UI RENDERING
+// ==========================================
+let radarChart = null;
+let moveDistChart = null;
+let errorTypeChart = null;
+let accuracyLineChart = null;
+
+function renderStyleTab(result) {
+    if (!result) {
+        document.getElementById('no-data-style').style.display = 'block';
+        document.getElementById('style-content').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('no-data-style').style.display = 'none';
+    document.getElementById('style-content').style.display = 'block';
+
+    // Stats
+    document.getElementById('stat-games').textContent = result.totalGames;
+    document.getElementById('stat-accuracy').textContent = Math.round(result.overallAccuracy) + '%';
+
+    // ELO from coach progress or calculated
+    let elo = 1200;
+    try {
+        const coach = JSON.parse(localStorage.getItem('chessnova_coach_progress'));
+        if (coach && coach.estimatedElo) elo = coach.estimatedElo;
+    } catch(e) {}
+    if (elo === 1200) {
+        elo = Math.round(800 + result.overallAccuracy * 1.4);
+    }
+    document.getElementById('stat-elo').textContent = elo;
+
+    // Radar Chart
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    if (radarChart) radarChart.destroy();
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Tactique', 'Positionnement', 'Ouvertures', 'Finales', 'Defense', 'Agressivite'],
+            datasets: [{
+                label: 'Votre Profil',
+                data: [
+                    result.scores.tactical,
+                    result.scores.positional,
+                    result.scores.opening,
+                    result.scores.endgame,
+                    result.scores.defense,
+                    result.scores.aggression
+                ],
+                backgroundColor: 'rgba(255, 107, 107, 0.2)',
+                borderColor: '#ff6b6b',
+                borderWidth: 2,
+                pointBackgroundColor: '#ff6b6b',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        color: '#666',
+                        backdropColor: 'transparent'
+                    },
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    pointLabels: {
+                        color: '#ccc',
+                        font: { size: 12, weight: '600' }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Style badge
+    const style = result.style;
+    document.getElementById('style-badge-container').innerHTML =
+        `<div class="style-badge ${style.class}">${style.name}</div>`;
+    document.getElementById('style-description').textContent = style.description;
+    document.getElementById('gm-comparison').innerHTML = `
+        <div class="gm-card">
+            <div class="gm-icon">${style.gm.icon}</div>
+            <div>
+                <div class="gm-name">Style proche de ${style.gm.name}</div>
+                <div class="gm-desc">${style.gm.desc}</div>
+            </div>
+        </div>`;
+
+    // Move distribution chart
+    const distCtx = document.getElementById('moveDistChart').getContext('2d');
+    if (moveDistChart) moveDistChart.destroy();
+    const dist = result.moveDistribution;
+    moveDistChart = new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Brillant', 'Excellent', 'Bon', 'Imprecision', 'Erreur', 'Gaffe'],
+            datasets: [{
+                data: [dist.brilliant, dist.excellent, dist.good, dist.inaccuracy, dist.mistake, dist.blunder],
+                backgroundColor: [
+                    '#ffd700', '#2ecc71', '#3498db', '#f39c12', '#e67e22', '#e74c3c'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#ccc', padding: 10, font: { size: 11 } }
+                }
+            }
+        }
+    });
+}
+
+function renderStrengthsTab(swAnalysis, result) {
+    if (!swAnalysis) return;
+
+    // Strengths
+    const strengthsDiv = document.getElementById('strengths-list');
+    if (!strengthsDiv) return;
+    strengthsDiv.innerHTML = swAnalysis.strengths.map(s => `
+        <div class="strength-item">
+            <span class="item-score score-good">${s.scoreNormalized}/100</span>
+            <div class="item-title">${s.icon} ${s.category}</div>
+            <div class="item-detail">${s.description}</div>
+        </div>
+    `).join('');
+
+    // Weaknesses
+    const weakDiv = document.getElementById('weaknesses-list');
+    weakDiv.innerHTML = swAnalysis.weaknesses.map(w => `
+        <div class="weakness-item">
+            <span class="item-score score-bad">${w.scoreNormalized}/100</span>
+            <div class="item-title">${w.icon} ${w.category}</div>
+            <div class="item-detail">${w.description}</div>
+        </div>
+    `).join('');
+
+    // Phase bars
+    if (result) {
+        const phases = result.phaseAccuracy;
+        setPhaseBar('phase-opening', phases.opening);
+        setPhaseBar('phase-middle', phases.middle);
+        setPhaseBar('phase-endgame', phases.endgame);
+    }
+
+    // Error type chart
+    const etCtx = document.getElementById('errorTypeChart').getContext('2d');
+    if (errorTypeChart) errorTypeChart.destroy();
+    const et = swAnalysis.errorTypes;
+    const labels = Object.keys(et);
+    const values = Object.values(et);
+    errorTypeChart = new Chart(etCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nombre d\'erreurs',
+                data: values,
+                backgroundColor: [
+                    'rgba(231,76,60,0.6)',
+                    'rgba(243,156,18,0.6)',
+                    'rgba(52,152,219,0.6)',
+                    'rgba(155,89,182,0.6)',
+                    'rgba(230,126,34,0.6)',
+                    'rgba(149,165,166,0.6)'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } },
+                y: { grid: { display: false }, ticks: { color: '#ccc', font: { size: 12 } } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function setPhaseBar(id, score) {
+    const pct = Math.max(5, Math.min(100, Math.round(score * 10)));
+    const el = document.getElementById(id);
+    if (el) {
+        el.style.width = pct + '%';
+        el.textContent = (score || 0).toFixed(1) + '/10';
+    }
+}
+
+function renderTrainingTab(trainingProgram, swAnalysis) {
+    if (!trainingProgram) return;
+
+    const gamesCountEl = document.getElementById('training-games-count');
+    if (gamesCountEl) gamesCountEl.textContent = allGames.length;
+
+    const exercisesDiv = document.getElementById('training-exercises');
+    if (!exercisesDiv) return;
+    exercisesDiv.innerHTML = trainingProgram.exercises.map(ex => `
+        <div class="training-card priority-${ex.priority}">
+            <span class="priority-tag tag-${ex.priority}">
+                ${ex.priority === 'critical' ? 'CRITIQUE' : ex.priority === 'important' ? 'IMPORTANT' : 'AMELIORATION'}
+            </span>
+            <div class="item-title">${ex.icon} ${ex.category} <span style="color:#888; font-weight:400;">(${ex.score}/100)</span></div>
+            <div class="item-detail" style="margin-top:6px;">${ex.description}</div>
+
+            <div class="exercise-box">
+                <div class="exercise-title">Exercices recommandes</div>
+                <ul style="list-style:none; padding:0;">
+                    ${ex.drills.map(d => `<li style="padding:4px 0; color:#ddd;">▸ ${d}</li>`).join('')}
+                </ul>
+            </div>
+
+            ${ex.worstMoves.length > 0 ? `
+            <div class="exercise-box" style="margin-top:8px;">
+                <div class="exercise-title">Exemples d'erreurs a corriger</div>
+                ${ex.worstMoves.map(wm => `
+                    <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
+                        <span style="color:#e74c3c;">${wm.quality || 'Erreur'}</span>
+                        - Coup ${wm.moveNum}: <strong>${wm.san}</strong>
+                        ${wm.comment ? `<br><span style="color:#888;">${wm.comment.substring(0, 100)}</span>` : ''}
+                    </div>
+                `).join('')}
+            </div>` : ''}
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+                <div style="background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); border-radius:8px; padding:12px;">
+                    <div style="font-weight:700; color:#2ecc71; margin-bottom:8px;">A FAIRE</div>
+                    <ul style="list-style:none; padding:0;">
+                        ${ex.doAndDont.doList.map(d => `<li style="padding:3px 0; color:#ccc; font-size:0.85rem;">&#10003; ${d}</li>`).join('')}
+                    </ul>
+                </div>
+                <div style="background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); border-radius:8px; padding:12px;">
+                    <div style="font-weight:700; color:#e74c3c; margin-bottom:8px;">A NE PLUS FAIRE</div>
+                    <ul style="list-style:none; padding:0;">
+                        ${ex.doAndDont.dontList.map(d => `<li style="padding:3px 0; color:#ccc; font-size:0.85rem;">&#10007; ${d}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>Conseil:</strong> ${ex.tip}
+            </div>
+        </div>
+    `).join('');
+
+    // Weekly plan
+    const planDiv = document.getElementById('weekly-plan');
+    planDiv.innerHTML = trainingProgram.weeklyPlan.map(d => `
+        <div class="day-card">
+            <div class="day-name">${d.day}</div>
+            ${d.tasks.map(t => `
+                <div class="day-task">
+                    <strong>${t.focus}</strong><br>
+                    ${t.duration} - ${t.type}
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+
+    // Build puzzles from worst moves
+    buildPuzzles(playerMovesByGame, swAnalysis);
+}
+
+function buildPuzzles(playerMovesByGame, swAnalysis) {
+    puzzles = [];
+    if (!swAnalysis || !swAnalysis.weaknesses) return;
+
+    // Collect error positions from games
+    for (const moves of playerMovesByGame) {
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            if ((m.rating || 5) > 4) continue;
+            if (!m.san) continue;
+
+            puzzles.push({
+                san: m.san,
+                moveNum: m.moveNum || i + 1,
+                quality: m.quality || 'Erreur',
+                comment: m.comment || '',
+                rating: m.rating || 3,
+                eval: m.eval,
+                evalDiff: m.evalDiff
+            });
+        }
+    }
+
+    puzzles.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+    puzzles = puzzles.slice(0, 20);
+
+    if (puzzles.length > 0) {
+        showPuzzleInfo(0);
+    }
+}
+
+function showPuzzleInfo(idx) {
+    if (idx >= puzzles.length) return;
+    currentPuzzleIndex = idx;
+    const p = puzzles[idx];
+
+    document.getElementById('puzzle-info').innerHTML = `
+        <div class="exercise-title">Erreur #${idx + 1}/${puzzles.length}</div>
+        <p style="margin-bottom:8px;"><strong>Coup ${p.moveNum}:</strong> ${p.san}</p>
+        <p style="color: #e74c3c; margin-bottom:8px;">${p.quality}</p>
+        ${p.comment ? `<p style="color:#aaa; font-size:0.85rem;">${p.comment}</p>` : ''}
+        ${p.evalDiff ? `<p style="color:#888; font-size:0.85rem; margin-top:8px;">Perte: ${Math.abs(p.evalDiff).toFixed(0)} centipawns</p>` : ''}
+        <div class="tip-box" style="margin-top:10px;">
+            <strong>Reflexion:</strong> Avant de jouer, demandez-vous: "Ce coup laisse-t-il des pieces en prise? Y a-t-il une tactique adverse?"
+        </div>
+    `;
+}
+
+function showPuzzleSolution() {
+    if (currentPuzzleIndex >= puzzles.length) return;
+    const p = puzzles[currentPuzzleIndex];
+    const infoDiv = document.getElementById('puzzle-info');
+    infoDiv.innerHTML += `
+        <div style="margin-top:12px; padding:10px; background:rgba(46,204,113,0.15); border-radius:8px; border:1px solid rgba(46,204,113,0.3);">
+            <strong style="color:#2ecc71;">Analyse:</strong><br>
+            <p style="color:#ccc; margin-top:5px;">Le coup ${p.san} etait note ${p.rating}/10. ${p.comment || 'Cherchez une alternative plus precise.'}</p>
+        </div>
+    `;
+}
+
+function nextPuzzle() {
+    currentPuzzleIndex = (currentPuzzleIndex + 1) % Math.max(1, puzzles.length);
+    showPuzzleInfo(currentPuzzleIndex);
+}
+
+function renderHistoryTab(result) {
+    // Accuracy chart
+    if (result && result.gameAnalyses.length > 0) {
+        const accEl = document.getElementById('accuracyChart');
+        if (!accEl) return;
+        const accCtx = accEl.getContext('2d');
+        if (accuracyLineChart) accuracyLineChart.destroy();
+
+        const accuracies = result.gameAnalyses.map(g => Math.round(g.avgRating * 10));
+        accuracyLineChart = new Chart(accCtx, {
+            type: 'line',
+            data: {
+                labels: accuracies.map((_, i) => 'P' + (i + 1)),
+                datasets: [{
+                    label: 'Precision (%)',
+                    data: accuracies,
+                    borderColor: '#ff6b6b',
+                    backgroundColor: 'rgba(255,107,107,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#ff6b6b',
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } },
+                    y: {
+                        min: 0, max: 100,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#888' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Games list
+    renderGamesList('all');
+}
+
+function renderGamesList(filter) {
+    const listDiv = document.getElementById('games-list');
+    if (allGames.length === 0) {
+        listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie enregistree</p>';
+        return;
+    }
+
+    let games = allGames.map((g, i) => ({
+        ...g,
+        index: i,
+        avgRatingNum: parseFloat(g.avgRating) || 5
+    }));
+
+    if (filter === 'best') {
+        games = games.filter(g => g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
+    } else if (filter === 'worst') {
+        games = games.filter(g => g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
+    }
+
+    if (games.length === 0) {
+        listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie dans ce filtre</p>';
+        return;
+    }
+
+    listDiv.innerHTML = games.map(g => {
+        const avgR = g.avgRatingNum;
+        let ratingClass = 'rating-mid';
+        let resultIcon = '⬜';
+        if (avgR >= 7) ratingClass = 'rating-high';
+        else if (avgR < 5) ratingClass = 'rating-low';
+
+        // Try to determine result
+        const opponent = g.opponent || 'IA';
+        const moves = g.moves || (g.history ? g.history.length : '?');
+
+        return `
+            <div class="game-row" onclick="expandGame(${g.index})">
+                <div class="game-result">${resultIcon}</div>
+                <div class="game-info">
+                    <div class="opponent">${opponent}</div>
+                    <div class="meta">${g.date || ''} | ${moves} coups</div>
+                </div>
+                <div class="game-rating ${ratingClass}">${avgR.toFixed(1)}/10</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function expandGame(index) {
+    const game = allGames[index];
+    if (!game || !game.history) return;
+
+    const playerMoves = game.history.filter(m => !m.isOpponent);
+    const total = playerMoves.length;
+    const avgRating = total > 0 ? (playerMoves.reduce((a, m) => a + (m.rating || 5), 0) / total) : 5;
+    const brilliants = playerMoves.filter(m => (m.rating || 5) >= 10).length;
+    const blunders = playerMoves.filter(m => (m.rating || 5) <= 3).length;
+
+    // Show inline detail
+    const listDiv = document.getElementById('games-list');
+    const detailId = 'game-detail-' + index;
+    const existing = document.getElementById(detailId);
+
+    if (existing) {
+        existing.remove();
+        return;
+    }
+
+    const detail = document.createElement('div');
+    detail.id = detailId;
+    detail.className = 'card';
+    detail.style.marginBottom = '8px';
+    detail.innerHTML = `
+        <h3>Detail - Partie #${index + 1}</h3>
+        <div class="grid-3" style="margin-bottom:12px;">
+            <div class="stat-box"><div class="value" style="font-size:1.2rem;">${avgRating.toFixed(1)}</div><div class="label">Precision moy.</div></div>
+            <div class="stat-box"><div class="value" style="font-size:1.2rem; color:#ffd700;">${brilliants}</div><div class="label">Brillants</div></div>
+            <div class="stat-box"><div class="value" style="font-size:1.2rem; color:#e74c3c;">${blunders}</div><div class="label">Gaffes</div></div>
+        </div>
+        <div style="max-height:300px; overflow-y:auto;">
+            ${playerMoves.map(m => {
+                const r = m.rating || 5;
+                const color = r >= 8 ? '#2ecc71' : r >= 6 ? '#3498db' : r >= 4 ? '#f39c12' : '#e74c3c';
+                return `<div style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
+                    <span style="color:${color}; font-weight:700;">${r}/10</span>
+                    Coup ${m.moveNum}: <strong>${m.san}</strong>
+                    <span style="color:#666;"> ${m.quality || ''}</span>
+                </div>`;
+            }).join('')}
+        </div>
+    `;
+
+    // Insert after the game row
+    const rows = listDiv.querySelectorAll('.game-row');
+    if (rows[index]) {
+        rows[index].insertAdjacentElement('afterend', detail);
+    } else {
+        listDiv.appendChild(detail);
+    }
+}
+
+function filterGames(filter) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderGamesList(filter);
+}
+
+// ==========================================
+// TAB SWITCHING
+// ==========================================
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+    const tabs = document.querySelectorAll('.tab');
+    const tabMap = { 'style': 0, 'strengths': 1, 'training': 2, 'thinking': 3, 'history': 4 };
+    if (tabMap[tabName] !== undefined) {
+        tabs[tabMap[tabName]].classList.add('active');
+    }
+    document.getElementById('tab-' + tabName).classList.add('active');
+}
+
+// ==========================================
+// THINKING ERRORS ANALYSIS
+// ==========================================
+function analyzeThinkingErrors(playerMovesByGame) {
+    const patterns = {
+        notCheckingThreats: {
+            name: 'Pas de verification des menaces',
+            icon: '🚨',
+            description: 'Vous jouez sans verifier ce que l\'adversaire menace. Le dernier coup adverse n\'est pas analyse.',
+            fix: 'AVANT chaque coup, demandez-vous: "Pourquoi a-t-il joue ca? Que menace-t-il?"',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        hangingPieces: {
+            name: 'Pieces laissees en prise',
+            icon: '💀',
+            description: 'Vous deplacez une piece sans verifier si elle reste protegee, ou vous oubliez qu\'une autre piece est attaquee.',
+            fix: 'Etape 5 de la methode: AVANT de confirmer, scannez tout l\'echiquier pour les pieces non protegees.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        tunnelVision: {
+            name: 'Vision tunnel',
+            icon: '🔭',
+            description: 'Vous vous focalisez sur un secteur de l\'echiquier et oubliez le reste. Les erreurs viennent souvent de l\'autre aile.',
+            fix: 'Apres avoir choisi votre coup, regardez TOUT l\'echiquier pendant 5 secondes. Les menaces oubliees sont souvent loin de votre zone d\'attention.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        noCalculation: {
+            name: 'Pas assez de calcul',
+            icon: '🧮',
+            description: 'Vous jouez le premier coup qui "semble" bon sans calculer les consequences. Le "feeling" remplace le calcul.',
+            fix: 'Forcez-vous a trouver AU MOINS 3 coups candidats et a calculer 2 coups a l\'avance pour chacun avant de choisir.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        overconfidence: {
+            name: 'Relachement en position gagnante',
+            icon: '😴',
+            description: 'Quand vous avez un avantage, vous relacchez votre attention et faites des erreurs. "C\'est gagne" → gaffe.',
+            fix: 'Position gagnante = PLUS de concentration, pas moins. Cherchez le coup le plus simple et le plus sur, pas le plus spectaculaire.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        panicInDefense: {
+            name: 'Panique en defense',
+            icon: '😰',
+            description: 'Quand vous etes sous pression, vous jouez trop vite et accumulez les erreurs au lieu de vous battre.',
+            fix: 'En position difficile: RALENTISSEZ. Cherchez les echanges de pieces pour simplifier. Une piece de moins n\'est pas perdu si le roi est en securite.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        wishfulThinking: {
+            name: 'Pensee magique',
+            icon: '🪄',
+            description: 'Vous esperez que l\'adversaire ne verra pas votre menace au lieu de considerer sa meilleure reponse.',
+            fix: 'Toujours supposer que l\'adversaire fera le MEILLEUR coup. Si votre plan ne marche que si l\'adversaire fait une erreur, c\'est un mauvais plan.',
+            count: 0,
+            examples: [],
+            severity: 0
+        },
+        noEndgamePlan: {
+            name: 'Pas de plan en finale',
+            icon: '🗺️',
+            description: 'En finale vous jouez au coup par coup sans plan clair. Roi passif, pions qui n\'avancent pas.',
+            fix: 'En finale, identifiez TOUJOURS: (1) ou va mon roi? (2) quel pion peut devenir dame? (3) comment bloquer ses pions passes?',
+            count: 0,
+            examples: [],
+            severity: 0
+        }
+    };
+
+    let totalPlayerMoves = 0;
+    let totalErrors = 0;
+
+    for (const moves of playerMovesByGame) {
+        let prevEval = 0;
+        let wasWinning = false;
+
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            const rating = m.rating || 5;
+            const evalDiff = m.evalDiff || 0;
+            const evalNow = m.eval || 0;
+            const comment = (m.comment || '').toLowerCase();
+            const quality = (m.quality || '').toLowerCase();
+            totalPlayerMoves++;
+
+            const isError = rating <= 4;
+            if (isError) totalErrors++;
+
+            // Pattern: Hanging pieces (big eval drop, likely left piece en prise)
+            if (isError && evalDiff > 150) {
+                patterns.hangingPieces.count++;
+                patterns.hangingPieces.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: Not checking threats (error right after opponent created a threat)
+            if (isError && i > 0) {
+                const prevMove = i > 0 ? moves[i-1] : null;
+                // If prev move had tactical info or was opponent creating threats
+                if (comment.includes('prise') || comment.includes('menace') || comment.includes('attaq') ||
+                    comment.includes('pendu') || evalDiff > 100) {
+                    patterns.notCheckingThreats.count++;
+                    patterns.notCheckingThreats.examples.push({
+                        san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                        comment: m.comment, evalDiff
+                    });
+                }
+            }
+
+            // Pattern: Tunnel vision (error in endgame/late middlegame, far from previous activity)
+            if (isError && i > 15 && evalDiff > 80) {
+                patterns.tunnelVision.count++;
+                patterns.tunnelVision.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: No calculation (moderate errors, not huge blunders - "didn't look deep enough")
+            if (isError && evalDiff > 50 && evalDiff <= 200 && rating >= 3) {
+                patterns.noCalculation.count++;
+                patterns.noCalculation.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: Overconfidence (was winning, then made error)
+            if (wasWinning && isError) {
+                patterns.overconfidence.count++;
+                patterns.overconfidence.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: Panic in defense (error while already losing)
+            if (!wasWinning && prevEval < -1.0 && isError) {
+                patterns.panicInDefense.count++;
+                patterns.panicInDefense.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: Wishful thinking (played a move that "threatens" but drops material)
+            if (isError && m.tactical && m.tactical.length > 0 && evalDiff > 80) {
+                patterns.wishfulThinking.count++;
+                patterns.wishfulThinking.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Pattern: No endgame plan (errors late in game)
+            if (isError && i >= 20) {
+                patterns.noEndgamePlan.count++;
+                patterns.noEndgamePlan.examples.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
+                    comment: m.comment, evalDiff
+                });
+            }
+
+            // Track state
+            wasWinning = evalNow > 1.5;
+            prevEval = evalNow;
+        }
+    }
+
+    // Calculate severity (0-100) for each pattern
+    for (const key of Object.keys(patterns)) {
+        const p = patterns[key];
+        p.severity = totalPlayerMoves > 0
+            ? Math.min(100, Math.round((p.count / totalPlayerMoves) * 1000))
+            : 0;
+        // Sort examples by worst first
+        p.examples.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+        p.examples = p.examples.slice(0, 5);
+    }
+
+    // Sort patterns by count (most frequent = biggest problem)
+    const sorted = Object.values(patterns)
+        .filter(p => p.count > 0)
+        .sort((a, b) => b.count - a.count);
+
+    // Thinking scores (inverse of errors)
+    const thinkingScores = {
+        threatCheck: Math.max(10, 100 - patterns.notCheckingThreats.severity * 3),
+        calculation: Math.max(10, 100 - patterns.noCalculation.severity * 3),
+        boardVision: Math.max(10, 100 - patterns.tunnelVision.severity * 2),
+        concentration: Math.max(10, 100 - patterns.overconfidence.severity * 3),
+        resilience: Math.max(10, 100 - patterns.panicInDefense.severity * 3),
+        objectivity: Math.max(10, 100 - patterns.wishfulThinking.severity * 3)
+    };
+
+    return { patterns: sorted, allPatterns: patterns, thinkingScores, totalPlayerMoves, totalErrors };
+}
+
+let thinkingRadarChart = null;
+
+function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
+    const errListDiv = document.getElementById('thinking-errors-list');
+    if (!errListDiv) return;
+
+    if (!thinkingAnalysis || thinkingAnalysis.patterns.length === 0) {
+        errListDiv.innerHTML =
+            '<p style="color:#666; text-align:center; padding:20px;">Pas assez de donnees pour detecter des patterns. Jouez plus de parties!</p>';
+        return;
+    }
+
+    // Render detected thinking errors
+    const listDiv = errListDiv;
+    listDiv.innerHTML = thinkingAnalysis.patterns.map((p, idx) => {
+        const barColor = p.severity > 60 ? '#e74c3c' : p.severity > 30 ? '#f39c12' : '#3498db';
+        const severityLabel = p.severity > 60 ? 'Frequent' : p.severity > 30 ? 'Occasionnel' : 'Rare';
+
+        return `
+        <div style="padding:15px; background:rgba(0,0,0,0.2); border-radius:10px; margin-bottom:12px; border-left:4px solid ${barColor};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div>
+                    <span style="font-size:1.3rem;">${p.icon}</span>
+                    <strong style="font-size:1rem; margin-left:6px;">${p.name}</strong>
+                    <span style="color:${barColor}; font-size:0.8rem; margin-left:8px;">(${p.count}x - ${severityLabel})</span>
+                </div>
+            </div>
+            <p style="color:#ccc; font-size:0.9rem; margin-bottom:8px;">${p.description}</p>
+            <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:10px;">
+                <div style="height:100%; width:${Math.min(100, p.severity * 2)}%; background:${barColor}; border-radius:3px;"></div>
+            </div>
+            <div style="padding:10px; background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); border-radius:8px;">
+                <strong style="color:#2ecc71;">Comment corriger:</strong>
+                <p style="color:#ccc; margin-top:4px; font-size:0.9rem;">${p.fix}</p>
+            </div>
+            ${p.examples.length > 0 ? `
+            <details style="margin-top:8px;">
+                <summary style="cursor:pointer; color:#888; font-size:0.85rem;">Voir les exemples (${p.examples.length})</summary>
+                <div style="margin-top:8px;">
+                    ${p.examples.map(ex => `
+                        <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:4px; font-size:0.85rem;">
+                            <span style="color:#e74c3c;">${ex.quality || 'Erreur'}</span>
+                            Coup ${ex.moveNum}: <strong>${ex.san}</strong>
+                            ${ex.evalDiff ? ` (perte: ${Math.abs(ex.evalDiff).toFixed(0)}cp)` : ''}
+                            ${ex.comment ? `<br><span style="color:#777;">${ex.comment.substring(0, 80)}</span>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </details>` : ''}
+        </div>`;
+    }).join('');
+
+    // Thinking radar chart
+    const scores = thinkingAnalysis.thinkingScores;
+    const ctx2 = document.getElementById('thinkingRadarChart').getContext('2d');
+    if (thinkingRadarChart) thinkingRadarChart.destroy();
+    thinkingRadarChart = new Chart(ctx2, {
+        type: 'radar',
+        data: {
+            labels: [
+                'Verification menaces',
+                'Calcul',
+                'Vision globale',
+                'Concentration',
+                'Resilience',
+                'Objectivite'
+            ],
+            datasets: [{
+                label: 'Reflexion',
+                data: [
+                    scores.threatCheck,
+                    scores.calculation,
+                    scores.boardVision,
+                    scores.concentration,
+                    scores.resilience,
+                    scores.objectivity
+                ],
+                backgroundColor: 'rgba(0, 217, 255, 0.2)',
+                borderColor: '#00d9ff',
+                borderWidth: 2,
+                pointBackgroundColor: '#00d9ff',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 1,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { stepSize: 20, color: '#666', backdropColor: 'transparent' },
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    pointLabels: { color: '#ccc', font: { size: 11, weight: '600' } }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Thinking summary
+    const summaryDiv = document.getElementById('thinking-summary');
+    const worstThinking = Object.entries(scores).sort((a, b) => a[1] - b[1]);
+    const labels = {
+        threatCheck: 'Verification des menaces',
+        calculation: 'Profondeur de calcul',
+        boardVision: 'Vision de l\'echiquier',
+        concentration: 'Concentration',
+        resilience: 'Resilience defensive',
+        objectivity: 'Objectivite'
+    };
+
+    summaryDiv.innerHTML = `
+        <div style="margin-bottom:15px;">
+            <h3 style="color:#00d9ff; margin-bottom:10px;">Diagnostic</h3>
+            <p style="color:#aaa; font-size:0.9rem; margin-bottom:12px;">
+                Sur ${thinkingAnalysis.totalPlayerMoves} coups analyses, ${thinkingAnalysis.totalErrors} erreurs detectees
+                (${thinkingAnalysis.totalPlayerMoves > 0 ? Math.round(thinkingAnalysis.totalErrors / thinkingAnalysis.totalPlayerMoves * 100) : 0}%).
+            </p>
+        </div>
+        <div>
+            <div style="font-weight:700; color:#e74c3c; margin-bottom:8px;">Priorite #1 a travailler:</div>
+            <div style="padding:12px; background:rgba(231,76,60,0.1); border-radius:8px; border:1px solid rgba(231,76,60,0.3);">
+                <strong>${labels[worstThinking[0][0]]}</strong>
+                <span style="color:#e74c3c;"> (${worstThinking[0][1]}/100)</span>
+                <p style="color:#aaa; font-size:0.85rem; margin-top:4px;">C'est votre plus grande source d'erreurs. Concentrez-vous sur ce point.</p>
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <div style="font-weight:700; color:#f39c12; margin-bottom:8px;">Priorite #2:</div>
+            <div style="padding:12px; background:rgba(243,156,18,0.1); border-radius:8px; border:1px solid rgba(243,156,18,0.3);">
+                <strong>${labels[worstThinking[1][0]]}</strong>
+                <span style="color:#f39c12;"> (${worstThinking[1][1]}/100)</span>
+            </div>
+        </div>
+    `;
+
+    // Worst moves for mental exercise
+    const worstDiv = document.getElementById('thinking-worst-moves');
+    const allErrors = [];
+    for (const moves of playerMovesByGame) {
+        for (let i = 0; i < moves.length; i++) {
+            const m = moves[i];
+            if ((m.rating || 5) <= 3) {
+                allErrors.push({
+                    san: m.san, moveNum: m.moveNum || i+1, rating: m.rating,
+                    quality: m.quality, comment: m.comment, evalDiff: m.evalDiff, moveIndex: i
+                });
+            }
+        }
+    }
+    allErrors.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+
+    if (allErrors.length > 0) {
+        worstDiv.innerHTML = allErrors.slice(0, 5).map((err, idx) => `
+            <div style="padding:12px; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:10px; border-left:3px solid #e74c3c;">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>Erreur #${idx+1}: Coup ${err.moveNum} - ${err.san}</strong>
+                    <span style="color:#e74c3c;">${err.quality || 'Gaffe'}</span>
+                </div>
+                ${err.comment ? `<p style="color:#aaa; font-size:0.85rem; margin-top:4px;">${err.comment.substring(0, 120)}</p>` : ''}
+                <div style="margin-top:8px; padding:8px; background:rgba(255,215,0,0.1); border-radius:6px; font-size:0.85rem;">
+                    <strong style="color:#ffd700;">Rejouez mentalement:</strong>
+                    <ol style="margin:4px 0 0 16px; color:#ccc;">
+                        <li>Que menaçait l'adversaire avant ce coup?</li>
+                        <li>Quels etaient les 3 coups candidats?</li>
+                        <li>Qu'est-ce qui se passe apres ${err.san}? Quelle reponse adverse?</li>
+                        <li>Quel coup aurait ete meilleur et pourquoi?</li>
+                    </ol>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        worstDiv.innerHTML = '<p style="color:#666; text-align:center;">Pas de grosses erreurs detectees. Bien joue!</p>';
+    }
+}
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const data = loadAllData();
+
+    analysisResult = analyzeStyle(data.playerMovesByGame);
+
+    // Render all tabs
+    renderStyleTab(analysisResult);
+
+    if (analysisResult) {
+        const swAnalysis = analyzeStrengthsWeaknesses(data.playerMovesByGame, analysisResult);
+        renderStrengthsTab(swAnalysis, analysisResult);
+
+        const trainingProgram = generateTrainingProgram(swAnalysis.weaknesses, data.playerMovesByGame);
+        renderTrainingTab(trainingProgram, swAnalysis);
+
+        const thinkingAnalysis = analyzeThinkingErrors(data.playerMovesByGame);
+        renderThinkingTab(thinkingAnalysis, data.playerMovesByGame);
+
+        renderHistoryTab(analysisResult);
+    }
+});
+</script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

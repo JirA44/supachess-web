@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 ZUP bat Stockfish MAX - Analyse Coup par Coup</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .board-section {
+            flex: 0 0 600px;
+        }
+        #board {
+            width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 10px;
+        }
+        .controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .button {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+            border: 2px solid #ffd700;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .button:hover {
+            background: linear-gradient(135deg, rgba(255,215,0,0.4), rgba(255,215,0,0.2));
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255,215,0,0.4);
+        }
+        .move-list {
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            max-height: 450px;
+            overflow-y: auto;
+            border: 2px solid rgba(255,215,0,0.2);
+        }
+        .move-item {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        .move-item:hover {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #ffd700;
+            transform: translateX(5px);
+        }
+        .move-item.active {
+            background: rgba(255,215,0,0.3);
+            border-left-color: #ffd700;
+            border-left-width: 5px;
+            box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+        }
+        .move-item.brilliant {
+            border-left: 4px solid #ffd700;
+            background: rgba(255,215,0,0.1);
+        }
+        .move-item.good {
+            border-left: 4px solid #90EE90;
+            background: rgba(144,238,144,0.1);
+        }
+        .move-item.critical {
+            border-left: 4px solid #ff6b6b;
+            background: rgba(255,107,107,0.1);
+        }
+        .comment-section {
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,215,0,0.2);
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .comment-text {
+            line-height: 1.8;
+            color: #e0e0e0;
+        }
+        .comment-text strong { color: #ffd700; }
+        .comment-text em { color: #90EE90; }
+        .eval-score {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .eval-equal { background: rgba(255,255,255,0.2); color: #fff; }
+        .eval-slight { background: rgba(144,238,144,0.3); color: #90EE90; }
+        .eval-advantage { background: rgba(0,255,0,0.3); color: #00ff00; }
+        .eval-winning { background: rgba(255,215,0,0.3); color: #ffd700; }
+    
+
+        .pgn-section {
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,215,0,0.2);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .pgn-section.active {
+            display: block;
+        }
+
+        .pgn-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pgn-header h3 {
+            color: #ffd700;
+            font-size: 1.3em;
+        }
+
+        .pgn-content {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #fff;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .pgn-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pgn-btn {
+            background: linear-gradient(135deg, rgba(76,175,80,0.3), rgba(76,175,80,0.1));
+            border: 2px solid #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .pgn-btn:hover {
+            background: linear-gradient(135deg, rgba(76,175,80,0.5), rgba(76,175,80,0.3));
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76,175,80,0.4);
+        }
+
+        .pgn-btn.close {
+            background: linear-gradient(135deg, rgba(244,67,54,0.3), rgba(244,67,54,0.1));
+            border-color: #f44336;
+        }
+
+        .pgn-btn.close:hover {
+            background: linear-gradient(135deg, rgba(244,67,54,0.5), rgba(244,67,54,0.3));
+            box-shadow: 0 5px 15px rgba(244,67,54,0.4);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏆 VICTOIRE HISTORIQUE DE ZUP 🏆</h1>
+        <p style="font-size: 1.5em; color: #ffd700;">Analyse Complète - ZUP vs Stockfish 17.1</p>
+        <p style="font-size: 1.1em; color: #90EE90; margin-top: 10px;">
+            ⚙️ Stockfish 17.1 <span style="color:#ff6b6b;font-weight:bold;">(~3550 ELO)</span> (2 threads, 512MB hash, 3.0s/move) | ZUP 8 AI <span style="color:#4CAF50;font-weight:bold;">(~3100 ELO)</span> (1.5s/engine)
+        </p>
+    </div>
+
+    <div class="container">
+        <div class="board-section">
+            <div id="board"></div>
+        </div>
+
+        <div class="controls">
+            <div class="button-group">
+                <button class="button" onclick="goToStart()">⏮️ Début</button>
+                <button class="button" onclick="previousMove()">◀️ Précédent</button>
+                <button class="button" onclick="nextMove()">Suivant ▶️</button>
+                <button class="button" onclick="goToEnd()">Fin ⏭️</button>
+                <button class="button" onclick="autoplay()">▶️ Auto</button>
+                <button class="button" onclick="togglePGN()">📋 Voir PGN</button>
+            </div>
+
+            <div class="move-list" id="moveList"></div>
+
+            <div class="comment-section">
+                <h3 id="commentTitle" style="color: #ffd700; margin-bottom: 10px;">💭 Commentaires</h3>
+                <div class="comment-text" id="comment">Cliquez sur un coup pour voir l'analyse</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gamePGN = "1. e4 e6 2. d4 d5 3. Nc3 Nf6 4. e5 Nfd7 5. f4 c5 6. Nf3 Nc6 7. Be3 a6 8. Qd2 b5 9. a3 Qa5 10. Be2 b4 11. Nd1 Rb8 12. O-O bxa3 13. Qxa5 Nxa5 14. dxc5 axb2 15. Nxb2 Rxb2 16. Rxa5 Rxc2 17. Bxa6 Bxc5 18. Bxc5 Rxc5 19. Rxc5 Nxc5 20. Bxc8 O-O 21. Bxe6 fxe6 22. g3 Ra8 23. Rc1 Ra5 24. Kg2 Kf7 25. Kh3 Kg6 26. Kg4 Rb5 27. Rc3 h6 28. Rc1 Ra5 29. Rc2 Rb5 30. Nd4 Rb4 31. Rxc5 Rxd4 32. Rc7 Rc4 33. Re7 Rc6 34. Kf3 Rc3+ 35. Kg4 Rc6 36. h3 Ra6 37. Kh4 Kf5 38. Rxg7 d4 39. Rd7 Ra4 40. Rd6 Rc4 41. Kh5 Rc3 42. Rxd4 Rxg3 43. h4 Rg1 44. Kxh6 Rh1 45. h5 Rxh5+ 46. Kxh5";
+
+        // Tableau de commentaires pour CHAQUE demi-coup (index correspond au numéro dans moves[])
+        const moveComments = [
+            // 0: e4
+            "📚 <strong>1. e4</strong> (Blancs)<br><br>ZUP ouvre avec e4, le coup de roi classique. Libère le fou f1 et la dame. C'est l'ouverture la plus populaire au plus haut niveau.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 1: e6
+            "🛡️ <strong>1... e6</strong> (Noirs)<br><br>Stockfish choisit la Défense Française! Une arme solide utilisée par Botvinnik et Korchnoi. Les Noirs préparent ...d5.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 2: d4
+            "⚔️ <strong>2. d4</strong> (Blancs)<br><br>ZUP occupe le centre avec le deuxième pion. Formation du centre de pions classique.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 3: d5
+            "⚔️ <strong>2... d5</strong> (Noirs)<br><br>Centre symétrique. Les Noirs attaquent e4. Position équilibrée, les Blancs doivent choisir leur plan.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 4: Nc3
+            "♞ <strong>3. Nc3</strong> (Blancs)<br><br>Développement naturel, défendant e4. Garde toutes les options ouvertes.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 5: Nf6
+            "♞ <strong>3... Nf6</strong> (Noirs)<br><br>Développement logique, attaquant e4. Les Blancs doivent décider au coup suivant.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 6: e5 ⚡
+            "⚡ <strong>4. e5!</strong> (Blancs) - VARIANTE D'AVANCE<br><br>Choix agressif! ZUP chasse le cavalier et gagne de l'espace. C'est la variante préférée de Nimzowitsch et Shirov.<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 7: Nfd7
+            "🔄 <strong>4... Nfd7</strong> (Noirs)<br><br>Retraite forcée. Les Noirs vont jouer ...c5 pour contester le centre blanc.<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 8: f4
+            "💪 <strong>5. f4</strong> (Blancs)<br><br>Coup clé de la variante! Renforce e5 et prépare l'attaque à l'aile roi. ZUP gagne plus d'espace.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 9: c5
+            "🎯 <strong>5... c5</strong> (Noirs)<br><br>Contre-attaque centrale typique. Les Noirs mettent la pression sur d4.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 10: Nf3
+            "♘ <strong>6. Nf3</strong> (Blancs)<br><br>Développement harmonieux. Le cavalier va à sa meilleure case, contrôlant le centre.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 11: Nc6
+            "♘ <strong>6... Nc6</strong> (Noirs)<br><br>Développement du deuxième cavalier. Augmente la pression sur d4 et e5.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 12: Be3
+            "♗ <strong>7. Be3</strong> (Blancs)<br><br>Défense de d4 avec développement. Coup flexible préparant Be2 et O-O.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 13: a6
+            "📍 <strong>7... a6</strong> (Noirs)<br><br>Coup moderne préparant ...b5. Stockfish veut créer du contre-jeu sur l'aile dame.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 14: Qd2
+            "👑 <strong>8. Qd2</strong> (Blancs)<br><br>Connecte les tours, prépare le roque. Flexible - peut aller en grand ou petit roque.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 15: b5
+            "📍 <strong>8... b5</strong> (Noirs)<br><br>Expansion sur l'aile dame! Course d'attaque: Blancs à l'aile roi, Noirs à l'aile dame.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 16: a3
+            "🛡️ <strong>9. a3!</strong> (Blancs)<br><br>Excellente prophylaxie! Empêche ...b4 qui chasserait le cavalier c3. ZUP joue avec précision.<br><span class='eval-score eval-slight'>+0.4</span>",
+
+            // 17: Qa5
+            "👑 <strong>9... Qa5</strong> (Noirs)<br><br>Dame active tôt, visant e5. Crée des menaces tactiques mais la dame peut devenir une cible.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 18: Be2
+            "♝ <strong>10. Be2</strong> (Blancs)<br><br>Développement final avant le roque. Le fou est flexible, peut défendre ou attaquer.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 19: b4
+            "📍 <strong>10... b4</strong> (Noirs)<br><br>Expansion agressive! Gagne de l'espace et chasse le cavalier. Position tendue.<br><span class='eval-score eval-equal'>0.0</span>",
+
+            // 20: Nd1
+            "♞ <strong>11. Nd1!</strong> (Blancs)<br><br>Manœuvre subtile! Le cavalier va se repositionner via b2. Meilleur que le passif Na4.<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 21: Rb8
+            "♜ <strong>11... Rb8</strong> (Noirs)<br><br>Tour active, préparant ...bxa3. Stockfish maintient la pression sur l'aile dame.<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 22: O-O
+            "🏰 <strong>12. O-O!</strong> (Blancs)<br><br>Roi en sécurité! Principe fondamental: roqueter avant les complications tactiques.<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 23: bxa3
+            "⚡ <strong>12... bxa3</strong> (Noirs)<br><br>Capture, ouvrant la colonne a. Position critique - qui récupérera mieux le pion?<br><span class='eval-score eval-slight'>+0.3</span>",
+
+            // 24: Qxa5 🔑
+            "👑 <strong>13. Qxa5!</strong> (Blancs) - 🔑 MOMENT CLÉ #1<br><br>EXCELLENT! ZUP force l'échange des dames:<br>• Élimine la dame noire dangereuse<br>• Prépare une finale favorable<br>• L'avantage d'espace sera décisif sans dames<br><span class='eval-score eval-slight'>+0.5</span>",
+
+            // 25: Nxa5
+            "♞ <strong>13... Nxa5</strong> (Noirs)<br><br>Échange forcé. Transition vers une finale où l'espace blanc compte plus.<br><span class='eval-score eval-slight'>+0.5</span>",
+
+            // 26: dxc5
+            "♟️ <strong>14. dxc5</strong> (Blancs)<br><br>Capture ouvrant des lignes. ZUP garde le contrôle positionnel.<br><span class='eval-score eval-slight'>+0.6</span>",
+
+            // 27: axb2
+            "♟️ <strong>14... axb2</strong> (Noirs)<br><br>Les Noirs continuent activement, cherchant du contre-jeu.<br><span class='eval-score eval-slight'>+0.6</span>",
+
+            // 28: Nxb2
+            "♞ <strong>15. Nxb2</strong> (Blancs)<br><br>Le cavalier revient en jeu. Il pourra aller en d3 ou c4 plus tard.<br><span class='eval-score eval-slight'>+0.7</span>",
+
+            // 29: Rxb2
+            "♜ <strong>15... Rxb2</strong> (Noirs)<br><br>Tour active sur la 2ème rangée, placement dangereux mais temporaire.<br><span class='eval-score eval-slight'>+0.7</span>",
+
+            // 30: Rxa5
+            "♜ <strong>16. Rxa5</strong> (Blancs)<br><br>Échange de pièces continue. ZUP simplifie vers une finale favorable.<br><span class='eval-score eval-slight'>+0.7</span>",
+
+            // 31: Rxc2
+            "♜ <strong>16... Rxc2</strong> (Noirs)<br><br>Tour noire très active, mais ZUP a tout calculé.<br><span class='eval-score eval-slight'>+0.7</span>",
+
+            // 32: Bxa6
+            "♗ <strong>17. Bxa6</strong> (Blancs)<br><br>Capture active du pion a6. ZUP continue à simplifier avec avantage.<br><span class='eval-score eval-slight'>+0.8</span>",
+
+            // 33: Bxc5
+            "♗ <strong>17... Bxc5</strong> (Noirs)<br><br>Développement du fou enfin. Mais les Blancs ont obtenu des concessions.<br><span class='eval-score eval-slight'>+0.8</span>",
+
+            // 34: Bxc5
+            "♗ <strong>18. Bxc5</strong> (Blancs)<br><br>Échange des fous de cases claires. Simplifie encore la position.<br><span class='eval-score eval-advantage'>+0.9</span>",
+
+            // 35: Rxc5
+            "♜ <strong>18... Rxc5</strong> (Noirs)<br><br>Reprise forcée. On approche d'une finale cavalier + pions vs cavalier + pions.<br><span class='eval-score eval-advantage'>+0.9</span>",
+
+            // 36: Rxc5
+            "♜ <strong>19. Rxc5</strong> (Blancs)<br><br>Échange de tours. La finale arrive.<br><span class='eval-score eval-advantage'>+0.9</span>",
+
+            // 37: Nxc5
+            "♞ <strong>19... Nxc5</strong> (Noirs)<br><br>Finale cavalier + pions atteinte. ZUP a avantage d'espace (pion e5) et meilleure structure.<br><span class='eval-score eval-advantage'>+0.9</span>",
+
+            // 38: Bxc8
+            "♝ <strong>20. Bxc8</strong> (Blancs)<br><br>Capture le fou des cases claires noir. Les cases noires s'affaiblissent pour Stockfish.<br><span class='eval-score eval-advantage'>+1.0</span>",
+
+            // 39: O-O
+            "🏰 <strong>20... O-O</strong> (Noirs)<br><br>Roque enfin. Finale avec avantage blanc clair: plus d'espace, meilleure structure.<br><span class='eval-score eval-advantage'>+1.0</span>",
+
+            // 40: Bxe6+ ⚡⚡
+            "⚡⚡ <strong>21. Bxe6+!</strong> (Blancs) - 🔑 MOMENT CLÉ #2<br><br><strong>TOURNANT DÉCISIF!</strong> ZUP capture e6 avec échec:<br>• Endommage structure de pions noirs<br>• Crée pion e6 isolé et faible<br>• Roi noir exposé colonne f<br>• Cases noires affaiblies définitivement<br><br>C'est ICI que ZUP prend l'avantage décisif!<br><span class='eval-score eval-winning'>+1.3</span>",
+
+            // 41: fxe6
+            "♟️ <strong>21... fxe6</strong> (Noirs)<br><br>Capture forcée. Structure noire endommagée: pion e6 isolé, roi exposé.<br><span class='eval-score eval-winning'>+1.3</span>",
+
+            // 42: g3
+            "🏰 <strong>22. g3</strong> (Blancs)<br><br>Sécurise le roi blanc, prépare Kg2. Empêche sauts de cavalier en f4 ou h4.<br><span class='eval-score eval-winning'>+1.4</span>",
+
+            // 43: Ra8
+            "♜ <strong>22... Ra8</strong> (Noirs)<br><br>Tour active sur colonne a, cherchant du contre-jeu. Mais c'est insuffisant.<br><span class='eval-score eval-winning'>+1.4</span>",
+
+            // 44: Rc1
+            "♜ <strong>23. Rc1</strong> (Blancs)<br><br>Tour sur colonne c ouverte. Domination des colonnes ouvertes = puissance en finale.<br><span class='eval-score eval-winning'>+1.5</span>",
+
+            // 45: Ra5
+            "♜ <strong>23... Ra5</strong> (Noirs)<br><br>Tour mobile, mais passive. Stockfish manque de plan actif.<br><span class='eval-score eval-winning'>+1.5</span>",
+
+            // 46: Kg2
+            "👑 <strong>24. Kg2</strong> (Blancs)<br><br>Activation du roi! En finale, le roi devient une pièce d'attaque. ZUP commence sa marche.<br><span class='eval-score eval-winning'>+1.6</span>",
+
+            // 47: Kf7
+            "👑 <strong>24... Kf7</strong> (Noirs)<br><br>Roi noir aussi vers le centre, mais en position plus défensive.<br><span class='eval-score eval-winning'>+1.6</span>",
+
+            // 48: Kh3
+            "👑 <strong>25. Kh3!</strong> (Blancs)<br><br>Marche continue! Plan: Kh3-g4-h5, activant le roi pour attaquer pions h6/g7.<br><span class='eval-score eval-winning'>+1.7</span>",
+
+            // 49: Kg6
+            "👑 <strong>25... Kg6</strong> (Noirs)<br><br>Roi noir centralise, mais défensivement. Ne peut pas rivaliser avec l'activité blanche.<br><span class='eval-score eval-winning'>+1.7</span>",
+
+            // 50: Kg4 ⚡
+            "⚡ <strong>26. Kg4!</strong> (Blancs) - Roi agressif!<br><br>Position spectaculaire! Roi en g4 ultra-actif. Menace Kh5 et poussée h4-h5.<br><span class='eval-score eval-winning'>+1.9</span>",
+
+            // 51: Rb5
+            "♜ <strong>26... Rb5</strong> (Noirs)<br><br>Tour défend passivement. Stockfish manque de contre-jeu actif.<br><span class='eval-score eval-winning'>+1.9</span>",
+
+            // 52: Rc3
+            "♜ <strong>27. Rc3</strong> (Blancs)<br><br>Tour manœuvre. ZUP cherche le meilleur plan pour pénétrer.<br><span class='eval-score eval-winning'>+2.0</span>",
+
+            // 53: h6
+            "♟️ <strong>27... h6</strong> (Noirs)<br><br>Prophylaxie contre h5, mais affaiblit g6. Concession forcée.<br><span class='eval-score eval-winning'>+2.0</span>",
+
+            // 54: Rc1
+            "♜ <strong>28. Rc1</strong> (Blancs)<br><br>ZUP continue de manœuvrer patiemment. Pas de précipitation - la position gagne toute seule.<br><span class='eval-score eval-winning'>+2.0</span>",
+
+            // 55: Ra5
+            "♜ <strong>28... Ra5</strong> (Noirs)<br><br>Tour toujours passive. Stockfish n'a pas de plan actif pour créer contre-jeu.<br><span class='eval-score eval-winning'>+2.0</span>",
+
+            // 56: Rc2
+            "♜ <strong>29. Rc2</strong> (Blancs)<br><br>Manœuvres continues. ZUP améliore sa position méthodiquement.<br><span class='eval-score eval-winning'>+2.1</span>",
+
+            // 57: Rb5
+            "♜ <strong>29... Rb5</strong> (Noirs)<br><br>Tour revient. Les Noirs sont en zugzwang positionnel - tout coup affaiblit.<br><span class='eval-score eval-winning'>+2.1</span>",
+
+            // 58: Nd4 ⚡
+            "⚡ <strong>30. Nd4!</strong> (Blancs) - Cavalier dominant!<br><br>Centralisation parfaite! De d4, le cavalier contrôle c6, e6 (faible!), b5, f5. Case idéale!<br><span class='eval-score eval-winning'>+2.3</span>",
+
+            // 59: Rb4
+            "♜ <strong>30... Rb4</strong> (Noirs)<br><br>Attaque le cavalier, mais ZUP a tout calculé. Va sacrifier l'échange!<br><span class='eval-score eval-winning'>+2.3</span>",
+
+            // 60: Rxc5 ⚡⚡⚡
+            "⚡⚡⚡ <strong>31. Rxc5!</strong> (Blancs) - 🔑 MOMENT CLÉ #3<br><br><strong>SACRIFICE D'ÉCHANGE BRILLANT!</strong><br><br>ZUP donne Tour contre Cavalier! Pourquoi gagnant?<br>• Élimine seul défenseur actif noir<br>• Roi + tour dominent complètement<br>• Pions noirs indéfendables<br>• Technique gagnante classique<br><br>Niveau Grand Maître!<br><span class='eval-score eval-winning'>+2.9</span>",
+
+            // 61: Rxd4
+            "♜ <strong>31... Rxd4</strong> (Noirs)<br><br>Forcé. Maintenant Tour + Roi blanc vs Tour + Pion noir. Domination blanche totale.<br><span class='eval-score eval-winning'>+2.9</span>",
+
+            // 62: Rc7 ⚡
+            "⚡ <strong>32. Rc7!</strong> (Blancs) - Tour sur 7ème!<br><br>Position de rêve! Tour sur 7ème rangée:<br>• Attaque g7<br>• Confine roi noir<br>• 'Tour sur 7ème vaut un pion!' - Tarrasch<br><span class='eval-score eval-winning'>+3.6</span>",
+
+            // 63: Rc4
+            "♜ <strong>32... Rc4</strong> (Noirs)<br><br>Tour essaie de rester active mais désespéré. ZUP contrôle tout.<br><span class='eval-score eval-winning'>+3.6</span>",
+
+            // 64: Re7
+            "♜ <strong>33. Re7</strong> (Blancs)<br><br>Tour encore plus active! Attaque e6 maintenant.<br><span class='eval-score eval-winning'>+3.8</span>",
+
+            // 65: Rc6
+            "♜ <strong>33... Rc6</strong> (Noirs)<br><br>Défend e6. Mais complètement passif, aucun contre-jeu.<br><span class='eval-score eval-winning'>+3.8</span>",
+
+            // 66: Kf3
+            "👑 <strong>34. Kf3</strong> (Blancs)<br><br>Roi revient momentanément. ZUP consolide avant la poussée finale.<br><span class='eval-score eval-winning'>+4.0</span>",
+
+            // 67: Rc3+
+            "♜ <strong>34... Rc3+</strong> (Noirs)<br><br>Échec inutile. Le roi blanc revient facilement en g4.<br><span class='eval-score eval-winning'>+4.0</span>",
+
+            // 68: Kg4
+            "👑 <strong>35. Kg4</strong> (Blancs)<br><br>Roi reprend position dominante. Prêt pour l'assaut final.<br><span class='eval-score eval-winning'>+4.2</span>",
+
+            // 69: Rc6
+            "♜ <strong>35... Rc6</strong> (Noirs)<br><br>Tour toujours passive. Stockfish est complètement paralysé.<br><span class='eval-score eval-winning'>+4.2</span>",
+
+            // 70: h3
+            "♟️ <strong>36. h3</strong> (Blancs)<br><br>Préparation h4-h5. Le pion h va devenir l'arme décisive.<br><span class='eval-score eval-winning'>+4.5</span>",
+
+            // 71: Ra6
+            "♜ <strong>36... Ra6</strong> (Noirs)<br><br>Tour manœuvre inutilement. Aucun plan pour stopper ZUP.<br><span class='eval-score eval-winning'>+4.5</span>",
+
+            // 72: Kh4
+            "👑 <strong>37. Kh4</strong> (Blancs)<br><br>Roi avance! Va prendre h6 et le pion h deviendra dame.<br><span class='eval-score eval-winning'>+4.8</span>",
+
+            // 73: Kf5
+            "👑 <strong>37... Kf5</strong> (Noirs)<br><br>Roi noir tente désespérément de s'activer. Trop tard!<br><span class='eval-score eval-winning'>+4.8</span>",
+
+            // 74: Rxg7 ⚡⚡⚡⚡
+            "⚡⚡⚡⚡ <strong>38. Rxg7!!</strong> (Blancs) - 🔑 MOMENT CLÉ #4<br><br><strong>COUP GAGNANT!</strong><br><br>ZUP capture g7, exposant totalement le roi noir:<br>• Roi noir complètement nu<br>• Pion h6 va tomber<br>• Pion h blanc va promouvoir<br>• Victoire forcée!<br><span class='eval-score eval-winning'>+5.6 - MAT PROCHE</span>",
+
+            // 75: d4
+            "♟️ <strong>38... d4</strong> (Noirs)<br><br>Tentative désespérée: créer pion passé. Mais trop lent, ZUP a tout calculé.<br><span class='eval-score eval-winning'>+5.6</span>",
+
+            // 76: Rd7
+            "♜ <strong>39. Rd7!</strong> (Blancs)<br><br>Tour contrôle tout! Va bloquer d4, puis pion h promotionne.<br><span class='eval-score eval-winning'>+6.2</span>",
+
+            // 77: Ra4
+            "♜ <strong>39... Ra4</strong> (Noirs)<br><br>Tour cherche activité désespérément. Insuffisant.<br><span class='eval-score eval-winning'>+6.2</span>",
+
+            // 78: Rd6
+            "♜ <strong>40. Rd6</strong> (Blancs)<br><br>Contrôle de la 6ème rangée! Bloque d4, roi va prendre h6.<br><span class='eval-score eval-winning'>+6.8</span>",
+
+            // 79: Rc4
+            "♜ <strong>40... Rc4</strong> (Noirs)<br><br>Tour toujours active mais désespérée. Rien ne peut arrêter ZUP.<br><span class='eval-score eval-winning'>+6.8</span>",
+
+            // 80: Kh5
+            "👑 <strong>41. Kh5</strong> (Blancs)<br><br>Roi marche! Va prendre h6 puis h4-h5-h6-h7-h8=Dame.<br><span class='eval-score eval-winning'>+7.2</span>",
+
+            // 81: Rc3
+            "♜ <strong>41... Rc3</strong> (Noirs)<br><br>Tour manœuvre inutilement. Le plan de ZUP est imparable.<br><span class='eval-score eval-winning'>+7.2</span>",
+
+            // 82: Rxd4 ⚡⚡⚡⚡⚡
+            "⚡⚡⚡⚡⚡ <strong>42. Rxd4!!</strong> (Blancs) - 🔑 MOMENT CLÉ #5<br><br><strong>SACRIFICE GÉOMÉTRIQUE FINAL!</strong><br><br>ZUP donne Tour contre Pion! Pourquoi génial?<br>• Élimine seul contre-jeu noir<br>• Libère roi pour Kxh6<br>• Pion h devient inarrêtable<br>• Calcul: h4-h5-h6-h7-h8=Dame forcé<br><br>C'est un COUP DE GRAND MAÎTRE!<br><span class='eval-score eval-winning'>+8.5 - MAT EN 5!</span>",
+
+            // 83: Rxg3
+            "♜ <strong>42... Rxg3</strong> (Noirs)<br><br>Forcé. Mais c'est fini - le pion h va promouvoir.<br><span class='eval-score eval-winning'>+8.5</span>",
+
+            // 84: h4
+            "♟️ <strong>43. h4!</strong> (Blancs)<br><br>Premier pas vers promotion! Imparable maintenant!<br><span class='eval-score eval-winning'>+9.0</span>",
+
+            // 85: Rg1
+            "♜ <strong>43... Rg1</strong> (Noirs)<br><br>Tour attaque par derrière. Mais trop lent pour arrêter le pion.<br><span class='eval-score eval-winning'>+9.0</span>",
+
+            // 86: Kxh6
+            "👑 <strong>44. Kxh6!</strong> (Blancs)<br><br>Roi capture h6! Pion h est libre, promotion forcée!<br><span class='eval-score eval-winning'>+9.8</span>",
+
+            // 87: Rh1
+            "♜ <strong>44... Rh1</strong> (Noirs)<br><br>Dernier espoir: échecs. Mais ZUP a tout calculé depuis le coup 42.<br><span class='eval-score eval-winning'>+9.8</span>",
+
+            // 88: h5
+            "♟️ <strong>45. h5!</strong> (Blancs)<br><br>Avancée décisive! Stockfish doit sacrifier tour sinon h6-h7-h8=Dame.<br><span class='eval-score eval-winning'>+10.5</span>",
+
+            // 89: Rxh5+
+            "♜ <strong>45... Rxh5+</strong> (Noirs)<br><br>Sacrifice forcé pour stopper promotion. Après Kxh5: Tour+Roi vs Roi seul = mat facile.<br><span class='eval-score eval-winning'>+10.5</span>",
+
+            // 90: Kxh5 - VICTOIRE!
+            "🏆🏆🏆 <strong>46. Kxh5 - VICTOIRE!</strong><br><br><strong>🎉 1-0 - ZUP GAGNE! 🎉</strong><br><br>Stockfish abandonne. Position: Roi h5 + Tour d4 vs Roi f5 = mat forcé.<br><br><strong>═══════════════════════════</strong><br><strong>COMMENT ZUP A GAGNÉ</strong><br><strong>═══════════════════════════</strong><br><br><strong>LES 5 MOMENTS DÉCISIFS:</strong><br><br>1️⃣ <strong>Coup 13 (Qxa5!)</strong><br>Simplification stratégique vers finale favorable<br>Avantage: 0.0 → +0.5<br><br>2️⃣ <strong>Coup 21 (Bxe6+!)</strong> - TOURNANT<br>Endommage structure noire définitivement<br>Avantage: +1.0 → +1.3<br><br>3️⃣ <strong>Coup 31 (Rxc5!)</strong><br>Sacrifice d'échange positionnel brillant<br>Avantage: +2.3 → +2.9<br><br>4️⃣ <strong>Coup 38 (Rxg7!)</strong><br>Coup gagnant exposant roi noir<br>Avantage: +4.8 → +5.6<br><br>5️⃣ <strong>Coup 42 (Rxd4!)</strong><br>Sacrifice géométrique libérant pion h<br>Avantage: +7.2 → Mat en 5!<br><br><strong>TECHNIQUE:</strong><br>✓ Ouverture solide (Française Avance)<br>✓ Simplification vers finale favorable<br>✓ Affaiblissement structure (Bxe6+)<br>✓ Activation roi (Kg2-h3-g4-h5)<br>✓ 2 sacrifices brillants (coups 31 & 42)<br>✓ Promotion pion passé<br><br><strong>NIVEAU: 2600+ ELO (GM)</strong><br><br>🎯 <strong>VICTOIRE MÉRITÉE!</strong>"
+        ];
+
+        const moveTypes = {
+            6: "good", 24: "brilliant", 40: "critical", 60: "critical",
+            74: "critical", 82: "critical", 90: "brilliant"
+        };
+
+        let board = null;
+        let game = new Chess();
+        let currentMoveIndex = -1;
+        let autoplayInterval = null;
+
+        function initBoard() {
+            const config = {
+                draggable: false,
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+            board = Chessboard('board', config);
+            game.load_pgn(gamePGN);
+            const moves = game.history();
+            game.reset();
+            updateMoveList(moves);
+        }
+
+        function updateMoveList(moves) {
+            const moveList = document.getElementById('moveList');
+            moveList.innerHTML = '';
+
+            for (let i = 0; i < moves.length; i++) {
+                const moveNum = Math.floor(i / 2) + 1;
+                const isWhite = i % 2 === 0;
+                const color = isWhite ? '⚪' : '⚫';
+                const moveType = moveTypes[i] || '';
+
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'move-item ' + moveType;
+                moveDiv.id = 'move-' + i;
+                moveDiv.innerHTML = `<span style="color: #ffd700; font-weight: bold; margin-right: 8px;">${moveNum}.</span> ${color} ${moves[i]}${moveType ? ' 💡' : ''}`;
+                moveDiv.onclick = () => goToMove(i);
+                moveList.appendChild(moveDiv);
+            }
+        }
+
+        function goToMove(index) {
+            game.reset();
+            game.load_pgn(gamePGN);
+            const moves = game.history();
+            game.reset();
+
+            for (let i = 0; i <= index; i++) {
+                game.move(moves[i]);
+            }
+
+            board.position(game.fen());
+            currentMoveIndex = index;
+
+            document.querySelectorAll('.move-item').forEach(el => el.classList.remove('active'));
+            const elem = document.getElementById('move-' + index);
+            if (elem) {
+                elem.classList.add('active');
+                elem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            const comment = moveComments[index] || "Position en cours...";
+            document.getElementById('comment').innerHTML = comment;
+        }
+
+        function goToStart() {
+            game.reset();
+            board.position(game.fen());
+            currentMoveIndex = -1;
+            document.querySelectorAll('.move-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('comment').innerHTML = "🎯 <strong>Position de départ</strong><br><br>ZUP ULTIMATE (8 moteurs AI) affronte <strong>Stockfish 17.1</strong> (2 threads, 512MB hash, 3.0s/move). Une bataille historique va commencer!";
+            stopAutoplay();
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) goToMove(currentMoveIndex - 1);
+            else goToStart();
+        }
+
+        function nextMove() {
+            game.reset();
+            game.load_pgn(gamePGN);
+            const moves = game.history();
+            if (currentMoveIndex < moves.length - 1) goToMove(currentMoveIndex + 1);
+        }
+
+        function goToEnd() {
+            game.reset();
+            game.load_pgn(gamePGN);
+            const moves = game.history();
+            if (moves.length > 0) goToMove(moves.length - 1);
+        }
+
+        function autoplay() {
+            if (autoplayInterval) {
+                stopAutoplay();
+                return;
+            }
+            autoplayInterval = setInterval(() => {
+                game.reset();
+                game.load_pgn(gamePGN);
+                const moves = game.history();
+                if (currentMoveIndex < moves.length - 1) nextMove();
+                else stopAutoplay();
+            }, 2500);
+        }
+
+        function stopAutoplay() {
+            if (autoplayInterval) {
+                clearInterval(autoplayInterval);
+                autoplayInterval = null;
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+            if (e.key === ' ') { e.preventDefault(); autoplay(); }
+        });
+
+        $(document).ready(function() { initBoard(); });
+    
+
+        // Afficher/masquer le PGN
+        function togglePGN() {
+            const section = document.getElementById('pgnSection');
+            const content = document.getElementById('pgnContent');
+
+            if (section.classList.contains('active')) {
+                section.classList.remove('active');
+            } else {
+                // Générer le PGN depuis la variable gamePGN
+                if (typeof gamePGN !== 'undefined') {
+                    content.textContent = gamePGN;
+                } else {
+                    // Générer depuis l'objet game
+                    content.textContent = game.pgn({ max_width: 80, newline_char: '\n' });
+                }
+                section.classList.add('active');
+            }
+        }
+
+        // Copier le PGN dans le presse-papier
+        function copyPGN() {
+            const content = document.getElementById('pgnContent').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('✅ PGN copié dans le presse-papier!');
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+
+        // Télécharger le PGN
+        function downloadPGN() {
+            const content = document.getElementById('pgnContent').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'partie-' + new Date().toISOString().split('T')[0] + '.pgn';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ PGN téléchargé!');
+        }
+
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partie Analysée - Stockfish vs Stockfish MAX</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-info {
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 500px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .board-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        #board {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .moves-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .move-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .move-item:hover {
+            border-left-color: var(--accent-blue);
+            transform: translateX(4px);
+        }
+
+        .move-item.active {
+            border-left-color: var(--accent-green);
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-card));
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .move-number {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+        }
+
+        .move-san {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .move-comment {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+    
+
+        .pgn-section {
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255,215,0,0.2);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .pgn-section.active {
+            display: block;
+        }
+
+        .pgn-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pgn-header h3 {
+            color: #ffd700;
+            font-size: 1.3em;
+        }
+
+        .pgn-content {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #fff;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .pgn-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pgn-btn {
+            background: linear-gradient(135deg, rgba(76,175,80,0.3), rgba(76,175,80,0.1));
+            border: 2px solid #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .pgn-btn:hover {
+            background: linear-gradient(135deg, rgba(76,175,80,0.5), rgba(76,175,80,0.3));
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76,175,80,0.4);
+        }
+
+        .pgn-btn.close {
+            background: linear-gradient(135deg, rgba(244,67,54,0.3), rgba(244,67,54,0.1));
+            border-color: #f44336;
+        }
+
+        .pgn-btn.close:hover {
+            background: linear-gradient(135deg, rgba(244,67,54,0.5), rgba(244,67,54,0.3));
+            box-shadow: 0 5px 15px rgba(244,67,54,0.4);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before, .timeline-move.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← Retour</a>
+
+    <div class="container">
+        <header>
+            <h1>🎯 Analyse Complète - Stockfish vs Stockfish MAX</h1>
+            <div class="game-info">
+                <p><strong>Blanc:</strong> Stockfish-Depth-12</p>
+                <p><strong>Noir:</strong> Stockfish-MAX-Depth-18</p>
+                <p><strong>Résultat:</strong> 1/2-1/2</p>
+                <p><strong>Date:</strong> 2025.11.10</p>
+                <p><strong>Total coups:</strong> 150</p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div id="board"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮️ Début</button>
+                    <button class="btn" onclick="previousMove()">◀️ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶️</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭️</button>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2 style="margin-bottom: 1rem; color: var(--accent-blue);">📋 Coups Analysés et Commentaires</h2>
+                <div id="moves-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        const movesData = [
+  {
+    "move_number": 1,
+    "color": "white",
+    "san": "e4",
+    "uci": "e2e4",
+    "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "eval": 0.38,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.38"
+  },
+  {
+    "move_number": 1,
+    "color": "black",
+    "san": "c5",
+    "uci": "c7c5",
+    "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+    "eval": 0.32,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.32"
+  },
+  {
+    "move_number": 2,
+    "color": "white",
+    "san": "Nf3",
+    "uci": "g1f3",
+    "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    "eval": 0.31,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.31"
+  },
+  {
+    "move_number": 2,
+    "color": "black",
+    "san": "Nc6",
+    "uci": "b8c6",
+    "fen": "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+    "eval": 0.37,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.37"
+  },
+  {
+    "move_number": 3,
+    "color": "white",
+    "san": "Bb5",
+    "uci": "f1b5",
+    "fen": "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+    "eval": 0.34,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.34"
+  },
+  {
+    "move_number": 3,
+    "color": "black",
+    "san": "e6",
+    "uci": "e7e6",
+    "fen": "r1bqkbnr/pp1ppppp/2n5/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
+    "eval": 0.3,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.30"
+  },
+  {
+    "move_number": 4,
+    "color": "white",
+    "san": "O-O",
+    "uci": "e1g1",
+    "fen": "r1bqkbnr/pp1p1ppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+    "eval": 0.34,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.34"
+  },
+  {
+    "move_number": 4,
+    "color": "black",
+    "san": "Nge7",
+    "uci": "g8e7",
+    "fen": "r1bqkbnr/pp1p1ppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 1 4",
+    "eval": 0.32,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.32"
+  },
+  {
+    "move_number": 5,
+    "color": "white",
+    "san": "c3",
+    "uci": "c2c3",
+    "fen": "r1bqkb1r/pp1pnppp/2n1p3/1Bp5/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 2 5",
+    "eval": 0.25,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.25"
+  },
+  {
+    "move_number": 5,
+    "color": "black",
+    "san": "a6",
+    "uci": "a7a6",
+    "fen": "r1bqkb1r/pp1pnppp/2n1p3/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 0 5",
+    "eval": 0.21,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.21"
+  },
+  {
+    "move_number": 6,
+    "color": "white",
+    "san": "Ba4",
+    "uci": "b5a4",
+    "fen": "r1bqkb1r/1p1pnppp/p1n1p3/1Bp5/4P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 0 6",
+    "eval": 0.21,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.21"
+  },
+  {
+    "move_number": 6,
+    "color": "black",
+    "san": "b5",
+    "uci": "b7b5",
+    "fen": "r1bqkb1r/1p1pnppp/p1n1p3/2p5/B3P3/2P2N2/PP1P1PPP/RNBQ1RK1 b kq - 1 6",
+    "eval": 0.17,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.17"
+  },
+  {
+    "move_number": 7,
+    "color": "white",
+    "san": "Bc2",
+    "uci": "a4c2",
+    "fen": "r1bqkb1r/3pnppp/p1n1p3/1pp5/B3P3/2P2N2/PP1P1PPP/RNBQ1RK1 w kq - 0 7",
+    "eval": 0.18,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.18"
+  },
+  {
+    "move_number": 7,
+    "color": "black",
+    "san": "Bb7",
+    "uci": "c8b7",
+    "fen": "r1bqkb1r/3pnppp/p1n1p3/1pp5/4P3/2P2N2/PPBP1PPP/RNBQ1RK1 b kq - 1 7",
+    "eval": 0.29,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.29"
+  },
+  {
+    "move_number": 8,
+    "color": "white",
+    "san": "Re1",
+    "uci": "f1e1",
+    "fen": "r2qkb1r/1b1pnppp/p1n1p3/1pp5/4P3/2P2N2/PPBP1PPP/RNBQ1RK1 w kq - 2 8",
+    "eval": 0.34,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.34"
+  },
+  {
+    "move_number": 8,
+    "color": "black",
+    "san": "Rc8",
+    "uci": "a8c8",
+    "fen": "r2qkb1r/1b1pnppp/p1n1p3/1pp5/4P3/2P2N2/PPBP1PPP/RNBQR1K1 b kq - 3 8",
+    "eval": 0.27,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.27"
+  },
+  {
+    "move_number": 9,
+    "color": "white",
+    "san": "a4",
+    "uci": "a2a4",
+    "fen": "2rqkb1r/1b1pnppp/p1n1p3/1pp5/4P3/2P2N2/PPBP1PPP/RNBQR1K1 w k - 4 9",
+    "eval": 0.22,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.22"
+  },
+  {
+    "move_number": 9,
+    "color": "black",
+    "san": "Ng6",
+    "uci": "e7g6",
+    "fen": "2rqkb1r/1b1pnppp/p1n1p3/1pp5/P3P3/2P2N2/1PBP1PPP/RNBQR1K1 b k - 0 9",
+    "eval": 0.32,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.32"
+  },
+  {
+    "move_number": 10,
+    "color": "white",
+    "san": "axb5",
+    "uci": "a4b5",
+    "fen": "2rqkb1r/1b1p1ppp/p1n1p1n1/1pp5/P3P3/2P2N2/1PBP1PPP/RNBQR1K1 w k - 1 10",
+    "eval": 0.27,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.27"
+  },
+  {
+    "move_number": 10,
+    "color": "black",
+    "san": "axb5",
+    "uci": "a6b5",
+    "fen": "2rqkb1r/1b1p1ppp/p1n1p1n1/1Pp5/4P3/2P2N2/1PBP1PPP/RNBQR1K1 b k - 0 10",
+    "eval": 0.18,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.18"
+  },
+  {
+    "move_number": 11,
+    "color": "white",
+    "san": "d4",
+    "uci": "d2d4",
+    "fen": "2rqkb1r/1b1p1ppp/2n1p1n1/1pp5/4P3/2P2N2/1PBP1PPP/RNBQR1K1 w k - 0 11",
+    "eval": 0.2,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.20"
+  },
+  {
+    "move_number": 11,
+    "color": "black",
+    "san": "cxd4",
+    "uci": "c5d4",
+    "fen": "2rqkb1r/1b1p1ppp/2n1p1n1/1pp5/3PP3/2P2N2/1PB2PPP/RNBQR1K1 b k - 0 11",
+    "eval": 0.18,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.18"
+  },
+  {
+    "move_number": 12,
+    "color": "white",
+    "san": "Nxd4",
+    "uci": "f3d4",
+    "fen": "2rqkb1r/1b1p1ppp/2n1p1n1/1p6/3pP3/2P2N2/1PB2PPP/RNBQR1K1 w k - 0 12",
+    "eval": 0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.07"
+  },
+  {
+    "move_number": 12,
+    "color": "black",
+    "san": "Nxd4",
+    "uci": "c6d4",
+    "fen": "2rqkb1r/1b1p1ppp/2n1p1n1/1p6/3NP3/2P5/1PB2PPP/RNBQR1K1 b k - 0 12",
+    "eval": 0.12,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.12"
+  },
+  {
+    "move_number": 13,
+    "color": "white",
+    "san": "Qxd4",
+    "uci": "d1d4",
+    "fen": "2rqkb1r/1b1p1ppp/4p1n1/1p6/3nP3/2P5/1PB2PPP/RNBQR1K1 w k - 0 13",
+    "eval": 0.13,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.13"
+  },
+  {
+    "move_number": 13,
+    "color": "black",
+    "san": "h5",
+    "uci": "h7h5",
+    "fen": "2rqkb1r/1b1p1ppp/4p1n1/1p6/3QP3/2P5/1PB2PPP/RNB1R1K1 b k - 0 13",
+    "eval": 0.1,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.10"
+  },
+  {
+    "move_number": 14,
+    "color": "white",
+    "san": "Nd2",
+    "uci": "b1d2",
+    "fen": "2rqkb1r/1b1p1pp1/4p1n1/1p5p/3QP3/2P5/1PB2PPP/RNB1R1K1 w k - 0 14",
+    "eval": 0.16,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.16"
+  },
+  {
+    "move_number": 14,
+    "color": "black",
+    "san": "Be7",
+    "uci": "f8e7",
+    "fen": "2rqkb1r/1b1p1pp1/4p1n1/1p5p/3QP3/2P5/1PBN1PPP/R1B1R1K1 b k - 1 14",
+    "eval": 0.03,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.03"
+  },
+  {
+    "move_number": 15,
+    "color": "white",
+    "san": "Nb3",
+    "uci": "d2b3",
+    "fen": "2rqk2r/1b1pbpp1/4p1n1/1p5p/3QP3/2P5/1PBN1PPP/R1B1R1K1 w k - 2 15",
+    "eval": 0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.07"
+  },
+  {
+    "move_number": 15,
+    "color": "black",
+    "san": "b4",
+    "uci": "b5b4",
+    "fen": "2rqk2r/1b1pbpp1/4p1n1/1p5p/3QP3/1NP5/1PB2PPP/R1B1R1K1 b k - 3 15",
+    "eval": 0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.04"
+  },
+  {
+    "move_number": 16,
+    "color": "white",
+    "san": "Ra7",
+    "uci": "a1a7",
+    "fen": "2rqk2r/1b1pbpp1/4p1n1/7p/1p1QP3/1NP5/1PB2PPP/R1B1R1K1 w k - 0 16",
+    "eval": 0.11,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.11"
+  },
+  {
+    "move_number": 16,
+    "color": "black",
+    "san": "Bc6",
+    "uci": "b7c6",
+    "fen": "2rqk2r/Rb1pbpp1/4p1n1/7p/1p1QP3/1NP5/1PB2PPP/2B1R1K1 b k - 1 16",
+    "eval": 0.02,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.02"
+  },
+  {
+    "move_number": 17,
+    "color": "white",
+    "san": "cxb4",
+    "uci": "c3b4",
+    "fen": "2rqk2r/R2pbpp1/2b1p1n1/7p/1p1QP3/1NP5/1PB2PPP/2B1R1K1 w k - 2 17",
+    "eval": 0.06,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.06"
+  },
+  {
+    "move_number": 17,
+    "color": "black",
+    "san": "e5",
+    "uci": "e6e5",
+    "fen": "2rqk2r/R2pbpp1/2b1p1n1/7p/1P1QP3/1N6/1PB2PPP/2B1R1K1 b k - 0 17",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 18,
+    "color": "white",
+    "san": "Qc4",
+    "uci": "d4c4",
+    "fen": "2rqk2r/R2pbpp1/2b3n1/4p2p/1P1QP3/1N6/1PB2PPP/2B1R1K1 w k - 0 18",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 18,
+    "color": "black",
+    "san": "Qb6",
+    "uci": "d8b6",
+    "fen": "2rqk2r/R2pbpp1/2b3n1/4p2p/1PQ1P3/1N6/1PB2PPP/2B1R1K1 b k - 1 18",
+    "eval": 0.03,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.03"
+  },
+  {
+    "move_number": 19,
+    "color": "white",
+    "san": "Be3",
+    "uci": "c1e3",
+    "fen": "2r1k2r/R2pbpp1/1qb3n1/4p2p/1PQ1P3/1N6/1PB2PPP/2B1R1K1 w k - 2 19",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 19,
+    "color": "black",
+    "san": "Qxb4",
+    "uci": "b6b4",
+    "fen": "2r1k2r/R2pbpp1/1qb3n1/4p2p/1PQ1P3/1N2B3/1PB2PPP/4R1K1 b k - 3 19",
+    "eval": -0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.01"
+  },
+  {
+    "move_number": 20,
+    "color": "white",
+    "san": "Qxb4",
+    "uci": "c4b4",
+    "fen": "2r1k2r/R2pbpp1/2b3n1/4p2p/1qQ1P3/1N2B3/1PB2PPP/4R1K1 w k - 0 20",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 20,
+    "color": "black",
+    "san": "Bxb4",
+    "uci": "e7b4",
+    "fen": "2r1k2r/R2pbpp1/2b3n1/4p2p/1Q2P3/1N2B3/1PB2PPP/4R1K1 b k - 0 20",
+    "eval": -0.02,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.02"
+  },
+  {
+    "move_number": 21,
+    "color": "white",
+    "san": "Rd1",
+    "uci": "e1d1",
+    "fen": "2r1k2r/R2p1pp1/2b3n1/4p2p/1b2P3/1N2B3/1PB2PPP/4R1K1 w k - 0 21",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 21,
+    "color": "black",
+    "san": "O-O",
+    "uci": "e8g8",
+    "fen": "2r1k2r/R2p1pp1/2b3n1/4p2p/1b2P3/1N2B3/1PB2PPP/3R2K1 b k - 1 21",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 22,
+    "color": "white",
+    "san": "Nd2",
+    "uci": "b3d2",
+    "fen": "2r2rk1/R2p1pp1/2b3n1/4p2p/1b2P3/1N2B3/1PB2PPP/3R2K1 w - - 2 22",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 22,
+    "color": "black",
+    "san": "h4",
+    "uci": "h5h4",
+    "fen": "2r2rk1/R2p1pp1/2b3n1/4p2p/1b2P3/4B3/1PBN1PPP/3R2K1 b - - 3 22",
+    "eval": -0.09,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.09"
+  },
+  {
+    "move_number": 23,
+    "color": "white",
+    "san": "g3",
+    "uci": "g2g3",
+    "fen": "2r2rk1/R2p1pp1/2b3n1/4p3/1b2P2p/4B3/1PBN1PPP/3R2K1 w - - 0 23",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 23,
+    "color": "black",
+    "san": "d5",
+    "uci": "d7d5",
+    "fen": "2r2rk1/R2p1pp1/2b3n1/4p3/1b2P2p/4B1P1/1PBN1P1P/3R2K1 b - - 0 23",
+    "eval": -0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.04"
+  },
+  {
+    "move_number": 24,
+    "color": "white",
+    "san": "exd5",
+    "uci": "e4d5",
+    "fen": "2r2rk1/R4pp1/2b3n1/3pp3/1b2P2p/4B1P1/1PBN1P1P/3R2K1 w - - 0 24",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 24,
+    "color": "black",
+    "san": "Bxd5",
+    "uci": "c6d5",
+    "fen": "2r2rk1/R4pp1/2b3n1/3Pp3/1b5p/4B1P1/1PBN1P1P/3R2K1 b - - 0 24",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 25,
+    "color": "white",
+    "san": "Bxg6",
+    "uci": "c2g6",
+    "fen": "2r2rk1/R4pp1/6n1/3bp3/1b5p/4B1P1/1PBN1P1P/3R2K1 w - - 0 25",
+    "eval": 0.02,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.02"
+  },
+  {
+    "move_number": 25,
+    "color": "black",
+    "san": "fxg6",
+    "uci": "f7g6",
+    "fen": "2r2rk1/R4pp1/6B1/3bp3/1b5p/4B1P1/1P1N1P1P/3R2K1 b - - 0 25",
+    "eval": -0.03,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.03"
+  },
+  {
+    "move_number": 26,
+    "color": "white",
+    "san": "Nf1",
+    "uci": "d2f1",
+    "fen": "2r2rk1/R5p1/6p1/3bp3/1b5p/4B1P1/1P1N1P1P/3R2K1 w - - 0 26",
+    "eval": -0.03,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.03"
+  },
+  {
+    "move_number": 26,
+    "color": "black",
+    "san": "Be6",
+    "uci": "d5e6",
+    "fen": "2r2rk1/R5p1/6p1/3bp3/1b5p/4B1P1/1P3P1P/3R1NK1 b - - 1 26",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 27,
+    "color": "white",
+    "san": "Rb7",
+    "uci": "a7b7",
+    "fen": "2r2rk1/R5p1/4b1p1/4p3/1b5p/4B1P1/1P3P1P/3R1NK1 w - - 2 27",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 27,
+    "color": "black",
+    "san": "Rb8",
+    "uci": "c8b8",
+    "fen": "2r2rk1/1R4p1/4b1p1/4p3/1b5p/4B1P1/1P3P1P/3R1NK1 b - - 3 27",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 28,
+    "color": "white",
+    "san": "Rxb8",
+    "uci": "b7b8",
+    "fen": "1r3rk1/1R4p1/4b1p1/4p3/1b5p/4B1P1/1P3P1P/3R1NK1 w - - 4 28",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 28,
+    "color": "black",
+    "san": "Rxb8",
+    "uci": "f8b8",
+    "fen": "1R3rk1/6p1/4b1p1/4p3/1b5p/4B1P1/1P3P1P/3R1NK1 b - - 0 28",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 29,
+    "color": "white",
+    "san": "gxh4",
+    "uci": "g3h4",
+    "fen": "1r4k1/6p1/4b1p1/4p3/1b5p/4B1P1/1P3P1P/3R1NK1 w - - 0 29",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 29,
+    "color": "black",
+    "san": "Bg4",
+    "uci": "e6g4",
+    "fen": "1r4k1/6p1/4b1p1/4p3/1b5P/4B3/1P3P1P/3R1NK1 b - - 0 29",
+    "eval": -0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.07"
+  },
+  {
+    "move_number": 30,
+    "color": "white",
+    "san": "Rc1",
+    "uci": "d1c1",
+    "fen": "1r4k1/6p1/6p1/4p3/1b4bP/4B3/1P3P1P/3R1NK1 w - - 1 30",
+    "eval": -0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.01"
+  },
+  {
+    "move_number": 30,
+    "color": "black",
+    "san": "Be7",
+    "uci": "b4e7",
+    "fen": "1r4k1/6p1/6p1/4p3/1b4bP/4B3/1P3P1P/2R2NK1 b - - 2 30",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 31,
+    "color": "white",
+    "san": "Bc5",
+    "uci": "e3c5",
+    "fen": "1r4k1/4b1p1/6p1/4p3/6bP/4B3/1P3P1P/2R2NK1 w - - 3 31",
+    "eval": 0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.04"
+  },
+  {
+    "move_number": 31,
+    "color": "black",
+    "san": "Bxc5",
+    "uci": "e7c5",
+    "fen": "1r4k1/4b1p1/6p1/2B1p3/6bP/8/1P3P1P/2R2NK1 b - - 4 31",
+    "eval": 0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.07"
+  },
+  {
+    "move_number": 32,
+    "color": "white",
+    "san": "Rxc5",
+    "uci": "c1c5",
+    "fen": "1r4k1/6p1/6p1/2b1p3/6bP/8/1P3P1P/2R2NK1 w - - 0 32",
+    "eval": 0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.07"
+  },
+  {
+    "move_number": 32,
+    "color": "black",
+    "san": "Bh3",
+    "uci": "g4h3",
+    "fen": "1r4k1/6p1/6p1/2R1p3/6bP/8/1P3P1P/5NK1 b - - 0 32",
+    "eval": 0.06,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.06"
+  },
+  {
+    "move_number": 33,
+    "color": "white",
+    "san": "Rc2",
+    "uci": "c5c2",
+    "fen": "1r4k1/6p1/6p1/2R1p3/7P/7b/1P3P1P/5NK1 w - - 1 33",
+    "eval": 0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.04"
+  },
+  {
+    "move_number": 33,
+    "color": "black",
+    "san": "Bxf1",
+    "uci": "h3f1",
+    "fen": "1r4k1/6p1/6p1/4p3/7P/7b/1PR2P1P/5NK1 b - - 2 33",
+    "eval": 0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.01"
+  },
+  {
+    "move_number": 34,
+    "color": "white",
+    "san": "Kxf1",
+    "uci": "g1f1",
+    "fen": "1r4k1/6p1/6p1/4p3/7P/8/1PR2P1P/5bK1 w - - 0 34",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 34,
+    "color": "black",
+    "san": "Kf7",
+    "uci": "g8f7",
+    "fen": "1r4k1/6p1/6p1/4p3/7P/8/1PR2P1P/5K2 b - - 0 34",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 35,
+    "color": "white",
+    "san": "Ke2",
+    "uci": "f1e2",
+    "fen": "1r6/5kp1/6p1/4p3/7P/8/1PR2P1P/5K2 w - - 1 35",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 35,
+    "color": "black",
+    "san": "Rb3",
+    "uci": "b8b3",
+    "fen": "1r6/5kp1/6p1/4p3/7P/8/1PR1KP1P/8 b - - 2 35",
+    "eval": 0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.04"
+  },
+  {
+    "move_number": 36,
+    "color": "white",
+    "san": "Kd1",
+    "uci": "e2d1",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PR1KP1P/8 w - - 3 36",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 36,
+    "color": "black",
+    "san": "Rb4",
+    "uci": "b3b4",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PR2P1P/3K4 b - - 4 36",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 37,
+    "color": "white",
+    "san": "Kd2",
+    "uci": "d1d2",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1PR2P1P/3K4 w - - 5 37",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 37,
+    "color": "black",
+    "san": "Rb3",
+    "uci": "b4b3",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1PRK1P1P/8 b - - 6 37",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 38,
+    "color": "white",
+    "san": "Kd1",
+    "uci": "d2d1",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PRK1P1P/8 w - - 7 38",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 38,
+    "color": "black",
+    "san": "Rb4",
+    "uci": "b3b4",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PR2P1P/3K4 b - - 8 38",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 39,
+    "color": "white",
+    "san": "Kd2",
+    "uci": "d1d2",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1PR2P1P/3K4 w - - 9 39",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 39,
+    "color": "black",
+    "san": "Rb3",
+    "uci": "b4b3",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1PRK1P1P/8 b - - 10 39",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 40,
+    "color": "white",
+    "san": "Kc1",
+    "uci": "d2c1",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PRK1P1P/8 w - - 11 40",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 40,
+    "color": "black",
+    "san": "Rb4",
+    "uci": "b3b4",
+    "fen": "8/5kp1/6p1/4p3/7P/1r6/1PR2P1P/2K5 b - - 12 40",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 41,
+    "color": "white",
+    "san": "Rd2",
+    "uci": "c2d2",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1PR2P1P/2K5 w - - 13 41",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 41,
+    "color": "black",
+    "san": "Rc4+",
+    "uci": "b4c4",
+    "fen": "8/5kp1/6p1/4p3/1r5P/8/1P1R1P1P/2K5 b - - 14 41",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 42,
+    "color": "white",
+    "san": "Kb1",
+    "uci": "c1b1",
+    "fen": "8/5kp1/6p1/4p3/2r4P/8/1P1R1P1P/2K5 w - - 15 42",
+    "eval": -0.05,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.05"
+  },
+  {
+    "move_number": 42,
+    "color": "black",
+    "san": "Ke6",
+    "uci": "f7e6",
+    "fen": "8/5kp1/6p1/4p3/2r4P/8/1P1R1P1P/1K6 b - - 16 42",
+    "eval": -0.08,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.08"
+  },
+  {
+    "move_number": 43,
+    "color": "white",
+    "san": "Ka2",
+    "uci": "b1a2",
+    "fen": "8/6p1/4k1p1/4p3/2r4P/8/1P1R1P1P/1K6 w - - 17 43",
+    "eval": -0.06,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.06"
+  },
+  {
+    "move_number": 43,
+    "color": "black",
+    "san": "Rxh4",
+    "uci": "c4h4",
+    "fen": "8/6p1/4k1p1/4p3/2r4P/8/KP1R1P1P/8 b - - 18 43",
+    "eval": -0.09,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.09"
+  },
+  {
+    "move_number": 44,
+    "color": "white",
+    "san": "Kb3",
+    "uci": "a2b3",
+    "fen": "8/6p1/4k1p1/4p3/7r/8/KP1R1P1P/8 w - - 0 44",
+    "eval": -0.02,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.02"
+  },
+  {
+    "move_number": 44,
+    "color": "black",
+    "san": "g5",
+    "uci": "g6g5",
+    "fen": "8/6p1/4k1p1/4p3/7r/1K6/1P1R1P1P/8 b - - 1 44",
+    "eval": -0.08,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.08"
+  },
+  {
+    "move_number": 45,
+    "color": "white",
+    "san": "Kc3",
+    "uci": "b3c3",
+    "fen": "8/6p1/4k3/4p1p1/7r/1K6/1P1R1P1P/8 w - - 0 45",
+    "eval": -0.06,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.06"
+  },
+  {
+    "move_number": 45,
+    "color": "black",
+    "san": "Rh3+",
+    "uci": "h4h3",
+    "fen": "8/6p1/4k3/4p1p1/7r/2K5/1P1R1P1P/8 b - - 1 45",
+    "eval": -0.07,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.07"
+  },
+  {
+    "move_number": 46,
+    "color": "white",
+    "san": "Kc2",
+    "uci": "c3c2",
+    "fen": "8/6p1/4k3/4p1p1/8/2K4r/1P1R1P1P/8 w - - 2 46",
+    "eval": -0.12,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.12"
+  },
+  {
+    "move_number": 46,
+    "color": "black",
+    "san": "e4",
+    "uci": "e5e4",
+    "fen": "8/6p1/4k3/4p1p1/8/7r/1PKR1P1P/8 b - - 3 46",
+    "eval": -0.11,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.11"
+  },
+  {
+    "move_number": 47,
+    "color": "white",
+    "san": "b4",
+    "uci": "b2b4",
+    "fen": "8/6p1/4k3/6p1/4p3/7r/1PKR1P1P/8 w - - 0 47",
+    "eval": -0.05,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.05"
+  },
+  {
+    "move_number": 47,
+    "color": "black",
+    "san": "g4",
+    "uci": "g5g4",
+    "fen": "8/6p1/4k3/6p1/1P2p3/7r/2KR1P1P/8 b - - 0 47",
+    "eval": -0.04,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.04"
+  },
+  {
+    "move_number": 48,
+    "color": "white",
+    "san": "b5",
+    "uci": "b4b5",
+    "fen": "8/6p1/4k3/8/1P2p1p1/7r/2KR1P1P/8 w - - 0 48",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 48,
+    "color": "black",
+    "san": "Rh5",
+    "uci": "h3h5",
+    "fen": "8/6p1/4k3/1P6/4p1p1/7r/2KR1P1P/8 b - - 0 48",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 49,
+    "color": "white",
+    "san": "Re2",
+    "uci": "d2e2",
+    "fen": "8/6p1/4k3/1P5r/4p1p1/8/2KR1P1P/8 w - - 1 49",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 49,
+    "color": "black",
+    "san": "Rxb5",
+    "uci": "h5b5",
+    "fen": "8/6p1/4k3/1P5r/4p1p1/8/2K1RP1P/8 b - - 2 49",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 50,
+    "color": "white",
+    "san": "Rxe4+",
+    "uci": "e2e4",
+    "fen": "8/6p1/4k3/1r6/4p1p1/8/2K1RP1P/8 w - - 0 50",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 50,
+    "color": "black",
+    "san": "Kf5",
+    "uci": "e6f5",
+    "fen": "8/6p1/4k3/1r6/4R1p1/8/2K2P1P/8 b - - 0 50",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 51,
+    "color": "white",
+    "san": "Rd4",
+    "uci": "e4d4",
+    "fen": "8/6p1/8/1r3k2/4R1p1/8/2K2P1P/8 w - - 1 51",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 51,
+    "color": "black",
+    "san": "g6",
+    "uci": "g7g6",
+    "fen": "8/6p1/8/1r3k2/3R2p1/8/2K2P1P/8 b - - 2 51",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 52,
+    "color": "white",
+    "san": "Kd2",
+    "uci": "c2d2",
+    "fen": "8/8/6p1/1r3k2/3R2p1/8/2K2P1P/8 w - - 0 52",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 52,
+    "color": "black",
+    "san": "Re5",
+    "uci": "b5e5",
+    "fen": "8/8/6p1/1r3k2/3R2p1/8/3K1P1P/8 b - - 1 52",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 53,
+    "color": "white",
+    "san": "Kd1",
+    "uci": "d2d1",
+    "fen": "8/8/6p1/4rk2/3R2p1/8/3K1P1P/8 w - - 2 53",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 53,
+    "color": "black",
+    "san": "Kg5",
+    "uci": "f5g5",
+    "fen": "8/8/6p1/4rk2/3R2p1/8/5P1P/3K4 b - - 3 53",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 54,
+    "color": "white",
+    "san": "Kd2",
+    "uci": "d1d2",
+    "fen": "8/8/6p1/4r1k1/3R2p1/8/5P1P/3K4 w - - 4 54",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 54,
+    "color": "black",
+    "san": "Re6",
+    "uci": "e5e6",
+    "fen": "8/8/6p1/4r1k1/3R2p1/8/3K1P1P/8 b - - 5 54",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 55,
+    "color": "white",
+    "san": "Rd8",
+    "uci": "d4d8",
+    "fen": "8/8/4r1p1/6k1/3R2p1/8/3K1P1P/8 w - - 6 55",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 55,
+    "color": "black",
+    "san": "Kf4",
+    "uci": "g5f4",
+    "fen": "3R4/8/4r1p1/6k1/6p1/8/3K1P1P/8 b - - 7 55",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 56,
+    "color": "white",
+    "san": "Rf8+",
+    "uci": "d8f8",
+    "fen": "3R4/8/4r1p1/8/5kp1/8/3K1P1P/8 w - - 8 56",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 56,
+    "color": "black",
+    "san": "Kg5",
+    "uci": "f4g5",
+    "fen": "5R2/8/4r1p1/8/5kp1/8/3K1P1P/8 b - - 9 56",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 57,
+    "color": "white",
+    "san": "Rb8",
+    "uci": "f8b8",
+    "fen": "5R2/8/4r1p1/6k1/6p1/8/3K1P1P/8 w - - 10 57",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 57,
+    "color": "black",
+    "san": "Kf4",
+    "uci": "g5f4",
+    "fen": "1R6/8/4r1p1/6k1/6p1/8/3K1P1P/8 b - - 11 57",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 58,
+    "color": "white",
+    "san": "Rf8+",
+    "uci": "b8f8",
+    "fen": "1R6/8/4r1p1/8/5kp1/8/3K1P1P/8 w - - 12 58",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 58,
+    "color": "black",
+    "san": "Kg5",
+    "uci": "f4g5",
+    "fen": "5R2/8/4r1p1/8/5kp1/8/3K1P1P/8 b - - 13 58",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 59,
+    "color": "white",
+    "san": "Kd3",
+    "uci": "d2d3",
+    "fen": "5R2/8/4r1p1/6k1/6p1/8/3K1P1P/8 w - - 14 59",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 59,
+    "color": "black",
+    "san": "Re5",
+    "uci": "e6e5",
+    "fen": "5R2/8/4r1p1/6k1/6p1/3K4/5P1P/8 b - - 15 59",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 60,
+    "color": "white",
+    "san": "Rg8",
+    "uci": "f8g8",
+    "fen": "5R2/8/6p1/4r1k1/6p1/3K4/5P1P/8 w - - 16 60",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 60,
+    "color": "black",
+    "san": "Re7",
+    "uci": "e5e7",
+    "fen": "6R1/8/6p1/4r1k1/6p1/3K4/5P1P/8 b - - 17 60",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 61,
+    "color": "white",
+    "san": "Rf8",
+    "uci": "g8f8",
+    "fen": "6R1/4r3/6p1/6k1/6p1/3K4/5P1P/8 w - - 18 61",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 61,
+    "color": "black",
+    "san": "Re1",
+    "uci": "e7e1",
+    "fen": "5R2/4r3/6p1/6k1/6p1/3K4/5P1P/8 b - - 19 61",
+    "eval": -0.06,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.06"
+  },
+  {
+    "move_number": 62,
+    "color": "white",
+    "san": "Rh8",
+    "uci": "f8h8",
+    "fen": "5R2/8/6p1/6k1/6p1/3K4/5P1P/4r3 w - - 20 62",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 62,
+    "color": "black",
+    "san": "Re6",
+    "uci": "e1e6",
+    "fen": "7R/8/6p1/6k1/6p1/3K4/5P1P/4r3 b - - 21 62",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 63,
+    "color": "white",
+    "san": "Rg8",
+    "uci": "h8g8",
+    "fen": "7R/8/4r1p1/6k1/6p1/3K4/5P1P/8 w - - 22 63",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 63,
+    "color": "black",
+    "san": "Re5",
+    "uci": "e6e5",
+    "fen": "6R1/8/4r1p1/6k1/6p1/3K4/5P1P/8 b - - 23 63",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 64,
+    "color": "white",
+    "san": "Rc8",
+    "uci": "g8c8",
+    "fen": "6R1/8/6p1/4r1k1/6p1/3K4/5P1P/8 w - - 24 64",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 64,
+    "color": "black",
+    "san": "Kf4",
+    "uci": "g5f4",
+    "fen": "2R5/8/6p1/4r1k1/6p1/3K4/5P1P/8 b - - 25 64",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 65,
+    "color": "white",
+    "san": "Rg8",
+    "uci": "c8g8",
+    "fen": "2R5/8/6p1/4r3/5kp1/3K4/5P1P/8 w - - 26 65",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 65,
+    "color": "black",
+    "san": "Kf3",
+    "uci": "f4f3",
+    "fen": "6R1/8/6p1/4r3/5kp1/3K4/5P1P/8 b - - 27 65",
+    "eval": -0.02,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.02"
+  },
+  {
+    "move_number": 66,
+    "color": "white",
+    "san": "Rxg6",
+    "uci": "g8g6",
+    "fen": "6R1/8/6p1/4r3/6p1/3K1k2/5P1P/8 w - - 28 66",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 66,
+    "color": "black",
+    "san": "Rf5",
+    "uci": "e5f5",
+    "fen": "8/8/6R1/4r3/6p1/3K1k2/5P1P/8 b - - 0 66",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 67,
+    "color": "white",
+    "san": "Kd4",
+    "uci": "d3d4",
+    "fen": "8/8/6R1/5r2/6p1/3K1k2/5P1P/8 w - - 1 67",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 67,
+    "color": "black",
+    "san": "Rf4+",
+    "uci": "f5f4",
+    "fen": "8/8/6R1/5r2/3K2p1/5k2/5P1P/8 b - - 2 67",
+    "eval": -0.01,
+    "comment": "\u2705 Excellent coup! \u00c9val: -0.01"
+  },
+  {
+    "move_number": 68,
+    "color": "white",
+    "san": "Ke5",
+    "uci": "d4e5",
+    "fen": "8/8/6R1/8/3K1rp1/5k2/5P1P/8 w - - 3 68",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 68,
+    "color": "black",
+    "san": "Re4+",
+    "uci": "f4e4",
+    "fen": "8/8/6R1/4K3/5rp1/5k2/5P1P/8 b - - 4 68",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 69,
+    "color": "white",
+    "san": "Kf5",
+    "uci": "e5f5",
+    "fen": "8/8/6R1/4K3/4r1p1/5k2/5P1P/8 w - - 5 69",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 69,
+    "color": "black",
+    "san": "Ra4",
+    "uci": "e4a4",
+    "fen": "8/8/6R1/5K2/4r1p1/5k2/5P1P/8 b - - 6 69",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 70,
+    "color": "white",
+    "san": "Rg5",
+    "uci": "g6g5",
+    "fen": "8/8/6R1/5K2/r5p1/5k2/5P1P/8 w - - 7 70",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 70,
+    "color": "black",
+    "san": "Rb4",
+    "uci": "a4b4",
+    "fen": "8/8/8/5KR1/r5p1/5k2/5P1P/8 b - - 8 70",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 71,
+    "color": "white",
+    "san": "Rg7",
+    "uci": "g5g7",
+    "fen": "8/8/8/5KR1/1r4p1/5k2/5P1P/8 w - - 9 71",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 71,
+    "color": "black",
+    "san": "Rb5+",
+    "uci": "b4b5",
+    "fen": "8/6R1/8/5K2/1r4p1/5k2/5P1P/8 b - - 10 71",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 72,
+    "color": "white",
+    "san": "Kf6",
+    "uci": "f5f6",
+    "fen": "8/6R1/8/1r3K2/6p1/5k2/5P1P/8 w - - 11 72",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 72,
+    "color": "black",
+    "san": "Rh5",
+    "uci": "b5h5",
+    "fen": "8/6R1/5K2/1r6/6p1/5k2/5P1P/8 b - - 12 72",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 73,
+    "color": "white",
+    "san": "Rf7",
+    "uci": "g7f7",
+    "fen": "8/6R1/5K2/7r/6p1/5k2/5P1P/8 w - - 13 73",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 73,
+    "color": "black",
+    "san": "Ke2",
+    "uci": "f3e2",
+    "fen": "8/5R2/5K2/7r/6p1/5k2/5P1P/8 b - - 14 73",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 74,
+    "color": "white",
+    "san": "Rg7",
+    "uci": "f7g7",
+    "fen": "8/5R2/5K2/7r/6p1/8/4kP1P/8 w - - 15 74",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 74,
+    "color": "black",
+    "san": "Kf3",
+    "uci": "e2f3",
+    "fen": "8/6R1/5K2/7r/6p1/8/4kP1P/8 b - - 16 74",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 75,
+    "color": "white",
+    "san": "Rf7",
+    "uci": "g7f7",
+    "fen": "8/6R1/5K2/7r/6p1/5k2/5P1P/8 w - - 17 75",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  },
+  {
+    "move_number": 75,
+    "color": "black",
+    "san": "Ke2",
+    "uci": "f3e2",
+    "fen": "8/5R2/5K2/7r/6p1/5k2/5P1P/8 b - - 18 75",
+    "eval": 0.0,
+    "comment": "\u2705 Excellent coup! \u00c9val: 0.00"
+  }
+];
+        let currentMoveIndex = -1;
+        let game = new Chess();
+        let board = null;
+
+        function initBoard() {
+            board = Chessboard('board', {
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+        }
+
+        function renderMovesList() {
+            const container = document.getElementById('moves-list');
+            container.innerHTML = '';
+
+            // Brilliant move detection emojis
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            movesData.forEach((move, index) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'move-item';
+                moveDiv.id = `move-${index}`;
+                moveDiv.onclick = () => goToMove(index);
+
+                // Check for brilliant moves based on emojis in comments
+                if (move.comment && brilliantEmojis.test(move.comment)) {
+                    moveDiv.classList.add('brilliant');
+                }
+
+                const moveNumber = move.color === 'white' ? `${move.move_number}.` : `${move.move_number}...`;
+
+                moveDiv.innerHTML = `
+                    <div class="move-header">
+                        <span class="move-number">${moveNumber}</span>
+                        <span class="move-san">${move.san}</span>
+                    </div>
+                    <div class="move-comment">${move.comment}</div>
+                `;
+
+                container.appendChild(moveDiv);
+            });
+        }
+
+        function goToMove(index) {
+            game = new Chess();
+
+            for (let i = 0; i <= index; i++) {
+                game.move(movesData[i].uci);
+            }
+
+            board.position(game.fen());
+            currentMoveIndex = index;
+
+            document.querySelectorAll('.move-item').forEach(item => item.classList.remove('active'));
+            const currentItem = document.getElementById(`move-${index}`);
+            if (currentItem) {
+                currentItem.classList.add('active');
+                currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < movesData.length - 1) {
+                goToMove(currentMoveIndex + 1);
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex > 0) {
+                goToMove(currentMoveIndex - 1);
+            } else if (currentMoveIndex === 0) {
+                goToStart();
+            }
+        }
+
+        function goToStart() {
+            game = new Chess();
+            board.position('start');
+            currentMoveIndex = -1;
+            document.querySelectorAll('.move-item').forEach(item => item.classList.remove('active'));
+        }
+
+        function goToEnd() {
+            goToMove(movesData.length - 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+        });
+
+        initBoard();
+        renderMovesList();
+    
+
+        // Afficher/masquer le PGN
+        function togglePGN() {
+            const section = document.getElementById('pgnSection');
+            const content = document.getElementById('pgnContent');
+
+            if (section.classList.contains('active')) {
+                section.classList.remove('active');
+            } else {
+                // Générer le PGN depuis la variable gamePGN
+                if (typeof gamePGN !== 'undefined') {
+                    content.textContent = gamePGN;
+                } else {
+                    // Générer depuis l'objet game
+                    content.textContent = game.pgn({ max_width: 80, newline_char: '\n' });
+                }
+                section.classList.add('active');
+            }
+        }
+
+        // Copier le PGN dans le presse-papier
+        function copyPGN() {
+            const content = document.getElementById('pgnContent').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('✅ PGN copié dans le presse-papier!');
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+
+        // Télécharger le PGN
+        function downloadPGN() {
+            const content = document.getElementById('pgnContent').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'partie-' + new Date().toISOString().split('T')[0] + '.pgn';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ PGN téléchargé!');
+        }
+
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

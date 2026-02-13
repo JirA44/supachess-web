@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karpov - Positional Masterclass 1978</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 600px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel h2 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .stat-item {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .board-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        #chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 70px);
+            grid-template-rows: repeat(8, 70px);
+            gap: 0;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .square {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .move-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .move-number {
+            font-size: 1.1em;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .move-comment {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 1em;
+        }
+
+        .timeline {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .timeline-move {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-move:hover {
+            background: rgba(52, 152, 219, 0.3);
+            transform: translateX(5px);
+        }
+
+        .timeline-move.active {
+            background: rgba(52, 152, 219, 0.5);
+            border-left: 3px solid #3498db;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before, .timeline-move.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Retour au menu</a>
+
+    <div class="container">
+        <header>
+            <h1>Karpov - Positional Masterclass 1978</h1>
+            <p class="subtitle">Le 12e Champion du Monde démontre sa technique impeccable</p>
+        </header>
+
+        <div class="main-content">
+            <div class="info-panel">
+                <h2>Informations de la partie</h2>
+                <div class="stat-item">
+                    <div class="stat-label">Blancs</div>
+                    <div class="stat-value">Anatoly Karpov</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Viktor Korchnoi</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Tournoi</div>
+                    <div class="stat-value">World Championship Match</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Ouverture</div>
+                    <div class="stat-value">English Opening</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Résultat</div>
+                    <div class="stat-value">1-0 (Karpov)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Année</div>
+                    <div class="stat-value">1978</div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn" onclick="previousMove()">◀ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭</button>
+                </div>
+                <div class="move-info">
+                    <div class="move-number" id="moveNumber">Position initiale</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer cette partie légendaire du match pour le titre mondial 1978.</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>Analyse</h2>
+                <div class="timeline" id="timeline"></div>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 8px; border-left: 3px solid #3498db;">
+                    <strong style="color: #3498db;">Le style Karpov:</strong>
+                    <p style="margin-top: 10px; color: #ccc;">Anatoly Karpov était célèbre pour son jeu positionnel d'une précision absolue. Cette partie de la partie 31 du match mondial 1978 contre Korchnoi démontre sa capacité à transformer de minuscules avantages en victoires. Technique, prophylaxie et précision chirurgicale.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        const chess = new Chess();
+
+        // Partie célèbre Karpov vs Korchnoi - World Championship 1978
+        const gameMoves = [
+            { move: 'c4', comment: 'Karpov ouvre avec l\'Anglaise, évitant les préparations théoriques de Korchnoi.' },
+            { move: 'e6', comment: 'Korchnoi choisit une formation solide et flexible.' },
+            { move: 'Nc3', comment: 'Développement classique du cavalier.' },
+            { move: 'Nf6', comment: 'Développement symétrique, les Noirs restent flexibles.' },
+            { move: 'e4', comment: 'Karpov transpose vers une formation de type Botvinnik.' },
+            { move: 'd5', comment: 'Contestation immédiate du centre.' },
+            { move: 'e5', comment: 'Formation française avec un tempo en plus!' },
+            { move: 'Ne4', comment: 'Le cavalier cherche l\'activité.' },
+            { move: 'cxd5', comment: 'Karpov ouvre le jeu au centre.' },
+            { move: 'exd5', comment: 'Recapture centrale.' },
+            { move: 'd4', comment: 'Centre de pions impressionnant pour les Blancs!' },
+            { move: 'Bb4', comment: 'Clouage actif du cavalier c3.' },
+            { move: 'Bd2', comment: 'Développement simple, décloudant le cavalier.' },
+            { move: 'c5', comment: 'Contre-attaque au centre, stratégie critique.' },
+            { move: 'Nf3', comment: 'Le cavalier se développe avec gain de tempo.' },
+            { move: 'cxd4', comment: 'Korchnoi ouvre les lignes.' },
+            { move: 'Nxd4', comment: 'Centralisation excellente du cavalier.' },
+            { move: 'O-O', comment: 'Le roi noir cherche la sécurité.' },
+            { move: 'Bd3', comment: 'Développement du fou avec des idées d\'attaque sur h7.' },
+            { move: 'Nxd2', comment: 'Échange simplificateur.' },
+            { move: 'Qxd2', comment: 'Recapture, la dame se centralise.' },
+            { move: 'Re8', comment: 'Pression sur la colonne e semi-ouverte.' },
+            { move: 'O-O', comment: 'Karpov met son roi en sécurité, structure solide.' },
+            { move: 'Nc6', comment: 'Développement du cavalier dame.' },
+            { move: 'Nxc6', comment: 'Décision stratégique importante - échange de pièces.' },
+            { move: 'bxc6', comment: 'Doublement de pions, mais ouverture de la colonne b.' },
+            { move: 'Rfd1', comment: 'Activation de la tour sur la colonne d ouverte.' },
+            { move: 'Qc7', comment: 'La dame protège le pion e5 et reste active.' },
+            { move: 'Rac1', comment: 'Les deux tours sont maintenant actives - domination!' },
+            { move: 'Be6', comment: 'Développement du dernier fou.' },
+            { move: 'Qf4', comment: 'La dame blanche devient agressive, visant plusieurs faiblesses.' },
+            { move: 'Bd6', comment: 'Échange proposé.' },
+            { move: 'Qg3', comment: 'Karpov garde les pièces, maintenant la pression!' },
+            { move: 'Kh8', comment: 'Prophylaxie - le roi s\'éloigne de menaces potentielles.' },
+            { move: 'h4', comment: 'Début de l\'assaut sur le flanc roi! Typique de Karpov - attaque méthodique.' },
+            { move: 'Rab8', comment: 'Contre-jeu sur la colonne b.' },
+            { move: 'h5', comment: 'La poussée de pion continue inexorablement.' },
+            { move: 'Rb4', comment: 'Contre-attaque active cherchant du contre-jeu.' },
+            { move: 'h6', comment: 'Coup fort! Affaiblissement permanent de la structure noire.' },
+            { move: 'g6', comment: 'Forcé - blocage de l\'avancée h7.' },
+            { move: 'Qf4', comment: 'Retour tactique de la dame, multi-fonctions.' },
+            { move: 'Kg8', comment: 'Le roi doit bouger constamment.' },
+            { move: 'Qg5', comment: 'Pression maximale sur les cases affaiblies!' },
+            { move: 'Reb8', comment: 'Les Noirs tentent du contre-jeu désespéré.' },
+            { move: 'b3', comment: 'Prophylaxie parfaite! Karpov sécurise son flanc dame.' },
+            { move: 'R8b6', comment: 'Manœuvre de tour sans objectif clair.' },
+            { move: 'Ne2', comment: 'Regroupement magnifique! Le cavalier va à f4.' },
+            { move: 'a5', comment: 'Tentative d\'expansion sur le flanc dame.' },
+            { move: 'Nf4', comment: 'Le cavalier arrive avec puissance - visant d6 et e6!' },
+            { move: 'Rxf4', comment: 'Sacrifice d\'échange forcé pour éviter pire!' },
+            { move: 'Qxf4', comment: 'La dame domine l\'échiquier entier!' },
+            { move: 'Qd7', comment: 'Centralisation défensive de la dame.' },
+            { move: 'Rc5', comment: 'Invasion de la cinquième rangée! Position dominante totale.' },
+            { move: 'Rb4', comment: 'Contre-jeu limité.' },
+            { move: 'Qg5', comment: 'Multi-menaces: attaque sur g6, c5, d5...' },
+            { move: 'Kh8', comment: 'Le roi fuit les menaces.' },
+            { move: 'Rdc1', comment: 'Doublement de tours sur la colonne c - pression écrasante!' },
+            { move: 'Rg4', comment: 'Défense active de la tour, protégeant g6.' },
+            { move: 'Rxc6', comment: 'CAPTURE DÉCISIVE! La forteresse noire s\'effondre!' },
+            { move: 'Qxc6', comment: 'Forcé - échange de dames.' },
+            { move: 'Rxc6', comment: 'Finale de tour contre tour et deux fous - avantage blanc!' },
+            { move: 'Bf8', comment: 'Le fou recule pour défendre.' },
+            { move: 'Qf6+', comment: 'Échec dévastateur! La dame blanche domine.' },
+            { move: 'Kg8', comment: 'Le roi noir est forcé de fuir.' },
+            { move: 'Rc8', comment: 'INVASION TOTALE! Menace Txf8+ gagnante. Les Noirs abandonnent.' }
+        ];
+
+        let currentMoveIndex = -1;
+
+        // Outline symbols pour tous - différenciés par CSS background
+        const pieces = {
+            'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔', 'p': '♙',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        function renderBoard() {
+            const board = chess.board();
+            const chessboard = document.getElementById('chessboard');
+            chessboard.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieces[piece.type.toUpperCase()];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            const moveNumber = document.getElementById('moveNumber');
+            const moveComment = document.getElementById('moveComment');
+
+            if (currentMoveIndex === -1) {
+                moveNumber.textContent = 'Position initiale';
+                moveComment.textContent = 'Cliquez sur "Suivant" pour explorer cette partie légendaire du match pour le titre mondial 1978.';
+            } else {
+                const moveNum = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                moveNumber.textContent = `Coup ${moveNum}. ${color}: ${gameMoves[currentMoveIndex].move}`;
+                moveComment.textContent = gameMoves[currentMoveIndex].comment;
+            }
+
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+
+            // Brilliant move detection emojis
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'timeline-move';
+                if (index === currentMoveIndex) {
+                    moveDiv.classList.add('active');
+                }
+
+                // Check for brilliant moves based on emojis in comments
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveDiv.classList.add('brilliant');
+                }
+
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+                moveDiv.textContent = `${color} ${moveNum}. ${moveNotation}`;
+
+                moveDiv.onclick = () => {
+                    goToMove(index);
+                };
+
+                timeline.appendChild(moveDiv);
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const moveData = gameMoves[currentMoveIndex];
+                let result = chess.move(moveData.move, { sloppy: true });
+                if (!result) {
+                    // Try variations
+                    const variations = [
+                        moveData.move.replace(/([RNBQK])([1-8])([a-h][1-8])/, '$1$3'),  // Remove rank disambiguation
+                        moveData.move.replace(/([RNBQK])([a-h])([a-h][1-8])/, '$1$3'),  // Remove file disambiguation
+                        moveData.move.replace('+', '').replace('#', ''),
+                        moveData.move
+                    ];
+                    for (const v of variations) {
+                        result = chess.move(v);
+                        if (result) break;
+                    }
+                    if (!result) console.warn('Move failed:', moveData.move, currentMoveIndex);
+                }
+                renderBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                chess.undo();
+                currentMoveIndex--;
+                renderBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            chess.reset();
+            currentMoveIndex = -1;
+            renderBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            for (let i = 0; i < gameMoves.length; i++) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            chess.reset();
+            currentMoveIndex = -1;
+            for (let i = 0; i <= index; i++) {
+                if (currentMoveIndex < gameMoves.length - 1) {
+                    currentMoveIndex++;
+                    const moveData = gameMoves[currentMoveIndex];
+                    let result = chess.move(moveData.move, { sloppy: true });
+                    if (!result) {
+                        result = chess.move(moveData.move.replace(/([RNBQK])([1-8])([a-h][1-8])/, '$1$3'));
+                        if (!result) result = chess.move(moveData.move.replace('+', '').replace('#', ''), { sloppy: true });
+                    }
+                }
+            }
+            renderBoard();
+            updateMoveInfo();
+        }
+
+        // Initialisation
+        renderBoard();
+        updateMoveInfo();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

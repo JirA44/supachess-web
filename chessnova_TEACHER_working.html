@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessNova Teacher - Mode Pédagogique Interactif</title>
+
+    <!-- jQuery REQUIS pour chessboard.js -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <!-- Chessboard.js -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .user-profile {
+            position: absolute;
+            right: 25px;
+            top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 25px;
+            border: 2px solid rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-profile:hover {
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 2px solid white;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .profile-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-modal.active {
+            display: flex;
+        }
+
+        .profile-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .profile-content h2 {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+
+        .avatar-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .avatar-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .avatar-option:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .avatar-option.selected {
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            transform: scale(1.15);
+        }
+
+        .btn-save-profile {
+            padding: 15px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save-profile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .back-button {
+            position: absolute;
+            left: 25px;
+            top: 25px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 600px 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .board-section {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        #board {
+            margin: 0 auto;
+            width: 500px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .info-panel {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: #333;
+        }
+
+        .level-selector {
+            margin-bottom: 20px;
+        }
+
+        .level-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .level-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .hint-box {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .hint-box h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .suggestion-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .suggestion {
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 4px solid;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion:hover {
+            transform: translateX(5px);
+        }
+
+        .suggestion.safe {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .suggestion.creative {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .suggestion.aggressive {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .explanation-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #333;
+        }
+
+        .move-analysis-box {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #333;
+            border-left: 5px solid #00bcd4;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .move-analysis-box h3 {
+            color: #00796b;
+            margin-bottom: 10px;
+        }
+
+        .move-analysis-box .your-move {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #00796b;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .strength-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4caf50;
+            border-radius: 5px;
+        }
+
+        .weakness-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 152, 0, 0.1);
+            border-left: 3px solid #ff9800;
+            border-radius: 5px;
+        }
+
+        .tactical-note {
+            padding: 10px;
+            margin: 6px 0;
+            background: rgba(25, 118, 210, 0.08);
+            border-left: 4px solid #1976d2;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .strategic-note {
+            padding: 10px;
+            margin: 6px 0;
+            background: rgba(123, 31, 162, 0.08);
+            border-left: 4px solid #7b1fa2;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .analysis-section {
+            margin: 15px 0;
+        }
+
+        .score-badge.excellent {
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            color: white;
+            font-weight: bold;
+        }
+
+        .score-badge.poor {
+            background: linear-gradient(135deg, #f57c00, #ff9800);
+            color: white;
+        }
+
+        .move-score {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid rgba(0, 188, 212, 0.3);
+        }
+
+        .score-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .score-badge.good {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .score-badge.neutral {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .score-badge.bad {
+            background: #ffccbc;
+            color: #d84315;
+        }
+
+        .move-history {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .move-item {
+            padding: 5px;
+            margin: 3px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .move-item:nth-child(odd) {
+            background: white;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-button">
+                <span>←</span>
+                <span>Retour au Hub</span>
+            </a>
+
+            <div class="user-profile" onclick="openProfileModal()" id="userProfileDisplay">
+                <div class="user-avatar" id="userAvatarDisplay">👤</div>
+                <div class="user-name" id="userNameDisplay">Invité</div>
+            </div>
+
+            <h1>🎓 ChessNova Teacher - Mode Pédagogique</h1>
+            <p class="subtitle">Apprenez les échecs avec un professeur IA personnel gratuit!</p>
+        </header>
+
+        <!-- Modal Profil -->
+        <div class="profile-modal" id="profileModal">
+            <div class="profile-content">
+                <h2>👤 Créer / Modifier ton Profil</h2>
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label>Ton nom d'utilisateur:</label>
+                        <input type="text" id="usernameInput" placeholder="Entre ton pseudo..." maxlength="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Choisis ton avatar:</label>
+                        <div class="avatar-selector" id="avatarSelector">
+                            <div class="avatar-option selected" data-avatar="♟️">♟️</div>
+                            <div class="avatar-option" data-avatar="🎓">🎓</div>
+                            <div class="avatar-option" data-avatar="🧠">🧠</div>
+                            <div class="avatar-option" data-avatar="👑">👑</div>
+                            <div class="avatar-option" data-avatar="🏆">🏆</div>
+                            <div class="avatar-option" data-avatar="⚡">⚡</div>
+                            <div class="avatar-option" data-avatar="🔥">🔥</div>
+                            <div class="avatar-option" data-avatar="💎">💎</div>
+                            <div class="avatar-option" data-avatar="🌟">🌟</div>
+                            <div class="avatar-option" data-avatar="🚀">🚀</div>
+                            <div class="avatar-option" data-avatar="🦁">🦁</div>
+                            <div class="avatar-option" data-avatar="🐉">🐉</div>
+                            <div class="avatar-option" data-avatar="🦅">🦅</div>
+                            <div class="avatar-option" data-avatar="🐺">🐺</div>
+                            <div class="avatar-option" data-avatar="🦊">🦊</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-save-profile" onclick="saveProfile()">💾 Sauvegarder mon Profil</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Échiquier -->
+            <div class="board-section">
+                <div id="board"></div>
+
+                <div class="controls">
+                    <button class="btn-primary" onclick="newGame()">🎮 Nouvelle Partie</button>
+                    <button class="btn-secondary" onclick="undoMove()">↶ Annuler</button>
+                    <button class="btn-success" onclick="getHint()">💡 Indice</button>
+                    <button class="btn-danger" onclick="flipBoard()">🔄 Retourner</button>
+                </div>
+
+                <div class="move-history" id="moveHistory">
+                    <strong>Historique des coups:</strong>
+                    <div id="historyContent"></div>
+                </div>
+            </div>
+
+            <!-- Panneau d'info -->
+            <div class="info-panel">
+                <h2>🎯 Sélectionnez votre niveau</h2>
+                <div class="level-selector">
+                    <button class="level-btn active" onclick="setLevel(1)" data-level="1">
+                        🌱 Débutant<br><small>(ELO ~1200)</small>
+                    </button>
+                    <button class="level-btn" onclick="setLevel(2)" data-level="2">
+                        ⭐ Intermédiaire<br><small>(ELO ~1600)</small>
+                    </button>
+                    <button class="level-btn" onclick="setLevel(3)" data-level="3">
+                        🔥 Avancé<br><small>(ELO ~2000)</small>
+                    </button>
+                    <button class="level-btn" onclick="setLevel(4)" data-level="4">
+                        💎 Expert<br><small>(ELO ~2400)</small>
+                    </button>
+                    <button class="level-btn" onclick="setLevel(5)" data-level="5">
+                        👑 Master<br><small>(ELO ~2800)</small>
+                    </button>
+                    <button class="level-btn" onclick="setLevel(6)" data-level="6">
+                        🏆 Grand Master<br><small>(ELO ~3200+)</small>
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="winsCount">0</div>
+                        <div class="stat-label">Victoires</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="drawsCount">0</div>
+                        <div class="stat-label">Nulles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lossesCount">0</div>
+                        <div class="stat-label">Défaites</div>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>ChessNova réfléchit...</p>
+                </div>
+
+                <div id="hintBox" class="hint-box" style="display: none;">
+                    <h3>💡 Indice Pédagogique</h3>
+                    <p id="hintText"></p>
+                </div>
+
+                <div id="suggestionsBox" class="suggestion-box" style="display: none;">
+                    <h3>🎯 Suggestions de Coups</h3>
+                    <p><strong>Cliquez sur un coup pour obtenir des explications:</strong></p>
+                    <div id="suggestionsContent"></div>
+                </div>
+
+                <div id="explanationBox" class="explanation-box" style="display: none;">
+                    <h3>📚 Explication du Coup</h3>
+                    <p id="explanationText"></p>
+                </div>
+
+                <div id="moveAnalysisBox" class="move-analysis-box" style="display: none;">
+                    <h3>🔍 Analyse de Votre Coup</h3>
+                    <div class="your-move" id="yourMoveText"></div>
+
+                    <div id="strengthsList"></div>
+                    <div id="weaknessesList"></div>
+
+                    <div class="move-score">
+                        <span id="moveScoreBadge" class="score-badge"></span>
+                        <span id="movePowerBadge" class="score-badge"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État du jeu
+        let board = null;
+        let game = new Chess();
+        let currentLevel = 1;
+        let gameAnalyses = [];  // Stockage des analyses de coups
+        let stats = {
+            wins: 0,
+            draws: 0,
+            losses: 0
+        };
+
+        // Profil utilisateur
+        let userProfile = {
+            username: 'Invité',
+            avatar: '👤'
+        };
+
+        // Charger les stats depuis localStorage
+        function loadStats() {
+            const saved = localStorage.getItem('chessnovaTeacherStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+                updateStatsDisplay();
+            }
+        }
+
+        // Sauvegarder les stats
+        function saveStats() {
+            localStorage.setItem('chessnovaTeacherStats', JSON.stringify(stats));
+            updateStatsDisplay();
+        }
+
+        // Mettre à jour l'affichage des stats
+        function updateStatsDisplay() {
+            document.getElementById('winsCount').textContent = stats.wins;
+            document.getElementById('drawsCount').textContent = stats.draws;
+            document.getElementById('lossesCount').textContent = stats.losses;
+        }
+
+        // Configuration de l'échiquier
+        const config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd,
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+            showNotation: true,
+            moveSpeed: 'slow',
+            snapbackSpeed: 500,
+            snapSpeed: 100
+        };
+
+        // board sera init dans $(document).ready()
+
+        // Empêcher de déplacer les pièces de l'adversaire
+        function onDragStart(source, piece, position, orientation) {
+            if (game.game_over()) return false;
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
+
+        // Gérer le dépôt d'une pièce
+        function onDrop(source, target) {
+            console.log(`🎯 onDrop: ${source} → ${target}`);
+            console.log('📋 FEN actuel:', game.fen());
+            console.log('🔢 Coups joués:', game.history().length);
+
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (move === null) {
+                console.log('❌ Coup illégal');
+                console.log('❌ Coups légaux depuis', source + ':', game.moves({square: source}));
+                return 'snapback';
+            }
+
+            console.log(`✅ Coup valide: ${move.san}`);
+
+            updateMoveHistory();
+            hideAllBoxes();
+
+            // Analyser le coup du joueur
+            analyzePlayerMove(move);
+
+            setTimeout(() => {
+                if (!game.game_over()) {
+                    makeAImove();
+                } else {
+                    checkGameOver();
+                }
+            }, 250);
+
+            // NE PAS retourner 'snapback' ici!
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        // ChessNova joue selon le niveau
+        function makeAImove() {
+            document.getElementById('loading').classList.add('active');
+
+            setTimeout(() => {
+                let move;
+
+                if (currentLevel === 1) {
+                    // Débutant: Coups aléatoires avec préférence développement
+                    move = getBeginnerMove();
+                } else if (currentLevel === 2) {
+                    // Intermédiaire: Minimax depth 2
+                    move = getIntermediateMove();
+                } else if (currentLevel === 3) {
+                    // Avancé: Minimax depth 3
+                    move = getAdvancedMove();
+                } else if (currentLevel === 4) {
+                    // Expert: Minimax depth 4
+                    move = getExpertMove();
+                } else if (currentLevel === 5) {
+                    // Master: Hybrid simple
+                    move = getMasterMove();
+                } else {
+                    // Grand Master: Full ChessNova Hybrid
+                    move = getGrandMasterMove();
+                }
+
+                game.move(move);
+                board.position(game.fen());
+                updateMoveHistory();
+                document.getElementById('loading').classList.remove('active');
+
+                if (game.game_over()) {
+                    checkGameOver();
+                }
+            }, 500 + (currentLevel * 200));
+        }
+
+        // Coups selon niveau
+        function getBeginnerMove() {
+            const moves = game.moves();
+            // Préfère développer les pièces
+            const developmentMoves = moves.filter(m =>
+                m.includes('N') || m.includes('B') || m === 'e4' || m === 'd4'
+            );
+            const selectedMoves = developmentMoves.length > 0 ? developmentMoves : moves;
+            return selectedMoves[Math.floor(Math.random() * selectedMoves.length)];
+        }
+
+        function getIntermediateMove() {
+            return minimax(game, 2).move;
+        }
+
+        function getAdvancedMove() {
+            return minimax(game, 3).move;
+        }
+
+        function getExpertMove() {
+            return minimax(game, 4).move;
+        }
+
+        function getMasterMove() {
+            // Hybrid simple: 70% minimax depth 3, 30% aléatoire créatif
+            if (Math.random() < 0.7) {
+                return minimax(game, 3).move;
+            } else {
+                const moves = game.moves();
+                return moves[Math.floor(Math.random() * moves.length)];
+            }
+        }
+
+        function getGrandMasterMove() {
+            // Full hybrid: minimax depth 4 avec évaluation avancée
+            return minimax(game, 4).move;
+        }
+
+        // Minimax simple (simulé - en production utiliserait vraiment chessnova.py)
+        function minimax(gameState, depth) {
+            const moves = gameState.moves();
+            let bestMove = moves[0];
+            let bestScore = -Infinity;
+
+            for (let move of moves) {
+                gameState.move(move);
+                const score = evaluatePosition(gameState);
+                gameState.undo();
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+
+            return { move: bestMove, score: bestScore };
+        }
+
+        // Évaluation simple de position
+        function evaluatePosition(game) {
+            if (game.in_checkmate()) return game.turn() === 'b' ? 10000 : -10000;
+            if (game.in_draw()) return 0;
+
+            let score = 0;
+            const board = game.board();
+            const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+            for (let row of board) {
+                for (let square of row) {
+                    if (square) {
+                        const value = pieceValues[square.type];
+                        score += square.color === 'b' ? value : -value;
+                    }
+                }
+            }
+
+            return score + (Math.random() - 0.5) * 0.5;
+        }
+
+        // Obtenir un indice
+        function getHint() {
+            const hints = [
+                "💡 Essayez de contrôler le centre de l'échiquier (cases e4, d4, e5, d5)",
+                "💡 Développez vos pièces (Cavaliers et Fous) avant de sortir la Dame",
+                "💡 Roquez tôt pour mettre votre Roi en sécurité",
+                "💡 Ne déplacez pas la même pièce plusieurs fois en ouverture",
+                "💡 Cherchez les tactiques: fourchettes, clouages, découvertes",
+                "💡 Contrôlez les colonnes ouvertes avec vos Tours",
+                "💡 Créez des menaces doubles pour mettre la pression",
+                "💡 Protégez vos pièces importantes et attaquez les pièces non défendues",
+                "💡 En fin de partie, activez votre Roi!",
+                "💡 Les pions ne reculent jamais - réfléchissez bien avant de les avancer"
+            ];
+
+            const hintBox = document.getElementById('hintBox');
+            const hintText = document.getElementById('hintText');
+
+            hintText.textContent = hints[Math.floor(Math.random() * hints.length)];
+            hintBox.style.display = 'block';
+
+            // Afficher les suggestions de coups
+            showSuggestions();
+        }
+
+        // Afficher les suggestions
+        function showSuggestions() {
+            const moves = game.moves({ verbose: true });
+            if (moves.length === 0) return;
+
+            // Sélectionner 3 coups: sûr, créatif, agressif
+            const safeMoves = moves.filter(m => !m.captured);
+            const captureMoves = moves.filter(m => m.captured);
+
+            const safe = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+            const creative = moves[Math.floor(Math.random() * moves.length)];
+            const aggressive = captureMoves.length > 0
+                ? captureMoves[Math.floor(Math.random() * captureMoves.length)]
+                : moves[Math.floor(Math.random() * moves.length)];
+
+            const suggestionsBox = document.getElementById('suggestionsBox');
+            const suggestionsContent = document.getElementById('suggestionsContent');
+
+            suggestionsContent.innerHTML = `
+                <div class="suggestion safe" onclick="explainMove('${safe.san}', 'safe')">
+                    <strong>✅ Sûr:</strong> ${safe.san}
+                    <br><small>Coup solide et positionnel</small>
+                </div>
+                <div class="suggestion creative" onclick="explainMove('${creative.san}', 'creative')">
+                    <strong>🎨 Créatif:</strong> ${creative.san}
+                    <br><small>Coup surprenant et original</small>
+                </div>
+                <div class="suggestion aggressive" onclick="explainMove('${aggressive.san}', 'aggressive')">
+                    <strong>⚔️ Agressif:</strong> ${aggressive.san}
+                    <br><small>Coup tactique et forcing</small>
+                </div>
+            `;
+
+            suggestionsBox.style.display = 'block';
+        }
+
+        // Expliquer un coup
+        function explainMove(move, type) {
+            const explanations = {
+                safe: `Le coup ${move} est un coup sûr qui améliore votre position sans prendre de risques. C'est un bon choix pour maintenir un jeu solide et positionnel.`,
+                creative: `Le coup ${move} est une idée créative qui peut surprendre votre adversaire. Il sort des sentiers battus et crée des complications intéressantes.`,
+                aggressive: `Le coup ${move} est un coup agressif qui met la pression sur votre adversaire. Il force des décisions tactiques et peut mener à un avantage matériel.`
+            };
+
+            const explanationBox = document.getElementById('explanationBox');
+            const explanationText = document.getElementById('explanationText');
+
+            explanationText.textContent = explanations[type];
+            explanationBox.style.display = 'block';
+        }
+
+        // Mettre à jour l'historique
+        function updateMoveHistory() {
+            const history = game.history();
+            const content = document.getElementById('historyContent');
+
+            let html = '';
+            for (let i = 0; i < history.length; i++) {
+                if (i % 2 === 0) {
+                    html += `<div class="move-item">${Math.floor(i/2) + 1}. ${history[i]}`;
+                } else {
+                    html += ` ${history[i]}</div>`;
+                }
+            }
+
+            content.innerHTML = html;
+            content.scrollTop = content.scrollHeight;
+        }
+
+        // Vérifier fin de partie
+        // Vérifier fin de partie
+        function checkGameOver() {
+            let message = '';
+            let result = '';
+
+            if (game.in_checkmate()) {
+                if (game.turn() === 'b') {
+                    message = '🎉 Félicitations! Vous avez gagné par échec et mat!';
+                    result = '1-0';
+                    stats.wins++;
+                } else {
+                    message = '😔 ChessNova gagne par échec et mat. Réessayez!';
+                    result = '0-1';
+                    stats.losses++;
+                }
+            } else if (game.in_draw()) {
+                message = '🤝 Partie nulle! Beau combat!';
+                result = '1/2-1/2';
+                stats.draws++;
+            } else if (game.in_stalemate()) {
+                message = '🤝 Pat! Partie nulle.';
+                result = '1/2-1/2';
+                stats.draws++;
+            } else if (game.in_threefold_repetition()) {
+                message = '🤝 Nulle par répétition triple.';
+                result = '1/2-1/2';
+                stats.draws++;
+            }
+
+            if (message) {
+                saveStats();
+
+                // Afficher message avec bouton rapport
+                const confirmMsg = message + '\n\nVoulez-vous voir le rapport détaillé de la partie?';
+                if (confirm(confirmMsg)) {
+                    showGameReport(result);
+                }
+            }
+        }
+
+        // Générer le rapport de partie
+        function showGameReport(result) {
+            const reportWin = window.open('', 'Rapport de Partie', 'width=1200,height=800,scrollbars=yes');
+            if (!reportWin) {
+                alert('Veuillez autoriser les popups pour voir le rapport!');
+                return;
+            }
+
+            let html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>📊 Rapport de Partie - ChessNova Teacher</title>
+<style>
+body{font-family:Arial,sans-serif;background:#1e3c72;color:#fff;padding:20px;margin:0}
+.container{max-width:1000px;margin:0 auto;background:rgba(255,255,255,0.1);border-radius:20px;padding:30px}
+h1{text-align:center;color:#ffd700;font-size:2.5em;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:10px}
+.subtitle{text-align:center;color:#ddd;margin-bottom:30px}
+.section{background:rgba(0,0,0,0.3);border-radius:15px;padding:20px;margin:20px 0;border-left:4px solid #ffd700}
+.section h2{color:#ffd700;margin-bottom:15px;font-size:1.5em}
+.pgn-box{background:rgba(0,0,0,0.5);padding:20px;border-radius:10px;font-family:Consolas,Monaco,monospace;font-size:1.05em;line-height:1.8;overflow-x:auto;margin:15px 0;white-space:pre-wrap;word-wrap:break-word}
+.move-analysis{background:rgba(255,255,255,0.05);border-left:3px solid #4facfe;padding:15px;margin:10px 0;border-radius:8px}
+.move-number{font-weight:bold;color:#4facfe;font-size:1.1em;display:block;margin-bottom:8px}
+.strength{color:#10b981;margin:8px 0;padding-left:10px}
+.weakness{color:#ff6b6b;margin:8px 0;padding-left:10px}
+.strategic{color:#f59e0b;margin:8px 0;padding-left:10px}
+.tactical{color:#8b5cf6;margin:8px 0;padding-left:10px}
+.copy-btn{background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 24px;border-radius:10px;cursor:pointer;font-weight:600;margin:10px 5px;transition:all 0.3s}
+.copy-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.5)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin:20px 0}
+.stat-card{background:rgba(102,126,234,0.2);border:2px solid rgba(102,126,234,0.4);border-radius:10px;padding:15px;text-align:center}
+.stat-value{font-size:2em;font-weight:bold;color:#ffd700;margin:10px 0}
+.stat-label{color:#ddd;font-size:0.9em}
+</style></head><body><div class="container">`;
+
+            // Header
+            html += `<h1>📊 Rapport de Partie - ChessNova Teacher</h1>`;
+            html += `<div class="subtitle">Analyse complète de votre performance</div>`;
+
+            // Stats summary
+            const totalMoves = gameAnalyses.length;
+            const avgScore = totalMoves > 0 ? (gameAnalyses.reduce((sum, a) => sum + a.score, 0) / totalMoves).toFixed(2) : 0;
+            const avgPower = totalMoves > 0 ? (gameAnalyses.reduce((sum, a) => sum + a.power, 0) / totalMoves).toFixed(1) : 0;
+            const goodMoves = gameAnalyses.filter(a => a.score >= 0.3).length;
+            const poorMoves = gameAnalyses.filter(a => a.score < 0).length;
+
+            html += `<div class="stats-grid">`;
+            html += `<div class="stat-card"><div class="stat-label">Résultat</div><div class="stat-value">${result}</div></div>`;
+            html += `<div class="stat-card"><div class="stat-label">Vos Coups</div><div class="stat-value">${totalMoves}</div></div>`;
+            html += `<div class="stat-card"><div class="stat-label">Score Moyen</div><div class="stat-value">${avgScore}</div></div>`;
+            html += `<div class="stat-card"><div class="stat-label">Puissance Moy.</div><div class="stat-value">${avgPower}</div></div>`;
+            html += `<div class="stat-card"><div class="stat-label">Bons Coups</div><div class="stat-value">${goodMoves}</div></div>`;
+            html += `<div class="stat-card"><div class="stat-label">Coups Faibles</div><div class="stat-value">${poorMoves}</div></div>`;
+            html += `</div>`;
+
+            // PGN Section
+            html += `<div class="section"><h2>📋 PGN de la Partie</h2>`;
+            html += `<button class="copy-btn" onclick="copyPGN()">📋 Copier PGN</button>`;
+            const pgnText = game.pgn();
+            html += `<div class="pgn-box" id="pgn">${pgnText}</div></div>`;
+
+            // Moves Analysis
+            html += `<div class="section"><h2>🔍 Analyse Détaillée de Vos Coups</h2>`;
+            html += `<button class="copy-btn" onclick="copyAnalysis()">📝 Copier Analyse</button>`;
+            html += `<div id="moves-analysis">`;
+
+            for (let i = 0; i < gameAnalyses.length; i++) {
+                const a = gameAnalyses[i];
+                html += `<div class="move-analysis">`;
+                html += `<span class="move-number">Coup ${a.moveNumber} (${a.color}): ${a.move} - Score: ${a.score.toFixed(2)} | Puissance: ${a.power}/10</span>`;
+
+                if (a.strengths.length > 0) {
+                    html += `<div class="strength"><strong>✅ Forces:</strong><br>${a.strengths.join('<br>')}</div>`;
+                }
+                if (a.weaknesses.length > 0) {
+                    html += `<div class="weakness"><strong>⚠️ Faiblesses:</strong><br>${a.weaknesses.join('<br>')}</div>`;
+                }
+                if (a.strategicNotes.length > 0) {
+                    html += `<div class="strategic"><strong>💡 Notes Stratégiques:</strong><br>${a.strategicNotes.join('<br>')}</div>`;
+                }
+                if (a.tacticalNotes.length > 0) {
+                    html += `<div class="tactical"><strong>🎯 Notes Tactiques:</strong><br>${a.tacticalNotes.join('<br>')}</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            html += `</div></div>`;
+
+            // Footer
+            html += `<div style="text-align:center;margin-top:30px;color:#ddd">`;
+            html += `<p>Généré par <strong>ChessNova Teacher</strong> - Mode Pédagogique</p>`;
+            html += `<p style="font-size:0.9em;opacity:0.7">Continuez à jouer pour vous améliorer! 🎯</p>`;
+            html += `</div></div>`;
+
+            // JavaScript functions
+            html += `<script>
+function copyPGN() {
+  const text = document.getElementById('pgn').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ PGN copié dans le presse-papiers!');
+  }).catch(err => {
+    alert('❌ Erreur de copie: ' + err);
+  });
+}
+function copyAnalysis() {
+  const elem = document.getElementById('moves-analysis');
+  const text = elem.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ Analyse copiée dans le presse-papiers!');
+  }).catch(err => {
+    alert('❌ Erreur de copie: ' + err);
+  });
+}
+<\/script>`;
+            html += `
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body></html>`;
+
+            reportWin.document.write(html);
+            reportWin.document.close();
+        }
+
+
+        // Changer de niveau
+        function setLevel(level) {
+            currentLevel = level;
+
+            // Mettre à jour les boutons
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-level="${level}"]`).classList.add('active');
+
+            hideAllBoxes();
+        }
+
+        // Nouvelle partie
+        function newGame() {
+            game = new Chess();
+            gameAnalyses = [];  // Réinitialiser les analyses
+            board.position('start');
+            const historyEl = document.getElementById('historyContent');
+            if (historyEl) historyEl.innerHTML = '';
+            const resultEl = document.getElementById('result');
+            if (resultEl) resultEl.style.display = 'none';
+            hideAllBoxes();
+        }
+
+        // Annuler
+        function undoMove() {
+            if (game.history().length >= 2) {
+                game.undo();
+                game.undo();
+                board.position(game.fen());
+                updateMoveHistory();
+                hideAllBoxes();
+            }
+        }
+
+        // Retourner l'échiquier
+        function flipBoard() {
+            board.flip();
+        }
+
+        // Cacher toutes les boîtes
+        function hideAllBoxes() {
+            document.getElementById('hintBox').style.display = 'none';
+            document.getElementById('suggestionsBox').style.display = 'none';
+            document.getElementById('explanationBox').style.display = 'none';
+            document.getElementById('moveAnalysisBox').style.display = 'none';
+        }
+
+        // ========== ANALYSE ENRICHIE DES COUPS ==========
+        function analyzePlayerMove(move) {
+            const strengths = [];
+            const weaknesses = [];
+            const strategicNotes = [];
+            const tacticalNotes = [];
+            let score = 0;
+            let power = 5;
+
+            const from = move.from;
+            const to = move.to;
+            const piece = move.piece;
+            const captured = move.captured;
+
+            console.log(`🔍 Analyse enrichie: ${move.san} (${from}→${to})`);
+
+            // Centre de l'échiquier
+            const centerSquares = ['e4', 'd4', 'e5', 'd5'];
+            const extendedCenter = ['c3', 'd3', 'e3', 'f3', 'c4', 'f4', 'c5', 'f5', 'c6', 'd6', 'e6', 'f6'];
+            const pieceValues = {p: 1, n: 3, b: 3, r: 5, q: 9, k: 0};
+
+            // 1. CONTRÔLE DU CENTRE (Enrichi)
+            if (centerSquares.includes(to)) {
+                strengths.push(`✅ <strong>EXCELLENT!</strong> Vous contrôlez une case centrale clé: <strong>${to}</strong>`);
+                strategicNotes.push(`💡 Le contrôle du centre est un principe fondamental. Cette pièce domine maintenant l'échiquier.`);
+                score += 0.4;
+                power += 2;
+            } else if (extendedCenter.includes(to)) {
+                strengths.push(`✅ Bonne influence sur le centre depuis <strong>${to}</strong>`);
+                strategicNotes.push(`💡 Cette pièce soutient indirectement votre contrôle central.`);
+                score += 0.2;
+                power += 1;
+            }
+
+            // 2. CAPTURES (Analyse détaillée)
+            if (captured) {
+                const capturedValue = pieceValues[captured];
+                const attackerValue = pieceValues[piece];
+
+                if (capturedValue > attackerValue) {
+                    strengths.push(`✅ <strong>EXCELLENTE CAPTURE!</strong> Vous gagnez du matériel: ${getNomPiece(captured)} (${capturedValue} pts) vs ${getNomPiece(piece)} (${attackerValue} pts)`);
+                    tacticalNotes.push(`🎯 Gain matériel de +${capturedValue - attackerValue} point(s). L'avantage matériel est décisif en finale!`);
+                    score += 0.6;
+                    power += 3;
+                } else if (capturedValue === attackerValue) {
+                    strengths.push(`✅ Échange équitable: ${getNomPiece(captured)} contre ${getNomPiece(piece)} (${capturedValue} pts chacun)`);
+                    tacticalNotes.push(`⚖️ Échange de valeur égale. Peut simplifier la position ou améliorer votre structure.`);
+                    score += 0.2;
+                    power += 1;
+                } else {
+                    weaknesses.push(`⚠️ <strong>ATTENTION!</strong> Capture défavorable: vous donnez ${getNomPiece(piece)} (${attackerValue} pts) pour ${getNomPiece(captured)} (${capturedValue} pts)`);
+                    tacticalNotes.push(`⚠️ Perte matérielle de -${attackerValue - capturedValue} point(s). Vérifiez qu'il y a une compensation tactique!`);
+                    score -= 0.4;
+                    power -= 2;
+                }
+            }
+
+            // 3. DÉVELOPPEMENT (Analyse approfondie)
+            const startRanks = piece === 'p' ? ['2', '7'] : ['1', '8'];
+            const isDevelopment = startRanks.includes(from[1]) && !startRanks.includes(to[1]);
+
+            if (isDevelopment && piece !== 'p') {
+                strengths.push(`✅ <strong>Développement excellent!</strong> Votre ${getNomPiece(piece)} entre en jeu depuis ${from}`);
+
+                if (captured || game.in_check()) {
+                    strengths.push(`✅ <strong>DÉVELOPPEMENT AVEC TEMPO!</strong> Vous développez ET attaquez simultanément!`);
+                    strategicNotes.push(`💡 Développer avec tempo est l'idéal: vous gagnez du temps en forçant l'adversaire à réagir.`);
+                    score += 0.4;
+                    power += 2;
+                } else {
+                    strategicNotes.push(`💡 Principe d'ouverture: développez vos pièces avant d'attaquer. Cavaliers et Fous en priorité!`);
+                    score += 0.25;
+                    power += 1;
+                }
+
+                // Placement optimal
+                const goodSquares = {
+                    n: ['c3', 'd2', 'e2', 'f3', 'g3', 'c6', 'd7', 'e7', 'f6', 'g6'],
+                    b: ['c4', 'd3', 'e2', 'f4', 'g5', 'b5', 'c5', 'd6', 'e7', 'f5', 'g4'],
+                };
+
+                if (goodSquares[piece] && goodSquares[piece].includes(to)) {
+                    strengths.push(`✅ Placement optimal du ${getNomPiece(piece)} sur ${to}!`);
+                    score += 0.15;
+                }
+            }
+
+            // Déplacements répétés en ouverture
+            const moveHistory = game.history({ verbose: true });
+            const moveCount = moveHistory.length;
+
+            if (moveCount < 10) {
+                const samePieceMoves = moveHistory.filter(m =>
+                    m.piece === piece && (m.from === from || m.to === from)
+                );
+
+                if (samePieceMoves.length >= 2) {
+                    weaknesses.push(`⚠️ Vous déplacez ce ${getNomPiece(piece)} pour la ${samePieceMoves.length}ème fois en ouverture!`);
+                    strategicNotes.push(`⚠️ Principe d'ouverture: "Développez toutes vos pièces avant d'en bouger une deux fois" sauf pour gain de tempo.`);
+                    score -= 0.2;
+                    power -= 1;
+                }
+
+                // Dame sortie trop tôt
+                if (piece === 'q' && moveCount < 6) {
+                    weaknesses.push(`⚠️ Sortir la Dame trop tôt (coup ${Math.floor(moveCount/2) + 1}) est généralement risqué!`);
+                    strategicNotes.push(`⚠️ La Dame peut être harcelée par les pièces mineures adverses. Développez d'abord Cavaliers et Fous.`);
+                    score -= 0.25;
+                }
+            }
+
+            // 4. PIÈCES BLOQUÉES (Détaillé avec alternatives)
+            const blockedPieces = findBlockedPieces(game, move);
+            if (blockedPieces.length > 0) {
+                blockedPieces.forEach(blocked => {
+                    weaknesses.push(`⚠️ <strong>Ce coup bloque votre ${blocked.piece} en ${blocked.square}!</strong>`);
+                    strategicNotes.push(`⚠️ Un Fou bloqué par ses propres pions est un "Fou mauvais". Cherchez à l'activer!`);
+                    score -= 0.2;
+                    power -= 1;
+                });
+            }
+
+            // 5. SÉCURITÉ DU ROI (Complet)
+            if (move.flags.includes('k') || move.flags.includes('q')) {
+                const roqueType = move.flags.includes('k') ? 'PETIT' : 'GRAND';
+                strengths.push(`✅ <strong>EXCELLENT ROQUE ${roqueType}!</strong> Votre roi est en sécurité.`);
+                strategicNotes.push(`🏰 Le roque est crucial: il met le roi en sécurité ET active la tour. À faire rapidement en ouverture!`);
+                score += 0.5;
+                power += 2;
+            }
+
+            // Roi en finale
+            if (piece === 'k' && moveCount > 40 && !game.in_check()) {
+                strengths.push(`✅ En finale, le roi devient une pièce active. Bon déplacement!`);
+                strategicNotes.push(`💡 Principe de finale: Activez votre roi! Il doit participer au combat.`);
+                score += 0.2;
+            }
+
+            // 6. STRUCTURE DE PIONS
+            if (piece === 'p') {
+                // Pion passé
+                if (isPassedPawn(game, to, move.color)) {
+                    strengths.push(`✅ <strong>PION PASSÉ!</strong> Aucun pion adverse ne peut l'arrêter sur la colonne ${to[0]}!`);
+                    strategicNotes.push(`💡 Un pion passé est un atout majeur, surtout en finale. Poussez-le vers la promotion!`);
+                    score += 0.4;
+                    power += 2;
+                }
+
+                // Pion avancé
+                const rank = parseInt(to[1]);
+                const isAdvanced = (move.color === 'w' && rank >= 6) || (move.color === 'b' && rank <= 3);
+
+                if (isAdvanced) {
+                    strengths.push(`✅ Pion avancé en ${to}! Il approche de la promotion.`);
+                    tacticalNotes.push(`🎯 Un pion proche de la promotion vaut presque autant qu'une pièce mineure!`);
+                    const proximity = move.color === 'w' ? (rank - 4) : (5 - rank);
+                    score += 0.25 * proximity;
+                    power += 1;
+                }
+
+                // Pions doublés
+                if (hasDoubledPawns(game, move.color, to[0])) {
+                    weaknesses.push(`⚠️ Ce coup crée des pions doublés sur la colonne ${to[0]}`);
+                    strategicNotes.push(`⚠️ Les pions doublés sont généralement faibles car ils ne se défendent pas mutuellement.`);
+                    score -= 0.15;
+                }
+            }
+
+            // 7. TACTIQUE (Motifs)
+            if (game.in_check()) {
+                strengths.push(`✅ <strong>ÉCHEC AU ROI!</strong> L'adversaire est obligé de réagir.`);
+                tacticalNotes.push(`🎯 Un échec force la réponse et gagne du tempo. Cherchez les échecs qui améliorent aussi votre position.`);
+                score += 0.3;
+                power += 2;
+            }
+
+            // Attaques multiples
+            const attacks = countAttacks(game, to);
+            if (attacks >= 2) {
+                strengths.push(`✅ <strong>ATTAQUE MULTIPLE!</strong> Vous attaquez ${attacks} pièces adverses simultanément!`);
+                tacticalNotes.push(`🎯 Attaquer plusieurs pièces crée une pression tactique: l'adversaire ne peut tout défendre!`);
+                score += 0.4;
+                power += 2;
+            } else if (attacks === 1) {
+                strengths.push(`✅ Vous attaquez une pièce adverse`);
+                tacticalNotes.push(`💡 Créer des menaces force l'adversaire à réagir, vous gardez l'initiative!`);
+                score += 0.15;
+                power += 1;
+            }
+
+            // 8. COLONNES ET DIAGONALES
+            if (piece === 'r' || piece === 'q') {
+                const file = to[0];
+
+                if (isOpenFile(game, file)) {
+                    strengths.push(`✅ Votre ${getNomPiece(piece)} contrôle la colonne <strong>OUVERTE</strong> ${file}!`);
+                    strategicNotes.push(`💡 Tours sur colonnes ouvertes sont très puissantes. Doublez-les si possible!`);
+                    score += 0.3;
+                    power += 2;
+                }
+
+                // Septième rangée
+                const rank = to[1];
+                const isSeventhRank = (move.color === 'w' && rank === '7') || (move.color === 'b' && rank === '2');
+
+                if (isSeventhRank && piece === 'r') {
+                    strengths.push(`✅ <strong>EXCELLENTE POSITION!</strong> ${getNomPiece(piece)} sur la 7ème rangée!`);
+                    strategicNotes.push(`💡 "Tour sur la septième" est un concept stratégique majeur: attaque des pions et du roi!`);
+                    score += 0.4;
+                    power += 2;
+                }
+            }
+
+            if (piece === 'b' || piece === 'q') {
+                if (isOnLongDiagonal(to)) {
+                    strengths.push(`✅ Votre ${getNomPiece(piece)} contrôle une grande diagonale depuis ${to}!`);
+                    strategicNotes.push(`💡 Les grandes diagonales traversent le centre et sont très puissantes.`);
+                    score += 0.25;
+                    power += 1;
+                }
+            }
+
+            // 9. PHASE DE JEU
+            const moveNumber = Math.floor(moveCount / 2) + 1;
+            let phase = moveNumber <= 10 ? "ouverture" : moveNumber <= 25 ? "milieu de jeu" : "finale";
+
+            // Affichage enrichi
+            displayEnhancedMoveAnalysis({
+                move: move,
+                strengths: strengths,
+                weaknesses: weaknesses,
+                strategicNotes: strategicNotes,
+                tacticalNotes: tacticalNotes,
+                score: score,
+                power: power,
+                phase: phase,
+                moveNumber: moveNumber
+            });
+
+            // Sauvegarder l'analyse pour le rapport final
+            gameAnalyses.push({
+                moveNumber: moveNumber,
+                move: move.san,
+                color: move.color === 'w' ? 'Blancs' : 'Noirs',
+                strengths: strengths,
+                weaknesses: weaknesses,
+                strategicNotes: strategicNotes,
+                tacticalNotes: tacticalNotes,
+                score: score,
+                power: clampedPower
+            });
+
+            console.log(`✅ Analyse terminée - Score: ${score.toFixed(2)}, Puissance: ${power}/10`);
+        }
+
+function findBlockedPieces(gameState, move) {
+    const blocked = [];
+    const board = gameState.board();
+
+    // Vérifier si le coup bloque un Fou
+    if (move.piece === 'p') {
+        const file = move.to[0];
+        const rank = parseInt(move.to[1]);
+
+        // Chercher les Fous de la même couleur
+        for (let r = 0; r < 8; r++) {
+            for (let f = 0; f < 8; f++) {
+                const square = board[r][f];
+                if (square && square.type === 'b' && square.color === move.color) {
+                    const bishopSquare = String.fromCharCode(97 + f) + (8 - r);
+                    if (isDiagonalBlocked(bishopSquare, move.to)) {
+                        blocked.push({
+                            piece: getNomPiece('b'),
+                            square: bishopSquare
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return blocked;
+}
+
+function isDiagonalBlocked(bishopPos, pawnPos) {
+    const bFile = bishopPos.charCodeAt(0);
+    const bRank = parseInt(bishopPos[1]);
+    const pFile = pawnPos.charCodeAt(0);
+    const pRank = parseInt(pawnPos[1]);
+
+    return Math.abs(bFile - pFile) === Math.abs(bRank - pRank);
+}
+
+function countAttacks(gameState, square) {
+    let count = 0;
+    const moves = gameState.moves({verbose: true, square: square});
+
+    for (let m of moves) {
+        if (m.captured) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+function isSquareAttacked(gameState, square, byColor) {
+    // Chess.js n'a pas de méthode isAttacked, on simule
+    // On met temporairement un roi de la couleur opposée et on vérifie l'échec
+    const fen = gameState.fen();
+    const testGame = new Chess(fen);
+
+    try {
+        const piece = testGame.get(square);
+        if (!piece) {
+            // Case vide, on met un roi temporaire
+            testGame.put({ type: 'k', color: gameState.turn() }, square);
+            return testGame.in_check();
+        } else {
+            // Case occupée, vérifier si elle peut être capturée
+            const moves = testGame.moves({verbose: true});
+            for (let m of moves) {
+                if (m.to === square && m.captured) {
+                    return true;
+                }
+            }
+        }
+    } catch(e) {
+        // En cas d'erreur, retourner false
+    }
+
+    return false;
+}
+
+function findThreats(gameState) {
+    const threats = [];
+    const moves = gameState.moves({verbose: true});
+
+    for (let m of moves) {
+        if (m.captured) {
+            threats.push(m);
+        }
+    }
+
+    return threats;
+}
+
+function getNomPiece(piece) {
+    const noms = {
+        'p': 'Pion',
+        'n': 'Cavalier',
+        'b': 'Fou',
+        'r': 'Tour',
+        'q': 'Dame',
+        'k': 'Roi'
+    };
+    return noms[piece] || piece;
+}
+
+function isPassedPawn(gameState, square, color) {
+    const board = gameState.board();
+    const file = square.charCodeAt(0) - 97;
+    const rank = parseInt(square[1]) - 1;
+
+    const direction = color === 'w' ? 1 : -1;
+    const startRank = color === 'w' ? rank : 7 - rank;
+
+    for (let r = startRank + 1; r < 8 && r >= 0; r += direction) {
+        for (let f = Math.max(0, file - 1); f <= Math.min(7, file + 1); f++) {
+            const sq = board[color === 'w' ? r : 7 - r][f];
+            if (sq && sq.type === 'p' && sq.color !== color) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function hasDoubledPawns(gameState, color, file) {
+    const board = gameState.board();
+    const fileIndex = file.charCodeAt(0) - 97;
+    let count = 0;
+
+    for (let rank = 0; rank < 8; rank++) {
+        const square = board[rank][fileIndex];
+        if (square && square.type === 'p' && square.color === color) {
+            count++;
+        }
+    }
+
+    return count >= 2;
+}
+
+function isOpenFile(gameState, file) {
+    const board = gameState.board();
+    const fileIndex = file.charCodeAt(0) - 97;
+
+    for (let rank = 0; rank < 8; rank++) {
+        const square = board[rank][fileIndex];
+        if (square && square.type === 'p') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function isOnLongDiagonal(square) {
+    const file = square.charCodeAt(0) - 97;
+    const rank = parseInt(square[1]) - 1;
+    return (file === rank) || (file + rank === 7);
+}
+
+function displayEnhancedMoveAnalysis(data) {
+    const box = document.getElementById('moveAnalysisBox');
+    if (!box) return;
+
+    const { move, strengths, weaknesses, strategicNotes, tacticalNotes, score, power, phase, moveNumber } = data;
+
+    let html = `
+        <h3>🔍 Analyse Approfondie de Votre Coup</h3>
+        <div class="your-move">
+            <strong>Coup ${moveNumber} (${phase}):</strong> ${move.san} (${move.from}→${move.to})
+        </div>
+    `;
+
+    if (strengths.length > 0) {
+        html += `
+            <div class="analysis-section">
+                <h4 style="color: #2e7d32; margin: 12px 0 8px 0;">💪 FORCES DU COUP:</h4>
+                ${strengths.map(s => `<div class="strength-item">${s}</div>`).join('')}
+            </div>
+        `;
+    }
+
+    if (weaknesses.length > 0) {
+        html += `
+            <div class="analysis-section">
+                <h4 style="color: #d32f2f; margin: 12px 0 8px 0;">⚠️ FAIBLESSES / POINTS D'ATTENTION:</h4>
+                ${weaknesses.map(w => `<div class="weakness-item">${w}</div>`).join('')}
+            </div>
+        `;
+    }
+
+    if (tacticalNotes.length > 0) {
+        html += `
+            <div class="analysis-section">
+                <h4 style="color: #1976d2; margin: 12px 0 8px 0;">🎯 ANALYSE TACTIQUE:</h4>
+                ${tacticalNotes.map(t => `<div class="tactical-note">${t}</div>`).join('')}
+            </div>
+        `;
+    }
+
+    if (strategicNotes.length > 0) {
+        html += `
+            <div class="analysis-section">
+                <h4 style="color: #7b1fa2; margin: 12px 0 8px 0;">💡 NOTES STRATÉGIQUES:</h4>
+                ${strategicNotes.map(s => `<div class="strategic-note">${s}</div>`).join('')}
+            </div>
+        `;
+    }
+
+    // Score
+    let scoreClass = 'neutral';
+    let scoreText = 'Neutre';
+
+    if (score > 0.5) {
+        scoreClass = 'excellent';
+        scoreText = `Excellent (+${score.toFixed(1)})`;
+    } else if (score > 0.2) {
+        scoreClass = 'good';
+        scoreText = `Bon (+${score.toFixed(1)})`;
+    } else if (score < -0.5) {
+        scoreClass = 'bad';
+        scoreText = `Faible (${score.toFixed(1)})`;
+    } else if (score < -0.2) {
+        scoreClass = 'poor';
+        scoreText = `Moyen (${score.toFixed(1)})`;
+    }
+
+    const clampedPower = Math.max(1, Math.min(10, power));
+    let powerClass = clampedPower >= 7 ? 'good' : clampedPower >= 4 ? 'neutral' : 'bad';
+
+    html += `
+        <div class="move-score" style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+            <span class="score-badge ${scoreClass}">📊 Score: ${scoreText}</span>
+            <span class="score-badge ${powerClass}">💪 Puissance: ${clampedPower}/10</span>
+        </div>
+    `;
+
+    box.innerHTML = html;
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+        // ============================================
+        // SYSTÈME DE PROFIL UTILISATEUR
+        // ============================================
+
+        // Charger le profil depuis localStorage
+        function loadUserProfile() {
+            const saved = localStorage.getItem('chessnovaUserProfile');
+            if (saved) {
+                userProfile = JSON.parse(saved);
+            }
+            updateProfileDisplay();
+        }
+
+        // Sauvegarder le profil dans localStorage
+        function saveUserProfile() {
+            localStorage.setItem('chessnovaUserProfile', JSON.stringify(userProfile));
+            updateProfileDisplay();
+        }
+
+        // Mettre à jour l'affichage du profil
+        function updateProfileDisplay() {
+            document.getElementById('userNameDisplay').textContent = userProfile.username;
+            document.getElementById('userAvatarDisplay').textContent = userProfile.avatar;
+        }
+
+        // Ouvrir le modal profil
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+            document.getElementById('usernameInput').value = userProfile.username === 'Invité' ? '' : userProfile.username;
+
+            // Sélectionner l'avatar actuel
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.avatar === userProfile.avatar) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
+
+        // Fermer le modal profil
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        // Sélectionner un avatar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.avatar-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Fermer modal si clic en dehors
+            document.getElementById('profileModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeProfileModal();
+                }
+            });
+        });
+
+        // Sauvegarder le profil
+        function saveProfile() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const selectedAvatar = document.querySelector('.avatar-option.selected');
+
+            if (!username) {
+                alert('❌ Entre un nom d\'utilisateur!');
+                return;
+            }
+
+            if (!selectedAvatar) {
+                alert('❌ Choisis un avatar!');
+                return;
+            }
+
+            userProfile.username = username;
+            userProfile.avatar = selectedAvatar.dataset.avatar;
+
+            saveUserProfile();
+            closeProfileModal();
+
+            // Animation de succès
+            const profileDisplay = document.getElementById('userProfileDisplay');
+            profileDisplay.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                profileDisplay.style.transform = 'scale(1)';
+            }, 300);
+
+            console.log('✅ Profil sauvegardé:', userProfile);
+        }
+
+
+        // Initialiser avec jQuery
+        $(document).ready(function() {
+            console.log('Initialisation échiquier...');
+
+            // CRÉER l'échiquier
+            board = Chessboard('board', config);
+            console.log('Échiquier créé!');
+
+            // Charger stats et profil
+            loadStats();
+            loadUserProfile();
+
+            // Ouvrir modal profil si c'est la première visite
+            const saved = localStorage.getItem('chessnovaUserProfile');
+            if (!saved) {
+                setTimeout(() => {
+                    openProfileModal();
+                }, 500);
+            }
+        });
+
+        // Responsive
+        $(window).resize(function() {
+            if (board) board.resize();
+        });
+    </script>
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "supachess-lichess-bot",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for SupaChess Lichess BOT integration",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": ["chess", "lichess", "bot", "cloudflare-worker"],
+  "author": "SupaChess",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

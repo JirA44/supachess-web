@@ -1,0 +1,109 @@
+{
+  "name": "SupaChess Opening Book",
+  "version": "1.0",
+  "description": "Curated openings for competitive play",
+  "openings": {
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -": {
+      "moves": ["e2e4", "d2d4", "c2c4", "g1f3"],
+      "weights": [40, 35, 15, 10],
+      "names": ["King's Pawn", "Queen's Pawn", "English", "Reti"]
+    },
+    "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -": {
+      "moves": ["e7e5", "c7c5", "e7e6", "c7c6"],
+      "weights": [35, 30, 20, 15],
+      "names": ["Open Game", "Sicilian", "French", "Caro-Kann"]
+    },
+    "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+      "moves": ["g1f3", "f1c4", "b1c3", "f2f4"],
+      "weights": [40, 25, 20, 15],
+      "names": ["Italian/Spanish", "Italian", "Vienna", "King's Gambit"]
+    },
+    "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": {
+      "moves": ["b8c6", "g8f6", "d7d6"],
+      "weights": [50, 35, 15],
+      "names": ["Classical", "Petrov", "Philidor"]
+    },
+    "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+      "moves": ["f1b5", "f1c4", "d2d4", "b1c3"],
+      "weights": [35, 30, 20, 15],
+      "names": ["Ruy Lopez", "Italian", "Scotch", "Four Knights"]
+    },
+    "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq -": {
+      "moves": ["a7a6", "g8f6", "f8c5", "d7d6"],
+      "weights": [40, 30, 15, 15],
+      "names": ["Morphy Defense", "Berlin", "Classical", "Steinitz"]
+    },
+    "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+      "moves": ["b5a4", "b5c6"],
+      "weights": [70, 30],
+      "names": ["Main Line", "Exchange"]
+    },
+    "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -": {
+      "moves": ["d7d5", "g8f6", "e7e6", "f7f5"],
+      "weights": [35, 30, 20, 15],
+      "names": ["Closed", "Indian", "French Structure", "Dutch"]
+    },
+    "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": {
+      "moves": ["c2c4", "g1f3", "b1c3", "c1f4"],
+      "weights": [40, 30, 15, 15],
+      "names": ["Queen's Gambit", "Torre/London", "Veresov", "London"]
+    },
+    "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq -": {
+      "moves": ["e7e6", "c7c6", "d5c4", "e7e5"],
+      "weights": [35, 30, 20, 15],
+      "names": ["QGD", "Slav", "QGA", "Albin"]
+    },
+    "rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+      "moves": ["b1c3", "g1f3", "c1g5", "e2e3"],
+      "weights": [35, 30, 20, 15],
+      "names": ["Main Line", "Quiet", "Exchange", "Colle"]
+    },
+    "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": {
+      "moves": ["c2c4", "g1f3", "c1f4", "b1c3"],
+      "weights": [40, 30, 20, 10],
+      "names": ["Indian Systems", "Classical", "London", "Trompowsky"]
+    },
+    "rnbqkb1r/pppppppp/5n2/8/2PP4/8/PP2PPPP/RNBQKBNR b KQkq -": {
+      "moves": ["e7e6", "g7g6", "c7c5", "e7e5"],
+      "weights": [30, 30, 25, 15],
+      "names": ["Nimzo/QID", "King's Indian", "Benoni", "Budapest"]
+    },
+    "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+      "moves": ["b1c3", "g1f3", "g2g3", "c1g5"],
+      "weights": [40, 30, 15, 15],
+      "names": ["Nimzo-Indian", "Queen's Indian", "Catalan", "Petrosian"]
+    },
+    "rnbqkb1r/pppppp1p/5np1/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+      "moves": ["b1c3", "g1f3", "g2g3", "e2e4"],
+      "weights": [35, 30, 20, 15],
+      "names": ["King's Indian", "Fianchetto", "g3 System", "Samisch"]
+    },
+    "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+      "moves": ["g1f3", "b1c3", "c2c3", "d2d4"],
+      "weights": [35, 25, 25, 15],
+      "names": ["Open Sicilian", "Closed", "Alapin", "Smith-Morra"]
+    },
+    "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": {
+      "moves": ["d7d6", "b8c6", "e7e6", "g7g6"],
+      "weights": [30, 25, 25, 20],
+      "names": ["Najdorf/Dragon", "Classical", "Scheveningen", "Accelerated Dragon"]
+    },
+    "rnbqkbnr/pp2pppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+      "moves": ["d2d4", "f1b5", "c2c3"],
+      "weights": [50, 30, 20],
+      "names": ["Open Sicilian", "Moscow", "c3 Sicilian"]
+    },
+    "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq -": {
+      "moves": ["c5d4", "g8f6", "e7e6"],
+      "weights": [50, 30, 20],
+      "names": ["Main Line", "Sveshnikov prep", "French Structure"]
+    }
+  },
+  "endgame_knowledge": {
+    "KRvK": "Push enemy king to edge, use opposition",
+    "KQvK": "Centralize queen, drive king to corner",
+    "KPvK": "Opposition is key, check rule of squares",
+    "KRPvKR": "Lucena and Philidor positions critical",
+    "KBNvK": "Drive king to corner matching bishop color"
+  }
+}

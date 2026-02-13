@@ -1,0 +1,4020 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Coach - Entraînement Personnalisé | ChessNova</title>
+
+    <!-- Libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
+    <!-- DEBUG ERROR OVERLAY -->
+    <script>
+    (function() {
+        var errors = [];
+        var overlay = null;
+
+        function createOverlay() {
+            if (overlay) return overlay;
+            overlay = document.createElement('div');
+            overlay.id = 'debug-error-overlay';
+            overlay.style.cssText = 'position:fixed;bottom:10px;right:10px;max-width:400px;max-height:300px;overflow-y:auto;background:rgba(0,0,0,0.9);border:2px solid #ff4444;border-radius:8px;padding:10px;font-family:monospace;font-size:12px;color:#fff;z-index:99999;';
+
+            var header = document.createElement('div');
+            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #ff4444;';
+            header.innerHTML = '<span style="color:#ff4444;font-weight:bold;">🐛 DEBUG ERRORS</span>';
+
+            var closeBtn = document.createElement('button');
+            closeBtn.textContent = '✕';
+            closeBtn.style.cssText = 'background:#ff4444;border:none;color:#fff;padding:2px 8px;border-radius:4px;cursor:pointer;';
+            closeBtn.onclick = function() { overlay.style.display = 'none'; };
+            header.appendChild(closeBtn);
+
+            overlay.appendChild(header);
+
+            var content = document.createElement('div');
+            content.id = 'debug-error-content';
+            overlay.appendChild(content);
+
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
+        function addError(type, msg, source, line) {
+            errors.push({ type: type, msg: msg, source: source, line: line, time: new Date().toLocaleTimeString() });
+            if (document.body) {
+                createOverlay();
+                var content = document.getElementById('debug-error-content');
+                var entry = document.createElement('div');
+                entry.style.cssText = 'margin-bottom:8px;padding:6px;background:rgba(255,68,68,0.2);border-radius:4px;word-break:break-all;';
+                entry.innerHTML = '<div style="color:#ff8888;">[' + errors.length + '] ' + type + ' @ ' + errors[errors.length-1].time + '</div><div style="color:#fff;">' + msg + '</div>' + (source ? '<div style="color:#888;font-size:10px;">' + source + ':' + line + '</div>' : '');
+                content.appendChild(entry);
+                overlay.style.display = 'block';
+            }
+        }
+
+        window.onerror = function(msg, source, line, col, error) {
+            addError('ERROR', msg, source, line);
+            return false;
+        };
+
+        window.onunhandledrejection = function(e) {
+            addError('PROMISE', e.reason ? (e.reason.message || e.reason) : 'Unhandled rejection', '', '');
+        };
+
+        var origConsoleError = console.error;
+        console.error = function() {
+            var args = Array.prototype.slice.call(arguments);
+            var msg = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' ');
+            // Filter out browser extension noise (MetaMask, wallets, etc.)
+            if (msg.indexOf('MetaMask') !== -1 || msg.indexOf('metamask') !== -1 || msg.indexOf('ethereum') !== -1 || msg.indexOf('web3') !== -1 || msg.indexOf('inpage.js') !== -1 || msg.indexOf('contentscript') !== -1) {
+                origConsoleError.apply(console, arguments);
+                return;
+            }
+            addError('CONSOLE', msg, '', '');
+            origConsoleError.apply(console, arguments);
+        };
+
+        // Also capture console.log for [Analysis], [SF], [Coach] messages
+        var origConsoleLog = console.log;
+        var logOverlay = null;
+        var logs = [];
+
+        function createLogOverlay() {
+            if (logOverlay) return logOverlay;
+            logOverlay = document.createElement('div');
+            logOverlay.id = 'debug-log-overlay';
+            logOverlay.style.cssText = 'position:fixed;bottom:10px;left:10px;max-width:500px;max-height:250px;overflow-y:auto;background:rgba(0,0,0,0.85);border:2px solid #00d9ff;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;color:#fff;z-index:99998;';
+
+            var header = document.createElement('div');
+            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #00d9ff;';
+            header.innerHTML = '<span style="color:#00d9ff;font-weight:bold;">📋 DEBUG LOGS</span>';
+
+            var closeBtn = document.createElement('button');
+            closeBtn.textContent = '✕';
+            closeBtn.style.cssText = 'background:#00d9ff;border:none;color:#000;padding:2px 8px;border-radius:4px;cursor:pointer;';
+            closeBtn.onclick = function() { logOverlay.style.display = 'none'; };
+            header.appendChild(closeBtn);
+
+            logOverlay.appendChild(header);
+
+            var content = document.createElement('div');
+            content.id = 'debug-log-content';
+            logOverlay.appendChild(content);
+
+            document.body.appendChild(logOverlay);
+            return logOverlay;
+        }
+
+        console.log = function() {
+            var args = Array.prototype.slice.call(arguments);
+            var msg = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' ');
+
+            // Only capture relevant debug messages
+            if (msg.indexOf('[Analysis]') !== -1 || msg.indexOf('[SF]') !== -1 || msg.indexOf('[Coach]') !== -1) {
+                logs.push({ msg: msg, time: new Date().toLocaleTimeString() });
+                if (document.body) {
+                    createLogOverlay();
+                    var content = document.getElementById('debug-log-content');
+                    var entry = document.createElement('div');
+                    var color = msg.indexOf('[SF]') !== -1 ? '#10b981' : msg.indexOf('[Analysis]') !== -1 ? '#f59e0b' : '#00d9ff';
+                    entry.style.cssText = 'margin-bottom:4px;padding:4px;background:rgba(255,255,255,0.05);border-radius:3px;border-left:3px solid ' + color + ';';
+                    entry.innerHTML = '<span style="color:#888;">' + logs[logs.length-1].time + '</span> ' + msg;
+                    content.appendChild(entry);
+                    content.scrollTop = content.scrollHeight;
+                }
+            }
+            origConsoleLog.apply(console, arguments);
+        };
+    })();
+    </script>
+
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: rgba(255,255,255,0.03);
+            --accent-primary: #00d9ff;
+            --accent-secondary: #667eea;
+            --accent-purple: #764ba2;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-orange: #f97316;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --border-color: rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .header .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .nav-tab:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-purple));
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* Panel container */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: rgba(0,217,255,0.3);
+            box-shadow: 0 0 20px rgba(0,217,255,0.1);
+        }
+        .card-title {
+            color: var(--accent-primary);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 1100px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        /* Board */
+        #board { width: 400px; margin: 0 auto; }
+        .board-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .board-controls button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-purple));
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .board-controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .board-controls button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Move List */
+        .move-list {
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+        .move-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .move-item:hover { background: rgba(0,217,255,0.2); }
+        .move-item.current { background: rgba(0,217,255,0.3); border: 1px solid var(--accent-primary); }
+        .move-item.brilliant { color: #ffd700; }
+        .move-item.best { color: #00d9ff; }
+        .move-item.excellent { color: var(--accent-green); }
+        .move-item.good { color: var(--accent-primary); }
+        .move-item.inaccuracy { color: var(--accent-yellow); }
+        .move-item.mistake { color: var(--accent-orange); }
+        .move-item.blunder { color: var(--accent-red); }
+
+        /* Analysis Panel */
+        .analysis-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--accent-primary);
+        }
+        .analysis-box.brilliant { border-left-color: #ffd700; background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent); }
+        .analysis-box.excellent { border-left-color: var(--accent-green); }
+        .analysis-box.good { border-left-color: var(--accent-primary); }
+        .analysis-box.inaccuracy { border-left-color: var(--accent-yellow); background: linear-gradient(90deg, rgba(245,158,11,0.1), transparent); }
+        .analysis-box.mistake { border-left-color: var(--accent-orange); background: linear-gradient(90deg, rgba(249,115,22,0.1), transparent); }
+        .analysis-box.blunder { border-left-color: var(--accent-red); background: linear-gradient(90deg, rgba(239,68,68,0.1), transparent); }
+
+        .error-explain {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .error-explain h4 { color: var(--accent-red); margin-bottom: 10px; }
+        .error-explain ul { margin-left: 20px; color: var(--text-secondary); }
+        .error-explain li { margin: 5px 0; }
+
+        .best-move-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(16,185,129,0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+        .best-move-box h4 { color: var(--accent-green); margin-bottom: 10px; }
+
+        .avoid-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(102,126,234,0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(102,126,234,0.3);
+        }
+        .avoid-box h4 { color: var(--accent-secondary); margin-bottom: 10px; }
+
+        /* Import Panel */
+        .import-section { display: flex; gap: 20px; flex-wrap: wrap; }
+        .import-section > div { flex: 1; min-width: 300px; }
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            color: var(--text-primary);
+            font-family: monospace;
+            resize: vertical;
+        }
+        textarea:focus { outline: none; border-color: var(--accent-primary); }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--accent-primary); }
+
+        .btn-primary {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-purple));
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-secondary {
+            padding: 12px 25px;
+            background: transparent;
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            color: var(--accent-primary);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: rgba(0,217,255,0.1); }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-value { font-size: 2em; font-weight: bold; color: var(--accent-primary); }
+        .stat-label { color: var(--text-secondary); font-size: 0.85em; margin-top: 5px; }
+
+        /* Progress bars */
+        .progress-bar {
+            height: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .weakness-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .weakness-label { min-width: 150px; color: var(--text-secondary); }
+        .weakness-bar { flex: 1; }
+
+        /* Puzzle section */
+        .puzzle-card {
+            background: linear-gradient(135deg, rgba(118,75,162,0.2), rgba(102,126,234,0.2));
+            border: 1px solid rgba(118,75,162,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+        .puzzle-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .puzzle-theme {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(0,217,255,0.2);
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: var(--accent-primary);
+        }
+        .puzzle-difficulty { display: flex; gap: 3px; }
+        .puzzle-difficulty span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        .puzzle-difficulty span.filled { background: var(--accent-yellow); }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .loading-overlay .loading { width: 50px; height: 50px; border-width: 5px; }
+
+        /* Chart */
+        .chart-container { height: 200px; margin-top: 20px; }
+
+        /* Error categories */
+        .error-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 3px;
+        }
+        .error-category.hanging { background: rgba(239,68,68,0.2); color: var(--accent-red); }
+        .error-category.tactics { background: rgba(245,158,11,0.2); color: var(--accent-yellow); }
+        .error-category.exchange { background: rgba(168,85,247,0.2); color: #a855f7; }
+        .error-category.king-safety { background: rgba(236,72,153,0.2); color: #ec4899; }
+        .error-category.positional { background: rgba(59,130,246,0.2); color: #3b82f6; }
+        .error-category.opening { background: rgba(34,197,94,0.2); color: var(--accent-green); }
+        .error-category.endgame { background: rgba(249,115,22,0.2); color: var(--accent-orange); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: var(--accent-green);
+            color: #fff;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--accent-primary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Retour au Hub</a>
+
+        <div class="header">
+            <h1>Chess Coach</h1>
+            <p class="subtitle">Analysez vos parties, comprenez vos erreurs, progressez</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showPanel('import')">📋 Importer</div>
+            <div class="nav-tab" onclick="showPanel('analysis')">🔍 Analyse</div>
+            <div class="nav-tab" onclick="showPanel('puzzles')">🧩 Puzzles</div>
+            <div class="nav-tab" onclick="showPanel('dashboard')">📊 Progression</div>
+        </div>
+
+        <!-- PANEL: IMPORT -->
+        <div id="panel-import" class="panel active">
+            <div class="import-section">
+                <div class="card">
+                    <h3 class="card-title">📋 Coller un PGN</h3>
+                    <textarea id="pgn-input" placeholder="Collez votre PGN ici...
+Exemple:
+[Event &quot;Casual Game&quot;]
+[White &quot;Player1&quot;]
+[Black &quot;Player2&quot;]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6..."></textarea>
+                    <button class="btn-primary" onclick="loadPGN()">Analyser ce PGN</button>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🔗 Import Lichess</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Entrez votre pseudo Lichess pour importer vos dernières parties.
+                    </p>
+                    <input type="text" id="lichess-username" placeholder="Votre pseudo Lichess">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-primary" onclick="fetchLichessGames()">Chercher les parties</button>
+                        <select id="lichess-game-count" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                            <option value="5">5 parties</option>
+                            <option value="10">10 parties</option>
+                            <option value="20" selected>20 parties</option>
+                        </select>
+                    </div>
+                    <div id="lichess-games-list" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px; border: 2px solid rgba(255,215,0,0.5); background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,152,0,0.05));">
+                <h3 class="card-title">👑 Parties Légendaires</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Analysez les plus grandes parties de l'histoire des échecs.
+                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="legendary-search" placeholder="🔍 Rechercher (joueur, année, ouverture...)" style="flex: 1; min-width: 200px;" oninput="filterLegendaryGames()">
+                </div>
+                <div id="legendary-games-list" style="overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px; border: 2px solid rgba(102,126,234,0.4);">
+                <h3 class="card-title">🎮 Parties jouées sur ChessNova</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Toutes vos parties jouées sur le site sont ici.
+                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <input type="text" id="chessnova-search" placeholder="🔍 Rechercher (adversaire, ouverture, date...)" style="flex: 1; min-width: 200px;">
+                    <select id="chessnova-filter" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                        <option value="all">Toutes</option>
+                        <option value="win">Victoires</option>
+                        <option value="loss">Défaites</option>
+                        <option value="draw">Nulles</option>
+                    </select>
+                    <button class="btn-primary" onclick="loadChessNovaGames()">🔄 Charger</button>
+                </div>
+                <div id="chessnova-games-count" style="margin-bottom: 10px; color: var(--accent-primary); font-weight: bold;"></div>
+                <div id="chessnova-games-list" style="max-height: 400px; overflow-y: auto;">
+                    <p style="color: var(--text-secondary);">Cliquez sur "Charger" pour voir vos parties.</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3 class="card-title">📁 Parties récentes (analysées)</h3>
+                <div id="recent-games-list">
+                    <p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: ANALYSIS -->
+        <div id="panel-analysis" class="panel">
+            <div class="main-layout">
+                <!-- Left: Board -->
+                <div>
+                    <div class="card">
+                        <div id="board"></div>
+                        <div class="board-controls">
+                            <button onclick="goToStart()" title="Début">⏮</button>
+                            <button onclick="goBack()" title="Coup précédent">◀</button>
+                            <button onclick="goForward()" title="Coup suivant">▶</button>
+                            <button onclick="goToEnd()" title="Fin">⏭</button>
+                            <button onclick="flipBoard()" title="Retourner">🔄</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">📜 Coups joués</h3>
+                        <div id="game-info" style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                            <span id="white-name" style="color: #fff;">Blancs</span> vs
+                            <span id="black-name" style="color: #888;">Noirs</span>
+                            <span id="game-result" style="float: right; color: var(--accent-yellow);"></span>
+                        </div>
+                        <div id="move-list" class="move-list">
+                            <span style="color: var(--text-secondary);">Importez une partie pour commencer l'analyse.</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">📊 Résumé de la partie</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="accuracy-white">-</div>
+                                <div class="stat-label">Précision ⬜</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="accuracy-black">-</div>
+                                <div class="stat-label">Précision ⬛</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="total-moves">0</div>
+                                <div class="stat-label">Coups</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="total-errors">0</div>
+                                <div class="stat-label">Erreurs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Analysis -->
+                <div>
+                    <div class="card">
+                        <h3 class="card-title">🎯 Analyse du coup</h3>
+                        <div id="move-analysis" class="analysis-box">
+                            <p style="color: var(--text-secondary);">Sélectionnez un coup pour voir l'analyse détaillée.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">📈 Évaluation</h3>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div id="eval-display" style="font-size: 2em; font-weight: bold; min-width: 80px;">0.0</div>
+                            <div style="flex: 1;">
+                                <div id="eval-bar" style="height: 24px; background: linear-gradient(90deg, #333 50%, #f5f5f5 50%); border-radius: 5px; position: relative; border: 1px solid #444;">
+                                    <div id="eval-indicator" style="position: absolute; left: 50%; top: -2px; width: 4px; height: 28px; background: #00d9ff; border-radius: 2px; transform: translateX(-50%); transition: left 0.3s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="eval-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card" id="error-details-card" style="display: none;">
+                        <h3 class="card-title">📚 Explication de l'erreur</h3>
+                        <div id="error-details"></div>
+                    </div>
+
+                    <div class="card" id="game-report-card" style="display: none;">
+                        <h3 class="card-title">📖 Rapport complet de la partie</h3>
+                        <div id="game-report" style="max-height: 500px; overflow-y: auto; line-height: 1.8;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: PUZZLES -->
+        <div id="panel-puzzles" class="panel">
+            <div class="main-layout">
+                <div>
+                    <div class="card">
+                        <div id="puzzle-board"></div>
+                        <div class="board-controls" style="margin-top: 15px;">
+                            <button onclick="showPuzzleHint()" id="hint-btn">💡 Indice</button>
+                            <button onclick="showPuzzleSolution()" id="solution-btn">👁 Solution</button>
+                            <button onclick="nextPuzzle()">➡ Suivant</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">🎯 Statistiques Puzzles</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="puzzles-solved">0</div>
+                                <div class="stat-label">Résolus</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="puzzles-accuracy">0%</div>
+                                <div class="stat-label">Réussite</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="puzzles-streak">0</div>
+                                <div class="stat-label">Série 🔥</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <h3 class="card-title">🧩 Puzzle actuel</h3>
+                        <div id="puzzle-info" class="puzzle-card">
+                            <div class="puzzle-header">
+                                <span class="puzzle-theme" id="puzzle-theme">-</span>
+                                <div class="puzzle-difficulty" id="puzzle-difficulty">
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+                            <p id="puzzle-instruction" style="color: var(--text-secondary); margin-bottom: 15px;">
+                                Analysez une partie pour générer des puzzles personnalisés basés sur vos erreurs.
+                            </p>
+                            <div id="puzzle-status" style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center;">
+                                Aucun puzzle disponible
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">📋 Mes puzzles générés</h3>
+                        <div id="puzzles-list" style="max-height: 400px; overflow-y: auto;">
+                            <p style="color: var(--text-secondary);">Les puzzles seront générés à partir de vos erreurs.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL: DASHBOARD -->
+        <div id="panel-dashboard" class="panel">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                <div class="card">
+                    <h3 class="card-title">📊 Mes faiblesses (dernières parties)</h3>
+                    <div id="weaknesses-chart">
+                        <div class="weakness-item">
+                            <span class="weakness-label">🎯 Pièces en prise</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: var(--accent-red);" id="weakness-hanging"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-hanging-pct">0%</span>
+                        </div>
+                        <div class="weakness-item">
+                            <span class="weakness-label">⚡ Tactiques manquées</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: var(--accent-yellow);" id="weakness-tactics"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-tactics-pct">0%</span>
+                        </div>
+                        <div class="weakness-item">
+                            <span class="weakness-label">⚖️ Mauvais échanges</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: #a855f7;" id="weakness-exchange"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-exchange-pct">0%</span>
+                        </div>
+                        <div class="weakness-item">
+                            <span class="weakness-label">👑 Sécurité du Roi</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: #ec4899;" id="weakness-king"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-king-pct">0%</span>
+                        </div>
+                        <div class="weakness-item">
+                            <span class="weakness-label">📖 Ouverture</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: var(--accent-green);" id="weakness-opening"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-opening-pct">0%</span>
+                        </div>
+                        <div class="weakness-item">
+                            <span class="weakness-label">🏁 Finales</span>
+                            <div class="weakness-bar">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%; background: var(--accent-orange);" id="weakness-endgame"></div>
+                                </div>
+                            </div>
+                            <span id="weakness-endgame-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">📈 Précision au fil du temps</h3>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="accuracy-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🎯 Vue d'ensemble</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card" style="border-left: 3px solid var(--accent-primary);">
+                            <div class="stat-value" id="dash-elo">1200</div>
+                            <div class="stat-label">ELO estimé</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 3px solid var(--accent-green);">
+                            <div class="stat-value" id="dash-games">0</div>
+                            <div class="stat-label">Parties analysées</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 3px solid var(--accent-yellow);">
+                            <div class="stat-value" id="dash-avg-accuracy">0%</div>
+                            <div class="stat-label">Précision moy.</div>
+                        </div>
+                        <div class="stat-card" style="border-left: 3px solid var(--accent-purple);">
+                            <div class="stat-value" id="dash-puzzles">0</div>
+                            <div class="stat-label">Puzzles résolus</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🏆 Niveau adaptatif</h3>
+                    <div id="level-info" style="text-align: center; padding: 20px;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">📈</div>
+                        <div id="player-level" style="font-size: 1.5em; font-weight: bold; color: var(--accent-primary);">Intermédiaire</div>
+                        <p style="color: var(--text-secondary); margin-top: 10px;" id="level-description">
+                            Focus sur la tactique et les bases stratégiques.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3 class="card-title">⚙️ Actions</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-secondary" onclick="exportProgress()">💾 Exporter données</button>
+                    <button class="btn-secondary" onclick="resetProgress()">🔄 Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading"></div>
+        <p id="loading-text">Analyse en cours...</p>
+        <button onclick="cancelAnalysis()" style="margin-top:15px;padding:8px 24px;background:#ff4444;border:none;color:#fff;border-radius:8px;cursor:pointer;font-size:1em;">Annuler</button>
+        <div id="loading-debug" style="margin-top:10px;font-size:0.75em;color:#888;max-height:120px;overflow-y:auto;text-align:left;width:80%;max-width:400px;"></div>
+    </div>
+
+    <script>
+        // ========================================
+        // CHESS COACH - Core Logic
+        // ========================================
+
+        // Global state
+        let board = null;
+        let puzzleBoard = null;
+        let game = new Chess();
+        let analysisGame = new Chess();
+        let stockfish = null;
+        let stockfishReady = false;
+        let currentMoveIndex = -1;
+        let analyzedMoves = [];
+        let evalChart = null;
+        let accuracyChart = null;
+
+        // Puzzle state
+        let currentPuzzle = null;
+        let puzzles = [];
+        let puzzleGame = null;
+
+        // Progress storage
+        const STORAGE_KEY = 'chessnova_coach_progress';
+        let progress = loadProgress();
+
+        // ========================================
+        // FIREBASE INITIALIZATION
+        // ========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8duVGo5Vgzn7VXyDTJcdkvThVElYmTss",
+            authDomain: "chessnova.firebaseapp.com",
+            projectId: "chessnova",
+            storageBucket: "chessnova.firebasestorage.app",
+            messagingSenderId: "260734552934",
+            appId: "1:260734552934:web:c2bf0995c1dd72d87896a7"
+        };
+
+        let firebaseApp = null;
+        let db = null;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('[Coach] Firebase initialized');
+        } catch (e) {
+            console.warn('[Coach] Firebase init failed:', e);
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+
+        function init() {
+            // Initialize main board
+            board = Chessboard('board', {
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+
+            // Initialize puzzle board
+            puzzleBoard = Chessboard('puzzle-board', {
+                position: 'start',
+                draggable: true,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                onDrop: onPuzzleDrop
+            });
+
+            // Initialize Stockfish
+            initStockfish();
+
+            // Initialize charts
+            initCharts();
+
+            // Load recent games
+            loadRecentGames();
+
+            // Initialize legendary games
+            initLegendaryGames();
+
+            // Update dashboard
+            updateDashboard();
+
+            console.log('Chess Coach initialized');
+        }
+
+        function initStockfish() {
+            try {
+                console.log('[SF] Creating Stockfish worker...');
+
+                // CDN sources - fetched as Blob to avoid cross-origin Worker restrictions
+                const sources = [
+                    'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js',
+                    'https://unpkg.com/stockfish.js@10.0.2/stockfish.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js'
+                ];
+
+                let sourceIndex = 0;
+                let currentWorker = null;
+
+                async function tryNextSource() {
+                    // Cleanup previous worker
+                    if (currentWorker) {
+                        try { currentWorker.terminate(); } catch(e) {}
+                        currentWorker = null;
+                    }
+
+                    if (sourceIndex >= sources.length) {
+                        console.error('[SF] All sources failed');
+                        showToast('Stockfish: impossible de charger. Vérifiez votre connexion.', 'error');
+                        stockfishReady = false;
+                        return;
+                    }
+
+                    const src = sources[sourceIndex];
+                    console.log('[SF] Trying source:', src);
+
+                    try {
+                        // Fetch the script and create a Blob URL to avoid cross-origin Worker restrictions
+                        console.log('[SF] Fetching script from', src);
+                        const response = await fetch(src);
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        const scriptText = await response.text();
+                        console.log('[SF] Fetched', scriptText.length, 'bytes from', src);
+                        const blob = new Blob([scriptText], { type: 'application/javascript' });
+                        const blobUrl = URL.createObjectURL(blob);
+
+                        currentWorker = new Worker(blobUrl);
+                        stockfish = currentWorker;
+
+                        let gotResponse = false;
+
+                        currentWorker.onerror = function(e) {
+                            console.error('[SF] Worker error from', src, e);
+                            if (!gotResponse) {
+                                URL.revokeObjectURL(blobUrl);
+                                sourceIndex++;
+                                tryNextSource();
+                            }
+                        };
+
+                        currentWorker.onmessage = function(event) {
+                            gotResponse = true;
+                            const data = event.data || '';
+                            console.log('[SF] Message:', data.substring(0, 80));
+                            handleStockfishMessage(event);
+                        };
+
+                        currentWorker.postMessage('uci');
+                        console.log('[SF] Sent uci command to', src);
+
+                        // If no response in 5s, try next source
+                        setTimeout(() => {
+                            if (!gotResponse && !stockfishReady) {
+                                console.warn('[SF] Timeout for', src, '- trying next');
+                                URL.revokeObjectURL(blobUrl);
+                                sourceIndex++;
+                                tryNextSource();
+                            }
+                        }, 5000);
+
+                    } catch (e) {
+                        console.error('[SF] Failed to load from', src, ':', e.message);
+                        sourceIndex++;
+                        tryNextSource();
+                    }
+                }
+
+                tryNextSource();
+
+            } catch (e) {
+                console.error('[SF] Init failed:', e);
+                showToast('Erreur chargement Stockfish: ' + e.message, 'error');
+                stockfishReady = false;
+            }
+        }
+
+        let pendingAnalysis = null;
+        let analysisQueue = [];
+        let isAnalyzing = false;
+        let lastAnalysisTime = 0;
+        let analysisStuckTimer = null;
+
+        function handleStockfishMessage(event) {
+            const line = event.data || '';
+
+            if (line === 'uciok') {
+                stockfish.postMessage('isready');
+            } else if (line === 'readyok') {
+                stockfishReady = true;
+                console.log('[SF] Stockfish ready!');
+                showToast('Stockfish chargé', 'success');
+                processAnalysisQueue();
+            } else if (line.startsWith('info depth')) {
+                lastAnalysisTime = Date.now();
+                // Parse evaluation
+                const match = line.match(/score (cp|mate) (-?\d+)/);
+                if (match && pendingAnalysis) {
+                    let score;
+                    if (match[1] === 'cp') {
+                        score = parseInt(match[2]) / 100;
+                    } else {
+                        score = match[2] > 0 ? 100 : -100;
+                    }
+                    pendingAnalysis.score = score;
+
+                    // Parse best move line
+                    const pvMatch = line.match(/pv (.+)/);
+                    if (pvMatch) {
+                        pendingAnalysis.pv = pvMatch[1].split(' ');
+                    }
+                }
+            } else if (line.startsWith('bestmove')) {
+                const move = line.split(' ')[1];
+                if (pendingAnalysis) {
+                    pendingAnalysis.bestMove = move;
+                    if (pendingAnalysis.callback) {
+                        pendingAnalysis.callback(pendingAnalysis);
+                    }
+                    pendingAnalysis = null;
+                    isAnalyzing = false;
+                    clearTimeout(analysisStuckTimer);
+                    processAnalysisQueue();
+                }
+            }
+        }
+
+        // Quick test to verify Stockfish is responding
+        function testStockfishPing() {
+            return new Promise((resolve) => {
+                if (!stockfish || !stockfishReady) {
+                    console.warn('[Coach] Stockfish not ready for ping test');
+                    resolve(false);
+                    return;
+                }
+
+                const timeout = setTimeout(() => {
+                    console.error('[Coach] Stockfish ping timeout - forcing recovery');
+                    isAnalyzing = false;
+                    pendingAnalysis = null;
+                    resolve(false);
+                }, 3000);
+
+                // Test with a simple position
+                const testCallback = (result) => {
+                    clearTimeout(timeout);
+                    console.log('[Coach] Stockfish ping OK:', result.bestMove);
+                    resolve(true);
+                };
+
+                // Quick depth 1 analysis
+                analysisQueue.push({
+                    fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+                    depth: 1,
+                    callback: testCallback
+                });
+                processAnalysisQueue();
+            });
+        }
+
+        function analyzePosition(fen, depth, callback) {
+            analysisQueue.push({ fen, depth, callback });
+            processAnalysisQueue();
+        }
+
+        function processAnalysisQueue() {
+            if (!stockfishReady || analysisQueue.length === 0) return;
+
+            // Force recovery if stuck for more than 6 seconds
+            if (isAnalyzing && lastAnalysisTime > 0 && Date.now() - lastAnalysisTime > 6000) {
+                console.warn('[SF] Analysis stuck, forcing recovery');
+                isAnalyzing = false;
+                if (pendingAnalysis && pendingAnalysis.callback) {
+                    pendingAnalysis.callback({ score: 0, bestMove: null, pv: [] });
+                }
+                pendingAnalysis = null;
+            }
+
+            if (isAnalyzing) return;
+
+            isAnalyzing = true;
+            lastAnalysisTime = Date.now();
+            const task = analysisQueue.shift();
+            pendingAnalysis = { callback: task.callback, score: 0, bestMove: null, pv: [] };
+
+            try {
+                stockfish.postMessage('position fen ' + task.fen);
+                stockfish.postMessage('go depth ' + task.depth);
+            } catch (e) {
+                console.error('[SF] Error sending command:', e);
+                isAnalyzing = false;
+                if (task.callback) task.callback({ score: 0, bestMove: null, pv: [] });
+                processAnalysisQueue();
+            }
+
+            // Safety timeout - force next analysis after 6 seconds max
+            clearTimeout(analysisStuckTimer);
+            analysisStuckTimer = setTimeout(() => {
+                if (isAnalyzing) {
+                    console.warn('[SF] 6s safety timeout, forcing next');
+                    isAnalyzing = false;
+                    if (pendingAnalysis && pendingAnalysis.callback) {
+                        pendingAnalysis.callback({ score: pendingAnalysis.score || 0, bestMove: pendingAnalysis.bestMove, pv: pendingAnalysis.pv || [] });
+                    }
+                    pendingAnalysis = null;
+                    processAnalysisQueue();
+                }
+            }, 6000);
+        }
+
+        // ========================================
+        // PANEL NAVIGATION
+        // ========================================
+
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+            document.getElementById('panel-' + panelId).classList.add('active');
+            document.querySelector(`.nav-tab[onclick="showPanel('${panelId}')"]`).classList.add('active');
+
+            // Resize boards when panels change
+            setTimeout(() => {
+                if (board) board.resize();
+                if (puzzleBoard) puzzleBoard.resize();
+            }, 100);
+        }
+
+        // ========================================
+        // PGN LOADING & PARSING
+        // ========================================
+
+        function loadPGN() {
+            let pgn = document.getElementById('pgn-input').value.trim();
+            if (!pgn) {
+                showToast('Veuillez coller un PGN', 'error');
+                return;
+            }
+
+            // Clean PGN for chess.js compatibility
+            pgn = cleanPGN(pgn);
+
+            game = new Chess();
+            let success = game.load_pgn(pgn);
+
+            // Fallback: try loading just moves if headers cause issues
+            if (!success || game.history().length === 0) {
+                game = new Chess();
+                // Extract moves only (remove headers and comments)
+                let movesOnly = pgn
+                    .replace(/\[.*?\]/g, '')           // Remove headers
+                    .replace(/\{[^}]*\}/g, '')         // Remove comments
+                    .replace(/\([^)]*\)/g, '')         // Remove variations
+                    .replace(/\d+\.\.\./g, '')         // Remove "1..." notation
+                    .replace(/\s+/g, ' ')              // Normalize spaces
+                    .trim();
+
+                success = game.load_pgn(movesOnly);
+
+                // Last fallback: play moves one by one
+                if (!success || game.history().length === 0) {
+                    game = new Chess();
+                    const moves = movesOnly.replace(/\d+\./g, ' ').trim().split(/\s+/);
+                    for (const m of moves) {
+                        if (m && m !== '1-0' && m !== '0-1' && m !== '1/2-1/2' && m !== '*') {
+                            const result = game.move(m, { sloppy: true });
+                            if (!result) break;
+                        }
+                    }
+                }
+            }
+
+            if (game.history().length === 0) {
+                showToast('PGN invalide ou aucun coup trouvé', 'error');
+                return;
+            }
+
+            console.log('[Coach] PGN chargé:', game.history().length, 'coups');
+            startAnalysis();
+        }
+
+        function cleanPGN(pgn) {
+            return pgn
+                .replace(/\r\n/g, '\n')              // Normalize line endings
+                .replace(/\r/g, '\n')
+                .replace(/\u00A0/g, ' ')             // Non-breaking spaces
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width chars
+                .replace(/…/g, '...')                // Ellipsis
+                .replace(/[""]/g, '"')               // Smart quotes
+                .replace(/['']/g, "'")
+                .trim();
+        }
+
+        // ========================================
+        // LEGENDARY GAMES DATABASE
+        // ========================================
+
+        const legendaryGames = [
+            {
+                id: 'fischer-byrne-1956',
+                title: 'The Game of the Century',
+                white: 'Donald Byrne',
+                black: 'Bobby Fischer',
+                year: 1956,
+                event: 'Rosenwald Memorial',
+                result: '0-1',
+                opening: 'Grünfeld Defense',
+                icon: '👑',
+                description: 'Fischer à 13 ans sacrifie sa Dame au coup 17 (Be6!!)',
+                pgn: `[Event "Rosenwald Memorial"]
+[Site "New York, NY USA"]
+[Date "1956.10.17"]
+[White "Donald Byrne"]
+[Black "Robert James Fischer"]
+[Result "0-1"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. Bf4 d5 6. Qb3 dxc4 7. Qxc4 c6 8. e4 Nbd7 9. Rd1 Nb6 10. Qc5 Bg4 11. Bg5 Na4 12. Qa3 Nxc3 13. bxc3 Nxe4 14. Bxe7 Qb6 15. Bc4 Nxc3 16. Bc5 Rfe8+ 17. Kf1 Be6 18. Bxb6 Bxc4+ 19. Kg1 Ne2+ 20. Kf1 Nxd4+ 21. Kg1 Ne2+ 22. Kf1 Nc3+ 23. Kg1 axb6 24. Qb4 Ra4 25. Qxb6 Nxd1 26. h3 Rxa2 27. Kh2 Nxf2 28. Re1 Rxe1 29. Qd8+ Bf8 30. Nxe1 Bd5 31. Nf3 Ne4 32. Qb8 b5 33. h4 h5 34. Ne5 Kg7 35. Kg1 Bc5+ 36. Kf1 Ng3+ 37. Ke1 Bb4+ 38. Kd1 Bb3+ 39. Kc1 Ne2+ 40. Kb1 Nc3+ 41. Kc1 Rc2# 0-1`
+            },
+            {
+                id: 'kasparov-topalov-1999',
+                title: 'Kasparov Immortal',
+                white: 'Garry Kasparov',
+                black: 'Veselin Topalov',
+                year: 1999,
+                event: 'Wijk aan Zee',
+                result: '1-0',
+                opening: 'Pirc Defense',
+                icon: '🔥',
+                description: 'Combinaison spectaculaire avec sacrifice de Tour',
+                pgn: `[Event "Wijk aan Zee"]
+[Site "Wijk aan Zee NED"]
+[Date "1999.01.20"]
+[White "Garry Kasparov"]
+[Black "Veselin Topalov"]
+[Result "1-0"]
+
+1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7 8. Bh6 Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O 14. Nb3 exd4 15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5 20. Qf4+ Ka7 21. Rhe1 d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 cxd4 25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+ Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+ Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8 Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7 1-0`
+            },
+            {
+                id: 'anderssen-kieseritzky-1851',
+                title: 'The Immortal Game',
+                white: 'Adolf Anderssen',
+                black: 'Lionel Kieseritzky',
+                year: 1851,
+                event: 'London',
+                result: '1-0',
+                opening: 'King\'s Gambit',
+                icon: '🎯',
+                description: 'La partie immortelle - sacrifices spectaculaires',
+                pgn: `[Event "London"]
+[Site "London"]
+[Date "1851.06.21"]
+[White "Adolf Anderssen"]
+[Black "Lionel Kieseritzky"]
+[Result "1-0"]
+
+1. e4 e5 2. f4 exf4 3. Bc4 Qh4+ 4. Kf1 b5 5. Bxb5 Nf6 6. Nf3 Qh6 7. d3 Nh5 8. Nh4 Qg5 9. Nf5 c6 10. g4 Nf6 11. Rg1 cxb5 12. h4 Qg6 13. h5 Qg5 14. Qf3 Ng8 15. Bxf4 Qf6 16. Nc3 Bc5 17. Nd5 Qxb2 18. Bd6 Bxg1 19. e5 Qxa1+ 20. Ke2 Na6 21. Nxg7+ Kd8 22. Qf6+ Nxf6 23. Be7# 1-0`
+            },
+            {
+                id: 'anderssen-dufresne-1852',
+                title: 'The Evergreen Game',
+                white: 'Adolf Anderssen',
+                black: 'Jean Dufresne',
+                year: 1852,
+                event: 'Berlin',
+                result: '1-0',
+                opening: 'Evans Gambit',
+                icon: '🏰',
+                description: 'La partie toujours verte - combinaison brillante',
+                pgn: `[Event "Berlin"]
+[Site "Berlin"]
+[Date "1852.01.01"]
+[White "Adolf Anderssen"]
+[Black "Jean Dufresne"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O d3 8. Qb3 Qf6 9. e5 Qg6 10. Re1 Nge7 11. Ba3 b5 12. Qxb5 Rb8 13. Qa4 Bb6 14. Nbd2 Bb7 15. Ne4 Qf5 16. Bxd3 Qh5 17. Nf6+ gxf6 18. exf6 Rg8 19. Rad1 Qxf3 20. Rxe7+ Nxe7 21. Qxd7+ Kxd7 22. Bf5+ Ke8 23. Bd7+ Kf8 24. Bxe7# 1-0`
+            },
+            {
+                id: 'short-timman-1991',
+                title: 'Short King Walk',
+                white: 'Nigel Short',
+                black: 'Jan Timman',
+                year: 1991,
+                event: 'Tilburg',
+                result: '1-0',
+                opening: 'Alekhine Defense',
+                icon: '⚡',
+                description: 'La marche du Roi - Kg3-Kf4-Kg5!',
+                pgn: `[Event "Tilburg"]
+[Site "Tilburg"]
+[Date "1991.10.14"]
+[White "Nigel Short"]
+[Black "Jan Timman"]
+[Result "1-0"]
+
+1. e4 Nf6 2. e5 Nd5 3. d4 d6 4. Nf3 g6 5. Bc4 Nb6 6. Bb3 Bg7 7. Qe2 Nc6 8. O-O O-O 9. h3 a5 10. a4 dxe5 11. dxe5 Nd4 12. Nxd4 Qxd4 13. Re1 e6 14. Nd2 Nd5 15. Nf3 Qc5 16. Qe4 Qb4 17. Bc4 Nb6 18. b3 Nxc4 19. bxc4 Re8 20. Rd1 Qc5 21. Qh4 b6 22. Be3 Qc6 23. Bh6 Bh8 24. Rd8 Bb7 25. Rad1 Bg7 26. R8d7 Rf8 27. Bxg7 Kxg7 28. R1d4 Rae8 29. Qf6+ Kg8 30. h4 h5 31. Kh2 Rc8 32. Kg3 Rce8 33. Kf4 Bc8 34. Kg5 1-0`
+            },
+            {
+                id: 'rotlewi-rubinstein-1907',
+                title: 'Rubinstein Immortal',
+                white: 'Georg Rotlewi',
+                black: 'Akiba Rubinstein',
+                year: 1907,
+                event: 'Lodz',
+                result: '0-1',
+                opening: 'Tarrasch Defense',
+                icon: '🤖',
+                description: 'L\'immortelle de Rubinstein - Rxc3!! Rd2!! Rh3!!',
+                pgn: `[Event "Lodz"]
+[Site "Lodz"]
+[Date "1907.12.26"]
+[White "Georg Rotlewi"]
+[Black "Akiba Rubinstein"]
+[Result "0-1"]
+
+1. d4 d5 2. Nf3 e6 3. e3 c5 4. c4 Nc6 5. Nc3 Nf6 6. dxc5 Bxc5 7. a3 a6 8. b4 Bd6 9. Bb2 O-O 10. Qd2 Qe7 11. Bd3 dxc4 12. Bxc4 b5 13. Bd3 Rd8 14. Qe2 Bb7 15. O-O Ne5 16. Nxe5 Bxe5 17. f4 Bc7 18. e4 Rac8 19. e5 Bb6+ 20. Kh1 Ng4 21. Be4 Qh4 22. g3 Rxc3 23. gxh4 Rd2 24. Qxd2 Bxe4+ 25. Qg2 Rh3 0-1`
+            },
+            {
+                id: 'deep-blue-kasparov-1997',
+                title: 'Deep Blue vs Kasparov',
+                white: 'Deep Blue',
+                black: 'Garry Kasparov',
+                year: 1997,
+                event: 'IBM Match Game 6',
+                result: '1-0',
+                opening: 'Caro-Kann Defense',
+                icon: '🖥️',
+                description: 'Le match qui a changé l\'histoire',
+                pgn: `[Event "IBM Man-Machine"]
+[Date "1997.05.11"]
+[White "Deep Blue"]
+[Black "Garry Kasparov"]
+[Result "1-0"]
+
+1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Ng5 Ngf6 6. Bd3 e6 7. N1f3 h6 8. Nxe6 Qe7 9. O-O fxe6 10. Bg6+ Kd8 11. Bf4 b5 12. a4 Bb7 13. Re1 Nd5 14. Bg3 Kc8 15. axb5 cxb5 16. Qd3 Bc6 17. Bf5 exf5 18. Rxe7 Bxe7 19. c4 1-0`
+            },
+            {
+                id: 'leela-stockfish-2019',
+                title: 'Leela Chess Zero vs Stockfish',
+                white: 'Leela Chess Zero',
+                black: 'Stockfish 11',
+                year: 2019,
+                event: 'TCEC Season 16',
+                result: '1-0',
+                opening: 'Sicilian Defense',
+                icon: '🧠',
+                description: 'Réseau neuronal vs calcul brute force',
+                pgn: `[Event "TCEC Season 16"]
+[Date "2019"]
+[White "Leela Chess Zero"]
+[Black "Stockfish 11"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e5 7. Nb3 Be7 8. O-O O-O 9. Kh1 Nc6 10. f4 exf4 11. Bxf4 Be6 12. Qd2 d5 13. exd5 Nxd5 14. Nxd5 Qxd5 15. Qxd5 Bxd5 16. Bf3 Bxf3 17. Rxf3 Rad8 18. Rd1 Rxd1+ 19. Nxd1 Rd8 20. Ne3 Bf6 21. c3 Rd2 22. Rf2 Rd3 23. Nc4 Be7 24. Rd2 Rxd2 25. Bxd2 Kf8 26. Kg1 Ke8 27. Kf2 Kd7 28. Ke3 Kc6 29. Ke4 f6 30. a4 Bf8 31. g4 h6 32. h4 Be7 33. g5 hxg5 34. hxg5 fxg5 35. Bxg5 Bf8 36. Bf4 Bg7 37. Kf5 Nd8 38. Nd6 Ne6 39. Ne4 b5 40. axb5+ axb5 41. Nc5 Nd4+ 42. Kg4 1-0`
+            },
+            {
+                id: 'alphazero-sacrifice-2017',
+                title: 'AlphaZero Sacrificial Masterpiece',
+                white: 'AlphaZero',
+                black: 'Stockfish 8',
+                year: 2017,
+                event: 'DeepMind Match',
+                result: '1-0',
+                opening: 'Italian Game',
+                icon: '💎',
+                description: 'Triple sacrifice de pièces pour un mat forcé',
+                pgn: `[Event "DeepMind Match"]
+[Date "2017.12"]
+[White "AlphaZero"]
+[Black "Stockfish 8"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. O-O a6 7. a4 Ba7 8. Na3 h6 9. Nc2 O-O 10. Be3 Bxe3 11. Nxe3 Re8 12. Qb3 Rb8 13. Nd5 Ne7 14. Nxf6+ Qxf6 15. Qc2 Ng6 16. d4 c6 17. Rad1 Qe7 18. h3 Be6 19. Bxe6 Qxe6 20. dxe5 dxe5 21. Qc4 Qxc4 22. Rxd8 Rxd8 23. g3 Nf8 24. Kg2 Ne6 25. Nd2 Qc5 26. Nc4 b5 27. axb5 axb5 28. Ne3 Rd2 29. Rc1 Nd4 30. cxd4 exd4 31. Nc4 Qf5 32. Nxd2 Qxf2+ 33. Kh1 d3 34. Rf1 Qe2 35. Rf2 Qe1+ 36. Kg2 d2 37. Nf3 Qe3 38. Rd2 1-0`
+            },
+            {
+                id: 'stockfish-komodo-2018',
+                title: 'Stockfish vs Komodo TCEC',
+                white: 'Stockfish 9',
+                black: 'Komodo MCTS',
+                year: 2018,
+                event: 'TCEC Season 13',
+                result: '1-0',
+                opening: 'Queen\'s Gambit',
+                icon: '⚔️',
+                description: 'Finale du championnat mondial des moteurs',
+                pgn: `[Event "TCEC Season 13 Final"]
+[Date "2018"]
+[White "Stockfish 9"]
+[Black "Komodo MCTS"]
+[Result "1-0"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 Be7 6. e3 c6 7. Bd3 Nbd7 8. Nf3 Nh5 9. Bxe7 Qxe7 10. O-O Nhf6 11. Qc2 O-O 12. Rab1 Re8 13. b4 a6 14. a4 Nf8 15. b5 axb5 16. axb5 Ne4 17. bxc6 bxc6 18. Rb7 Qd6 19. Nxe4 dxe4 20. Bxe4 Bg4 21. Nd2 Ng6 22. Qc5 Qxc5 23. dxc5 Rec8 24. Nb3 Ne5 25. Bd3 Nd7 26. c6 Nb6 27. Nd4 Be6 28. Bc4 Bxc4 29. Nxc4 Nxc4 30. c7 Rxc7 31. Rxc7 Nb6 32. Rc2 Ra3 33. Kf1 Kf8 34. Ke2 Ke7 35. Kd2 Kd6 36. Rb1 Nc4+ 37. Kc1 Ra7 38. Kb1 Rb7+ 39. Ka2 Ra7+ 40. Kb3 Ne5 41. Rc5 Nd7 42. Rc2 Ne5 43. Rd1+ Ke6 44. Rcd2 Ra3+ 45. Kc2 Ra7 46. Rd6+ Kf5 47. R1d4 Re7 48. Rf6+ Kg5 49. Rxc6 Ng4 50. Rc5+ f5 51. h3 1-0`
+            },
+            {
+                id: 'morphy-opera-1858',
+                title: 'The Opera Game',
+                white: 'Paul Morphy',
+                black: 'Duke of Brunswick & Count Isouard',
+                year: 1858,
+                event: 'Paris Opera',
+                result: '1-0',
+                opening: 'Philidor Defense',
+                icon: '🎭',
+                description: 'Chef-d\'oeuvre de développement rapide et attaque fulgurante',
+                pgn: `[Event "Paris Opera"]
+[Site "Paris"]
+[Date "1858.01.01"]
+[White "Paul Morphy"]
+[Black "Duke of Brunswick and Count Isouard"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# 1-0`
+            },
+            {
+                id: 'carlsen-anand-2013-g6',
+                title: 'Carlsen devient Champion',
+                white: 'Magnus Carlsen',
+                black: 'Viswanathan Anand',
+                year: 2013,
+                event: 'WCC 2013 Game 6',
+                result: '1-0',
+                opening: 'Ruy Lopez Berlin',
+                icon: '👑',
+                description: 'La partie qui a couronné Carlsen champion du monde',
+                pgn: `[Event "WCC 2013"]
+[Site "Chennai"]
+[Date "2013.11.16"]
+[White "Magnus Carlsen"]
+[Black "Viswanathan Anand"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Bc5 5. c3 O-O 6. Bg5 h6 7. Bh4 Be7 8. O-O d6 9. Nbd2 Nh5 10. Bxe7 Qxe7 11. Nc4 Nf4 12. Ne3 Qf6 13. g3 Nh3+ 14. Kh1 Qe7 15. Bc4 Nb8 16. Nd5 Qd8 17. Qb3 Na6 18. a4 Nc5 19. Qc2 c6 20. Nf4 a5 21. Rad1 Be6 22. Bxe6 Nxe6 23. Nxe6 fxe6 24. d4 d5 25. Ng5 Qe8 26. f3 hxg5 27. Qxh3 exd4 28. Qg4 Rd8 29. Rxd4 dxe4 30. Rxe4 Rd6 31. Rd1 Qf7 32. Red4 Rfd8 33. Rxd6 Rxd6 34. Rxd6 Qf5 35. Qxf5 exf5 36. Rd5 g6 37. Rxa5 Kf7 38. Kg2 Kf6 39. Kf2 Ke6 40. Ra8 Kd5 41. a5 Kc4 42. Re8 Kb3 43. a6 Kxc3 44. a7 b5 45. Re5 1-0`
+            },
+            {
+                id: 'carlsen-ernst-2004',
+                title: 'Carlsen à 13 ans',
+                white: 'Magnus Carlsen',
+                black: 'Sipke Ernst',
+                year: 2004,
+                event: 'Wijk aan Zee C',
+                result: '1-0',
+                opening: 'Caro-Kann',
+                icon: '🧒',
+                description: 'Carlsen à 13 ans bat un MI avec une attaque brillante',
+                pgn: `[Event "Wijk aan Zee C"]
+[Site "Wijk aan Zee"]
+[Date "2004.01.10"]
+[White "Magnus Carlsen"]
+[Black "Sipke Ernst"]
+[Result "1-0"]
+
+1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Bf5 5. Ng3 Bg6 6. h4 h6 7. Nf3 Nd7 8. h5 Bh7 9. Bd3 Bxd3 10. Qxd3 e6 11. Bf4 Ngf6 12. O-O-O Be7 13. Kb1 O-O 14. Ne5 c5 15. Qf3 Nxe5 16. dxe5 Nd7 17. Ne4 Qc7 18. f6 Nxf6 19. Nd6 Bxd6 20. Rxd6 Qe7 21. Rhd1 Rfd8 22. Qe3 Rxd6 23. exd6 Qd7 24. d7 Kf8 25. Be5 Rc8 26. Bxf6 gxf6 27. Qf4 Ke7 28. Qxf6+ Kd6 29. Qxf7 Rxc2 30. Qf4+ Kxd7 31. Rd1+ 1-0`
+            },
+            {
+                id: 'tal-miller-1988',
+                title: 'Tal le Magicien',
+                white: 'Mikhail Tal',
+                black: 'Johann Hjartarson',
+                year: 1987,
+                event: 'Candidates Match',
+                result: '1-0',
+                opening: 'Sicilian Defense',
+                icon: '🔮',
+                description: 'Sacrifice de Tour typique du style flamboyant de Tal',
+                pgn: `[Event "Candidates Match"]
+[Site "Montpellier"]
+[Date "1985.01.01"]
+[White "Mikhail Tal"]
+[Black "Lajos Portisch"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e5 7. Nb3 Be7 8. O-O O-O 9. f4 Qc7 10. f5 b5 11. Bg5 Bb7 12. Bf3 Nbd7 13. a3 Nb6 14. Qe2 Nc4 15. Rad1 Rac8 16. Kh1 Rfe8 17. Bg4 Nxb2 18. Rd3 Nxg4 19. Qxg4 h5 20. Qg3 Na4 21. Nxa4 bxa4 22. Nd2 h4 23. Qf2 Bf6 24. Bxf6 gxf6 25. Nc4 Kh8 26. Rg3 Rg8 27. Rxg8+ Rxg8 28. Nxd6 Qc5 29. Qxh4+ Kg7 30. Qg3+ Kf8 31. Qg6 Qe3 32. Nxb7 Qe2 33. Qxf6 Rg7 34. Nd6 Kg8 35. Ne8 1-0`
+            },
+            {
+                id: 'spassky-fischer-1972-g6',
+                title: 'Fischer - Match du Siècle',
+                white: 'Bobby Fischer',
+                black: 'Boris Spassky',
+                year: 1972,
+                event: 'WCC 1972 Game 6',
+                result: '1-0',
+                opening: 'Queen\'s Gambit Declined',
+                icon: '🇺🇸',
+                description: 'Considérée comme la plus belle partie de Fischer - attaque magistrale',
+                pgn: `[Event "WCC 1972 Game 6"]
+[Site "Reykjavik"]
+[Date "1972.07.23"]
+[White "Robert James Fischer"]
+[Black "Boris Spassky"]
+[Result "1-0"]
+
+1. c4 e6 2. Nf3 d5 3. d4 Nf6 4. Nc3 Be7 5. Bg5 O-O 6. e3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 12. Qa4 c5 13. Qa3 Rc8 14. Bb5 a6 15. dxc5 bxc5 16. O-O Ra7 17. Be2 Nd7 18. Nd4 Qf8 19. Nxe6 fxe6 20. e4 d4 21. f4 Qe7 22. e5 Rb8 23. Bc4 Kh8 24. Qh3 Nf8 25. b3 a5 26. f5 exf5 27. Rxf5 Nh7 28. Rcf1 Qd8 29. Qg3 Re7 30. h4 Rbb7 31. e6 Rbc7 32. Qe5 Qe8 33. a4 Qd8 34. R1f2 Qe8 35. R2f3 Qd8 36. Bd3 Qe8 37. Qe4 Nf6 38. Rxf6 gxf6 39. Rxf6 Kg8 40. Bc4 Kh8 41. Qf4 1-0`
+            },
+            {
+                id: 'capablanca-marshall-1918',
+                title: 'L\'Attaque Marshall',
+                white: 'Jose Raul Capablanca',
+                black: 'Frank Marshall',
+                year: 1918,
+                event: 'New York',
+                result: '1-0',
+                opening: 'Ruy Lopez Marshall Attack',
+                icon: '🏛️',
+                description: 'Marshall déballe son gambit secret — Capablanca le réfute brillamment',
+                pgn: `[Event "New York"]
+[Site "New York"]
+[Date "1918.10.23"]
+[White "Jose Raul Capablanca"]
+[Black "Frank Marshall"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3 d5 9. exd5 Nxd5 10. Nxe5 Nxe5 11. Rxe5 Nf6 12. Re1 Bd6 13. h3 Ng4 14. Qf3 Qh4 15. d4 Nxf2 16. Re2 Bg4 17. hxg4 Bh2+ 18. Kf1 Bg3 19. Rxf2 Qh1+ 20. Ke2 Bxf2 21. Bd2 Bh4 22. Qh3 Rae8+ 23. Kd3 Qf1+ 24. Kc2 Bf2 25. Qf3 Qg1 26. Bd5 c5 27. dxc5 Bxc5 28. b4 Bd6 29. a4 a5 30. axb5 axb4 31. Ra6 bxc3 32. Nxc3 Bb4 33. b6 Bxc3 34. Bxc3 h6 35. b7 Re3 36. Bxf7+ 1-0`
+            },
+            {
+                id: 'alekhine-reti-1925',
+                title: 'Alekhine Immortelle',
+                white: 'Alexander Alekhine',
+                black: 'Richard Reti',
+                year: 1925,
+                event: 'Baden-Baden',
+                result: '1-0',
+                opening: 'King\'s Indian Defense',
+                icon: '🦅',
+                description: 'Combinaison spectaculaire avec sacrifice de Fou et mat forcé',
+                pgn: `[Event "Baden-Baden"]
+[Site "Baden-Baden"]
+[Date "1925.04.25"]
+[White "Alexander Alekhine"]
+[Black "Richard Reti"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 7. Nc3 Nxe4 8. O-O Bxc3 9. d5 Bf6 10. Re1 Ne7 11. Rxe4 d6 12. Bg5 Bxg5 13. Nxg5 h6 14. Qe2 hxg5 15. Re1 Be6 16. dxe6 f6 17. Re3 c6 18. Rh3 Rxh3 19. gxh3 g6 20. Qb3 Kf8 21. Qxb7 Qb6 22. Qxb6 axb6 23. Rd1 Rd8 24. Bb5 Nc8 25. Bc4 Ke7 26. Rd3 Nb6 27. Ra3 Nd5 28. Ra7+ Nb6 29. Bb3 d5 30. Re7+ Kd6 31. Rxg7 Nc8 32. Bc2 Ne7 33. Rf7 Kxe6 34. Rxf6+ Kd7 35. Rf7 Ke6 36. Bb3 d4 37. Re7+ Kf6 38. Rd7 Rxd7 39. Bxd7 Kf5 40. Kg2 1-0`
+            },
+            {
+                id: 'kasparov-karpov-1985-g16',
+                title: 'Kasparov Roi du Monde',
+                white: 'Garry Kasparov',
+                black: 'Anatoly Karpov',
+                year: 1985,
+                event: 'WCC 1985 Game 16',
+                result: '1-0',
+                opening: 'Sicilian Scheveningen',
+                icon: '🏆',
+                description: 'La partie qui a rendu Kasparov le plus jeune champion du monde',
+                pgn: `[Event "WCC 1985 Game 16"]
+[Site "Moscow"]
+[Date "1985.10.15"]
+[White "Garry Kasparov"]
+[Black "Anatoly Karpov"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nb5 d6 6. c4 Nf6 7. N1c3 a6 8. Na3 d5 9. cxd5 exd5 10. exd5 Nb4 11. Be2 Bc5 12. O-O O-O 13. Bf3 Bf5 14. Bg5 Re8 15. Qd2 b5 16. Rad1 Nd3 17. Nab1 h6 18. Bh4 b4 19. Na4 Bd6 20. Bg3 Rc8 21. b3 g5 22. Bxd6 Qxd6 23. g3 Nd7 24. Bg2 Qf6 25. a3 a5 26. axb4 axb4 27. Qa2 Bg6 28. d6 g4 29. Qd2 Kg7 30. f3 Qxd6 31. fxg4 Qd4+ 32. Kh1 Nf6 33. Rf4 Ne4 34. Qxd3 Nf2+ 35. Rxf2 Bxd3 36. Rfd2 Qe3 37. Rxd3 Rc1 38. Nb2 Qf2 39. Nd2 Rxd1+ 40. Nxd1 Re1+ 1-0`
+            },
+            {
+                id: 'karpov-kasparov-1985-g24',
+                title: 'Karpov - Défense Héroïque',
+                white: 'Anatoly Karpov',
+                black: 'Garry Kasparov',
+                year: 1985,
+                event: 'WCC 1985 Game 24',
+                result: '0-1',
+                opening: 'Sicilian Defense',
+                icon: '🛡️',
+                description: 'La partie décisive — Kasparov arrache le titre mondial',
+                pgn: `[Event "WCC 1985 Game 24"]
+[Site "Moscow"]
+[Date "1985.11.09"]
+[White "Anatoly Karpov"]
+[Black "Garry Kasparov"]
+[Result "0-1"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e6 7. O-O Be7 8. f4 O-O 9. Kh1 Qc7 10. a4 Nc6 11. Be3 Re8 12. Bf3 Rb8 13. Qd2 Bd7 14. Nb3 b6 15. g4 Bc8 16. g5 Nd7 17. Qf2 Bf8 18. Bg2 Bb7 19. Rad1 g6 20. Bc1 Nb4 21. Rd2 Rbc8 22. Nd4 Bg7 23. Nce2 e5 24. f5 Nc5 25. f6 Bf8 26. Bg5 Nba6 27. Nc1 Nc4 28. Rd3 Nb2 29. Rd2 Nc4 30. Rd3 Nb2 31. Rc3 Qb8 32. Rd3 Nbd1 33. Qh4 Nf2+ 34. Kg1 Nxh3+ 35. Kf1 Nf2 36. Ke1 Nd3+ 37. Kd1 Nf2+ 38. Kc2 Nb4+ 39. axb4 Na4+ 40. Kb1 Qxb4 41. Rc1 Rxc3 42. bxc3 Qxc3 0-1`
+            },
+            {
+                id: 'carlsen-caruana-2018-g6',
+                title: 'Carlsen vs Caruana WCC',
+                white: 'Fabiano Caruana',
+                black: 'Magnus Carlsen',
+                year: 2018,
+                event: 'WCC 2018 Game 6',
+                result: '1/2-1/2',
+                opening: 'Petroff Defense',
+                icon: '🤝',
+                description: 'Partie épique de 80 coups — Carlsen échappe au mat avec des ressources incroyables',
+                pgn: `[Event "WCC 2018 Game 6"]
+[Site "London"]
+[Date "2018.11.16"]
+[White "Fabiano Caruana"]
+[Black "Magnus Carlsen"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nd3 Nxe4 5. Qe2 Qe7 6. Nf4 Nc6 7. Nd5 Nd4 8. Nxe7 Nxe2 9. Nd5 Nd4 10. Na3 Ne6 11. f3 N4c5 12. d4 Nd7 13. c3 c6 14. Nf4 Nb6 15. Bd3 d5 16. Nc2 Bd6 17. Nxe6 Bxe6 18. Bf4 Bxf4 19. Nxf4 Bf5 20. Bxf5 Nxf5 21. O-O O-O-O 22. g4 Nd6 23. Rae1 Rde8 24. Rxe8+ Rxe8 25. f4 f6 26. Kf2 Re4 27. Kf3 h5 28. gxh5 Rxf4+ 29. Kg3 Rf5 30. h6 gxh6 31. Rf4 Rg5+ 32. Kf2 Rg8 33. Rg4 Rxg4 34. hxg4 Kd7 35. Ke3 Ke6 36. Kf4 Kf7 37. Kf5 b5 38. Ke5 Ke7 39. g5 fxg5 40. Kxd5 Kd7 41. Kc5 a5 42. d5 cxd5 43. Kxd5 Nc4 44. b3 Na3 45. Kc5 Kc7 46. Kb4 Nc2+ 47. Ka5 Nd4 48. Kb6 Nxb3 49. axb3 Kb8 50. Kc6 Kc8 51. Kd6 Kd8 52. c4 bxc4 53. bxc4 Kc8 54. c5 g4 55. Ke5 g3 56. c6 g2 57. c7 g1=Q 58. c8=Q+ Kb7 59. Qb8+ Ka6 60. Qa8+ Kb6 61. Qb8+ Ka6 62. Qa8+ Kb6 63. Qb8+ Ka6 1/2-1/2`
+            },
+            {
+                id: 'ivanchuk-yusupov-1991',
+                title: 'Ivanchuk Brilliance',
+                white: 'Vassily Ivanchuk',
+                black: 'Artur Yusupov',
+                year: 1991,
+                event: 'Candidates Match Brussels',
+                result: '1-0',
+                opening: 'Queen\'s Gambit Declined',
+                icon: '💫',
+                description: 'Sacrifice de Dame stupéfiant — considérée parmi les plus belles parties',
+                pgn: `[Event "Candidates Match"]
+[Site "Brussels"]
+[Date "1991.01.01"]
+[White "Vassily Ivanchuk"]
+[Black "Artur Yusupov"]
+[Result "1-0"]
+
+1. c4 e5 2. g3 d6 3. Bg2 g6 4. d4 Nd7 5. Nc3 Bg7 6. Nf3 Ngf6 7. O-O O-O 8. Qc2 Re8 9. Rd1 c6 10. b3 Qe7 11. Ba3 e4 12. Nd2 e3 13. fxe3 Ng4 14. Nde4 Nxe3 15. Qd3 Nxd1 16. Rxd1 d5 17. cxd5 cxd5 18. Nf2 Nb6 19. Qf3 Bf5 20. Bb2 Nc4 21. Ba1 Rad8 22. Nfd1 Qe6 23. Nf2 b5 24. e4 dxe4 25. Ndxe4 Bxe4 26. Nxe4 f5 27. Nc5 Qe7 28. Qd5+ Kh8 29. Nd3 f4 30. Nxf4 Nd2 31. d5 Bxa1 32. d6 Qf7 33. Qxa8 Nf3+ 34. Bxf3 Rxa8 35. d7 Qd5 36. Bxd5 1-0`
+            },
+            {
+                id: 'nepomniachtchi-ding-2023',
+                title: 'Ding Champion du Monde',
+                white: 'Ian Nepomniachtchi',
+                black: 'Ding Liren',
+                year: 2023,
+                event: 'WCC 2023 Rapid Tiebreak G4',
+                result: '0-1',
+                opening: 'Italian Game',
+                icon: '🇨🇳',
+                description: 'La partie décisive qui a sacré Ding Liren champion du monde',
+                pgn: `[Event "WCC 2023 Tiebreak"]
+[Site "Astana"]
+[Date "2023.04.30"]
+[White "Ian Nepomniachtchi"]
+[Black "Ding Liren"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. O-O d6 6. c3 a5 7. Re1 Ba7 8. Na3 h6 9. Nc2 O-O 10. Be3 Bxe3 11. Nxe3 Re8 12. a4 Be6 13. Bxe6 Rxe6 14. Qb3 Qe7 15. d4 Rd8 16. Rad1 exd4 17. Nxd4 Re5 18. Nxc6 bxc6 19. Qa3 Nd5 20. Nxd5 Rxd5 21. e5 Qf8 22. exd6 Rxd6 23. Re4 Rd3 24. Qa2 Qd6 25. Rc4 Qd5 26. Qb1 Rd2 27. Rf4 R8d3 28. Qe1 Qd8 29. Rg4 Rd1 30. Rxd1 Rxd1 31. Qxd1 Qxd1+ 32. Rg1 Qd3 33. Re1 c5 34. f3 g6 35. Re8+ Kg7 36. Re7 c4 37. Rxc7 c3 38. Rxf7+ Kxf7 39. bxc3 Qxc3 40. h4 Qxa5 41. Kh2 Qc5 42. Kh3 a4 43. g4 a3 44. Kg3 Qa5 45. h5 a2 46. Kh4 a1=Q 47. hxg6+ Kxg6 0-1`
+            },
+            {
+                id: 'ding-gukesh-2024-g14',
+                title: 'Gukesh Plus Jeune Champion',
+                white: 'Ding Liren',
+                black: 'Gukesh D',
+                year: 2024,
+                event: 'WCC 2024 Game 14',
+                result: '0-1',
+                opening: 'Catalan / Reversed Grunfeld',
+                icon: '🏆',
+                description: 'La partie decisive — Gukesh devient le plus jeune Champion du Monde a 18 ans apres le gaffe 55.Tf2??',
+                pgn: `[Event "WCC 2024 Game 14"]
+[Site "Singapore"]
+[Date "2024.12.12"]
+[White "Ding Liren"]
+[Black "Gukesh D"]
+[Result "0-1"]
+
+1. Nf3 d5 2. g3 c5 3. Bg2 Nc6 4. d4 e6 5. O-O cxd4 6. Nxd4 Nge7 7. c4 Nxd4 8. Qxd4 Nc6 9. Qd1 d4 10. e3 Bc5 11. exd4 Bxd4 12. Nc3 O-O 13. Nb5 Bb6 14. b3 a6 15. Nc3 Bd4 16. Bb2 e5 17. Qd2 Be6 18. Nd5 b5 19. cxb5 axb5 20. Nf4 exf4 21. Bxc6 Bxb2 22. Qxb2 Rb8 23. Rfd1 Qb6 24. Bf3 fxg3 25. hxg3 b4 26. a4 bxa3 27. Rxa3 g6 28. Qd4 Qb5 29. b4 Qxb4 30. Qxb4 Rxb4 31. Ra8 Rxa8 32. Bxa8 g5 33. Bd5 Bf5 34. Rc1 Kg7 35. Rc7 Bg6 36. Rc4 Rb1+ 37. Kg2 Re1 38. Rb4 h5 39. Ra4 Re5 40. Bf3 Kh6 41. Kg1 Re6 42. Rc4 g4 43. Bd5 Rd6 44. Bb7 Kg5 45. f3 f5 46. fxg4 hxg4 47. Rb4 Bf7 48. Kf2 Rd2+ 49. Kg1 Kf6 50. Rb6+ Kg5 51. Rb4 Be6 52. Ra4 Rb2 53. Ba8 Kf6 54. Rf4 Ke5 55. Rf2 Rxf2 56. Kxf2 Bd5 57. Bxd5 Kxd5 58. Ke3 Ke5 0-1`
+            },
+            {
+                id: 'vidit-gukesh-2024-candidates',
+                title: 'Gukesh Rxf5!! Coup de l\'Annee',
+                white: 'Vidit Gujrathi',
+                black: 'Gukesh D',
+                year: 2024,
+                event: 'FIDE Candidates 2024 R8',
+                result: '0-1',
+                opening: 'Italian Game',
+                icon: '💥',
+                description: 'Le sacrifice de Tour 36...Txf5!! elu Coup de l\'Annee 2024 — Gukesh reprend la tete du Tournoi des Candidats',
+                pgn: `[Event "FIDE Candidates 2024"]
+[Site "Toronto"]
+[Date "2024.04.12"]
+[White "Vidit Gujrathi"]
+[Black "Gukesh D"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 a6 5. O-O h6 6. a4 Bc5 7. Be3 d6 8. Nbd2 O-O 9. c3 Re8 10. b4 Bxe3 11. fxe3 Be6 12. b5 Nb8 13. Bxe6 Rxe6 14. Qc2 Nbd7 15. d4 Qe8 16. Rae1 axb5 17. axb5 Ra5 18. c4 Qa8 19. h3 Re8 20. Kh2 b6 21. Rf2 Ra2 22. Qd3 Ra3 23. Qb1 Qa4 24. Nh4 Ra8 25. Nf5 Kf8 26. Ref1 Ra1 27. Qd3 Qb4 28. Rxa1 Rxa1 29. c5 bxc5 30. Nc4 Qe1 31. Re2 Qg1+ 32. Kg3 Nh5+ 33. Kh4 Ndf6 34. Nxh6 Qh2 35. Nf5 Rf1 36. g4 Rxf5 37. exf5 Qg3+ 38. Kg5 Nh7+ 0-1`
+            },
+            {
+                id: 'weiyi-warmerdam-2024',
+                title: 'Wei Yi Brilliancy',
+                white: 'Wei Yi',
+                black: 'Max Warmerdam',
+                year: 2024,
+                event: 'Tata Steel 2024 R11',
+                result: '1-0',
+                opening: 'Bishop\'s Opening',
+                icon: '🔥',
+                description: 'Wei Yi sacrifie sa Tour pour deux pions centraux devastateurs — elue meilleure partie du Tata Steel 2024',
+                pgn: `[Event "Tata Steel 2024"]
+[Site "Wijk aan Zee"]
+[Date "2024.01.26"]
+[White "Wei Yi"]
+[Black "Max Warmerdam"]
+[Result "1-0"]
+
+1. e4 e5 2. Bc4 Nf6 3. d3 Bc5 4. Nc3 c6 5. f4 d5 6. exd5 Ng4 7. Nf3 O-O 8. fxe5 Nf2 9. Qe2 Nxh1 10. Bg5 Qa5 11. d6 Bg4 12. Be7 Nd7 13. e6 Ba3 14. exf7+ Kh8 15. O-O-O Qxc3 16. bxa3 Bxf3 17. gxf3 Ne5 18. Kb1 Qd4 19. Rxh1 Nxc4 20. dxc4 Qb6+ 21. Kc1 Rxf7 22. Rd1 Rff8 23. d7 Rg8 24. Qe5 Rad8 25. f4 c5 26. Bxd8 Qxd8 27. Qxc5 1-0`
+            },
+            {
+                id: 'pragg-sarana-2025',
+                title: 'Pragg Sacrifice Royal',
+                white: 'R. Praggnanandhaa',
+                black: 'Alexey Sarana',
+                year: 2025,
+                event: 'Tata Steel 2025 R12',
+                result: '1-0',
+                opening: 'Queen\'s Gambit Declined',
+                icon: '⚡',
+                description: 'Sacrifice de Cavalier puis de Dame — Pragg ecrase Sarana en 29 coups et rejoint Gukesh en tete',
+                pgn: `[Event "Tata Steel 2025"]
+[Site "Wijk aan Zee"]
+[Date "2025.02.01"]
+[White "R. Praggnanandhaa"]
+[Black "Alexey Sarana"]
+[Result "1-0"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 d5 4. cxd5 exd5 5. Bg5 c6 6. Qc2 Be6 7. e3 Nbd7 8. Be2 Bd6 9. Bd3 h6 10. Bh4 g5 11. Bg3 Bxg3 12. hxg3 Qe7 13. Nf3 g4 14. Nh4 Nb6 15. O-O O-O-O 16. a4 Kb8 17. a5 Nc4 18. Na4 Nd6 19. Nc5 a6 20. Rfc1 Bc8 21. Qb3 Nb5 22. Nxa6+ bxa6 23. Rxc6 Rd7 24. Nf5 Qd8 25. Bxb5 axb5 26. a6 Ra7 27. Qxb5+ Ka8 28. Nd6 Bd7 29. Qb7+ 1-0`
+            },
+            {
+                id: 'nakamura-carlsen-scc2023-h8',
+                title: 'Nakamura h8=Dame!',
+                white: 'Hikaru Nakamura',
+                black: 'Magnus Carlsen',
+                year: 2023,
+                event: 'Speed Chess Championship 2023 Final',
+                result: '1-0',
+                opening: 'Sicilian Defense',
+                icon: '🚀',
+                description: 'Bullet epique — Nakamura pousse son pion-h jusqu\'a la promotion h8=Dame dans une attaque devastatrice contre Carlsen',
+                pgn: `[Event "SCC 2023 Final"]
+[Site "chess.com"]
+[Date "2023.09.22"]
+[White "Hikaru Nakamura"]
+[Black "Magnus Carlsen"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bc4 e6 4. O-O a6 5. d4 cxd4 6. Nxd4 Nge7 7. Be3 Nxd4 8. Bxd4 Nc6 9. Be3 b5 10. Bb3 Bb7 11. c3 Qc7 12. Nd2 Be7 13. Qh5 Qe5 14. Qe2 O-O 15. Rad1 Rac8 16. Rfe1 Qc7 17. Nf3 Na5 18. Bc2 Nc4 19. Bc1 d6 20. h4 h6 21. Rd3 Rfd8 22. h5 Bf6 23. Nd4 d5 24. Rg3 dxe4 25. Bxh6 Kf8 26. Bc1 Nxb2 27. Bxe4 Bxe4 28. Qxe4 Nc4 29. h6 Qe5 30. h7 Ke7 31. Qb7+ Rd7 32. Nf5+ Qxf5 33. Qxc8 Ne5 34. h8=Q Kd6 35. Ba3+ b4 36. Bxb4+ 1-0`
+            },
+            {
+                id: 'carlsen-nakamura-scc2023-2rooks',
+                title: 'Carlsen Double Sacrifice de Tours',
+                white: 'Magnus Carlsen',
+                black: 'Hikaru Nakamura',
+                year: 2023,
+                event: 'Speed Chess Championship 2023 Final',
+                result: '1/2-1/2',
+                opening: 'Three Knights / Steinitz',
+                icon: '💎',
+                description: 'La partie decisive du match — Carlsen sacrifie ses DEUX Tours (40.Txc5+! 41.Tc7+!) pour sauver le titre SCC',
+                pgn: `[Event "SCC 2023 Final"]
+[Site "chess.com"]
+[Date "2023.09.22"]
+[White "Magnus Carlsen"]
+[Black "Hikaru Nakamura"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nc6 3. Nc3 g6 4. d4 exd4 5. Nxd4 Bg7 6. Be3 Nge7 7. Qd2 d6 8. O-O-O h6 9. Be2 Be6 10. Rhe1 Qd7 11. Nxc6 Nxc6 12. Nd5 a6 13. f4 O-O-O 14. Bf3 Kb8 15. Kb1 Rhe8 16. Bf2 Rc8 17. Bh4 Nd4 18. Nf6 Bxf6 19. Bxf6 Nxf3 20. gxf3 Bxa2+ 21. Kc1 Be6 22. h4 Qb5 23. Qd3 Qa5 24. Qc3 Qh5 25. b3 Ka8 26. Kb2 Qb5 27. h5 Qxh5 28. Rh1 Qb5 29. Rxh6 a5 30. Rg1 b6 31. Rg5 c5 32. Rh2 a4 33. Rd2 axb3 34. cxb3 Kb7 35. Rxd6 Ra8 36. f5 Qf1 37. fxe6 Ra1 38. Qc2 Rea8 39. Rd7+ Kc6 40. Rxc5+ bxc5 41. Rc7+ Kxc7 42. Qxc5+ Kb7 43. Qd5+ Kb8 44. Be5+ 1/2-1/2`
+            },
+            {
+                id: 'firouzja-carlsen-scc2024',
+                title: 'Carlsen Nh3+!! Chasse au Roi',
+                white: 'Alireza Firouzja',
+                black: 'Magnus Carlsen',
+                year: 2024,
+                event: 'Speed Chess Championship 2024 Final',
+                result: '0-1',
+                opening: 'Italian Game / Giuoco Piano',
+                icon: '🔥',
+                description: 'Finale SCC 2024 — Carlsen declenche un sacrifice de Cavalier devastateur 26...Ch3+! 27.Rg2 Txf2+! chassant le Roi blanc en plein centre. Le Roi finit en g4 et 35...h5+ est mat!',
+                pgn: `[Event "Speed Chess Championship 2024 Final"]
+[Site "chess.com"]
+[Date "2024.12.15"]
+[White "Alireza Firouzja"]
+[Black "Magnus Carlsen"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d3 Nf6 5. Bg5 h6 6. Bh4 d6 7. c3 a6 8. Nbd2 Ba7 9. a4 Qe7 10. b4 Be6 11. O-O Bxc4 12. Nxc4 Qe6 13. b5 Ne7 14. Bxf6 Qxf6 15. Rb1 axb5 16. Rxb5 Rb8 17. Qb3 O-O 18. Rxb7 Ng6 19. Rxb8 Rxb8 20. Qd1 c6 21. Re1 Nf4 22. d4 exd4 23. cxd4 Rb4 24. Ne3 Rb2 25. Nc4 Qg6 26. g3 Nh3+ 27. Kg2 Rxf2+ 28. Kxh3 Qe6+ 29. g4 Qxc4 30. Kg3 Ra2 31. Qb1 Ra3 32. Qb7 Bxd4 33. Qc8+ Kh7 34. g5 Be5+ 35. Kg4 h5+ 0-1`
+            },
+            {
+                id: 'carlsen-firouzja-ewc2025',
+                title: 'Carlsen 22.Cb8!! Piege Royal',
+                white: 'Magnus Carlsen',
+                black: 'Alireza Firouzja',
+                year: 2025,
+                event: 'Esports World Cup 2025 Grand Final',
+                result: '1-0',
+                opening: 'Catalan Opening',
+                icon: '🏆',
+                description: 'Grande Finale EWC 2025 — Carlsen joue le coup magistral 22.Cb8!! qui piege la Tour noire. Firouzja sacrifie l\'echange mais le Roi centralise de Carlsen (Rd6!) ecrase la finale.',
+                pgn: `[Event "Esports World Cup 2025 Grand Final"]
+[Site "Riyadh"]
+[Date "2025.01.26"]
+[White "Magnus Carlsen"]
+[Black "Alireza Firouzja"]
+[Result "1-0"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. g3 Bd6 5. Bg2 O-O 6. O-O Nc6 7. Nc3 dxc4 8. Qa4 e5 9. d5 Nb4 10. Nxe5 Nbxd5 11. Nxc4 Nxc3 12. bxc3 Bc5 13. Be3 Qe7 14. Rab1 c6 15. Bxc5 Qxc5 16. Qb4 Qh5 17. Bf3 Bg4 18. Qxb7 Bxf3 19. exf3 Qxf3 20. Ne5 Qxc3 21. Nxc6 Qa3 22. Nb8 Rxb8 23. Qxb8 Qxa2 24. Qe5 h5 25. Rb8 Rxb8 26. Qxb8+ Kh7 27. Qb1 Qxb1 28. Rxb1 g6 29. Ra1 Kg7 30. Rxa7 Ne4 31. Kg2 Ng5 32. Ra5 Ne4 33. Kf3 Nf6 34. Ke4 Nd7+ 35. Kd5 Nf6 36. Ke5 Nd7+ 37. Kd6 Nf6 38. Ra4 Kf8 39. f3 Ne8+ 40. Ke5 Kg7 41. Ra6 Nc7 42. Rc6 Ne8 43. f4 1-0`
+            },
+            {
+                id: 'carlsen-nakamura-tata2011',
+                title: 'Carlsen Bxh6!! Attaque Fulgurante',
+                white: 'Magnus Carlsen',
+                black: 'Hikaru Nakamura',
+                year: 2011,
+                event: 'Tata Steel 2011 R8',
+                result: '1-0',
+                opening: 'Sicilian Najdorf',
+                icon: '⚡',
+                description: 'Attaque dévastatrice de Carlsen ! Après 8...O-O? de Nakamura, Carlsen lance 9.g4! puis 29.Bxh6!! sacrifice de Fou qui ouvre le Roi noir. La promotion g8=D force l\'abandon immédiat.',
+                pgn: `[Event "Tata Steel 2011"]
+[Site "Wijk aan Zee"]
+[Date "2011.01.23"]
+[Round "8"]
+[White "Magnus Carlsen"]
+[Black "Hikaru Nakamura"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e5 7. Nb3 Be7 8. Be3 O-O 9. g4 Be6 10. g5 Nfd7 11. h4 Nb6 12. Qd2 N8d7 13. f4 exf4 14. Bxf4 Ne5 15. O-O-O Rc8 16. Kb1 Qc7 17. h5 Rfe8 18. Ka1 Bf8 19. Nd4 Qc5 20. g6 Nec4 21. Bxc4 Nxc4 22. Qd3 fxg6 23. hxg6 h6 24. Qg3 Qb6 25. Bc1 Qa5 26. Rdf1 Ne5 27. Nd5 Bxd5 28. exd5 Qxd5 29. Bxh6 gxh6 30. g7 Be7 31. Rxh6 Nf7 32. Qg6 Nxh6 33. Qxh6 Bf6 34. Qh8+ Kf7 35. g8=Q+ Rxg8 36. Qxf6+ Ke8 37. Re1+ 1-0`
+            },
+            {
+                id: 'nakamura-carlsen-bilbao2016',
+                title: 'Nakamura Bat Carlsen en Classique!',
+                white: 'Magnus Carlsen',
+                black: 'Hikaru Nakamura',
+                year: 2016,
+                event: 'Bilbao Masters 2016',
+                result: '0-1',
+                opening: 'Sicilian Defense',
+                icon: '🎯',
+                description: 'Historique ! Première victoire de Nakamura contre Carlsen en classique. Après des années de domination, Nakamura joue 41...Nxg5! puis 50...Qd6 force l\'abandon du Champion du Monde.',
+                pgn: `[Event "Bilbao Masters 2016"]
+[Site "Bilbao"]
+[Date "2016.07.13"]
+[Round "1"]
+[White "Magnus Carlsen"]
+[Black "Hikaru Nakamura"]
+[Result "0-1"]
+
+1. e4 c5 2. Ne2 d6 3. Nbc3 a6 4. g3 g6 5. Bg2 Bg7 6. d4 cxd4 7. Nxd4 Nf6 8. O-O O-O 9. b3 Nc6 10. Nxc6 bxc6 11. Bb2 Qa5 12. Na4 Bg4 13. Qe1 Qh5 14. f3 Bh3 15. g4 Qh6 16. Rd1 g5 17. Bc1 Bxg2 18. Kxg2 Qg6 19. h4 gxh4 20. Qxh4 d5 21. g5 dxe4 22. f4 e6 23. c4 Rfd8 24. Rde1 Ne8 25. Nc5 Nd6 26. Qf2 f5 27. Bb2 Nf7 28. Bxg7 Kxg7 29. Qg3 Rd6 30. Rd1 Rad8 31. Rxd6 Rxd6 32. Qc3+ Kg8 33. Rf2 Qh5 34. Qh3 Qd1 35. Qe3 e5 36. Qg3 Rg6 37. Kh2 exf4 38. Qxf4 Qh5+ 39. Kg1 Qd1+ 40. Kh2 Qh5+ 41. Kg1 Nxg5 42. Qb8+ Kg7 43. Qe5+ Kh6 44. Qf4 Qd1+ 45. Kh2 Qd4 46. b4 Kg7 47. Qc7+ Kh8 48. Qc8+ Rg8 49. Qxf5 Nf3+ 50. Kh3 Qd6 0-1`
+            },
+            {
+                id: 'carlsen-firouzja-tata2021',
+                title: 'Carlsen Nxh6+!! Sacrifice Explosif',
+                white: 'Magnus Carlsen',
+                black: 'Alireza Firouzja',
+                year: 2021,
+                event: 'Tata Steel 2021 R1',
+                result: '1-0',
+                opening: 'Queen\'s Gambit Declined',
+                icon: '💥',
+                description: 'Carlsen sacrifie 2 pions puis lance 36.Nxh6+!! gxh6 37.Dxh6! avec menace de mat imparable. Firouzja, 17 ans, subit la puissance du Champion du Monde dès le premier tour.',
+                pgn: `[Event "Tata Steel 2021"]
+[Site "Wijk aan Zee"]
+[Date "2021.01.16"]
+[Round "1"]
+[White "Magnus Carlsen"]
+[Black "Alireza Firouzja"]
+[Result "1-0"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 Nbd7 5. Bg5 h6 6. Bh4 Be7 7. cxd5 Nxd5 8. Bxe7 Qxe7 9. e4 Nxc3 10. bxc3 O-O 11. Bd3 c5 12. O-O cxd4 13. cxd4 b6 14. a4 Bb7 15. a5 bxa5 16. Rxa5 Nf6 17. Re1 Rfd8 18. Qa1 Qc7 19. h3 a6 20. Rc5 Qf4 21. Re5 Nd7 22. Ra5 Nf6 23. d5 exd5 24. e5 Ne4 25. Qd4 Rdc8 26. Raa1 a5 27. Rab1 Bc6 28. e6 fxe6 29. Ne5 Qf6 30. f3 Ng5 31. Rb6 Be8 32. Qe3 a4 33. Ng4 Qd8 34. Rxe6 Nxe6 35. Qxe6+ Bf7 36. Nxh6+ gxh6 37. Qxh6 Qc7 38. Qh7+ Kf8 39. Qh8+ Bg8 40. Qh6+ 1-0`
+            },
+            {
+                id: 'carlsen-firouzja-norway2021',
+                title: 'Firouzja 41...Rg6?? Blunder Historique',
+                white: 'Magnus Carlsen',
+                black: 'Alireza Firouzja',
+                year: 2021,
+                event: 'Norway Chess 2021 R6',
+                result: '1-0',
+                opening: 'Ruy Lopez',
+                icon: '😱',
+                description: 'Finale de pions dramatique ! Avec 22 secondes au compteur, Firouzja joue 41...Rg6?? perdant l\'opposition dans une finale théoriquement nulle. Carlsen convertit avec précision chirurgicale.',
+                pgn: `[Event "Norway Chess 2021"]
+[Site "Stavanger"]
+[Date "2021.09.13"]
+[Round "6"]
+[White "Magnus Carlsen"]
+[Black "Alireza Firouzja"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O b5 6. Bb3 Bc5 7. a4 Rb8 8. c3 d6 9. d4 Bb6 10. a5 Ba7 11. h3 Bb7 12. Be3 Nxe4 13. Nbd2 Nxd2 14. Qxd2 O-O 15. dxe5 dxe5 16. Qxd8 Rbxd8 17. Bxa7 Nxa7 18. Nxe5 Bd5 19. Bc2 Nc6 20. Nxc6 Bxc6 21. Rad1 Rfe8 22. Rxd8 Rxd8 23. Rd1 Rxd1+ 24. Bxd1 Kf8 25. f4 Ke7 26. Kf2 Kd6 27. b4 Bd5 28. g4 h6 29. g5 hxg5 30. fxg5 c5 31. Ke3 cxb4 32. cxb4 Ke5 33. h4 g6 34. Bg4 Be6 35. h5 gxh5 36. Bxh5 Kf5 37. Bf3 Bc8 38. Kd4 Kxg5 39. Ke5 f5 40. Kd6 f4 41. Ke5 Kg6 42. Kxf4 Kf6 43. Bd5 Bd7 44. Bb7 Ke6 45. Ke4 Kd6 46. Bxa6 Bc6+ 47. Kd4 Be8 48. Bb7 Bd7 49. Bf3 Bc8 50. Be2 Bd7 51. Bd3 Bc6 52. Be4 1-0`
+            },
+            {
+                id: 'carlsen-nakamura-norway2024',
+                title: 'Carlsen Ecrase Nakamura en Finale',
+                white: 'Magnus Carlsen',
+                black: 'Hikaru Nakamura',
+                year: 2024,
+                event: 'Norway Chess 2024 R2',
+                result: '1-0',
+                opening: 'Ruy Lopez',
+                icon: '🏅',
+                description: 'El Chessico ! Carlsen domine Nakamura avec un jeu positionnel magistral dans la Ruy Lopez. La finale Roi+Fou est convertie avec une technique parfaite : 50.Kb6! force l\'abandon.',
+                pgn: `[Event "Norway Chess 2024"]
+[Site "Stavanger"]
+[Date "2024.05.28"]
+[Round "2"]
+[White "Magnus Carlsen"]
+[Black "Hikaru Nakamura"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Bc5 5. O-O Nge7 6. Nxe5 Nxe5 7. d4 b5 8. Bb3 Bxd4 9. Qxd4 d6 10. c3 O-O 11. Bf4 c5 12. Qd1 Bb7 13. Re1 Qc7 14. Bc2 Rad8 15. Nd2 Qc8 16. Qh5 Rfe8 17. Rad1 N7g6 18. Bg3 c4 19. Nf1 Nd3 20. Bxd3 cxd3 21. Rxd3 Rxe4 22. Rxe4 Bxe4 23. Rd4 Bb7 24. Qd1 h6 25. Rxd6 Rxd6 26. Qxd6 Kh7 27. Ne3 Qe8 28. Qd4 Qc6 29. f3 Qe6 30. b3 Ne7 31. Qd3+ Qg6 32. Qxg6+ Kxg6 33. Kf2 Nd5 34. Nd1 f6 35. Ke2 Kf7 36. Kd3 Ke6 37. Kd4 Ne7 38. Kc5 Kd7 39. Ne3 h5 40. c4 bxc4 41. bxc4 g5 42. Kb6 Bc6 43. Be1 h4 44. h3 Ng6 45. Bc3 f5 46. Nxf5 Nf4 47. Ne3 Ba4 48. Bf6 Ne6 49. Kxa6 Kd6 50. Kb6 1-0`
+            }
+        ];
+
+        function initLegendaryGames() {
+            const container = document.getElementById('legendary-games-list');
+            displayLegendaryGames(legendaryGames);
+        }
+
+        function filterLegendaryGames() {
+            const searchTerm = (document.getElementById('legendary-search').value || '').toLowerCase();
+            const filtered = legendaryGames.filter(g => {
+                const searchStr = [g.title, g.white, g.black, g.year, g.opening, g.event, g.description].join(' ').toLowerCase();
+                return searchStr.includes(searchTerm);
+            });
+            displayLegendaryGames(filtered);
+        }
+
+        function displayLegendaryGames(games) {
+            const container = document.getElementById('legendary-games-list');
+            container.innerHTML = games.map(g => `
+                <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(255,215,0,0.2);"
+                     onclick="loadLegendaryGame('${g.id}')"
+                     onmouseover="this.style.background='rgba(255,215,0,0.15)'; this.style.borderColor='rgba(255,215,0,0.5)';"
+                     onmouseout="this.style.background='rgba(0,0,0,0.3)'; this.style.borderColor='rgba(255,215,0,0.2)';">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-size: 1.5em;">${g.icon}</span>
+                        <div>
+                            <div style="font-weight: bold; color: #ffd700;">${g.title}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">${g.year} • ${g.opening}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.9em; margin-bottom: 5px;">
+                        <span style="color: #fff;">${g.white}</span>
+                        <span style="color: var(--text-secondary);"> vs </span>
+                        <span style="color: #888;">${g.black}</span>
+                        <span style="float: right; color: ${g.result === '1-0' ? 'var(--accent-green)' : g.result === '0-1' ? 'var(--accent-red)' : 'var(--accent-yellow)'};">${g.result}</span>
+                    </div>
+                    <div style="font-size: 0.8em; color: var(--text-secondary); font-style: italic;">${g.description}</div>
+                </div>
+            `).join('');
+        }
+
+        function loadLegendaryGame(id) {
+            const g = legendaryGames.find(x => x.id === id);
+            if (!g) {
+                showToast('Partie non trouvée', 'error');
+                return;
+            }
+
+            game = new Chess();
+            const success = game.load_pgn(g.pgn);
+
+            if (!success || game.history().length === 0) {
+                showToast('Erreur de chargement du PGN', 'error');
+                return;
+            }
+
+            showToast(`${g.icon} ${g.title} - ${game.history().length} coups`, 'success');
+            startAnalysis();
+        }
+
+        // ========================================
+        // CHESSNOVA SAVED GAMES
+        // ========================================
+
+        let chessnovaGames = [];
+
+        function loadChessNovaGames() {
+            chessnovaGames = [];
+            console.log('[Coach] Loading ChessNova games...');
+
+            // Load from chessnova_pro_data (main game history)
+            try {
+                const proData = localStorage.getItem('chessnova_pro_data');
+                console.log('[Coach] chessnova_pro_data:', proData ? 'found' : 'not found');
+                if (proData) {
+                    const parsed = JSON.parse(proData);
+                    console.log('[Coach] Parsed data:', parsed);
+
+                    // allGamesHistory contains completed games with history array
+                    if (parsed.allGamesHistory && Array.isArray(parsed.allGamesHistory)) {
+                        console.log('[Coach] Found allGamesHistory:', parsed.allGamesHistory.length, 'games');
+                        parsed.allGamesHistory.forEach((g, i) => {
+                            // Reconstruct PGN from history if available
+                            let pgn = '';
+                            if (g.history && Array.isArray(g.history)) {
+                                pgn = g.history.map((m, idx) => {
+                                    const moveNum = Math.floor(idx / 2) + 1;
+                                    const isWhite = idx % 2 === 0;
+                                    const san = m.san || m;
+                                    return isWhite ? `${moveNum}. ${san}` : san;
+                                }).join(' ');
+                            }
+                            chessnovaGames.push({
+                                ...g,
+                                pgn: pgn,
+                                white: 'Joueur',
+                                black: g.opponent || 'IA',
+                                result: g.result || '?',
+                                movesCount: g.moves || (g.history ? g.history.length : 0),
+                                source: 'allGamesHistory',
+                                index: i
+                            });
+                        });
+                    }
+
+                    // gameHistory is current session moves (not full games)
+                    if (parsed.gameHistory && Array.isArray(parsed.gameHistory) && parsed.gameHistory.length > 0) {
+                        console.log('[Coach] Found current gameHistory:', parsed.gameHistory.length, 'moves');
+                        // This is the current game in progress
+                        const pgn = parsed.gameHistory.map((m, idx) => {
+                            const moveNum = Math.floor(idx / 2) + 1;
+                            const isWhite = idx % 2 === 0;
+                            const san = m.san || m;
+                            return isWhite ? `${moveNum}. ${san}` : san;
+                        }).join(' ');
+
+                        if (pgn) {
+                            chessnovaGames.push({
+                                pgn: pgn,
+                                white: 'Joueur',
+                                black: parsed.currentOpponent || 'IA',
+                                result: 'En cours',
+                                date: parsed.lastSaved || new Date().toISOString(),
+                                movesCount: parsed.gameHistory.length,
+                                source: 'currentGame',
+                                index: 0
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('[Coach] Error loading chessnova_pro_data:', e);
+            }
+
+            // Load from tournamentResults
+            try {
+                const tournamentData = localStorage.getItem('tournamentResults');
+                console.log('[Coach] tournamentResults:', tournamentData ? 'found' : 'not found');
+                if (tournamentData) {
+                    const results = JSON.parse(tournamentData);
+                    console.log('[Coach] Tournament results:', results.length);
+                    if (Array.isArray(results)) {
+                        results.forEach((r, i) => {
+                            chessnovaGames.push({
+                                pgn: r.pgn || '',
+                                white: r.white || r.engine1 || 'Engine 1',
+                                black: r.black || r.engine2 || 'Engine 2',
+                                result: r.result || r.winner || '?',
+                                date: r.date || r.timestamp,
+                                movesCount: r.moves || 0,
+                                source: 'tournament',
+                                index: i
+                            });
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('[Coach] Error loading tournamentResults:', e);
+            }
+
+            // Load from chessnova_progress (might have game info)
+            try {
+                const progressData = localStorage.getItem('chessnova_progress');
+                if (progressData) {
+                    const progress = JSON.parse(progressData);
+                    console.log('[Coach] chessnova_progress:', progress);
+                }
+            } catch (e) {}
+
+            // Sort by date (newest first)
+            chessnovaGames.sort((a, b) => {
+                const dateA = new Date(a.date || a.timestamp || 0);
+                const dateB = new Date(b.date || b.timestamp || 0);
+                return dateB - dateA;
+            });
+
+            console.log('[Coach] Total games loaded:', chessnovaGames.length);
+            displayChessNovaGames();
+
+            // Show debug info if no games
+            if (chessnovaGames.length === 0) {
+                const container = document.getElementById('chessnova-games-list');
+                container.innerHTML = `
+                    <div style="padding: 15px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px;">
+                        <p style="color: var(--accent-yellow); margin-bottom: 10px;">⚠️ Aucune partie trouvée dans le localStorage.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9em;">
+                            Pour que vos parties apparaissent ici, jouez d'abord quelques parties sur
+                            <a href="CHESSNOVA.html" style="color: var(--accent-primary);">ChessNova Teacher</a>.
+                        </p>
+                        <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 10px;">
+                            Clés vérifiées: chessnova_pro_data, tournamentResults
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayChessNovaGames() {
+            const container = document.getElementById('chessnova-games-list');
+            const countEl = document.getElementById('chessnova-games-count');
+            const searchTerm = (document.getElementById('chessnova-search').value || '').toLowerCase();
+            const filter = document.getElementById('chessnova-filter').value;
+
+            // Filter games
+            let filtered = chessnovaGames.filter(g => {
+                // Search filter
+                if (searchTerm) {
+                    const searchStr = [
+                        g.white, g.black, g.opponent, g.opening, g.result,
+                        g.date, g.event
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    if (!searchStr.includes(searchTerm)) return false;
+                }
+
+                // Result filter
+                if (filter !== 'all') {
+                    const result = (g.result || '').toLowerCase();
+                    if (filter === 'win' && !result.includes('1-0') && !result.includes('win')) return false;
+                    if (filter === 'loss' && !result.includes('0-1') && !result.includes('loss')) return false;
+                    if (filter === 'draw' && !result.includes('1/2') && !result.includes('draw') && !result.includes('½')) return false;
+                }
+
+                return true;
+            });
+
+            countEl.textContent = `${filtered.length} partie${filtered.length > 1 ? 's' : ''} trouvée${filtered.length > 1 ? 's' : ''} (${chessnovaGames.length} total)`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Aucune partie trouvée.</p>';
+                return;
+            }
+
+            container.innerHTML = filtered.slice(0, 50).map((g, i) => {
+                const white = g.white || g.player || 'Joueur';
+                const black = g.black || g.opponent || 'IA';
+                const result = g.result || '?';
+                const date = g.date ? new Date(g.date).toLocaleDateString() : (g.timestamp ? new Date(g.timestamp).toLocaleDateString() : '?');
+                const moves = g.movesCount || g.moves || '?';
+                const opening = g.opening || '';
+                const avgRating = g.avgRating ? ` • ⭐${g.avgRating}` : '';
+
+                // Result color
+                let resultColor = 'var(--accent-yellow)';
+                if (result.includes('1-0')) resultColor = 'var(--accent-green)';
+                else if (result.includes('0-1')) resultColor = 'var(--accent-red)';
+
+                return `
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border-left: 3px solid ${resultColor};"
+                         onclick="loadChessNovaGame(${chessnovaGames.indexOf(g)})"
+                         onmouseover="this.style.background='rgba(102,126,234,0.2)'"
+                         onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><b>⬜ ${white}</b> vs <b>⬛ ${black}</b></span>
+                            <span style="color: ${resultColor}; font-weight: bold;">${result}</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px; display: flex; justify-content: space-between;">
+                            <span>${opening ? opening + ' • ' : ''}${moves} coups${avgRating}</span>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (filtered.length > 50) {
+                container.innerHTML += `<p style="color: var(--text-secondary); text-align: center; padding: 10px;">... et ${filtered.length - 50} autres parties</p>`;
+            }
+        }
+
+        function loadChessNovaGame(index) {
+            const g = chessnovaGames[index];
+            if (!g) {
+                showToast('Partie non trouvée', 'error');
+                return;
+            }
+
+            // Try to get PGN
+            let pgn = g.pgn;
+
+            // If no PGN but has moves array, reconstruct
+            if (!pgn && g.moves && Array.isArray(g.moves)) {
+                pgn = g.moves.join(' ');
+            }
+
+            // If still no PGN but has history
+            if (!pgn && g.history && Array.isArray(g.history)) {
+                pgn = g.history.map((m, i) => {
+                    const moveNum = Math.floor(i / 2) + 1;
+                    const isWhite = i % 2 === 0;
+                    return isWhite ? `${moveNum}. ${m}` : m;
+                }).join(' ');
+            }
+
+            if (!pgn) {
+                showToast('Cette partie n\'a pas de PGN enregistré', 'error');
+                return;
+            }
+
+            // Add headers if missing
+            if (!pgn.includes('[Event')) {
+                const headers = [
+                    `[Event "ChessNova Game"]`,
+                    `[White "${g.white || g.player || 'Joueur'}"]`,
+                    `[Black "${g.black || g.opponent || 'IA'}"]`,
+                    `[Result "${g.result || '*'}"]`,
+                    `[Date "${g.date ? new Date(g.date).toISOString().split('T')[0] : '????.??.??'}"]`,
+                    ''
+                ].join('\n');
+                pgn = headers + pgn;
+            }
+
+            game = new Chess();
+            const success = game.load_pgn(pgn);
+
+            if (!success) {
+                // Try loading just moves
+                game = new Chess();
+                const moves = pgn.replace(/\[.*?\]/g, '').replace(/\d+\./g, '').trim().split(/\s+/);
+                for (const m of moves) {
+                    if (m && m !== '1-0' && m !== '0-1' && m !== '1/2-1/2' && m !== '*') {
+                        try { game.move(m); } catch (e) {}
+                    }
+                }
+            }
+
+            if (game.history().length === 0) {
+                showToast('Impossible de charger cette partie', 'error');
+                return;
+            }
+
+            showToast(`Partie chargée: ${game.history().length} coups`, 'success');
+            startAnalysis();
+        }
+
+        // Search on input
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('chessnova-search');
+            const filterSelect = document.getElementById('chessnova-filter');
+            if (searchInput) {
+                searchInput.addEventListener('input', displayChessNovaGames);
+            }
+            if (filterSelect) {
+                filterSelect.addEventListener('change', displayChessNovaGames);
+            }
+        });
+
+        async function fetchLichessGames() {
+            const username = document.getElementById('lichess-username').value.trim();
+            if (!username) {
+                showToast('Entrez un pseudo Lichess', 'error');
+                return;
+            }
+
+            const count = document.getElementById('lichess-game-count').value;
+            showLoading('Récupération des parties de ' + username + '...');
+
+            try {
+                const response = await fetch(
+                    `https://lichess.org/api/games/user/${username}?max=${count}&pgnInJson=true`,
+                    { headers: { 'Accept': 'application/x-ndjson' } }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Utilisateur non trouvé');
+                }
+
+                const text = await response.text();
+                const games = text.split('\n').filter(l => l).map(l => JSON.parse(l));
+
+                displayLichessGames(games);
+                hideLoading();
+            } catch (e) {
+                hideLoading();
+                showToast('Erreur: ' + e.message, 'error');
+            }
+        }
+
+        function displayLichessGames(games) {
+            const container = document.getElementById('lichess-games-list');
+            if (games.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Aucune partie trouvée.</p>';
+                return;
+            }
+
+            container.innerHTML = games.map((g, i) => {
+                const white = g.players?.white?.user?.name || 'Anonymous';
+                const black = g.players?.black?.user?.name || 'Anonymous';
+                const result = g.winner === 'white' ? '1-0' : g.winner === 'black' ? '0-1' : '½-½';
+                const date = new Date(g.createdAt).toLocaleDateString();
+
+                return `
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                         onclick="loadLichessGame(${i})"
+                         onmouseover="this.style.background='rgba(0,217,255,0.1)'"
+                         onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><b>${white}</b> vs <b>${black}</b></span>
+                            <span style="color: var(--accent-yellow);">${result}</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                            ${g.speed || 'Standard'} • ${date}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Store games for later access
+            window.lichessGames = games;
+        }
+
+        function loadLichessGame(index) {
+            const g = window.lichessGames[index];
+            if (!g || !g.pgn) {
+                showToast('Partie sans PGN', 'error');
+                return;
+            }
+
+            game = new Chess();
+            game.load_pgn(g.pgn);
+            startAnalysis();
+        }
+
+        // ========================================
+        // DEEP ANALYSIS
+        // ========================================
+
+        // Analysis cache
+        const ANALYSIS_CACHE_KEY = 'chessnova_analysis_cache';
+        let analysisCache = loadAnalysisCache();
+
+        function loadAnalysisCache() {
+            try {
+                return JSON.parse(localStorage.getItem(ANALYSIS_CACHE_KEY)) || {};
+            } catch { return {}; }
+        }
+
+        function saveAnalysisCache() {
+            try {
+                // Keep only last 50 analyses to avoid storage issues
+                const keys = Object.keys(analysisCache);
+                if (keys.length > 50) {
+                    const toRemove = keys.slice(0, keys.length - 50);
+                    toRemove.forEach(k => delete analysisCache[k]);
+                }
+                localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(analysisCache));
+            } catch (e) {
+                console.error('Failed to save analysis cache:', e);
+            }
+        }
+
+        function getGameHash(pgn) {
+            // Simple hash of PGN for cache key
+            let hash = 0;
+            const str = pgn.replace(/\s+/g, ' ').trim();
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return 'game_' + Math.abs(hash).toString(36);
+        }
+
+        // ========================================
+        // FIRESTORE CLOUD SAVE/LOAD
+        // ========================================
+
+        async function saveAnalysisToFirestore(gameHash, analysisData) {
+            if (!db) {
+                console.warn('[Coach] Firestore not available');
+                return false;
+            }
+            try {
+                await db.collection('chess_analyses').doc(gameHash).set({
+                    ...analysisData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('[Coach] Analysis saved to Firestore:', gameHash);
+                return true;
+            } catch (e) {
+                console.error('[Coach] Failed to save to Firestore:', e);
+                return false;
+            }
+        }
+
+        async function loadAnalysisFromFirestore(gameHash) {
+            if (!db) {
+                console.warn('[Coach] Firestore not available');
+                return null;
+            }
+            try {
+                // Add 2 second timeout to prevent blocking
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Firestore timeout')), 2000)
+                );
+                const fetchPromise = db.collection('chess_analyses').doc(gameHash).get();
+
+                const doc = await Promise.race([fetchPromise, timeoutPromise]);
+                if (doc.exists) {
+                    console.log('[Coach] Analysis loaded from Firestore:', gameHash);
+                    return doc.data();
+                }
+                return null;
+            } catch (e) {
+                console.warn('[Coach] Firestore unavailable, using local analysis:', e.message);
+                return null;
+            }
+        }
+
+        async function startAnalysis() {
+            console.log('[Analysis] startAnalysis() called');
+            showPanel('analysis');
+
+            const pgn = game.pgn();
+            console.log('[Analysis] PGN length:', pgn.length, 'moves:', game.history().length);
+
+            if (game.history().length === 0) {
+                showToast('Aucun coup à analyser', 'error');
+                return;
+            }
+
+            const gameHash = getGameHash(pgn);
+            console.log('[Analysis] Game hash:', gameHash);
+
+            // Check localStorage cache first — INSTANT, no re-analysis needed
+            if (analysisCache[gameHash]) {
+                console.log('[Coach] CACHE HIT localStorage:', gameHash);
+                showPanel('analysis');
+                loadAnalysisFromCache(gameHash);
+                showToast('Analyse déjà sauvegardée — chargement instantané!', 'success');
+                return;
+            }
+
+            // Check Firestore cloud cache
+            console.log('[Analysis] Checking Firestore cache...');
+            showLoading('Recherche dans le cloud...');
+            loadingLog('Vérification cache cloud...');
+            const cloudAnalysis = await loadAnalysisFromFirestore(gameHash);
+            console.log('[Analysis] Firestore result:', cloudAnalysis ? 'found' : 'not found');
+            loadingLog('Cloud: ' + (cloudAnalysis ? 'trouvé!' : 'pas en cache'));
+            if (cloudAnalysis) {
+                console.log('[Coach] Loading from Firestore:', gameHash);
+                analysisCache[gameHash] = cloudAnalysis;
+                saveAnalysisCache();
+                loadAnalysisFromCache(gameHash);
+                showToast('Analyse chargée depuis le cloud!', 'success');
+                return;
+            }
+
+            // Wait for Stockfish to be ready (max 15 seconds)
+            if (!stockfishReady) {
+                showLoading('Chargement de Stockfish...');
+                loadingLog('Attente Stockfish...');
+                let waited = 0;
+                while (!stockfishReady && waited < 15000) {
+                    if (analysisCancelled) return;
+                    await new Promise(r => setTimeout(r, 500));
+                    waited += 500;
+                    loadingLog('Stockfish... ' + (waited/1000) + 's');
+                }
+                if (!stockfishReady) {
+                    loadingLog('ERREUR: Stockfish non disponible après 15s');
+                    showToast('Stockfish non disponible. Rechargez la page.', 'error');
+                    hideLoading();
+                    return;
+                }
+            }
+            loadingLog('Stockfish OK!');
+
+            // Test Stockfish with a quick ping
+            showLoading('Test Stockfish...');
+            loadingLog('Test ping Stockfish...');
+            console.log('[Analysis] Testing Stockfish ping...');
+            const testResult = await testStockfishPing();
+            console.log('[Analysis] Ping result:', testResult);
+            loadingLog('Ping: ' + (testResult ? 'OK' : 'ECHEC'));
+            if (!testResult) {
+                showToast('Stockfish ne répond pas. Rechargez la page.', 'error');
+                hideLoading();
+                return;
+            }
+
+            analysisGame = new Chess();
+            analyzedMoves = [];
+            const history = game.history({ verbose: true });
+            console.log('[Analysis] Starting analysis of', history.length, 'moves');
+
+            // Show initial loading with 0%
+            showLoading('');
+            document.getElementById('loading-text').innerHTML = `
+                <div style="font-size: 1.5em; margin-bottom: 15px; font-weight: bold;">
+                    <span style="color: #00d9ff;">0%</span> terminé
+                </div>
+                <div style="font-size: 1.1em; margin-bottom: 10px;">
+                    Préparation de l'analyse de <strong>${history.length}</strong> coups...
+                </div>
+                <div style="color: #f59e0b; font-size: 1.1em; margin-bottom: 15px;">
+                    ⏱️ Temps restant: <strong>calcul...</strong>
+                </div>
+                <div style="width: 250px; height: 12px; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden;">
+                    <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d9ff, #667eea); border-radius: 6px;"></div>
+                </div>
+                <div style="margin-top: 15px; font-size: 0.9em; color: #888;">Profondeur Stockfish: 18</div>
+            `;
+
+            // Update game info
+            const headers = game.header();
+            document.getElementById('white-name').textContent = headers.White || 'Blancs';
+            document.getElementById('black-name').textContent = headers.Black || 'Noirs';
+            document.getElementById('game-result').textContent = headers.Result || '';
+
+            // Analyze each position with timing
+            let whiteScores = [];
+            let blackScores = [];
+            let evalHistory = [0];
+            let prevEval = 0;
+
+            const startTime = Date.now();
+            let moveTimes = [];
+
+            for (let i = 0; i < history.length; i++) {
+                if (analysisCancelled) { hideLoading(); return; }
+                const moveStartTime = Date.now();
+                console.log(`[Analysis] Move ${i+1}/${history.length}`);
+                if (i < 3) loadingLog('Analyse coup ' + (i+1) + '/' + history.length + '...');
+
+                const move = history[i];
+                const fenBefore = analysisGame.fen();
+
+                // Get evaluation before the move (single analysis per move for speed)
+                const analysisBefore = await analyzePositionAsync(fenBefore, 15);
+
+                // Make the move
+                analysisGame.move(move);
+                const fenAfter = analysisGame.fen();
+
+                // Get evaluation after - use quicker depth for second analysis
+                const analysisAfter = await analyzePositionAsync(fenAfter, 12);
+
+                // Track time for this move
+                const moveTime = Date.now() - moveStartTime;
+                moveTimes.push(moveTime);
+
+                // Adjust score perspective
+                const scoreBefore = i % 2 === 0 ? analysisBefore.score : -analysisBefore.score;
+                const scoreAfter = i % 2 === 0 ? -analysisAfter.score : analysisAfter.score;
+
+                // Calculate loss
+                const loss = scoreBefore - scoreAfter;
+
+                // Classify the move
+                const classification = classifyMove(loss, move, analysisBefore.bestMove, fenBefore);
+
+                analyzedMoves.push({
+                    move: move,
+                    san: move.san,
+                    fen: fenBefore,
+                    fenAfter: fenAfter,
+                    evalBefore: scoreBefore,
+                    evalAfter: scoreAfter,
+                    loss: loss,
+                    bestMove: analysisBefore.bestMove,
+                    bestLine: analysisBefore.pv,
+                    classification: classification,
+                    isWhite: i % 2 === 0
+                });
+
+                evalHistory.push(scoreAfter);
+
+                // Track accuracy
+                const accuracy = Math.max(0, 100 - Math.abs(loss) * 10);
+                if (i % 2 === 0) {
+                    whiteScores.push(accuracy);
+                } else {
+                    blackScores.push(accuracy);
+                }
+
+                prevEval = scoreAfter;
+
+                // Update loading with progress and ETA
+                const pct = Math.round((i + 1) / history.length * 100);
+                const remainingMoves = history.length - i - 1;
+                let etaStr = 'calcul...';
+
+                if (moveTimes.length > 0) {
+                    const avgTimePerMove = moveTimes.reduce((a, b) => a + b, 0) / moveTimes.length;
+                    const etaMs = avgTimePerMove * remainingMoves;
+                    const etaSec = Math.floor(etaMs / 1000);
+                    if (etaSec < 60) {
+                        etaStr = etaSec + ' sec';
+                    } else {
+                        const mins = Math.floor(etaSec / 60);
+                        const secs = etaSec % 60;
+                        etaStr = mins + ' min ' + secs + ' sec';
+                    }
+                }
+
+                document.getElementById('loading-text').innerHTML = `
+                    <div style="font-size: 1.5em; margin-bottom: 15px; font-weight: bold;">
+                        <span style="color: #00d9ff;">${pct}%</span> terminé
+                    </div>
+                    <div style="font-size: 1.1em; margin-bottom: 10px;">
+                        Coup <strong>${i + 1}</strong> / <strong>${history.length}</strong>
+                    </div>
+                    <div style="color: #f59e0b; font-size: 1.1em; margin-bottom: 15px;">
+                        ⏱️ Temps restant: <strong>${etaStr}</strong>
+                    </div>
+                    <div style="width: 250px; height: 12px; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, #00d9ff, #667eea); border-radius: 6px; transition: width 0.3s;"></div>
+                    </div>
+                `;
+            }
+
+            // Calculate accuracies
+            const whiteAcc = whiteScores.length > 0 ? Math.round(whiteScores.reduce((a, b) => a + b, 0) / whiteScores.length) : 0;
+            const blackAcc = blackScores.length > 0 ? Math.round(blackScores.reduce((a, b) => a + b, 0) / blackScores.length) : 0;
+
+            document.getElementById('accuracy-white').textContent = whiteAcc + '%';
+            document.getElementById('accuracy-black').textContent = blackAcc + '%';
+            document.getElementById('total-moves').textContent = history.length;
+
+            const errors = analyzedMoves.filter(m => ['inaccuracy', 'mistake', 'blunder'].includes(m.classification.type)).length;
+            document.getElementById('total-errors').textContent = errors;
+
+            // Save to localStorage cache
+            const analysisData = {
+                pgn: pgn,
+                headers: headers,
+                analyzedMoves: analyzedMoves,
+                evalHistory: evalHistory,
+                whiteAcc: whiteAcc,
+                blackAcc: blackAcc,
+                errors: errors,
+                timestamp: Date.now()
+            };
+            analysisCache[gameHash] = analysisData;
+            saveAnalysisCache();
+            console.log('[Coach] Analysis saved to localStorage:', gameHash);
+
+            // Save to Firestore cloud (async, non-blocking)
+            saveAnalysisToFirestore(gameHash, analysisData).then(success => {
+                if (success) {
+                    console.log('[Coach] Analysis saved to Firestore:', gameHash);
+                    showToast('Analyse sauvegardée (local + cloud)', 'success');
+                } else {
+                    console.warn('[Coach] Firestore save failed, local only');
+                    showToast('Analyse sauvegardée (local uniquement)', 'info');
+                }
+            });
+
+            // Build move list
+            buildMoveList();
+
+            // Build full game report
+            buildGameReport();
+
+            // Update eval chart
+            updateEvalChart(evalHistory);
+
+            // Generate puzzles from errors
+            generatePuzzlesFromErrors();
+
+            // Save to recent games
+            saveRecentGame();
+
+            // Update progress
+            updateProgressFromAnalysis(whiteAcc, blackAcc, errors);
+
+            hideLoading();
+            showToast('Analyse terminée et synchronisée!', 'success');
+
+            // Go to first move
+            goToStart();
+            goForward();
+        }
+
+        function loadAnalysisFromCache(gameHash) {
+            const cached = analysisCache[gameHash];
+            if (!cached) return false;
+
+            console.log('[Coach] Loading cached analysis');
+
+            // Restore state
+            analyzedMoves = cached.analyzedMoves;
+
+            // Update game info
+            document.getElementById('white-name').textContent = cached.headers?.White || 'Blancs';
+            document.getElementById('black-name').textContent = cached.headers?.Black || 'Noirs';
+            document.getElementById('game-result').textContent = cached.headers?.Result || '';
+
+            document.getElementById('accuracy-white').textContent = cached.whiteAcc + '%';
+            document.getElementById('accuracy-black').textContent = cached.blackAcc + '%';
+            document.getElementById('total-moves').textContent = analyzedMoves.length;
+            document.getElementById('total-errors').textContent = cached.errors;
+
+            // Build move list
+            buildMoveList();
+
+            // Build full game report
+            buildGameReport();
+
+            // Update eval chart
+            updateEvalChart(cached.evalHistory);
+
+            // Generate puzzles from errors
+            generatePuzzlesFromErrors();
+
+            showToast('Analyse chargée depuis le cache!', 'success');
+
+            // Go to first move
+            goToStart();
+            goForward();
+
+            return true;
+        }
+
+        function formatTime(ms) {
+            if (ms < 1000) return '<1s';
+            const seconds = Math.floor(ms / 1000);
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return minutes + 'min ' + secs + 's';
+        }
+
+        function analyzePositionAsync(fen, depth) {
+            return new Promise((resolve) => {
+                // If Stockfish not ready, return immediately with defaults
+                if (!stockfishReady || !stockfish) {
+                    console.warn('[Analysis] Stockfish unavailable, using fallback');
+                    resolve({ score: 0, bestMove: null, pv: [], fallback: true });
+                    return;
+                }
+
+                let resolved = false;
+
+                // Aggressive 5-second timeout - skip if no response
+                const timeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        console.warn('[Analysis] 5s timeout, skipping position');
+                        isAnalyzing = false;
+                        pendingAnalysis = null;
+                        resolve({ score: 0, bestMove: null, pv: [], timeout: true });
+                        // IMPORTANT: kick the queue so next analysis starts
+                        processAnalysisQueue();
+                    }
+                }, 5000);
+
+                analyzePosition(fen, depth, result => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        resolve(result);
+                    }
+                });
+            });
+        }
+
+        function classifyMove(loss, move, bestMove, fen) {
+            // Check if it was the best move
+            const moveStr = move.from + move.to + (move.promotion || '');
+            const isBestMove = bestMove && bestMove.startsWith(moveStr.substring(0, 4));
+
+            // Detect error category
+            let category = detectErrorCategory(move, loss, fen);
+
+            if (loss <= -1) {
+                return { type: 'brilliant', icon: '🌟', label: 'Brillant', category };
+            } else if (isBestMove && loss <= 0.05) {
+                return { type: 'best', icon: '💎', label: 'Meilleur coup', category };
+            } else if (isBestMove || loss <= 0.1) {
+                return { type: 'excellent', icon: '✅', label: 'Excellent', category };
+            } else if (loss <= 0.3) {
+                return { type: 'good', icon: '👍', label: 'Bon', category };
+            } else if (loss <= 0.8) {
+                return { type: 'inaccuracy', icon: '⚠️', label: 'Imprécision', category };
+            } else if (loss <= 2) {
+                return { type: 'mistake', icon: '❌', label: 'Erreur', category };
+            } else {
+                return { type: 'blunder', icon: '💥', label: 'Gaffe', category };
+            }
+        }
+
+        function detectErrorCategory(move, loss, fen) {
+            const tempGame = new Chess(fen);
+
+            // Check for hanging piece
+            if (loss > 0.5) {
+                // Simulate opponent taking
+                tempGame.move(move);
+                const opponentMoves = tempGame.moves({ verbose: true });
+                for (const m of opponentMoves) {
+                    if (m.captured) {
+                        const capturedValue = getPieceValue(m.captured);
+                        const attackerValue = getPieceValue(m.piece);
+                        if (capturedValue >= attackerValue) {
+                            return 'hanging';
+                        }
+                    }
+                }
+            }
+
+            // Check phase
+            const moveNum = tempGame.history().length;
+            if (moveNum <= 10) return 'opening';
+
+            // Count material
+            const fenParts = fen.split(' ')[0];
+            const pieces = fenParts.replace(/[0-9\/]/g, '');
+            if (pieces.length <= 10) return 'endgame';
+
+            // Check king safety (if moving pawns near king)
+            if (move.piece === 'p') {
+                const kingSquare = findKing(fen, move.color);
+                if (kingSquare && isNearKing(move.to, kingSquare)) {
+                    return 'king-safety';
+                }
+            }
+
+            // Check bad exchange
+            if (move.captured) {
+                const capturedValue = getPieceValue(move.captured);
+                const pieceValue = getPieceValue(move.piece);
+                if (pieceValue > capturedValue + 1) {
+                    return 'exchange';
+                }
+            }
+
+            return 'tactics';
+        }
+
+        function getPieceValue(piece) {
+            const values = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            return values[piece.toLowerCase()] || 0;
+        }
+
+        function findKing(fen, color) {
+            const board = fen.split(' ')[0];
+            const rows = board.split('/');
+            const king = color === 'w' ? 'K' : 'k';
+
+            for (let r = 0; r < 8; r++) {
+                let col = 0;
+                for (const c of rows[r]) {
+                    if (c === king) {
+                        return String.fromCharCode(97 + col) + (8 - r);
+                    }
+                    if (isNaN(c)) col++;
+                    else col += parseInt(c);
+                }
+            }
+            return null;
+        }
+
+        function isNearKing(square, kingSquare) {
+            const colDiff = Math.abs(square.charCodeAt(0) - kingSquare.charCodeAt(0));
+            const rowDiff = Math.abs(parseInt(square[1]) - parseInt(kingSquare[1]));
+            return colDiff <= 2 && rowDiff <= 2;
+        }
+
+        // ========================================
+        // MOVE LIST & NAVIGATION
+        // ========================================
+
+        function buildMoveList() {
+            const container = document.getElementById('move-list');
+            let html = '';
+
+            for (let i = 0; i < analyzedMoves.length; i++) {
+                const m = analyzedMoves[i];
+                const moveNum = Math.floor(i / 2) + 1;
+                const isWhite = i % 2 === 0;
+
+                if (isWhite) {
+                    html += `<span style="color: var(--text-secondary); margin-right: 5px;">${moveNum}.</span>`;
+                }
+
+                html += `<span class="move-item ${m.classification.type}" data-index="${i}" onclick="goToMove(${i})">
+                    ${m.san} ${m.classification.icon}
+                </span>`;
+
+                if (!isWhite) {
+                    html += '<br>';
+                }
+            }
+
+            container.innerHTML = html || '<span style="color: var(--text-secondary);">Aucun coup analysé.</span>';
+        }
+
+        function buildGameReport() {
+            const card = document.getElementById('game-report-card');
+            const container = document.getElementById('game-report');
+            if (!analyzedMoves || analyzedMoves.length === 0) { card.style.display = 'none'; return; }
+
+            card.style.display = 'block';
+
+            const totalMoves = analyzedMoves.length;
+            const openingEnd = Math.min(Math.floor(totalMoves * 0.2), 20);
+            const middlegameEnd = Math.floor(totalMoves * 0.7);
+
+            // Count stats per side
+            const stats = { white: { brilliant: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 },
+                            black: { brilliant: 0, best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 } };
+            analyzedMoves.forEach(m => {
+                const side = m.isWhite ? 'white' : 'black';
+                stats[side][m.classification.type] = (stats[side][m.classification.type] || 0) + 1;
+            });
+
+            const headers = game.header();
+            const whiteName = headers.White || 'Blancs';
+            const blackName = headers.Black || 'Noirs';
+            const result = headers.Result || '';
+
+            let html = '';
+
+            // Header
+            html += `<div style="padding:12px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:8px;margin-bottom:15px;">
+                <div style="font-size:1.2em;font-weight:bold;color:#ffd700;">${whiteName} vs ${blackName}</div>
+                <div style="color:var(--text-secondary);">${headers.Event || ''} ${headers.Date || ''} — Résultat: <strong style="color:#fff;">${result}</strong></div>
+            </div>`;
+
+            // Stats summary
+            html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
+                <div style="padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;">
+                    <div style="font-weight:bold;margin-bottom:5px;">⬜ ${whiteName}</div>
+                    ${stats.white.brilliant ? '<div>🌟 Brillants: ' + stats.white.brilliant + '</div>' : ''}
+                    ${stats.white.best ? '<div>💎 Meilleurs coups: ' + stats.white.best + '</div>' : ''}
+                    <div>✅ Excellents: ${stats.white.excellent || 0}</div>
+                    <div>👍 Bons: ${stats.white.good || 0}</div>
+                    ${stats.white.inaccuracy ? '<div>⚠️ Imprécisions: ' + stats.white.inaccuracy + '</div>' : ''}
+                    ${stats.white.mistake ? '<div>❌ Erreurs: ' + stats.white.mistake + '</div>' : ''}
+                    ${stats.white.blunder ? '<div>💥 Gaffes: ' + stats.white.blunder + '</div>' : ''}
+                </div>
+                <div style="padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;">
+                    <div style="font-weight:bold;margin-bottom:5px;">⬛ ${blackName}</div>
+                    ${stats.black.brilliant ? '<div>🌟 Brillants: ' + stats.black.brilliant + '</div>' : ''}
+                    ${stats.black.best ? '<div>💎 Meilleurs coups: ' + stats.black.best + '</div>' : ''}
+                    <div>✅ Excellents: ${stats.black.excellent || 0}</div>
+                    <div>👍 Bons: ${stats.black.good || 0}</div>
+                    ${stats.black.inaccuracy ? '<div>⚠️ Imprécisions: ' + stats.black.inaccuracy + '</div>' : ''}
+                    ${stats.black.mistake ? '<div>❌ Erreurs: ' + stats.black.mistake + '</div>' : ''}
+                    ${stats.black.blunder ? '<div>💥 Gaffes: ' + stats.black.blunder + '</div>' : ''}
+                </div>
+            </div>`;
+
+            // Full commentary - ALL moves
+            const phases = [
+                { name: '📖 Ouverture', start: 0, end: openingEnd },
+                { name: '⚔️ Milieu de partie', start: openingEnd, end: middlegameEnd },
+                { name: '🏁 Finale', start: middlegameEnd, end: totalMoves }
+            ];
+
+            for (const phase of phases) {
+                if (phase.end - phase.start === 0) continue;
+
+                html += `<div style="margin-top:15px;padding:8px 12px;background:rgba(102,126,234,0.15);border-radius:6px;font-weight:bold;color:var(--accent-secondary);">
+                    ${phase.name} <span style="font-weight:normal;color:var(--text-secondary);">(coups ${Math.floor(phase.start/2)+1}-${Math.floor((phase.end-1)/2)+1})</span>
+                </div>`;
+
+                for (let i = phase.start; i < phase.end; i++) {
+                    const m = analyzedMoves[i];
+                    const moveNum = Math.floor(i / 2) + 1;
+                    const side = m.isWhite ? whiteName : blackName;
+                    const type = m.classification.type;
+                    const bestSan = uciToSan(m.fen, m.bestMove);
+                    const evalDiff = Math.abs(m.loss).toFixed(1);
+
+                    // Commentary for EVERY move
+                    let commentary = '';
+                    if (type === 'brilliant') {
+                        commentary = `Coup spectaculaire! Améliore la position de ${evalDiff} pion(s). Un coup de génie.`;
+                    } else if (type === 'best') {
+                        commentary = `Le meilleur coup! Choix parfait du moteur dans cette position.`;
+                    } else if (type === 'excellent') {
+                        if (m.bestMove && bestSan !== m.san) {
+                            commentary = `Très bon coup. Proche du meilleur (${bestSan}).`;
+                        } else {
+                            commentary = `Le meilleur coup dans cette position.`;
+                        }
+                    } else if (type === 'good') {
+                        commentary = `Bon coup. Légèrement inférieur à ${bestSan} (${evalDiff}).`;
+                    } else if (type === 'inaccuracy') {
+                        commentary = `Imprécision. Mieux: <strong>${bestSan}</strong> — perte de ${evalDiff} pion(s).`;
+                    } else if (type === 'mistake') {
+                        commentary = `Erreur! Il fallait jouer <strong>${bestSan}</strong>. Perte de ${evalDiff} pion(s).`;
+                    } else if (type === 'blunder') {
+                        commentary = `Gaffe majeure! <strong>${bestSan}</strong> était nécessaire. Perte de ${evalDiff} pion(s).`;
+                    }
+
+                    // Colors per type
+                    const colors = {
+                        brilliant:  { bg: 'rgba(16,185,129,0.12)', border: '#10b981' },
+                        best:       { bg: 'rgba(0,217,255,0.10)', border: '#00d9ff' },
+                        excellent:  { bg: 'rgba(16,185,129,0.06)', border: '#10b981' },
+                        good:       { bg: 'rgba(255,255,255,0.03)', border: '#666' },
+                        inaccuracy: { bg: 'rgba(245,158,11,0.08)', border: '#f59e0b' },
+                        mistake:    { bg: 'rgba(239,68,68,0.08)', border: '#ef4444' },
+                        blunder:    { bg: 'rgba(239,68,68,0.15)', border: '#ef4444' }
+                    };
+                    const c = colors[type] || colors.good;
+
+                    // Move number display
+                    const moveLabel = m.isWhite ? `${moveNum}.` : `${moveNum}...`;
+
+                    html += `<div style="padding:8px 12px;margin:3px 0;background:${c.bg};border-left:3px solid ${c.border};border-radius:0 6px 6px 0;cursor:pointer;display:flex;align-items:flex-start;gap:8px;" onclick="goToMove(${i})">
+                        <div style="min-width:45px;font-weight:bold;color:var(--text-secondary);">${moveLabel}</div>
+                        <div style="flex:1;">
+                            <span style="font-weight:bold;">${m.classification.icon} ${m.san}</span>
+                            <span style="color:var(--text-secondary);font-size:0.85em;margin-left:6px;">${side}</span>
+                            <span style="float:right;font-size:0.8em;color:${c.border};">${m.evalAfter >= 0 ? '+' : ''}${m.evalAfter.toFixed(1)}</span>
+                            <div style="margin-top:3px;color:var(--text-secondary);font-size:0.85em;">${commentary}</div>
+                        </div>
+                    </div>`;
+                }
+            }
+
+            // Conclusion
+            let conclusion = '';
+            if (result === '1-0') conclusion = `${whiteName} remporte la partie.`;
+            else if (result === '0-1') conclusion = `${blackName} remporte la partie.`;
+            else if (result === '1/2-1/2') conclusion = 'La partie se termine par une nulle.';
+
+            const totalBlunders = (stats.white.blunder || 0) + (stats.black.blunder || 0);
+            const totalMistakes = (stats.white.mistake || 0) + (stats.black.mistake || 0);
+            const totalBrilliant = (stats.white.brilliant || 0) + (stats.black.brilliant || 0);
+
+            html += `<div style="margin-top:15px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.1);">
+                <div style="font-weight:bold;margin-bottom:8px;">🏆 Conclusion</div>
+                <div>${conclusion}</div>
+                <div style="margin-top:5px;color:var(--text-secondary);">
+                    ${totalBrilliant} coup(s) brillant(s), ${totalMistakes} erreur(s), ${totalBlunders} gaffe(s) dans cette partie.
+                </div>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        function goToMove(index) {
+            if (index < -1 || index >= analyzedMoves.length) return;
+
+            currentMoveIndex = index;
+
+            // Reset to start
+            analysisGame = new Chess();
+
+            // Replay moves up to index
+            for (let i = 0; i <= index; i++) {
+                analysisGame.move(analyzedMoves[i].move);
+            }
+
+            // Update board
+            board.position(analysisGame.fen());
+
+            // Update move list highlighting
+            document.querySelectorAll('.move-item').forEach(el => el.classList.remove('current'));
+            if (index >= 0) {
+                document.querySelector(`.move-item[data-index="${index}"]`)?.classList.add('current');
+            }
+
+            // Update analysis panel
+            updateAnalysisPanel();
+
+            // Update eval bar
+            if (index >= 0) {
+                updateEvalBar(analyzedMoves[index].evalAfter);
+            } else {
+                updateEvalBar(0);
+            }
+        }
+
+        function goToStart() { goToMove(-1); analysisGame = new Chess(); board.position('start'); }
+        function goBack() { goToMove(currentMoveIndex - 1); }
+        function goForward() { goToMove(currentMoveIndex + 1); }
+        function goToEnd() { goToMove(analyzedMoves.length - 1); }
+        function flipBoard() { board.flip(); }
+
+        // ========================================
+        // ANALYSIS PANEL
+        // ========================================
+
+        function updateAnalysisPanel() {
+            const container = document.getElementById('move-analysis');
+            const errorCard = document.getElementById('error-details-card');
+            const errorDetails = document.getElementById('error-details');
+
+            if (currentMoveIndex < 0 || currentMoveIndex >= analyzedMoves.length) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Sélectionnez un coup pour voir l\'analyse.</p>';
+                container.className = 'analysis-box';
+                errorCard.style.display = 'none';
+                return;
+            }
+
+            const m = analyzedMoves[currentMoveIndex];
+            const moveNum = Math.floor(currentMoveIndex / 2) + 1;
+            const colorStr = m.isWhite ? 'Blancs' : 'Noirs';
+
+            container.className = 'analysis-box ' + m.classification.type;
+
+            // Build main analysis
+            let html = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <span style="font-size: 1.5em; font-weight: bold;">${m.classification.icon} ${m.san}</span>
+                        <span style="color: var(--text-secondary); margin-left: 10px;">Coup ${moveNum} (${colorStr})</span>
+                    </div>
+                    <span class="error-category ${m.classification.category}">${getCategoryLabel(m.classification.category)}</span>
+                </div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div>
+                        <span style="color: var(--text-secondary);">Évaluation avant:</span>
+                        <span style="font-weight: bold; color: ${m.evalBefore >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                            ${m.evalBefore >= 0 ? '+' : ''}${m.evalBefore.toFixed(2)}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary);">Évaluation après:</span>
+                        <span style="font-weight: bold; color: ${m.evalAfter >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                            ${m.evalAfter >= 0 ? '+' : ''}${m.evalAfter.toFixed(2)}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-secondary);">Perte:</span>
+                        <span style="font-weight: bold; color: ${m.loss > 0.3 ? 'var(--accent-red)' : 'var(--accent-green)'};">
+                            ${m.loss > 0 ? '-' : '+'}${Math.abs(m.loss).toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            // Best move
+            if (m.bestMove) {
+                const bestSan = uciToSan(m.fen, m.bestMove);
+                html += `
+                    <div class="best-move-box">
+                        <h4>✨ Meilleur coup: ${bestSan}</h4>
+                        ${m.bestLine && m.bestLine.length > 1 ? `<p style="color: var(--text-secondary); font-size: 0.9em;">Ligne: ${m.bestLine.slice(0, 5).join(' ')}</p>` : ''}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+
+            // Show error explanation for mistakes/blunders
+            if (['inaccuracy', 'mistake', 'blunder'].includes(m.classification.type)) {
+                errorCard.style.display = 'block';
+                errorDetails.innerHTML = generateErrorExplanation(m);
+            } else {
+                errorCard.style.display = 'none';
+            }
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                'hanging': '🎯 Pièce en prise',
+                'tactics': '⚡ Tactique manquée',
+                'exchange': '⚖️ Mauvais échange',
+                'king-safety': '👑 Sécurité du Roi',
+                'positional': '📍 Erreur positionnelle',
+                'opening': '📖 Erreur d\'ouverture',
+                'endgame': '🏁 Erreur de finale'
+            };
+            return labels[category] || category;
+        }
+
+        function generateErrorExplanation(m) {
+            // Générer une explication spécifique au coup joué
+            const specificExplanation = generateSpecificExplanation(m);
+            const bestSan = uciToSan(m.fen, m.bestMove);
+            const bestExplanation = generateBestMoveExplanation(m, bestSan);
+
+            const avoidTips = {
+                'hanging': [
+                    'Avant chaque coup, demandez-vous: "Ma pièce sera-t-elle protégée?"',
+                    'Vérifiez les attaques de l\'adversaire sur votre pièce.',
+                    'Comptez toujours: défenseurs vs attaquants.'
+                ],
+                'tactics': [
+                    'Cherchez les échecs, captures et menaces (CCM) AVANT de jouer.',
+                    'Faites des puzzles tactiques chaque jour.',
+                    'Prenez le temps de calculer les variantes forcées.'
+                ],
+                'exchange': [
+                    'Valeurs: Pion=1, Cavalier/Fou=3, Tour=5, Dame=9.',
+                    'N\'échangez jamais sans raison stratégique claire.',
+                    'Posez-vous: "Qui bénéficie de cet échange?"'
+                ],
+                'king-safety': [
+                    'Ne poussez JAMAIS les pions devant votre Roi roqueé sans raison.',
+                    'Gardez des pièces défensives près du Roi.',
+                    'Anticipez les sacrifices d\'ouverture de lignes.'
+                ],
+                'opening': [
+                    'Développez les pièces mineures (Cavaliers et Fous) en premier.',
+                    'Contrôlez le centre avec d4/e4 ou d5/e5.',
+                    'Ne sortez pas la Dame avant le coup 6-8.',
+                    'Roquez avant le coup 10.'
+                ],
+                'endgame': [
+                    'Activez votre Roi en finale - il devient une pièce d\'attaque!',
+                    'Poussez les pions passés vers la promotion.',
+                    'L\'opposition est CRUCIALE dans les finales de pions.',
+                    'Centralisez vos Tours derrière les pions passés.'
+                ]
+            };
+
+            const tips = avoidTips[m.classification.category] || avoidTips['tactics'];
+
+            return `
+                <div class="error-explain" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);">
+                    <h4 style="color: var(--accent-red); font-size: 1.1em; margin-bottom: 12px;">
+                        🚫 IL NE FAUT PAS JOUER ${m.san} CAR:
+                    </h4>
+                    <ul style="line-height: 1.8;">
+                        ${specificExplanation.map(e => `<li style="margin-bottom: 8px;">${e}</li>`).join('')}
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-red);">Perte d'évaluation:</strong>
+                        <span style="color: #fff; font-size: 1.1em;"> ${m.evalBefore.toFixed(1)} → ${m.evalAfter.toFixed(1)}</span>
+                        <span style="color: var(--accent-red); margin-left: 10px;">(${m.loss > 0 ? '-' : '+'}${Math.abs(m.loss).toFixed(1)} pion${Math.abs(m.loss) > 1 ? 's' : ''})</span>
+                    </div>
+                </div>
+
+                <div class="best-move-box" style="margin-top: 20px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);">
+                    <h4 style="color: var(--accent-green); font-size: 1.1em; margin-bottom: 12px;">
+                        ✅ À LA PLACE, IL FALLAIT JOUER ${bestSan}:
+                    </h4>
+                    <ul style="line-height: 1.8;">
+                        ${bestExplanation.map(e => `<li style="margin-bottom: 8px;">${e}</li>`).join('')}
+                    </ul>
+                    ${m.bestLine && m.bestLine.length > 2 ? `
+                        <div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 5px; font-family: monospace;">
+                            <span style="color: var(--text-secondary);">Suite probable:</span>
+                            <span style="color: #fff;"> ${m.bestLine.slice(0, 5).join(' ')}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="avoid-box" style="margin-top: 20px; background: rgba(102,126,234,0.1); border: 1px solid rgba(102,126,234,0.3);">
+                    <h4 style="color: var(--accent-secondary); font-size: 1.1em; margin-bottom: 12px;">
+                        📚 POUR NE PLUS REFAIRE CETTE ERREUR:
+                    </h4>
+                    <ol style="line-height: 1.8; margin-left: 20px;">
+                        ${tips.map(t => `<li style="margin-bottom: 8px;">${t}</li>`).join('')}
+                    </ol>
+                </div>
+
+                <button class="btn-primary" onclick="createPuzzleFromError(${currentMoveIndex})" style="margin-top: 20px; width: 100%;">
+                    🧩 S'entraîner sur ce type d'erreur
+                </button>
+            `;
+        }
+
+        function generateSpecificExplanation(m) {
+            const explanations = [];
+            const piece = getPieceName(m.move.piece);
+            const from = m.move.from;
+            const to = m.move.to;
+
+            // Analyse basée sur la catégorie d'erreur
+            switch (m.classification.category) {
+                case 'hanging':
+                    explanations.push(`Votre ${piece} en ${to} n'est plus protégé après ce coup.`);
+                    explanations.push(`L'adversaire peut capturer cette pièce au prochain coup.`);
+                    if (m.loss > 3) {
+                        explanations.push(`Vous perdez du matériel significatif (environ ${Math.round(m.loss)} points).`);
+                    }
+                    break;
+
+                case 'tactics':
+                    explanations.push(`Ce coup ignore une combinaison tactique disponible.`);
+                    explanations.push(`Une séquence de coups forcés permettait de gagner du matériel ou un avantage.`);
+                    if (m.move.captured) {
+                        explanations.push(`La capture ${from}x${to} n'est pas la meilleure option dans cette position.`);
+                    }
+                    break;
+
+                case 'exchange':
+                    if (m.move.captured) {
+                        const captured = getPieceName(m.move.captured);
+                        const capturedValue = getPieceValue(m.move.captured);
+                        const pieceValue = getPieceValue(m.move.piece);
+                        explanations.push(`Vous échangez votre ${piece} (${pieceValue} pts) contre ${captured} (${capturedValue} pts).`);
+                        if (pieceValue > capturedValue) {
+                            explanations.push(`C'est un mauvais échange: vous perdez ${pieceValue - capturedValue} point(s) de matériel.`);
+                        }
+                    } else {
+                        explanations.push(`Ce coup conduit à un échange défavorable.`);
+                    }
+                    explanations.push(`Les échanges doivent servir un but stratégique clair.`);
+                    break;
+
+                case 'king-safety':
+                    if (m.move.piece === 'p') {
+                        explanations.push(`Avancer le pion en ${to} affaiblit la protection de votre Roi.`);
+                        explanations.push(`Les cases autour du Roi deviennent vulnérables aux attaques.`);
+                    } else {
+                        explanations.push(`Ce coup déplace une pièce défensive loin du Roi.`);
+                    }
+                    explanations.push(`L'adversaire peut maintenant lancer une attaque dangereuse.`);
+                    break;
+
+                case 'opening':
+                    if (m.move.piece === 'q') {
+                        explanations.push(`Sortir la Dame trop tôt la rend vulnérable aux attaques.`);
+                        explanations.push(`Vous perdrez des temps à la déplacer quand elle sera attaquée.`);
+                    } else if (m.move.piece === 'k' && !m.move.flags.includes('k') && !m.move.flags.includes('q')) {
+                        explanations.push(`Bouger le Roi vous fait perdre le droit de roquer.`);
+                    } else {
+                        explanations.push(`Ce coup ne développe pas vos pièces efficacement.`);
+                        explanations.push(`Le centre n'est pas suffisamment contrôlé.`);
+                    }
+                    break;
+
+                case 'endgame':
+                    if (m.move.piece === 'k') {
+                        explanations.push(`Le Roi n'est pas actif sur cette case.`);
+                        explanations.push(`En finale, le Roi doit être centralisé et actif.`);
+                    } else {
+                        explanations.push(`Ce coup ne suit pas les principes de finale.`);
+                    }
+                    explanations.push(`La technique de finale appropriée n'est pas appliquée.`);
+                    break;
+
+                default:
+                    explanations.push(`Ce coup perd de l'évaluation: ${m.loss.toFixed(1)} point(s).`);
+                    explanations.push(`Il existe un meilleur plan dans cette position.`);
+            }
+
+            return explanations;
+        }
+
+        function generateBestMoveExplanation(m, bestSan) {
+            const explanations = [];
+
+            // Analyse du meilleur coup basée sur le contexte
+            if (m.bestMove) {
+                const tempGame = new Chess(m.fen);
+                const from = m.bestMove.substring(0, 2);
+                const to = m.bestMove.substring(2, 4);
+
+                // Trouver le coup dans les coups légaux
+                const moves = tempGame.moves({ verbose: true });
+                const bestMoveObj = moves.find(mv => mv.from === from && mv.to === to);
+
+                if (bestMoveObj) {
+                    const piece = getPieceName(bestMoveObj.piece);
+
+                    if (bestMoveObj.captured) {
+                        const captured = getPieceName(bestMoveObj.captured);
+                        explanations.push(`Capture le ${captured} adverse, gagnant du matériel.`);
+                    }
+
+                    if (bestMoveObj.san.includes('+')) {
+                        explanations.push(`Met le Roi adverse en échec, forçant une réponse.`);
+                    }
+
+                    if (bestMoveObj.san.includes('#')) {
+                        explanations.push(`C'est échec et mat! La partie est gagnée.`);
+                    }
+
+                    // Explications positionnelles
+                    const centralSquares = ['d4', 'd5', 'e4', 'e5', 'c4', 'c5', 'f4', 'f5'];
+                    if (centralSquares.includes(to)) {
+                        explanations.push(`Place le ${piece} sur une case centrale active (${to}).`);
+                    }
+
+                    if (bestMoveObj.flags.includes('k') || bestMoveObj.flags.includes('q')) {
+                        explanations.push(`Le roque met le Roi en sécurité et active la Tour.`);
+                    }
+                }
+            }
+
+            // Ajouter des explications génériques si nécessaire
+            if (explanations.length === 0) {
+                explanations.push(`Ce coup maintient ou améliore votre position.`);
+            }
+
+            if (m.evalBefore !== m.evalAfter) {
+                const evalAfterBest = m.evalBefore; // Le meilleur coup maintient l'éval
+                explanations.push(`Maintient l'évaluation à ${evalAfterBest >= 0 ? '+' : ''}${evalAfterBest.toFixed(1)} au lieu de la perdre.`);
+            }
+
+            return explanations;
+        }
+
+        function getPieceName(piece) {
+            const names = {
+                'p': 'Pion',
+                'n': 'Cavalier',
+                'b': 'Fou',
+                'r': 'Tour',
+                'q': 'Dame',
+                'k': 'Roi'
+            };
+            return names[piece.toLowerCase()] || piece;
+        }
+
+        function uciToSan(fen, uci) {
+            if (!uci) return '?';
+            const tempGame = new Chess(fen);
+            const from = uci.substring(0, 2);
+            const to = uci.substring(2, 4);
+            const promo = uci.length > 4 ? uci[4] : undefined;
+
+            const moves = tempGame.moves({ verbose: true });
+            for (const m of moves) {
+                if (m.from === from && m.to === to && (!promo || m.promotion === promo)) {
+                    return m.san;
+                }
+            }
+            return uci;
+        }
+
+        // ========================================
+        // EVAL BAR & CHART
+        // ========================================
+
+        function updateEvalBar(score) {
+            const display = document.getElementById('eval-display');
+            const indicator = document.getElementById('eval-indicator');
+
+            // Clamp score for display
+            const clampedScore = Math.max(-10, Math.min(10, score));
+            display.textContent = (score >= 0 ? '+' : '') + score.toFixed(1);
+            display.style.color = score >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+            // Move indicator (50% is center, 0% is full black, 100% is full white)
+            const position = 50 + (clampedScore / 10) * 50;
+            indicator.style.left = position + '%';
+        }
+
+        function initCharts() {
+            // Eval chart
+            const evalCtx = document.getElementById('eval-chart').getContext('2d');
+            evalChart = new Chart(evalCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Évaluation',
+                        data: [],
+                        borderColor: '#00d9ff',
+                        backgroundColor: 'rgba(0,217,255,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            min: -5,
+                            max: 5,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Accuracy chart (for dashboard)
+            const accCtx = document.getElementById('accuracy-chart').getContext('2d');
+            accuracyChart = new Chart(accCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Précision',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888', callback: v => v + '%' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateEvalChart(evalHistory) {
+            evalChart.data.labels = evalHistory.map((_, i) => i);
+            evalChart.data.datasets[0].data = evalHistory;
+            evalChart.update();
+        }
+
+        // ========================================
+        // PUZZLE GENERATION
+        // ========================================
+
+        function generatePuzzlesFromErrors() {
+            puzzles = [];
+
+            for (let i = 0; i < analyzedMoves.length; i++) {
+                const m = analyzedMoves[i];
+                if (['inaccuracy', 'mistake', 'blunder'].includes(m.classification.type) && m.bestMove) {
+                    puzzles.push({
+                        fen: m.fen,
+                        solution: m.bestMove,
+                        solutionSan: uciToSan(m.fen, m.bestMove),
+                        theme: m.classification.category,
+                        difficulty: m.classification.type === 'blunder' ? 5 : m.classification.type === 'mistake' ? 3 : 2,
+                        loss: m.loss,
+                        originalMove: m.san
+                    });
+                }
+            }
+
+            // Update puzzles list
+            updatePuzzlesList();
+
+            // Save puzzles to progress
+            progress.puzzles = progress.puzzles || [];
+            puzzles.forEach(p => {
+                if (!progress.puzzles.find(x => x.fen === p.fen)) {
+                    progress.puzzles.push(p);
+                }
+            });
+            saveProgress();
+        }
+
+        function updatePuzzlesList() {
+            const container = document.getElementById('puzzles-list');
+            if (puzzles.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Aucun puzzle généré. Analysez une partie avec des erreurs.</p>';
+                return;
+            }
+
+            container.innerHTML = puzzles.map((p, i) => `
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                     onclick="loadPuzzle(${i})"
+                     onmouseover="this.style.background='rgba(118,75,162,0.2)'"
+                     onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="puzzle-theme">${getCategoryLabel(p.theme)}</span>
+                        <div class="puzzle-difficulty">
+                            ${Array(5).fill(0).map((_, j) => `<span ${j < p.difficulty ? 'class="filled"' : ''}></span>`).join('')}
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 8px;">
+                        Au lieu de ${p.originalMove}, trouvez le meilleur coup.
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        function loadPuzzle(index) {
+            currentPuzzle = puzzles[index];
+            puzzleGame = new Chess(currentPuzzle.fen);
+            puzzleBoard.position(currentPuzzle.fen);
+
+            // Update puzzle info
+            document.getElementById('puzzle-theme').textContent = getCategoryLabel(currentPuzzle.theme);
+            document.getElementById('puzzle-instruction').textContent =
+                `${puzzleGame.turn() === 'w' ? 'Blancs' : 'Noirs'} jouent. Trouvez le meilleur coup!`;
+            document.getElementById('puzzle-status').innerHTML = '<span style="color: var(--accent-primary);">À vous de jouer!</span>';
+
+            // Update difficulty stars
+            const diffContainer = document.getElementById('puzzle-difficulty');
+            diffContainer.innerHTML = Array(5).fill(0).map((_, j) =>
+                `<span ${j < currentPuzzle.difficulty ? 'class="filled"' : ''}></span>`
+            ).join('');
+
+            showPanel('puzzles');
+        }
+
+        function createPuzzleFromError(index) {
+            const m = analyzedMoves[index];
+            if (!m.bestMove) {
+                showToast('Pas de solution pour ce coup', 'error');
+                return;
+            }
+
+            const puzzle = {
+                fen: m.fen,
+                solution: m.bestMove,
+                solutionSan: uciToSan(m.fen, m.bestMove),
+                theme: m.classification.category,
+                difficulty: m.classification.type === 'blunder' ? 5 : m.classification.type === 'mistake' ? 3 : 2,
+                loss: m.loss,
+                originalMove: m.san
+            };
+
+            puzzles.unshift(puzzle);
+            updatePuzzlesList();
+            loadPuzzle(0);
+        }
+
+        function onPuzzleDrop(source, target) {
+            if (!currentPuzzle || !puzzleGame) return 'snapback';
+
+            const move = puzzleGame.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (!move) return 'snapback';
+
+            // Check if correct
+            const uci = source + target + (move.promotion || '');
+            if (uci.startsWith(currentPuzzle.solution.substring(0, 4))) {
+                document.getElementById('puzzle-status').innerHTML =
+                    '<span style="color: var(--accent-green);">✅ Correct! C\'était ' + currentPuzzle.solutionSan + '</span>';
+
+                progress.puzzlesSolved = (progress.puzzlesSolved || 0) + 1;
+                progress.puzzlesStreak = (progress.puzzlesStreak || 0) + 1;
+                saveProgress();
+                updatePuzzleStats();
+
+                showToast('Bravo!', 'success');
+            } else {
+                document.getElementById('puzzle-status').innerHTML =
+                    '<span style="color: var(--accent-red);">❌ Incorrect. La solution était ' + currentPuzzle.solutionSan + '</span>';
+
+                progress.puzzlesStreak = 0;
+                saveProgress();
+                updatePuzzleStats();
+
+                // Reset position
+                setTimeout(() => {
+                    puzzleGame = new Chess(currentPuzzle.fen);
+                    puzzleBoard.position(currentPuzzle.fen);
+                }, 1500);
+            }
+
+            return undefined;
+        }
+
+        function showPuzzleHint() {
+            if (!currentPuzzle) return;
+            const hint = currentPuzzle.solution.substring(0, 2);
+            showToast('La pièce à jouer est en ' + hint, 'info');
+        }
+
+        function showPuzzleSolution() {
+            if (!currentPuzzle) return;
+            document.getElementById('puzzle-status').innerHTML =
+                '<span style="color: var(--accent-yellow);">👁 Solution: ' + currentPuzzle.solutionSan + '</span>';
+
+            // Play the move
+            puzzleGame.move(currentPuzzle.solutionSan);
+            puzzleBoard.position(puzzleGame.fen());
+        }
+
+        function nextPuzzle() {
+            if (puzzles.length === 0) {
+                showToast('Aucun puzzle disponible', 'error');
+                return;
+            }
+            const currentIdx = puzzles.indexOf(currentPuzzle);
+            const nextIdx = (currentIdx + 1) % puzzles.length;
+            loadPuzzle(nextIdx);
+        }
+
+        function updatePuzzleStats() {
+            document.getElementById('puzzles-solved').textContent = progress.puzzlesSolved || 0;
+            const total = (progress.puzzlesSolved || 0) + (progress.puzzlesFailed || 0);
+            const acc = total > 0 ? Math.round((progress.puzzlesSolved / total) * 100) : 0;
+            document.getElementById('puzzles-accuracy').textContent = acc + '%';
+            document.getElementById('puzzles-streak').textContent = progress.puzzlesStreak || 0;
+        }
+
+        // ========================================
+        // PROGRESS & STORAGE
+        // ========================================
+
+        function loadProgress() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultProgress();
+            } catch {
+                return getDefaultProgress();
+            }
+        }
+
+        function getDefaultProgress() {
+            return {
+                gamesAnalyzed: 0,
+                totalAccuracy: 0,
+                accuracyHistory: [],
+                weaknesses: {
+                    hanging: 0,
+                    tactics: 0,
+                    exchange: 0,
+                    'king-safety': 0,
+                    opening: 0,
+                    endgame: 0
+                },
+                puzzlesSolved: 0,
+                puzzlesFailed: 0,
+                puzzlesStreak: 0,
+                puzzles: [],
+                recentGames: [],
+                estimatedElo: 1200
+            };
+        }
+
+        function saveProgress() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        function updateProgressFromAnalysis(whiteAcc, blackAcc, errors) {
+            const avgAcc = (whiteAcc + blackAcc) / 2;
+
+            progress.gamesAnalyzed++;
+            progress.totalAccuracy = ((progress.totalAccuracy * (progress.gamesAnalyzed - 1)) + avgAcc) / progress.gamesAnalyzed;
+            progress.accuracyHistory.push(avgAcc);
+            if (progress.accuracyHistory.length > 20) progress.accuracyHistory.shift();
+
+            // Update weaknesses
+            for (const m of analyzedMoves) {
+                if (['inaccuracy', 'mistake', 'blunder'].includes(m.classification.type)) {
+                    const cat = m.classification.category;
+                    progress.weaknesses[cat] = (progress.weaknesses[cat] || 0) + 1;
+                }
+            }
+
+            // Estimate ELO based on accuracy
+            progress.estimatedElo = Math.round(800 + avgAcc * 14);
+
+            saveProgress();
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            // Weaknesses
+            const totalErrors = Object.values(progress.weaknesses).reduce((a, b) => a + b, 0) || 1;
+            for (const [key, value] of Object.entries(progress.weaknesses)) {
+                const pct = Math.round((value / totalErrors) * 100);
+                const bar = document.getElementById('weakness-' + key);
+                const pctEl = document.getElementById('weakness-' + key + '-pct');
+                if (bar) bar.style.width = pct + '%';
+                if (pctEl) pctEl.textContent = pct + '%';
+            }
+
+            // Accuracy chart
+            if (accuracyChart && progress.accuracyHistory.length > 0) {
+                accuracyChart.data.labels = progress.accuracyHistory.map((_, i) => 'Partie ' + (i + 1));
+                accuracyChart.data.datasets[0].data = progress.accuracyHistory;
+                accuracyChart.update();
+            }
+
+            // Stats
+            document.getElementById('dash-elo').textContent = progress.estimatedElo || 1200;
+            document.getElementById('dash-games').textContent = progress.gamesAnalyzed || 0;
+            document.getElementById('dash-avg-accuracy').textContent = Math.round(progress.totalAccuracy || 0) + '%';
+            document.getElementById('dash-puzzles').textContent = progress.puzzlesSolved || 0;
+
+            // Level
+            const elo = progress.estimatedElo || 1200;
+            let level, desc;
+            if (elo < 1200) {
+                level = 'Débutant';
+                desc = 'Focus sur les pièces en prise et la tactique de base.';
+            } else if (elo < 1500) {
+                level = 'Intermédiaire';
+                desc = 'Travaillez la tactique et les principes stratégiques.';
+            } else if (elo < 1800) {
+                level = 'Avancé';
+                desc = 'Approfondissez les concepts positionnels et les finales.';
+            } else {
+                level = 'Expert';
+                desc = 'Perfectionnez votre préparation d\'ouverture et calcul profond.';
+            }
+            document.getElementById('player-level').textContent = level;
+            document.getElementById('level-description').textContent = desc;
+
+            // Puzzle stats
+            updatePuzzleStats();
+        }
+
+        function saveRecentGame() {
+            const headers = game.header();
+            const recent = {
+                white: headers.White || 'Blancs',
+                black: headers.Black || 'Noirs',
+                result: headers.Result || '?',
+                date: new Date().toISOString(),
+                moves: analyzedMoves.length,
+                pgn: game.pgn()
+            };
+
+            progress.recentGames = progress.recentGames || [];
+            progress.recentGames.unshift(recent);
+            if (progress.recentGames.length > 10) progress.recentGames.pop();
+            saveProgress();
+            loadRecentGames();
+        }
+
+        function loadRecentGames() {
+            const container = document.getElementById('recent-games-list');
+            const games = progress.recentGames || [];
+
+            if (games.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>';
+                return;
+            }
+
+            container.innerHTML = games.map((g, i) => `
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                     onclick="loadRecentGame(${i})"
+                     onmouseover="this.style.background='rgba(0,217,255,0.1)'"
+                     onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><b>${g.white}</b> vs <b>${g.black}</b></span>
+                        <span style="color: var(--accent-yellow);">${g.result}</span>
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                        ${g.moves} coups • ${new Date(g.date).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadRecentGame(index) {
+            const g = progress.recentGames[index];
+            if (!g || !g.pgn) return;
+
+            game = new Chess();
+            game.load_pgn(g.pgn);
+            startAnalysis();
+        }
+
+        function exportProgress() {
+            const data = JSON.stringify(progress, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chess_coach_progress.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Données exportées', 'success');
+        }
+
+        function resetProgress() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes vos données?')) {
+                progress = getDefaultProgress();
+                saveProgress();
+                updateDashboard();
+                loadRecentGames();
+                showToast('Données réinitialisées', 'success');
+            }
+        }
+
+        // ========================================
+        // UTILITIES
+        // ========================================
+
+        let analysisCancelled = false;
+
+        function showLoading(text) {
+            document.getElementById('loading-text').textContent = text || 'Chargement...';
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-debug').innerHTML = '';
+            analysisCancelled = false;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        function cancelAnalysis() {
+            analysisCancelled = true;
+            hideLoading();
+            showToast('Analyse annulée', 'info');
+        }
+
+        function loadingLog(msg) {
+            const el = document.getElementById('loading-debug');
+            if (el) {
+                el.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' ' + msg + '</div>';
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = type === 'error' ? 'var(--accent-red)' : type === 'info' ? 'var(--accent-primary)' : 'var(--accent-green)';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ========================================
+        // INIT
+        // ========================================
+
+        $(document).ready(init);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft') goBack();
+            else if (e.key === 'ArrowRight') goForward();
+            else if (e.key === 'Home') goToStart();
+            else if (e.key === 'End') goToEnd();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

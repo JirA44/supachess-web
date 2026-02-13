@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stockfish vs Komodo - TCEC 2018</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffaa00 0%, #ff6b00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 600px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel h2 {
+            color: #ffaa00;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .stat-item {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid #ffaa00;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .board-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        #chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 70px);
+            grid-template-rows: repeat(8, 70px);
+            gap: 0;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .square {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #ffaa00 0%, #ff6b00 100%);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .move-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .move-number {
+            font-size: 1.1em;
+            color: #ffaa00;
+            margin-bottom: 10px;
+        }
+
+        .move-comment {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 1em;
+        }
+
+        .timeline {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .timeline-move {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-move:hover {
+            background: rgba(255, 170, 0, 0.3);
+            transform: translateX(5px);
+        }
+
+        .timeline-move.active {
+            background: rgba(255, 170, 0, 0.5);
+            border-left: 3px solid #ffaa00;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before, .timeline-move.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Retour au menu</a>
+
+    <div class="container">
+        <header>
+            <h1>Stockfish vs Komodo - TCEC Season 13</h1>
+            <p class="subtitle">Bataille épique des titans informatiques - Finale du championnat</p>
+        </header>
+
+        <div class="main-content">
+            <div class="info-panel">
+                <h2>Informations de la partie</h2>
+                <div class="stat-item">
+                    <div class="stat-label">Blancs</div>
+                    <div class="stat-value">Stockfish 9</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Komodo MCTS</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Tournoi</div>
+                    <div class="stat-value">TCEC Season 13 Final</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Ouverture</div>
+                    <div class="stat-value">Queen's Gambit Declined</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Résultat</div>
+                    <div class="stat-value">1-0 (Stockfish)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Année</div>
+                    <div class="stat-value">2018 - Game 47</div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn" onclick="previousMove()">◀ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭</button>
+                </div>
+                <div class="move-info">
+                    <div class="move-number" id="moveNumber">Position initiale</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer cette bataille épique entre les deux meilleurs moteurs d'échecs au monde.</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>Analyse</h2>
+                <div class="timeline" id="timeline"></div>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 170, 0, 0.1); border-radius: 8px; border-left: 3px solid #ffaa00;">
+                    <strong style="color: #ffaa00;">Échecs informatiques:</strong>
+                    <p style="margin-top: 10px; color: #ccc;">Cette partie de la finale TCEC Season 13 2018 illustre le niveau époustouflant des moteurs modernes. Stockfish 9 affronte Komodo MCTS dans une lutte stratégique d'une profondeur inhumaine. Chaque coup est calculé avec une précision de millions de positions par seconde. Pure perfection computationnelle!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        const chess = new Chess();
+
+        // Partie Stockfish 9 vs Komodo MCTS - TCEC Season 13 Final, Game 47
+        const gameMoves = [
+            { move: 'd4', comment: '1. Stockfish 9 ouvre avec le coup de dame classique. Preparation pour le Gambit Dame, ouverture favorite des moteurs!' },
+            { move: 'd5', comment: '1...Komodo MCTS repond symetriquement. Lutte pour le controle central entre deux titans informatiques!' },
+            { move: 'c4', comment: '2. LE GAMBIT DAME! Stockfish propose le sacrifice du pion c pour dominer le centre.' },
+            { move: 'e6', comment: '2...Defense Semi-Slave. Komodo choisit une structure solide et flexible.' },
+            { move: 'Nc3', comment: '3. Developpement du cavalier dame avec pression sur d5. Coordination parfaite!' },
+            { move: 'Nf6', comment: '3...Developpement classique du cavalier roi. Komodo attaque e4 potentiellement.' },
+            { move: 'Bg5', comment: '4. CLOUAGE! Stockfish epingle le cavalier f6 contre la dame. Pression immediate!' },
+            { move: 'Be7', comment: '4...Declouage immediat. Komodo developpe tout en preparant le roque court.' },
+            { move: 'e3', comment: '5. Formation Carlsbad. Structure pyramidale solide d4-e3-c4 pour les Blancs.' },
+            { move: 'h6', comment: '5...Komodo questionne le fou g5. Gain d\'espace sur le flanc roi.' },
+            { move: 'Bh4', comment: '6. Le fou maintient la tension. Stockfish garde toutes les options ouvertes.' },
+            { move: 'O-O', comment: '6...Roque court. Komodo met son roi en securite. La tour f8 s\'active!' },
+            { move: 'Nf3', comment: '7. Developpement complet des pieces mineures. Stockfish est pret pour le milieu de jeu.' },
+            { move: 'b6', comment: '7...Fianchetto du fou dame. Systeme Tartakower - Komodo prepare Bb7.' },
+            { move: 'Rc1', comment: '8. Tour sur la colonne c. Stockfish anticipe l\'ouverture apres cxd5.' },
+            { move: 'Bb7', comment: '8...Fou sur la grande diagonale. Komodo cree une batterie visant e4!' },
+            { move: 'cxd5', comment: '9. STOCKFISH LIBERE LA TENSION! La colonne c s\'ouvre pour les tours blanches.' },
+            { move: 'exd5', comment: '9...Reprise vers le centre. Structure de pions symetrique etablie.' },
+            { move: 'Bd3', comment: '10. Le fou vise h7! Pression classique sur le point faible du roque.' },
+            { move: 'Ne4', comment: '10...CENTRALISATION PUISSANTE! Le cavalier occupe un poste avance magnifique.' },
+            { move: 'Bxe7', comment: '11. Stockfish echange le fou. Simplification calculee vers une finale technique.' },
+            { move: 'Qxe7', comment: '11...Recapture avec la dame. Komodo maintient la coordination des pieces.' },
+            { move: 'Nxe4', comment: '12. Echange des cavaliers. Stockfish elimine le cavalier centralise.' },
+            { move: 'dxe4', comment: '12...Recapture avec le pion d. Structure asymetrique creee.' },
+            { move: 'Bxe4', comment: '13. Le fou capture le pion e4. Stockfish gagne un pion!' },
+            { move: 'Bxe4', comment: '13...Komodo reprend avec son fou. Echange egal de materiel.' },
+            { move: 'Rxc7', comment: '14. INVASION DE LA 7EME RANGEE! Tour sur c7 avec pression devastatrice!' },
+            { move: 'Qd6', comment: '14...La dame defie la tour. Komodo centralise tout en defendant.' },
+            { move: 'Rc3', comment: '15. Tour en position defensive-offensive. Preparation de manoeuvres.' },
+            { move: 'Nd7', comment: '15...Le cavalier noir se developpe enfin. Komodo coordonne ses pieces.' },
+            { move: 'O-O', comment: '16. Roque court. Stockfish securise son roi avant de continuer l\'attaque.' },
+            { move: 'Rfc8', comment: '16...Tour sur la colonne c. Komodo cherche du contre-jeu.' },
+            { move: 'Rxc8+', comment: '17. Echange de tours! Stockfish simplifie vers une finale technique.' },
+            { move: 'Rxc8', comment: '17...Reprise forcee. Komodo doit echanger pour eviter les pertes.' },
+            { move: 'Qb3', comment: '18. Dame active sur b3. Pression sur b7 et f7 simultanement!' },
+            { move: 'Nf6', comment: '18...Cavalier en defense. Komodo protege les points faibles.' },
+            { move: 'Nd2', comment: '19. Regroupement du cavalier. Stockfish prepare Ne4 ou Nc4.' },
+            { move: 'Bd5', comment: '19...Centralisation du fou. Komodo bloque la diagonale a2-g8.' },
+            { move: 'Qb5', comment: '20. Dame active! Stockfish attaque a7 et menace des echanges favorables.' },
+            { move: 'a6', comment: '20...Defense du pion a7. Komodo repousse la dame blanche.' },
+            { move: 'Qd3', comment: '21. Dame vers d3. Stockfish vise d5 et maintient la pression centrale.' },
+            { move: 'Rc2', comment: '21...INVASION! Tour sur la 2eme rangee. Komodo contre-attaque!' },
+            { move: 'Rb1', comment: '22. Tour en defense. Stockfish protege le pion b2.' },
+            { move: 'Be4', comment: '22...Fou centralise. Komodo menace le cavalier et controle le centre.' },
+            { move: 'Qe2', comment: '23. Dame connectee avec la tour. Coordination des pieces blanches.' },
+            { move: 'Rc7', comment: '23...Tour retourne en defense. Komodo maintient l\'equilibre.' },
+            { move: 'f3', comment: '24. Chasse du fou. Stockfish gagne de l\'espace au centre.' },
+            { move: 'Bd5', comment: '24...Fou recule. Komodo garde son fou actif sur la diagonale.' },
+            { move: 'e4', comment: '25. AVANCE CENTRALE! Stockfish gagne de l\'espace et active ses pieces.' },
+            { move: 'Be6', comment: '25...Fou en retrait. Komodo cherche une case sure.' },
+            { move: 'Nc4', comment: '26. CAVALIER TRES ACTIF! Menace directe sur e5 et a5.' },
+            { move: 'Qc6', comment: '26...Dame defensive. Komodo protege le pion b6.' },
+            { move: 'd5', comment: '27. PERCEE CENTRALE! Stockfish sacrifie pour ouvrir les lignes!' },
+            { move: 'Bxd5', comment: '27...Capture forcee. Komodo prend le pion offert.' },
+            { move: 'exd5', comment: '28. Recapture. Structure de pions passee creee pour les Blancs.' },
+            { move: 'Qxd5', comment: '28...Reprise avec la dame. Komodo centralise sa dame.' },
+            { move: 'Qe3', comment: '29. Dame coordonnee. Stockfish vise e7 et le flanc roi.' },
+            { move: 'Qb5', comment: '29...Dame active. Komodo menace le cavalier c4.' },
+            { move: 'Ne5', comment: '30. CAVALIER DOMINANT! Position centrale ideale sur e5.' },
+            { move: 'Qa5', comment: '30...Dame en a5. Komodo cherche du contre-jeu sur le flanc dame.' },
+            { move: 'a3', comment: '31. Securisation du pion b. Stockfish prepare b4 eventuellement.' },
+            { move: 'Rc2', comment: '31...Tour active. Komodo maintient la pression sur la 2eme rangee.' },
+            { move: 'Nf7', comment: '32. Cavalier attaque h6! Stockfish vise les faiblesses du roque.' },
+            { move: 'Rxb2', comment: '32...CAPTURE DU PION B2! Komodo gagne un pion important.' },
+            { move: 'Rxb2', comment: '33. Echange de tours. Stockfish reprend avec la tour.' },
+            { move: 'Qxa3', comment: '33...Dame capture a3. Komodo a maintenant deux pions.' },
+            { move: 'Nxh6+', comment: '34. SACRIFICE DU CAVALIER! Stockfish detruit le roque noir!' },
+            { move: 'gxh6', comment: '34...Capture forcee. Le roi noir est expose maintenant.' },
+            { move: 'Qxh6', comment: '35. Dame sur h6! Attaque devastatrice sur le roi nu.' },
+            { move: 'Qe7', comment: '35...Dame en defense. Komodo essaie de bloquer les menaces.' },
+            { move: 'Qg5+', comment: '36. ECHEC! La dame blanche domine. Le roi noir fuit.' },
+            { move: 'Kf8', comment: '36...Roi vers f8. Seule case disponible pour le roi.' },
+            { move: 'Qxf6+', comment: '37. GAIN DU CAVALIER! Dame capture avec echec. Avantage materiel enorme!' },
+            { move: 'Qxf6', comment: '37...Reprise forcee avec la dame. Komodo n\'a pas le choix.' },
+            { move: 'Rxb6', comment: '38. STOCKFISH GAGNE! Tour capture b6. Avec une tour et des pions contre la dame, la technique de Stockfish est implacable. Komodo ABANDONNE! Victoire ecrasante du champion!' }
+        ];
+
+        let currentMoveIndex = -1;
+
+        // Outline symbols pour tous - différenciés par CSS background
+        const pieces = {
+            'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔', 'p': '♙',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        function renderBoard() {
+            const board = chess.board();
+            const chessboard = document.getElementById('chessboard');
+            chessboard.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieces[piece.type.toUpperCase()];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            const moveNumber = document.getElementById('moveNumber');
+            const moveComment = document.getElementById('moveComment');
+
+            if (currentMoveIndex === -1) {
+                moveNumber.textContent = 'Position initiale';
+                moveComment.textContent = 'Cliquez sur "Suivant" pour explorer cette bataille épique entre les deux meilleurs moteurs d\'échecs au monde.';
+            } else {
+                const moveNum = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                moveNumber.textContent = `Coup ${moveNum}. ${color}: ${gameMoves[currentMoveIndex].move}`;
+                moveComment.textContent = gameMoves[currentMoveIndex].comment;
+            }
+
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+
+            // Brilliant move detection emojis
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'timeline-move';
+                if (index === currentMoveIndex) {
+                    moveDiv.classList.add('active');
+                }
+
+                // Check for brilliant moves based on emojis in comments
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveDiv.classList.add('brilliant');
+                }
+
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+                moveDiv.textContent = `${color} ${moveNum}. ${moveNotation}`;
+
+                moveDiv.onclick = () => {
+                    goToMove(index);
+                };
+
+                timeline.appendChild(moveDiv);
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                try {
+                    chess.move(gameMoves[currentMoveIndex].move, { sloppy: true });
+                    renderBoard();
+                    updateMoveInfo();
+                } catch (e) {
+                    console.error('Erreur de coup:', gameMoves[currentMoveIndex].move, e);
+                }
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                chess.undo();
+                currentMoveIndex--;
+                renderBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            chess.reset();
+            currentMoveIndex = -1;
+            renderBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            for (let i = 0; i < gameMoves.length; i++) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            goToStart();
+            for (let i = 0; i <= index; i++) {
+                nextMove();
+            }
+        }
+
+        // Initialisation
+        renderBoard();
+        updateMoveInfo();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

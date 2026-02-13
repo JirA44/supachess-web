@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 SupaEngine v2.6 - Nouveaux Enseignements</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00b894 0%, #0984e3 100%);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 184, 148, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .header .version-tag {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            color: #00b894;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 184, 148, 0.3);
+        }
+
+        .section h3 {
+            font-size: 1.5rem;
+            color: #74b9ff;
+            margin: 25px 0 15px 0;
+        }
+
+        .lesson-card {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(9, 132, 227, 0.1) 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #00b894;
+            transition: transform 0.3s;
+        }
+
+        .lesson-card:hover {
+            transform: translateX(10px);
+        }
+
+        .lesson-card h4 {
+            color: #00b894;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .insight {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.2) 0%, rgba(9, 132, 227, 0.2) 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid rgba(0, 184, 148, 0.3);
+        }
+
+        .stat-box .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00b894;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .stat-box .label {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        .principle {
+            background: rgba(116, 185, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #74b9ff;
+        }
+
+        .principle strong {
+            color: #74b9ff;
+            font-size: 1.1rem;
+        }
+
+        .tactic-card {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .tactic-card strong {
+            color: #ff6b6b;
+        }
+
+        .chess-diagram {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .highlight-green {
+            color: #00b894;
+            font-weight: bold;
+        }
+
+        .highlight-red {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .progress-bar-container {
+            background: rgba(0, 184, 148, 0.2);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #00b894 0%, #0984e3 100%);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: width 1.5s ease-out;
+        }
+
+        .skill-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .skill-table th, .skill-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .skill-table th {
+            background: rgba(0, 184, 148, 0.2);
+            color: #00b894;
+            font-weight: bold;
+        }
+
+        .skill-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .win { color: #00b894; font-weight: bold; }
+        .draw { color: #74b9ff; }
+        .loss { color: #ff6b6b; }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .nav-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-button:hover {
+            background: rgba(0, 184, 148, 0.3);
+            border-color: #00b894;
+            transform: translateX(-5px);
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="nav-button">&#9664; Menu</a>
+    <div class="container">
+        <div class="header">
+            <h1>&#127891; Nouveaux Enseignements</h1>
+            <p>Ce que SupaEngine a appris en 131 parties contre Stockfish 17.1</p>
+            <span class="version-tag">SupaEngine v2.6 | 813 tactiques | ~2900 ELO</span>
+        </div>
+
+        <!-- SECTION: Progression depuis le dernier cours -->
+        <div class="section">
+            <h2>&#128200; Progression depuis le dernier cours</h2>
+            <p style="margin-bottom: 20px; opacity: 0.8;">Le premier cours a ete ecrit apres 4 parties. Depuis, SupaEngine a joue <span class="highlight">131 parties</span> et accumule <span class="highlight">813 patterns tactiques</span>.</p>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="label">Parties jouees</span>
+                    <span class="number">131</span>
+                    <span class="label">4 &#8594; 131</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Victoires</span>
+                    <span class="number" style="color: #00b894;">66</span>
+                    <span class="label">50.4% win rate global</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Nulles</span>
+                    <span class="number" style="color: #74b9ff;">38</span>
+                    <span class="label">29% draw rate</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Defaites</span>
+                    <span class="number" style="color: #ff6b6b;">27</span>
+                    <span class="label">20.6% loss rate</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Tactiques apprises</span>
+                    <span class="number">813</span>
+                    <span class="label">pins, forks, sacrifices...</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">ELO estime</span>
+                    <span class="number">~2900</span>
+                    <span class="label">vs SF Skill 20 (~3000)</span>
+                </div>
+            </div>
+
+            <h3>Resultats par niveau</h3>
+            <table class="skill-table">
+                <tr>
+                    <th>Adversaire</th>
+                    <th>ELO approx.</th>
+                    <th>Victoires</th>
+                    <th>Nulles</th>
+                    <th>Defaites</th>
+                    <th>Score</th>
+                </tr>
+                <tr>
+                    <td>SF Skill 5</td>
+                    <td>~1300</td>
+                    <td class="win">18</td>
+                    <td class="draw">0</td>
+                    <td class="loss">0</td>
+                    <td class="win">100%</td>
+                </tr>
+                <tr>
+                    <td>SF Skill 8</td>
+                    <td>~1600</td>
+                    <td class="win">10</td>
+                    <td class="draw">0</td>
+                    <td class="loss">0</td>
+                    <td class="win">100%</td>
+                </tr>
+                <tr>
+                    <td>SF Skill 10</td>
+                    <td>~1800</td>
+                    <td class="win">10</td>
+                    <td class="draw">0</td>
+                    <td class="loss">0</td>
+                    <td class="win">100%</td>
+                </tr>
+                <tr>
+                    <td>SF Skill 12</td>
+                    <td>~2000</td>
+                    <td class="win">9</td>
+                    <td class="draw">1</td>
+                    <td class="loss">0</td>
+                    <td class="win">95%</td>
+                </tr>
+                <tr>
+                    <td>SF Skill 15</td>
+                    <td>~2400</td>
+                    <td class="win">8</td>
+                    <td class="draw">2</td>
+                    <td class="loss">0</td>
+                    <td class="win">90%</td>
+                </tr>
+                <tr>
+                    <td>SF Skill 18</td>
+                    <td>~2700</td>
+                    <td class="win">10</td>
+                    <td class="draw">12</td>
+                    <td class="loss">5</td>
+                    <td class="highlight">59%</td>
+                </tr>
+                <tr>
+                    <td><strong>SF Skill 20</strong></td>
+                    <td><strong>~3000</strong></td>
+                    <td class="win">1</td>
+                    <td class="draw">23</td>
+                    <td class="loss">22</td>
+                    <td class="highlight-red">27%</td>
+                </tr>
+            </table>
+
+            <div class="insight">
+                <strong>&#128161; Ce que ce tableau nous apprend :</strong> SupaEngine domine jusqu'au Skill 15 (90%+). Le vrai combat commence au Skill 18 (59%) et surtout Skill 20 (27%). La frontiere entre "fort" et "elite" est immense : passer de 2400 a 3000 est infiniment plus dur que de 1300 a 2400.
+            </div>
+        </div>
+
+        <!-- SECTION: La victoire historique vs Skill 20 -->
+        <div class="section" style="border: 2px solid rgba(255, 215, 0, 0.4); background: linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, rgba(0, 184, 148, 0.08) 100%);">
+            <h2 style="color: #ffd700;">&#127942; L'exploit : 1 victoire contre Stockfish Skill 20</h2>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="stat-box" style="border-color: rgba(255, 215, 0, 0.5);">
+                    <span class="label">Date</span>
+                    <span class="number" style="font-size: 1.8rem; color: #ffd700;">5 fev 2026</span>
+                </div>
+                <div class="stat-box" style="border-color: rgba(255, 215, 0, 0.5);">
+                    <span class="label">Couleur</span>
+                    <span class="number" style="font-size: 1.8rem; color: #ffd700;">Blancs</span>
+                </div>
+                <div class="stat-box" style="border-color: rgba(255, 215, 0, 0.5);">
+                    <span class="label">Nombre de coups</span>
+                    <span class="number" style="font-size: 1.8rem; color: #ffd700;">165</span>
+                </div>
+                <div class="stat-box" style="border-color: rgba(255, 215, 0, 0.5);">
+                    <span class="label">Adversaire</span>
+                    <span class="number" style="font-size: 1.8rem; color: #ffd700;">~3000 ELO</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <a href="victoire_vs_sf20.html" style="display: inline-block; background: linear-gradient(135deg, #ffd700, #b8960f); color: #1a1a2e; padding: 15px 40px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.2rem; transition: transform 0.3s; box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);">&#9654; Rejouer la partie interactive</a>
+            </div>
+
+            <div class="lesson-card" style="border-left-color: #ffd700;">
+                <h4 style="color: #ffd700;">165 coups : une victoire de patience et d'endurance</h4>
+                <p>Sur 46 parties contre Stockfish Skill 20 (~3000 ELO), SupaEngine a reussi <span class="highlight">1 victoire</span>. C'est rare, et c'est exactement ce qui rend cette victoire remarquable.</p>
+                <p style="margin-top: 10px;">165 coups signifie que la partie est allee en <span class="highlight">finale profonde</span>. SupaEngine n'a pas gagne par un coup tactique chanceux en milieu de partie : il a survecu a l'ouverture, tenu le milieu de partie, et <strong>converti en finale</strong> — exactement la phase ou il perd d'habitude.</p>
+                <p style="margin-top: 10px;">Cette victoire prouve que meme contre un adversaire bien plus fort, une partie parfaitement jouee peut suffire. Stockfish n'est pas invincible : il suffit de ne <strong>jamais lui donner d'opportunite</strong> pendant 165 coups.</p>
+            </div>
+
+            <h3 style="color: #ffd700;">Ce que cette victoire nous apprend</h3>
+
+            <div class="principle" style="border-left-color: #ffd700;">
+                <strong style="color: #ffd700;">1. La perseverance paie</strong>
+                <p>22 defaites et 23 nulles avant 1 victoire. Il a fallu echouer 45 fois pour reussir 1 fois. Aux echecs comme dans la vie, la reussite vient apres la repetition.</p>
+            </div>
+
+            <div class="principle" style="border-left-color: #ffd700;">
+                <strong style="color: #ffd700;">2. Les Blancs ont un avantage reel</strong>
+                <p>La victoire est venue avec les Blancs. Le trait (jouer en premier) donne un demi-tempo d'avance qui, sur 165 coups, peut faire la difference. En pratique : jouez pour gagner avec les Blancs, jouez pour la nulle avec les Noirs contre un adversaire plus fort.</p>
+            </div>
+
+            <div class="principle" style="border-left-color: #ffd700;">
+                <strong style="color: #ffd700;">3. Les longues parties favorisent le meilleur endgame</strong>
+                <p>165 coups = finale inevitable. L'adversaire qui maitrise mieux les finales gagne les parties longues. C'est pourquoi la lecon 1 ci-dessous est consacree a l'endgame.</p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Contre un adversaire plus fort, ne cherchez pas a gagner rapidement. Jouez solidement, echangez les pieces, simplifiez, et dirigez la partie vers une finale ou vos connaissances techniques peuvent faire la difference. C'est exactement ce que SupaEngine a fait en 165 coups.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 1 - L'Endgame, le mur invisible -->
+        <div class="section">
+            <h2>&#9823; Lecon 1 : L'Endgame, le mur invisible</h2>
+
+            <div class="lesson-card">
+                <h4>Le probleme : gagner l'ouverture, perdre la finale</h4>
+                <p>Contre Stockfish Skill 20, SupaEngine obtient souvent des positions egales ou legerement meilleures en milieu de partie. Mais dans les <span class="highlight">finales techniques</span>, c'est la catastrophe : des positions gagnantes se transforment en nulles, et des nulles en defaites.</p>
+                <p style="margin-top: 10px;"><strong>Statistique revelante :</strong> 23 nulles sur 46 parties contre Skill 20. La majorite sont des positions ou SupaEngine avait un avantage mais n'a pas su le convertir.</p>
+            </div>
+
+            <h3>Pourquoi la finale est si difficile ?</h3>
+
+            <div class="principle">
+                <strong>1. Chaque pion compte enormement</strong>
+                <p>En milieu de partie, perdre un pion c'est embetant. En finale, perdre un pion c'est souvent <span class="highlight">perdre la partie</span>. Il n'y a plus de compensation tactique possible : pas de mat a l'horizon, pas de contre-attaque sur le roi.</p>
+            </div>
+
+            <div class="principle">
+                <strong>2. Le roi devient une piece d'attaque</strong>
+                <p>Toute la partie, vous protegez votre roi. En finale, il faut <span class="highlight-green">l'activer</span> - le faire avancer au centre pour soutenir vos pions passes et bloquer ceux de l'adversaire. C'est un changement de mentalite total.</p>
+            </div>
+
+            <div class="principle">
+                <strong>3. Le tempo et le Zugzwang</strong>
+                <p>En finale, il arrive qu'on <span class="highlight-red">perde parce qu'on doit jouer</span>. C'est le Zugzwang : n'importe quel coup aggrave votre position. Stockfish excelle a creer ces situations. SupaEngine les detecte moins bien.</p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Etudiez les finales Roi+Pions avant tout le reste. C'est la base de tout. Si vous ne savez pas jouer K+P vs K, ou Lucena/Philidor (Tour+Pion vs Tour), vous perdrez des parties gagnees a chaque session.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 2 - Les 813 patterns tactiques -->
+        <div class="section">
+            <h2>&#9876; Lecon 2 : Les 813 patterns tactiques</h2>
+
+            <p>En 131 parties, SupaEngine a identifie et memorise 813 motifs tactiques. Voici la repartition :</p>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="number">440</span>
+                    <span class="label">Clouages (Pins)</span>
+                    <span class="label" style="color: #ff6b6b;">54% du total</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number">185</span>
+                    <span class="label">Sacrifices avec echec</span>
+                    <span class="label" style="color: #ff6b6b;">23%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number">150</span>
+                    <span class="label">Fourchettes (Forks)</span>
+                    <span class="label" style="color: #ff6b6b;">18%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number">34</span>
+                    <span class="label">Attaques a la decouverte</span>
+                    <span class="label" style="color: #ff6b6b;">4%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="number">4</span>
+                    <span class="label">Mats</span>
+                    <span class="label" style="color: #ff6b6b;">Qb6# Qg5# Rf4# Rf7#</span>
+                </div>
+            </div>
+
+            <h3>&#128204; Le clouage : l'arme secrete numero 1</h3>
+
+            <div class="tactic-card">
+                <strong>Pourquoi 440 clouages ?</strong>
+                <p>Le clouage (pin) est le motif tactique le plus frequent aux echecs de haut niveau. Une piece est "clouee" quand elle ne peut pas bouger sans exposer une piece plus forte derriere elle.</p>
+                <p style="margin-top: 10px;"><strong>Types de clouages appris :</strong></p>
+                <ul>
+                    <li><strong>Clouage absolu</strong> : la piece clouee protege le roi (illegal de la bouger)</li>
+                    <li><strong>Clouage relatif</strong> : la piece clouee protege la dame ou une tour (legal mais couteux de la bouger)</li>
+                    <li><strong>Clouage en serie</strong> : maintenir un clouage pendant 10+ coups pour paralyser l'adversaire</li>
+                </ul>
+            </div>
+
+            <div class="chess-diagram">
+Exemple reel - Partie contre SF Skill 18, position au coup 50 :
+
+  8  . . . . . r k .
+  7  . . . . . . p p
+  6  . . . Q p q . .
+  5  . . . . . . . p
+  4  . P P . . . . .
+  3  . . . . . . . .
+  2  . . . . . P P .
+  1  . . . . R . K .
+     a b c d e f g h
+
+La Dame blanche en d6 cloue la Dame noire f6 contre le Roi g8.
+Resultat : Fou ne peut pas bouger, Roi coince, Tour domine.
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Cherchez les clouages AVANT de calculer vos combinaisons. Un clouage immobilise une piece adverse = c'est comme jouer avec une piece de plus. Les fous et les tours sont les meilleurs cloueurs.
+            </div>
+
+            <h3>&#9876; Le sacrifice avec echec : forcer le jeu</h3>
+
+            <div class="tactic-card">
+                <strong>185 sacrifices gagnants appris</strong>
+                <p>Un sacrifice avec echec force l'adversaire a reagir. C'est le moyen le plus fiable de lancer une combinaison car l'adversaire n'a pas le choix - il DOIT parer l'echec.</p>
+                <p style="margin-top: 10px;"><strong>Patterns recurrents :</strong></p>
+                <ul>
+                    <li><strong>axb8=Q+</strong> : Promotion avec echec (combo mortel en finale)</li>
+                    <li><strong>Qxf7+</strong> : Sacrifice de dame sur f7 (point faible classique)</li>
+                    <li><strong>Bxd5+</strong> : Sacrifice de fou pour ouvrir des diagonales</li>
+                    <li><strong>Rxd4+</strong> : Sacrifice de tour pour demolir le centre</li>
+                </ul>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Quand vous cherchez des combinaisons, commencez TOUJOURS par les echecs, puis les captures, puis les menaces. Dans cet ordre. C'est la methode "Checks, Captures, Threats" (CCT) utilisee par tous les Grands Maitres.
+            </div>
+
+            <h3>&#9822; La fourchette : attaquer deux cibles a la fois</h3>
+
+            <div class="tactic-card">
+                <strong>150 fourchettes identifiees</strong>
+                <p>La fourchette attaque deux pieces ou plus simultanement. L'adversaire ne peut en sauver qu'une.</p>
+                <p style="margin-top: 10px;"><strong>Les plus efficaces :</strong></p>
+                <ul>
+                    <li><strong>Fourchette de cavalier</strong> : Le cavalier est le roi des fourchettes (il saute par-dessus les pieces)</li>
+                    <li><strong>Fourchette de pion</strong> : Un simple pion qui avance peut attaquer deux pieces</li>
+                    <li><strong>Fourchette de dame</strong> : La dame combine toutes les directions d'attaque</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 3 - La course de pions -->
+        <div class="section">
+            <h2>&#9823;&#9823; Lecon 3 : La course de pions passes</h2>
+
+            <div class="lesson-card">
+                <h4>Nouveau dans v2.6 : l'evaluation des courses mutuelles</h4>
+                <p>SupaEngine a appris (et enseigne maintenant) un concept crucial de finale : quand les deux camps ont des <span class="highlight">pions passes qui courent vers la promotion</span>, qui arrive en premier ?</p>
+            </div>
+
+            <div class="principle">
+                <strong>La regle du carre</strong>
+                <p>Pour savoir si un roi peut rattraper un pion passe, tracez un carre imaginaire depuis le pion jusqu'a la 8eme rangee. Si le roi est a l'interieur du carre (ou peut y entrer), il rattrape le pion. Sinon, le pion promote.</p>
+            </div>
+
+            <div class="chess-diagram">
+Exemple : Course de pions - Qui gagne ?
+
+  8  . . . . . . . .
+  7  . . . . . . . .
+  6  . . . . . . . .
+  5  . . . . . . . .
+  4  P . . . . . . p      &lt;-- Pion blanc a4, pion noir h4
+  3  . . . . . . . .
+  2  . . . . . . . .
+  1  . . . K . . k .      &lt;-- Roi blanc d1, roi noir g1
+     a b c d e f g h
+
+Blanc joue : le pion a arrive en a8 en 4 coups.
+Noir repond : le pion h arrive en h1 en 3 coups !
+
+MAIS le roi noir en g1 est DANS le carre du pion a
+(carre = a4-a8-e8-e4). Donc le roi noir rattrape le pion blanc.
+
+Le roi blanc en d1 est HORS du carre du pion h
+(carre = h4-h1-e1-e4). Le pion noir promote !
+
+Resultat : Noir gagne cette course.
+            </div>
+
+            <div class="two-col">
+                <div class="principle">
+                    <strong>Quand compter les tempos</strong>
+                    <ul>
+                        <li>Distance pion-promotion = nombre de rangees restantes</li>
+                        <li>Le camp qui a le trait a un demi-tempo d'avance</li>
+                        <li>Un pion passe protege (soutenu par un autre pion) vaut 2x un pion passe isole</li>
+                    </ul>
+                </div>
+                <div class="principle">
+                    <strong>Quand sacrifier pour la course</strong>
+                    <ul>
+                        <li>Sacrifier une piece pour eliminer le dernier bloqueur du pion</li>
+                        <li>Echanger les tours si votre pion est plus avance</li>
+                        <li>Utiliser le roi comme bloqueur du pion adverse pendant que le votre avance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> En finale de pions, comptez TOUJOURS les tempos avant de jouer. "Mon pion arrive en combien de coups ? Son pion arrive en combien de coups ? Son roi peut-il intercepter ?" Ces 3 questions decident de la partie.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 4 - Gestion du temps -->
+        <div class="section">
+            <h2>&#9201; Lecon 4 : La gestion du temps</h2>
+
+            <div class="lesson-card">
+                <h4>Ce que SupaEngine a appris sur le temps de reflexion</h4>
+                <p>SupaEngine v2.6 a un systeme de gestion du temps adaptatif. En analysant ses parties, voici les conclusions :</p>
+            </div>
+
+            <div class="principle">
+                <strong>1. En ouverture : jouez VITE</strong>
+                <p>SupaEngine utilise 50% de son temps normal en ouverture (les 6 premiers coups). Pourquoi ? Parce que les coups d'ouverture sont connus et prepares. <span class="highlight">Economisez votre temps</span> pour les positions critiques.</p>
+            </div>
+
+            <div class="principle">
+                <strong>2. Quand il n'y a que 1-3 coups legaux : jouez VITE</strong>
+                <p>Si vous etes en echec ou qu'il n'y a que 2-3 reponses possibles, ne perdez pas de temps. SupaEngine divise son temps par 2 dans ces positions. Il n'y a rien a calculer : testez les 2-3 options et choisissez.</p>
+            </div>
+
+            <div class="principle">
+                <strong>3. En position complexe : prenez votre temps</strong>
+                <p>Quand il y a beaucoup de captures possibles, des pieces en prise, ou des tensions de pions, c'est LA qu'il faut investir du temps. SupaEngine utilise jusqu'a 1.5x son temps normal dans ces moments.</p>
+            </div>
+
+            <div class="principle">
+                <strong>4. Quand vous gagnez largement : accelerez</strong>
+                <p>Avec +5 pions d'avance, ne passez pas 5 minutes par coup. SupaEngine reduit son temps a 40% quand il a un avantage materiel > 800 centipawns. L'objectif : convertir sans risquer le zeitnot.</p>
+            </div>
+
+            <div class="tactic-card">
+                <strong>Nouveau : le mode Bullet</strong>
+                <p>En bullet (0.1-0.3 seconde par coup), toutes les regles changent :</p>
+                <ul>
+                    <li>Analyser <strong>1 seule ligne</strong> au lieu de 3 (pas le temps pour le multi-PV)</li>
+                    <li><strong>Pas de reflexion pendant le tour adverse</strong> (le pondering coute trop cher)</li>
+                    <li>Multiplicateurs de temps <strong>reduits</strong> (max 1.2x au lieu de 1.5x)</li>
+                    <li>Moins de profondeur en finale (+2 au lieu de +4)</li>
+                </ul>
+                <p style="margin-top: 10px;"><em>Lecon : En bullet, la vitesse de decision bat la precision de calcul.</em></p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Repartissez votre temps ainsi : <strong>20%</strong> pour les 15 premiers coups, <strong>50%</strong> pour le milieu de partie (coups 15-35), <strong>30%</strong> pour la finale. La pire erreur est d'arriver en finale avec 30 secondes quand il vous faut de la precision.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 5 - Faire confiance au moteur -->
+        <div class="section">
+            <h2>&#129504; Lecon 5 : Quand faire confiance a son instinct</h2>
+
+            <div class="lesson-card">
+                <h4>Le dilemme de SupaEngine : evaluation custom vs Stockfish</h4>
+                <p>SupaEngine utilise deux evaluations : celle de Stockfish (tres precise) et sa propre evaluation (24 criteres positionnels). Le defi : <span class="highlight">quand ecouter son propre jugement ?</span></p>
+            </div>
+
+            <div class="principle">
+                <strong>La reponse : presque jamais</strong>
+                <p>En v2.4, SupaEngine a <span class="highlight-red">baisse</span> le poids de sa propre evaluation de 50% a 40%. Resultat : <span class="highlight-green">amelioration immediate</span>. Pourquoi ? Parce que l'evaluation de Stockfish est basee sur un reseau de neurones entraine sur des millions de parties, alors que notre evaluation custom utilise seulement 24 regles simples.</p>
+                <p style="margin-top: 10px;">En v2.6, on remonte tres legerement a 42% <strong>uniquement en deep endgame</strong> (10 pieces ou moins), car nos regles sur les pions passes et l'activite du roi ajoutent une vraie valeur dans ces positions simplifiees.</p>
+            </div>
+
+            <div class="tactic-card">
+                <strong>Traduction pour le joueur humain</strong>
+                <p>Quand un moteur vous dit qu'un coup est le meilleur, faites-lui confiance a <strong>90%</strong>. Votre "intuition" n'est utile que dans les situations que le moteur ne gere pas bien :</p>
+                <ul>
+                    <li>Positions fermees avec des plans a tres long terme</li>
+                    <li>Finales de pions tres simplifiees</li>
+                    <li>Positions avec compensation non-materielle (initiative, attaque de roi)</li>
+                </ul>
+                <p style="margin-top: 10px;">Pour tout le reste : <span class="highlight">ecoutez le moteur</span>.</p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Quand vous analysez vos parties avec un moteur, ne cherchez pas a justifier vos coups. Si le moteur dit que votre coup etait mauvais, il a probablement raison. Comprenez POURQUOI plutot que de contester.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 6 - Le plateau de progression -->
+        <div class="section">
+            <h2>&#128200; Lecon 6 : Le plateau de progression (et comment le casser)</h2>
+
+            <div class="lesson-card">
+                <h4>SupaEngine plafonne a ~2900 ELO. Pourquoi ?</h4>
+                <p>Malgre 131 parties et 813 tactiques, SupaEngine stagne. Contre Skill 20, c'est 27% de score. Pourquoi cette barriere ?</p>
+            </div>
+
+            <div class="two-col">
+                <div class="tactic-card">
+                    <strong>Ce qui marche bien</strong>
+                    <ul>
+                        <li>Ouverture solide (book moves)</li>
+                        <li>Tactique intermediaire (forks, pins)</li>
+                        <li>Milieu de partie positionnel</li>
+                        <li>100% victoire jusqu'a Skill 15</li>
+                    </ul>
+                </div>
+                <div class="tactic-card">
+                    <strong>Ce qui bloque</strong>
+                    <ul>
+                        <li>Finales techniques (conversion)</li>
+                        <li>Positions egales (pas d'avantage a exploiter)</li>
+                        <li>Vitesse de calcul en bullet</li>
+                        <li>Derniers 5% de precision</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Comment on casse le plateau</h3>
+
+            <div class="principle">
+                <strong>1. Specialiser plutot que generaliser</strong>
+                <p>Au lieu d'ameliorer tout un peu, on ameliore <span class="highlight">une chose beaucoup</span>. Pour SupaEngine v2.6, c'est l'endgame. Pour vous : identifiez votre plus grande faiblesse et travaillez-la exclusivement pendant 2 semaines.</p>
+            </div>
+
+            <div class="principle">
+                <strong>2. Analyser chaque partie en detail</strong>
+                <p>SupaEngine v2.6 a un nouveau mode "bullet verify" : apres chaque partie, analyse complete avec blunders, erreurs, graphe d'evaluation, et detection des faiblesses par phase. <span class="highlight-green">Faites la meme chose</span> avec vos parties.</p>
+            </div>
+
+            <div class="principle">
+                <strong>3. Nettoyer les vieilles habitudes</strong>
+                <p>Bug corrige en v2.6 : la table d'historique (memoire des bons coups) n'etait <span class="highlight-red">jamais nettoyee entre les parties</span>. SupaEngine jouait en partie avec des reflexes de la partie precedente ! Apres le fix, les decisions sont plus fraiches.</p>
+                <p style="margin-top: 10px;"><em>Lecon pour vous : si vous repetez les memes erreurs, c'est peut-etre parce que vous jouez avec des "reflexes" qui ne s'appliquent pas a la position actuelle. Chaque partie est unique.</em></p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Tenez un journal d'echecs. Apres chaque session, notez : 1) Votre plus grosse erreur 2) Pourquoi vous l'avez faite 3) Comment l'eviter la prochaine fois. En 30 jours, vous eliminerez vos erreurs recurrentes.
+            </div>
+        </div>
+
+        <!-- SECTION: Lecon 7 - Le respect de Stockfish -->
+        <div class="section">
+            <h2>&#9813; Lecon 7 : Respecter la force adverse</h2>
+
+            <div class="lesson-card">
+                <h4>Le fossé Skill 15 → Skill 20</h4>
+                <p>Regardez le tableau de resultats :</p>
+                <ul>
+                    <li>Contre Skill 15 (ELO ~2400) : <span class="win">90% de score</span></li>
+                    <li>Contre Skill 18 (ELO ~2700) : <span class="highlight">59% de score</span></li>
+                    <li>Contre Skill 20 (ELO ~3000) : <span class="loss">27% de score</span></li>
+                </ul>
+                <p style="margin-top: 10px;">Chaque pallier de 300 ELO <span class="highlight-red">divise le score presque par 2</span>. C'est la nature exponentielle de la progression aux echecs.</p>
+            </div>
+
+            <div class="principle">
+                <strong>Ce que ca signifie concretement</strong>
+                <p>Un joueur a 1800 ELO pense qu'il est "fort". Contre un 2100, il gagne ~25%. Contre un 2400, il gagne ~5%. Contre un GM a 2700, il ne gagne pratiquement <span class="highlight-red">jamais</span>.</p>
+                <p style="margin-top: 10px;">Chaque gain de 100 ELO necessite <strong>exponentiellement plus d'effort</strong> que le precedent. C'est normal. C'est pourquoi SupaEngine a domine jusqu'a 2400 puis a commence a souffrir.</p>
+            </div>
+
+            <div class="insight">
+                <strong>&#127919; Conseil pratique :</strong> Ne vous decouragez pas si votre progression ralentit. Passer de 800 a 1200 prend quelques semaines. Passer de 1200 a 1600 prend quelques mois. Passer de 1600 a 2000 peut prendre des annees. C'est la courbe naturelle aux echecs, et elle s'applique aussi aux IA.
+            </div>
+        </div>
+
+        <!-- SECTION: Resume et prochaines etapes -->
+        <div class="section" style="background: linear-gradient(135deg, rgba(0, 184, 148, 0.2) 0%, rgba(9, 132, 227, 0.2) 100%);">
+            <h2>&#128218; Resume des 7 lecons</h2>
+
+            <ol style="font-size: 1.1rem;">
+                <li><strong>L'endgame est le mur invisible</strong> - Etudiez les finales de pions, Lucena, Philidor</li>
+                <li><strong>Le clouage est l'arme #1</strong> - 54% des tactiques apprises sont des pins</li>
+                <li><strong>Comptez les tempos en finale</strong> - Course de pions = qui promote en premier</li>
+                <li><strong>Gerez votre temps</strong> - Vite en ouverture, lent en complications, vite quand vous gagnez</li>
+                <li><strong>Faites confiance au moteur</strong> - Votre intuition n'est utile que dans 10% des cas</li>
+                <li><strong>Cassez le plateau</strong> - Specialisez-vous, analysez chaque partie, nettoyez vos reflexes</li>
+                <li><strong>Respectez la courbe</strong> - Chaque pallier de 300 ELO divise le score par 2</li>
+            </ol>
+        </div>
+
+        <!-- SECTION: Prochaines etapes -->
+        <div class="section">
+            <h2>&#128302; Prochaines etapes pour SupaEngine</h2>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: 65%">65% vers l'objectif 3200 ELO</div>
+            </div>
+
+            <h3>Plan d'amelioration v2.7+</h3>
+            <ul>
+                <li>&#9823; <strong>Tablebases etendues</strong> : 7 pieces (actuellement 5-6)</li>
+                <li>&#129504; <strong>Reseau de neurones custom</strong> : Entrainer un NNUE sur les 131 parties</li>
+                <li>&#9876; <strong>Quiescence amelioree</strong> : Chercher plus profondement les echanges en finale</li>
+                <li>&#128200; <strong>1000 parties</strong> : Plus de donnees = meilleure Q-table</li>
+                <li>&#128161; <strong>Anti-nulle</strong> : Detecter et eviter les positions de nulle quand on a l'avantage</li>
+            </ul>
+
+            <div class="insight">
+                <strong>&#128640; L'objectif :</strong> Atteindre 3200 ELO (~45% de score contre Stockfish Skill 20). Chaque amelioration est un petit pas, mais ensemble elles font la difference.
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center;">
+            <h2 style="color: #ffc107;">&#127942; Continuez a apprendre !</h2>
+            <p style="font-size: 1.2rem; margin: 20px 0;">SupaEngine apprend en jouant contre le meilleur moteur du monde. Vous pouvez faire la meme chose : jouez, analysez, corrigez, recommencez.</p>
+            <p style="margin-top: 15px; opacity: 0.7;">Page generee le 7 fevrier 2026 | Donnees : 131 parties, 813 tactiques, SupaEngine v2.6</p>
+        </div>
+    </div>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Deep Blue vs Kasparov 1997 - Man vs Machine</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.6);
+            padding: 50px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(0,200,255,0.4);
+            box-shadow: 0 0 50px rgba(0,200,255,0.3);
+        }
+
+        h1 {
+            font-size: 3.2em;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(0,200,255,0.5); }
+            50% { text-shadow: 0 0 40px rgba(0,255,136,0.8); }
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(0,200,255,0.5);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 14px 24px;
+            margin: 8px;
+            border-radius: 25px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid rgba(0, 255, 136, 0.5);
+            font-size: 1.05em;
+            font-weight: bold;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 20px 45px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            color: #0f2027;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 25px 0;
+            font-size: 1.15em;
+        }
+
+        .back-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 212, 255, 0.8);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 680px 1fr;
+            gap: 50px;
+            margin-top: 40px;
+        }
+
+        .board-section {
+            background: rgba(0,0,0,0.7);
+            padding: 45px;
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            border: 3px solid rgba(0,212,255,0.4);
+            box-shadow: 0 0 40px rgba(0,200,255,0.2);
+        }
+
+        #board {
+            width: 590px;
+            margin: 0 auto;
+            box-shadow: 0 25px 70px rgba(0,212,255,0.5);
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px;
+            margin: 20px 0;
+            border-radius: 20px;
+            border: 3px solid rgba(0,212,255,0.5);
+        }
+
+        .player-info.human {
+            background: linear-gradient(135deg, rgba(255,100,0,0.3), rgba(255,150,0,0.2));
+            border-color: rgba(255,150,0,0.6);
+        }
+
+        .player-info.machine {
+            background: linear-gradient(135deg, rgba(0,212,255,0.3), rgba(0,255,136,0.2));
+            border-color: rgba(0,255,136,0.6);
+        }
+
+        .player-name {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .player-rating {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 7px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 35px;
+        }
+
+        .btn {
+            padding: 18px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,212,255,0.6);
+        }
+
+        .btn-first { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .btn-prev { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .btn-next { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .btn-last { background: linear-gradient(135deg, #30cfd0, #330867); }
+
+        .move-info {
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            padding: 26px;
+            border-radius: 18px;
+            text-align: center;
+            font-weight: bold;
+            color: #0f2027;
+            margin-top: 25px;
+            font-size: 1.25em;
+        }
+
+        .moves-section {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        .move-card {
+            background: rgba(0,0,0,0.5);
+            border-radius: 22px;
+            padding: 32px;
+            margin-bottom: 28px;
+            border-left: 8px solid #00d4ff;
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+            transition: all 0.4s;
+        }
+
+        .move-card:hover {
+            transform: translateX(18px);
+            background: rgba(0,212,255,0.15);
+            border-left-color: #00ff88;
+        }
+
+        .move-card.active {
+            border-left-color: #00ff88;
+            background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,212,255,0.2));
+            box-shadow: 0 0 40px rgba(0,255,136,0.4);
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .move-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .move-rating {
+            font-size: 1.8em;
+            font-weight: bold;
+            padding: 14px 24px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #0f2027;
+        }
+
+        .move-notation {
+            font-size: 2.4em;
+            font-weight: bold;
+            margin-bottom: 16px;
+            font-family: 'Courier New', monospace;
+            color: #00d4ff;
+        }
+
+        .move-comment {
+            font-size: 1.12em;
+            line-height: 2;
+            color: #f5f5f5;
+            margin-top: 16px;
+        }
+
+        .move-analysis {
+            margin-top: 22px;
+            padding-top: 22px;
+            border-top: 2px solid rgba(0,212,255,0.3);
+        }
+
+        .analysis-section {
+            margin-bottom: 18px;
+        }
+
+        .analysis-title {
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 12px;
+            font-size: 1.08em;
+        }
+
+        .analysis-item {
+            padding: 12px 18px;
+            margin: 7px 0;
+            border-radius: 12px;
+            background: rgba(0,255,136,0.1);
+            font-size: 1.02em;
+        }
+
+        .advantage { border-left: 5px solid #4caf50; }
+        .benefit { border-left: 5px solid #00d4ff; }
+        .weakness { border-left: 5px solid #ff5252; }
+
+        .game-info-box {
+            background: rgba(0,0,0,0.6);
+            padding: 40px;
+            border-radius: 22px;
+            margin-bottom: 45px;
+            border: 3px solid rgba(0,212,255,0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .game-info-box h3 {
+            color: #00ff88;
+            margin-bottom: 22px;
+            font-size: 1.7em;
+        }
+
+        .game-info-box p {
+            line-height: 2.1;
+            margin-bottom: 16px;
+            color: #f8f8f8;
+            font-size: 1.1em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Deep Blue vs Kasparov - Match du Siècle</h1>
+            <div class="subtitle">Deep Blue (IBM) vs Garry Kasparov - Homme vs Machine</div>
+            <div>
+                <span class="badge">🔥 Défense Caro-Kann</span>
+                <span class="badge">🏆 Match Historique 1997</span>
+                <span class="badge">1-0 Victoire Deep Blue!</span>
+            </div>
+            <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+        </header>
+
+        <div class="game-info-box">
+            <h3>📖 À Propos de Ce Moment Historique</h3>
+            <p><strong>Contexte:</strong> 11 Mai 1997, New York. Match revanche après la défaite de Deep Blue en 1996. Partie 6, score 3-2 pour Deep Blue. Le monde entier regarde.</p>
+            <p><strong>Importance HISTORIQUE:</strong> PREMIÈRE FOIS qu'un ordinateur bat le Champion du Monde en match officiel! Moment décisif de l'histoire : la Machine devient plus forte que l'Homme aux échecs.</p>
+            <p><strong>Technique:</strong> Deep Blue analyse 200 millions de positions/seconde. Kasparov, frustré par la partie 2, commet des erreurs. Jeu ultra-positionnel de la machine.</p>
+            <p><strong>Legacy:</strong> Change TOUT! Prouve que l'IA peut surpasser l'humain dans des domaines complexes. Lance l'ère moderne de l'IA aux échecs. Stockfish, AlphaZero, Leela sont les héritiers de Deep Blue.</p>
+            <p><strong>Controverse:</strong> Kasparov a contesté certains coups de Deep Blue, les jugeant "trop humains". IBM a refusé de dévoiler les logs. Mystère non résolu!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div class="player-info human">
+                    <div>
+                        <div class="player-name">♚ Garry Kasparov</div>
+                        <div class="player-rating">ELO: 2785 | Champion du Monde | Humain</div>
+                    </div>
+                    <div style="font-size: 4em;">👤</div>
+                </div>
+
+                <div id="board"></div>
+
+                <div class="player-info machine">
+                    <div style="font-size: 4em;">🤖</div>
+                    <div style="text-align: right;">
+                        <div class="player-name">♔ Deep Blue</div>
+                        <div class="player-rating">IBM RS/6000 SP | 200M pos/sec | Machine</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-first" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn btn-prev" onclick="goToPrevious()">◀ Préc</button>
+                    <button class="btn btn-next" onclick="goToNext()">Suiv ▶</button>
+                    <button class="btn btn-last" onclick="goToEnd()">⏭ Fin</button>
+                </div>
+
+                <div class="move-info" id="moveInfo">Position de départ</div>
+            </div>
+
+            <div class="moves-section" id="movesSection"></div>
+        </div>
+    </div>
+
+    <script>
+        const gamePGN = `[Event "IBM Man-Machine"]
+[Site "New York, NY USA"]
+[Date "1997.05.11"]
+[Round "6"]
+[White "Deep Blue (Computer)"]
+[Black "Garry Kasparov"]
+[Result "1-0"]
+[WhiteElo "?"]
+[BlackElo "2785"]
+[ECO "B17"]
+
+1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Nd7 5.Ng5 Ngf6 6.Bd3 e6 7.N1f3 h6
+8.Nxe6 Qe7 9.O-O fxe6 10.Bg6+ Kd8 11.Bf4 b5 12.a4 Bb7 13.Re1 Nd5
+14.Bg3 Kc8 15.axb5 cxb5 16.Qd3 Bc6 17.Bf5 exf5 18.Rxe7 Bxe7 19.c4 1-0`;
+
+        const moveAnnotations = {
+            1: { rating: 8.0, comment: "e4 - Deep Blue ouvre classiquement. Répertoire programmé.", advantages: ["✓ Contrôle centre"], benefits: ["✓ Initiative"], weaknesses: [] },
+            2: { rating: 8.5, comment: "Caro-Kann! Kasparov choisit une défense solide et éprouvée.", advantages: ["✓ Structure solide"], benefits: ["✓ Défense sûre"], weaknesses: [] },
+            5: { rating: 7.5, comment: "Ng5 - Variante agressive de Deep Blue. Position théorique.", advantages: ["✓ Pression immédiate"], benefits: ["✓ Initiative"], weaknesses: [] },
+            7: { rating: 8.0, comment: "N1f3 - Deep Blue développe avec précision machine.", advantages: ["✓ Développement"], benefits: ["✓ Contrôle centre"], weaknesses: [] },
+            8: { rating: 9.5, comment: "Nxe6!! SACRIFICE BRILLANT! Deep Blue sacrifie le cavalier!", advantages: ["✓ Ouvre lignes", "✓ Attaque roi noir"], benefits: ["✓ Initiative dévastatrice", "✓ Coup programmé parfait"], weaknesses: [] },
+            9: { rating: 8.0, comment: "O-O! Deep Blue roque calmement malgré le sacrifice. Confiance totale.", advantages: ["✓ Roi en sécurité"], benefits: ["✓ Tours connectées"], weaknesses: [] },
+            10: { rating: 9.0, comment: "Bg6+! ÉCHEC! Le roi noir est exposé, forcé à bouger!", advantages: ["✓ Roi déplacé", "✓ Avantage positionnel"], benefits: ["✓ Attaque continue"], weaknesses: [] },
+            11: { rating: 8.5, comment: "Bf4 - Deep Blue continue à développer avec menaces.", advantages: ["✓ Fou actif"], benefits: ["✓ Pression maximale"], weaknesses: [] },
+            13: { rating: 8.0, comment: "Re1 - La tour entre, doublant la pression sur e6.", advantages: ["✓ Tour sur colonne ouverte"], benefits: ["✓ Menaces multiples"], weaknesses: [] },
+            14: { rating: 7.5, comment: "Bg3 - Deep Blue maintient la pression, toutes pièces actives.", advantages: ["✓ Coordination parfaite"], benefits: ["✓ Position dominante"], weaknesses: [] },
+            16: { rating: 9.0, comment: "Qd3! La dame entre avec des menaces dévastatrices!", advantages: ["✓ Dame centralisée", "✓ Menaces multiples"], benefits: ["✓ Avantage décisif"], weaknesses: [] },
+            17: { rating: 9.5, comment: "Bf5!! COUP MACHINE! Menace mat et gagne pion e6!", advantages: ["✓ Menace Rxe7", "✓ Menace Bxe6"], benefits: ["✓ Position gagnante"], weaknesses: [] },
+            18: { rating: 10.0, comment: "Rxe7!! Deep Blue gagne la Dame! VICTOIRE HISTORIQUE! 1-0", advantages: ["✓ Gagne Dame", "✓ Avantage matériel décisif"], benefits: ["✓ DEEP BLUE BAT KASPAROV!", "✓ L'ÈRE DE L'IA COMMENCE!"], weaknesses: [] }
+        };
+
+        let game = new Chess();
+        let board = null;
+        let moveHistory = [];
+        let currentMoveIndex = 0;
+
+        function parsePGN() {
+            game.load_pgn(gamePGN);
+            moveHistory = game.history({ verbose: true });
+            game.reset();
+        }
+
+        function init() {
+            parsePGN();
+
+            board = Chessboard('board', {
+                draggable: false,
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+
+            drawMovesList();
+            updateMoveInfo();
+        }
+
+        function drawMovesList() {
+            const movesDiv = $('#movesSection');
+            movesDiv.html('<h2 style="margin-bottom: 35px; font-size: 2.3em; color: #00ff88;">🤖 Analyse de la Partie Historique</h2>');
+
+            moveHistory.forEach((move, index) => {
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const isBlackMove = index % 2 === 1;
+
+                const annotation = moveAnnotations[moveNum] || {
+                    rating: 8.0,
+                    comment: "Coup de précision machine."
+                };
+
+                let cardHTML = `
+                    <div class="move-card" data-move="${index + 1}">
+                        <div class="move-header">
+                            <div class="move-number">${color} ${moveNum}.</div>
+                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
+                        </div>
+                        <div class="move-notation">${move.san}</div>
+                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                    </div>
+                `;
+
+                const $card = $(cardHTML);
+                $card.on('click', () => goToMoveNumber(index + 1));
+                movesDiv.append($card);
+            });
+        }
+
+        function updateMoveInfo() {
+            if (currentMoveIndex === 0) {
+                $('#moveInfo').text('Position de départ - Le match du siècle commence...');
+            } else {
+                const moveNum = Math.floor((currentMoveIndex - 1) / 2) + 1;
+                const move = moveHistory[currentMoveIndex - 1];
+                $('#moveInfo').text(`Coup ${moveNum}: ${move.san}`);
+            }
+
+            $('.move-card').removeClass('active');
+            if (currentMoveIndex > 0) {
+                const activeCard = $(`.move-card[data-move="${currentMoveIndex}"]`);
+                activeCard.addClass('active');
+                // Scroll active move into view centered
+                if (activeCard.length > 0) {
+                    activeCard[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function goToNext() {
+            if (currentMoveIndex < moveHistory.length) {
+                game.move(moveHistory[currentMoveIndex].san);
+                currentMoveIndex++;
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToPrevious() {
+            if (currentMoveIndex > 0) {
+                currentMoveIndex--;
+                game.reset();
+                for (let i = 0; i < currentMoveIndex; i++) {
+                    game.move(moveHistory[i].san);
+                }
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = 0;
+            game.reset();
+            board.position('start');
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            while (currentMoveIndex < moveHistory.length) {
+                goToNext();
+            }
+        }
+
+        function goToMoveNumber(moveIndex) {
+            goToStart();
+            for (let i = 0; i < moveIndex && i < moveHistory.length; i++) {
+                goToNext();
+            }
+        }
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                goToNext();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToPrevious();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToStart();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToEnd();
+            }
+        });
+
+        $(document).ready(init);
+    </script>
+
+    <!-- Bouton retour en bas -->
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+    </div>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

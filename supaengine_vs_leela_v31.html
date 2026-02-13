@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaEngine v3.1 vs Leela Chess Zero - VICTOIRE! | Partie Legendaire</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #374151;
+            --gold: #ffd700;
+            --gold-dark: #b8960f;
+            --gold-light: #ffe44d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Back button - fixed top-left */
+        .nav-back {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--gold);
+            font-weight: 600;
+            border: 1px solid var(--gold-dark);
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateX(-5px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        /* Header with champion gradient */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 20px;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #1a1000 0%, #2d2000 30%, #3d2a00 50%, #2d2000 70%, #1a1000 100%);
+            border-radius: 20px;
+            border: 2px solid var(--gold-dark);
+            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.15), inset 0 1px 0 rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.6em;
+            margin-bottom: 12px;
+            background: linear-gradient(120deg, var(--gold-light), var(--gold), #fff, var(--gold), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--gold);
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .header .result-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            color: #000;
+            font-weight: 700;
+            font-size: 1.1em;
+            border-radius: 30px;
+            margin-top: 12px;
+            letter-spacing: 1px;
+        }
+
+        .header .quote {
+            margin-top: 15px;
+            font-size: 1em;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--gold-dark);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        /* Main two-column layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: minmax(520px, 560px) 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Board section */
+        .board-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .board-section h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            color: var(--gold);
+        }
+
+        .board-container {
+            width: 500px;
+            margin: 0 auto 15px;
+        }
+
+        #board {
+            width: 500px;
+        }
+
+        .move-info {
+            text-align: center;
+            font-size: 1.15em;
+            margin: 15px 0;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-dark);
+            border-radius: 8px;
+            color: var(--gold);
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-pgn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-pgn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* PGN section */
+        .pgn-section {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pgn-section.visible {
+            display: block;
+        }
+
+        .pgn-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .pgn-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .pgn-buttons button {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pgn-buttons button:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        /* Moves section */
+        .moves-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            max-height: 750px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: var(--gold);
+            border-bottom: 2px solid var(--gold-dark);
+            padding-bottom: 10px;
+        }
+
+        .move-item {
+            padding: 12px 14px;
+            margin: 8px 0;
+            background: var(--bg-card);
+            border-radius: 10px;
+            border-left: 4px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-item:hover {
+            background: rgba(255, 215, 0, 0.08);
+            border-left-color: var(--gold);
+            transform: translateX(4px);
+        }
+
+        .move-item.active {
+            background: rgba(255, 215, 0, 0.12);
+            border-left-color: var(--gold);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+        }
+
+        .move-item.white-move {
+            border-left-color: var(--accent-blue);
+        }
+
+        .move-item.black-move {
+            border-left-color: var(--text-secondary);
+        }
+
+        .move-item.brilliant {
+            border-left-color: var(--gold) !important;
+        }
+
+        .move-item.key-moment {
+            border-left-color: var(--accent-green) !important;
+        }
+
+        .move-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .move-number-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: var(--gold);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .move-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .move-color-dot.white {
+            background: #fff;
+            border: 1px solid #999;
+        }
+
+        .move-color-dot.black {
+            background: #333;
+            border: 1px solid #666;
+        }
+
+        .move-notation {
+            font-family: 'Courier New', monospace;
+            font-size: 1.15em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .move-comment {
+            margin-top: 6px;
+            font-size: 0.92em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .keyboard-hint kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold-dark);
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold);
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .board-container, #board {
+                width: 100% !important;
+                max-width: 500px;
+            }
+
+            .nav-back {
+                position: relative;
+                top: auto;
+                left: auto;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+
+            .board-container, #board {
+                width: 100% !important;
+                max-width: 360px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="nav-back">&#8592; Retour</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>SupaEngine v3.1 vs Leela Chess Zero - VICTOIRE!</h1>
+            <p class="subtitle">Bullet 0.5s/coup - Tournoi Multi-Moteurs 2026</p>
+            <span class="result-badge">1-0 -- Victoire par Mat!</span>
+            <p class="quote">"Un moteur hybride maison terrasse le reseau de neurones le plus celebre du monde"</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Blanc</div>
+                <div class="stat-value" style="font-size: 1.1em;">SupaEngine v3.1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Noir</div>
+                <div class="stat-value" style="font-size: 1.1em;">Leela Chess Zero</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Date</div>
+                <div class="stat-value" style="font-size: 1.1em;">2026.02.08</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ouverture</div>
+                <div class="stat-value" style="font-size: 1.1em;">Reti / Grunfeld inv.</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Coups</div>
+                <div class="stat-value">54</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Resultat</div>
+                <div class="stat-value" style="color: var(--accent-green);">1-0 Mat</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <h2>Position Actuelle</h2>
+                <div class="board-container">
+                    <div id="board" style="width: 500px;"></div>
+                </div>
+                <div class="move-info" id="moveInfo">Position initiale - Cliquez Suivant ou appuyez sur la fleche droite</div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">&#9198; Debut</button>
+                    <button class="btn" onclick="previousMove()">&#9664; Precedent</button>
+                    <button class="btn" onclick="nextMove()">Suivant &#9654;</button>
+                    <button class="btn" onclick="goToEnd()">Fin &#9197;</button>
+                </div>
+                <div class="keyboard-hint">
+                    <kbd>&#8592;</kbd> / <kbd>&#8594;</kbd> Naviguer &nbsp;|&nbsp; <kbd>Home</kbd> Debut &nbsp;|&nbsp; <kbd>End</kbd> Fin
+                </div>
+                <button class="btn-pgn" onclick="togglePGN()">Afficher / Masquer le PGN</button>
+                <div class="pgn-section" id="pgnSection">
+                    <div class="pgn-text" id="pgnText">1. Nf3 d5 2. g3 g6 3. Bg2 Bg7 4. d4 Nf6 5. c4 c6 6. cxd5 cxd5 7. Nc3 Nc6 8. Ne5 Qb6 9. Nxc6 bxc6 10. O-O O-O 11. Na4 Qb5 12. b3 Re8 13. h3 Ne4 14. Bb2 Ba6 15. Re1 Rad8 16. Qc2 Bc8 17. Rac1 Bd7 18. g4 f5 19. f3 Ng5 20. f4 Ne4 21. Bxe4 dxe4 22. g5 h6 23. h4 Kf7 24. e3 Rh8 25. Kg2 hxg5 26. hxg5 Rh4 27. Rh1 Rdh8 28. Rxh4 Rxh4 29. Qc4+ Be6 30. Qxb5 cxb5 31. Nc5 Rg4+ 32. Kh3 Bd5 33. Bc3 e6 34. Ba5 Bxd4 35. exd4 Rxf4 36. Nd7 Rf3+ 37. Kg2 e3 38. Ne5+ Kg8 39. Rc8+ Kg7 40. Nxf3 f4 41. Rc5 b4 42. Rxd5 exd5 43. Ne5 Kg8 44. Bxb4 Kh7 45. Kf3 Kg8 46. Nxg6 Kf7 47. Ne5+ Ke6 48. g6 Kf6 49. Bf8 e2 50. Kxe2 f3+ 51. Kxf3 Kf5 52. g7 Kg5 53. g8=Q+ Kf6 54. Qg6# 1-0</div>
+                    <div class="pgn-buttons">
+                        <button onclick="copyPGN()">Copier</button>
+                        <button onclick="downloadPGN()">Telecharger .pgn</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="moves-section" id="movesPanel">
+                <h2>Analyse coup par coup</h2>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script>
+        // =====================================================
+        // MOVES DATA - 107 half-moves with French commentary
+        // =====================================================
+        var movesData = [
+            // === Move 1 ===
+            { move_number: 1, color: "white", san: "Nf3", comment: "SupaEngine ouvre avec le cavalier roi ! Une ouverture Reti, flexible et hypermoderne. Plutot que d'occuper immediatement le centre avec des pions, les Blancs controlent les cases centrales a distance. Un choix strategique tres fin qui montre la profondeur de preparation de notre moteur hybride." },
+            { move_number: 1, color: "black", san: "d5", comment: "Leela repond classiquement en occupant le centre. Le pion d5 revendique de l'espace et prepare le developpement naturel des pieces. Un choix solide du reseau de neurones." },
+
+            // === Move 2 ===
+            { move_number: 2, color: "white", san: "g3", comment: "Le fianchetto du fou roi ! SupaEngine prepare Bg2 pour viser la grande diagonale a1-h8. C'est le setup classique de la Reti : flexible, positionnel, et redoutablement dangereux a long terme." },
+            { move_number: 2, color: "black", san: "g6", comment: "Leela adopte aussi un fianchetto ! On entre dans un systeme de Grunfeld inverse. Les deux camps optent pour un developpement hypermoderne, chacun postant son fou sur la grande diagonale. La lutte pour le centre sera subtile." },
+
+            // === Move 3 ===
+            { move_number: 3, color: "white", san: "Bg2", comment: "Le fou blanc prend sa diagonale royale. Depuis g2, il irradie vers le centre et l'aile dame. Cette piece sera un atout strategique majeur tout au long de la partie, surtout combinee avec Bb2 plus tard." },
+            { move_number: 3, color: "black", san: "Bg7", comment: "Le fou noir se deploie symetriquement en g7. Il controle la grande diagonale et protege le roi noir apres le roque. Les deux fous fianchettes se font face dans un duel diagonal." },
+
+            // === Move 4 ===
+            { move_number: 4, color: "white", san: "d4", comment: "SupaEngine frappe au centre ! Apres avoir prepare le terrain, les Blancs occupent d4 avec force. La combinaison Nf3 + g3 + Bg2 + d4 forme une structure catalane/Reti extremement harmonieuse. Le moteur hybride montre une comprehension profonde des structures." },
+            { move_number: 4, color: "black", san: "Nf6", comment: "Leela developpe son cavalier roi, controlant e4 et d5. Developpement naturel et conforme aux principes classiques. Le cavalier est magnifiquement place sur f6." },
+
+            // === Move 5 ===
+            { move_number: 5, color: "white", san: "c4", comment: "Le pion anglais ! SupaEngine attaque le centre noir avec c4, mettant la pression sur d5. C'est maintenant une structure catalane complete : Nf3, g3, Bg2, d4, c4. L'une des ouvertures les plus redoutables au plus haut niveau." },
+            { move_number: 5, color: "black", san: "c6", comment: "Leela renforce d5 avec c6, adoptant une formation Slave. Solide et defensif, ce coup stabilise le centre mais limite le cavalier dame qui ne peut plus aller en c6 naturellement." },
+
+            // === Move 6 ===
+            { move_number: 6, color: "white", san: "cxd5", comment: "SupaEngine ouvre la tension centrale ! En echangeant cxd5, les Blancs cherchent a exploiter la colonne c ouverte et a creer un isolani potentiel pour les Noirs. Un choix concret plutot que de maintenir la tension." },
+            { move_number: 6, color: "black", san: "cxd5", comment: "Leela reprend avec le pion c. La colonne c est maintenant semi-ouverte pour les deux camps. La structure est symetrique en apparence mais les Blancs ont un leger avantage de developpement." },
+
+            // === Move 7 ===
+            { move_number: 7, color: "white", san: "Nc3", comment: "Le cavalier dame se developpe naturellement en c3, visant d5 et e4. SupaEngine complete son developpement de facon exemplaire. Toutes les pieces mineures blanches seront bientot en jeu." },
+            { move_number: 7, color: "black", san: "Nc6", comment: "Leela deploie aussi son cavalier dame. Nc6 controle d4 et e5, mais le cavalier se retrouve face au pion d4 et pourrait etre cible. Position classique mais avec des subtilites strategiques." },
+
+            // === Move 8 ===
+            { move_number: 8, color: "white", san: "Ne5", comment: "COUP AMBITIEUX ! SupaEngine installe un puissant avant-poste central avec Ne5 ! Ce cavalier domine le centre, menace c6 directement, et rayonne sur toutes les cases cles : d7, f7, c4, d3. Un coup qui demontre l'agressivite controlee de notre moteur. Leela va devoir reagir a cette pression centrale." },
+            { move_number: 8, color: "black", san: "Qb6", comment: "Leela sort sa dame tot pour mettre la pression sur b2 et d4. Un choix actif mais la dame pourrait devenir une cible. Ce coup cree neanmoins des menaces tactiques concr etes contre le centre blanc." },
+
+            // === Move 9 ===
+            { move_number: 9, color: "white", san: "Nxc6", comment: "SupaEngine capture le cavalier c6 ! En eliminant ce defenseur, les Blancs affaiblissent la structure de pions noire et ouvrent la colonne b. Le concept de la paire de fous n'est pas pertinent ici car les Blancs gardent un cavalier puissant et creent des faiblesses dans le camp noir." },
+            { move_number: 9, color: "black", san: "bxc6", comment: "Leela reprend avec le pion b, doublant ses pions sur la colonne c. Les pions c6+d5 forment une chaine solide au centre, mais la colonne b ouverte et le pion c6 isole pourraient devenir des faiblesses a long terme." },
+
+            // === Move 10 ===
+            { move_number: 10, color: "white", san: "O-O", comment: "Le roi blanc se met en securite ! SupaEngine roque calmement, completant le developpement harmonieusement. La tour f1 regardera bientot le centre via la colonne f. Tout est en place pour l'action." },
+            { move_number: 10, color: "black", san: "O-O", comment: "Leela roque egalement. Les deux rois sont en securite... pour l'instant. La bataille va se dechainer sur les ailes et au centre. La position est tendue et riche en possibilites strategiques." },
+
+            // === Move 11 ===
+            { move_number: 11, color: "white", san: "Na4", comment: "Manoeuvre subtile ! Le cavalier se dirige vers a4 pour viser c5 et presser l'aile dame noire. Ce cavalier va grignoter du terrain sur le flanc dame, un plan typique de la Catalane. SupaEngine joue avec une precision chirurgicale dans le maniement des cavaliers." },
+            { move_number: 11, color: "black", san: "Qb5", comment: "Leela deplace sa dame sur b5, ciblant le pion b3 a venir et gardant la pression. La dame est active mais exposee. Un placement qui sera bientot conteste par les Blancs." },
+
+            // === Move 12 ===
+            { move_number: 12, color: "white", san: "b3", comment: "SupaEngine joue b3, preparant le developpement du fou en b2 sur la longue diagonale. Ce fou sera un MONSTRE sur a1-h8, visant directement le roi noir. La combinaison Bg2 + Bb2 creera un double fianchetto devastateur." },
+            { move_number: 12, color: "black", san: "Re8", comment: "Leela centralise sa tour sur la colonne e semi-ouverte. Un coup utile qui prepare des contre-attaques centrales. La tour pourrait soutenir une poussee e5 a terme." },
+
+            // === Move 13 ===
+            { move_number: 13, color: "white", san: "h3", comment: "Un petit coup prophylactique mais utile. SupaEngine prepare g4, l'avancee aggressive du pion g sur le flanc roi. h3 empeche aussi Ng4 du cavalier noir. Chaque coup a un but precis dans le plan de SupaEngine." },
+            { move_number: 13, color: "black", san: "Ne4", comment: "Le cavalier noir bondit en e4 ! Un avant-poste central puissant pour Leela. Ce cavalier controle d2, f2, c3. Mais SupaEngine a prevu ce coup et prepare une reponse energique." },
+
+            // === Move 14 ===
+            { move_number: 14, color: "white", san: "Bb2", comment: "Le deuxieme fou en fianchetto ! La diagonale a1-h8 est maintenant sous le controle total de SupaEngine. Ce fou vise directement le roi noir a travers la diagonale. Combine avec Bg2 c'est une arme strategique redoutable. La pression positionnelle augmente." },
+            { move_number: 14, color: "black", san: "Ba6", comment: "Leela active son fou dame en a6, ciblant la diagonale a6-f1 et le pion e2. Un placement agressif qui cherche a exploiter les cases blanches affaiblies. Le fou est actif mais un peu excentre." },
+
+            // === Move 15 ===
+            { move_number: 15, color: "white", san: "Re1", comment: "La tour se place sur la colonne e, soutenant le centre et visant le cavalier e4. SupaEngine renforce methodiquement sa position avant de lancer l'offensive. La coordination des pieces blanches est remarquable." },
+            { move_number: 15, color: "black", san: "Rad8", comment: "Leela centralise sa deuxieme tour. Les tours noires sont connectees et pointent vers le centre. La position noire semble solide, mais SupaEngine prepare un orage sur le flanc roi." },
+
+            // === Move 16 ===
+            { move_number: 16, color: "white", san: "Qc2", comment: "La dame blanche se positionne sur c2, alignee avec le cavalier e4 via la colonne c. Ce coup cree une batterie potentielle et prepare l'action centrale. SupaEngine orchestre ses pieces avec une harmonie impressionnante." },
+            { move_number: 16, color: "black", san: "Bc8", comment: "Leela ramene son fou en c8, admettant que Ba6 n'etait pas optimal. Un tempo perdu qui permet a SupaEngine de prendre l'initiative. Le reseau de neurones semble hesiter sur le placement de cette piece." },
+
+            // === Move 17 ===
+            { move_number: 17, color: "white", san: "Rac1", comment: "La tour dame s'empare de la colonne c ! SupaEngine a maintenant les deux tours parfaitement placees sur les colonnes centrales et semi-ouvertes. La pression sur c6 est reelle. Toutes les pieces blanches sont au maximum de leur potentiel." },
+            { move_number: 17, color: "black", san: "Bd7", comment: "Leela redeplace son fou en d7. Le fou cherche une meilleure diagonale mais a perdu deux temps dans cette manoeuvre. SupaEngine capitalise sur ce temps perdu par le reseau de neurones." },
+
+            // === Move 18 ===
+            { move_number: 18, color: "white", san: "g4", comment: "LANCEMENT DE L'OFFENSIVE ! SupaEngine pousse g4, declenchant une tempete de pions sur le flanc roi ! C'est le moment critique ou notre moteur revele son plan agressif. L'avancee g4 gagne de l'espace, menace g5 pour chasser le cavalier f6 (si il y retourne), et prepare h4-h5. Un coup courageux et strategiquement profond contre un adversaire comme Leela !" },
+            { move_number: 18, color: "black", san: "f5", comment: "Leela tente de bloquer l'offensive avec f5, fermant le flanc roi. Un coup defensif comprehensible mais qui affaiblit la case e5 et le pion e7. Le reseau de neurones essaie de verrouiller la position." },
+
+            // === Move 19 ===
+            { move_number: 19, color: "white", san: "f3", comment: "SupaEngine chasse le cavalier centralise ! f3 attaque Ne4 et renforce le centre avec e3 a venir. Le mur de pions e3-f3-g4-h3 se construit, formant une structure agressive orientee vers le flanc roi. Un jeu de construction patient mais menacant." },
+            { move_number: 19, color: "black", san: "Ng5", comment: "Le cavalier est force de reculer en g5. Depuis cette case, il vise e4 et f3 mais reste instable. Leela perd l'avant-poste central qu'elle avait gagne. L'initiative passe clairement aux Blancs." },
+
+            // === Move 20 ===
+            { move_number: 20, color: "white", san: "f4", comment: "Le mur de pions blancs avance ! f4 chasse le cavalier g5 et controle e5. La formation f4-g4-h3 est un belier dirige vers le roi noir. SupaEngine construit methodiquement son attaque avec une precision de machine." },
+            { move_number: 20, color: "black", san: "Ne4", comment: "Le cavalier revient en e4 ! Leela insiste pour garder ce poste central. Mais cette fois SupaEngine a une reponse tactique preparee qui va changer le cours de la partie." },
+
+            // === Move 21 ===
+            { move_number: 21, color: "white", san: "Bxe4", comment: "SACRIFICE DU FOU FIANCHETTO ! SupaEngine echange son precieux fou g2 contre le cavalier ! Un choix qui semble paradoxal mais qui est brillamment calcule. En eliminant le defenseur central, les Blancs obtiennent des pions passes potentiels et une structure favorable. Le deuxieme fou en b2 devient la piece dominante de l'echiquier." },
+            { move_number: 21, color: "black", san: "dxe4", comment: "Leela reprend avec le pion d. Les Noirs ont maintenant un pion e4 avance mais isole. La structure a change radicalement : les Blancs visent a creer des pions passes sur le flanc roi, les Noirs doivent defendre." },
+
+            // === Move 22 ===
+            { move_number: 22, color: "white", san: "g5", comment: "L'avancee continue ! g5 ferme le flanc roi et cree une chaine de pions aggressive. Le pion g5 restreint le fou g7 et fixe les pions noirs. La colonne h va devenir le champ de bataille principal. SupaEngine execute son plan avec une logique implacable." },
+            { move_number: 22, color: "black", san: "h6", comment: "Leela essaie d'ouvrir la position avec h6, attaquant le pion g5. Le reseau de neurones cherche du contre-jeu mais cette avancee va ouvrir des lignes que SupaEngine pourra exploiter sur la colonne h." },
+
+            // === Move 23 ===
+            { move_number: 23, color: "white", san: "h4", comment: "SupaEngine renforce la chaine ! h4 soutient g5 et prepare l'ouverture de la colonne h apres un echange. Le plan est clair : ouvrir la colonne h et lancer l'assaut contre le roi noir. La precision du moteur hybride est remarquable." },
+            { move_number: 23, color: "black", san: "Kf7", comment: "Leela deplace son roi en f7 ! Un coup surprenant qui prepare la defense. Le roi s'eloigne de la diagonale a1-h8 ou le fou b2 rayonne. Mais en f7 le roi est aussi expose aux attaques sur la colonne f et les diagonales." },
+
+            // === Move 24 ===
+            { move_number: 24, color: "white", san: "e3", comment: "SupaEngine consolide avec e3, protegeant d4 et completant sa structure. Le mur de pions e3-f4-g5-h4 est maintenant une forteresse orientee vers le flanc roi. Le plan est en place, l'execution va commencer." },
+            { move_number: 24, color: "black", san: "Rh8", comment: "Leela transfere sa tour sur la colonne h ! Le reseau de neurones anticipe l'ouverture de cette colonne et place sa tour proactivement. Un bon coup defensif-offensif qui montre que Leela ne reste pas passive." },
+
+            // === Move 25 ===
+            { move_number: 25, color: "white", san: "Kg2", comment: "Le roi blanc se deplace en g2, s'eloignant de la premiere rangee et preparant Rh1. Ce coup subtil permet aux tours de manoeuvrer librement sur la colonne h. SupaEngine pense a la securite de son roi tout en preparant l'attaque." },
+            { move_number: 25, color: "black", san: "hxg5", comment: "Leela capture hxg5 ! La tension se resout sur le flanc roi et la colonne h s'ouvre. C'est ce que SupaEngine voulait : la colonne h ouverte sera l'autoroute pour l'attaque des tours blanches." },
+
+            // === Move 26 ===
+            { move_number: 26, color: "white", san: "hxg5", comment: "SupaEngine reprend et la colonne h est GRANDE OUVERTE ! Les tours blanches vont pouvoir investir cette colonne avec des consequences devastatrices. Le pion g5 reste comme sentinelle avancee sur le flanc roi." },
+            { move_number: 26, color: "black", san: "Rh4", comment: "Leela lance sa tour en h4, cherchant du contre-jeu actif. La tour est agressive mais aussi vulnerable. Un combat tactique intense se prepare sur la colonne h." },
+
+            // === Move 27 ===
+            { move_number: 27, color: "white", san: "Rh1", comment: "TOUR SUR LA COLONNE H ! SupaEngine s'empare de la colonne ouverte. La tour blanche menace de penetrer en h7 ou h8. La pression est enorme. La coordination Rh1 + Bb2 + le pion g5 cree un etau autour du roi noir." },
+            { move_number: 27, color: "black", san: "Rdh8", comment: "Leela double ses tours sur la colonne h ! Le reseau de neurones cherche l'echange de tours pour soulager la pression. Un plan defensif logique : echanger les tours reduirait l'attaque blanche." },
+
+            // === Move 28 ===
+            { move_number: 28, color: "white", san: "Rxh4", comment: "SupaEngine echange une paire de tours. La simplification est controlee : les Blancs gardent l'avantage positionnel meme avec moins de materiel sur l'echiquier. L'important est la structure et les pieces qui restent." },
+            { move_number: 28, color: "black", san: "Rxh4", comment: "Leela reprend. Une paire de tours a ete echangee, mais la position reste critique pour les Noirs. Le fou b2 domine toujours la grande diagonale et le pion g5 reste menacant." },
+
+            // === Move 29 ===
+            { move_number: 29, color: "white", san: "Qc4+", comment: "ECHEC DE DAME ! SupaEngine place sa dame sur c4 avec echec ! Ce coup force la dame noire a interagir et prepare un echange de dames dans une finale favorable aux Blancs. La precision tactique de notre moteur est impeccable. Le roi en f7 est expose a cet echec diagonal." },
+            { move_number: 29, color: "black", san: "Be6", comment: "Leela interpose son fou en e6 pour bloquer l'echec. Un coup force qui place le fou sur une case active. Mais maintenant la dame noire en b5 est en danger..." },
+
+            // === Move 30 ===
+            { move_number: 30, color: "white", san: "Qxb5", comment: "SupaEngine capture la dame ! L'echange de dames dans cette position est favorable aux Blancs car la finale qui en resulte met en valeur la superiorite structurelle de SupaEngine : les pions passes sur le flanc roi, le fou b2 dominant, et le cavalier a4 pret a bondir en c5. Un echange strategiquement parfait." },
+            { move_number: 30, color: "black", san: "cxb5", comment: "Leela reprend avec le pion c. La dame est partie mais les problemes restent. Les pions noirs sont disperses (b5, d5, e4, e6) et le fou b2 controle toujours la grande diagonale. La finale commence et SupaEngine est en position dominante." },
+
+            // === Move 31 ===
+            { move_number: 31, color: "white", san: "Nc5", comment: "LE CAVALIER DOMINE ! Nc5 est un coup magistral ! Ce cavalier occupe un avant-poste inexpugnable en c5, attaquant simultanment le fou e6 et visant a7, b7. Depuis c5, le cavalier est une pieuvre qui controle tout le terrain. SupaEngine montre sa superiorite technique en finale." },
+            { move_number: 31, color: "black", san: "Rg4+", comment: "Leela lance un echec avec la tour en g4 ! Le roi blanc doit se deplacer. Un coup actif qui cherche a perturber la coordination des pieces blanches et gagner un tempo." },
+
+            // === Move 32 ===
+            { move_number: 32, color: "white", san: "Kh3", comment: "Le roi blanc se place en h3, a cote de la tour. Une case sûre qui maintient la cohesion de la position blanche. Le roi est actif et participe a la lutte en finale. SupaEngine gere la phase technique avec brio." },
+            { move_number: 32, color: "black", san: "Bd5", comment: "Leela centralise son fou en d5. Le fou controle des cases importantes et bloque le pion d4. Un placement defensif solide mais SupaEngine a les ressources pour progresser." },
+
+            // === Move 33 ===
+            { move_number: 33, color: "white", san: "Bc3", comment: "SupaEngine repositionne son fou en c3, visant la diagonale a1-h8 tout en protegeant d4. Le fou reste une piece dominante et couvre les cases noires essentielles. Chaque piece est optimisee." },
+            { move_number: 33, color: "black", san: "e6", comment: "Leela joue e6, renfor cant le centre et la chaine de pions. Les Noirs essaient de solidifier leur position mais les faiblesses structurelles persistent. Le pion e4 reste isole et faible." },
+
+            // === Move 34 ===
+            { move_number: 34, color: "white", san: "Ba5", comment: "Le fou bondit en a5 ! Depuis cette case, il vise d8 et controle les cases cruciales de l'aile dame. Un coup d'apparence tranquille mais qui restreint considerablement les possibilites de Leela. Le fou est un sniper positionnel." },
+            { move_number: 34, color: "black", san: "Bxd4", comment: "Leela capture le pion d4 ! Le fou prend un pion central important. Mais cet echange va ouvrir la position pour les pieces blanches. Le reseau de neurones sacrifie la structure pour du materiel." },
+
+            // === Move 35 ===
+            { move_number: 35, color: "white", san: "exd4", comment: "SupaEngine reprend avec le pion e. La colonne e s'ouvre et le pion d4 est solide. La structure blanche reste coherente malgre l'echange. Les pions passes g5 et d4 vont progresser ensemble." },
+            { move_number: 35, color: "black", san: "Rxf4", comment: "Leela capture le pion f4 avec sa tour ! Un gain de materiel temporaire mais la tour est maintenant loin de la defense du roi. Leela joue pour les compensations tactiques." },
+
+            // === Move 36 ===
+            { move_number: 36, color: "white", san: "Nd7", comment: "COUP DE MAITRE ! Le cavalier bondit en d7 avec une fourchette potentielle ! Ce cavalier menace de prendre f6 ou f8, des cases cruciales. SupaEngine montre sa puissance tactique. Le cavalier en d7 est une bombe a retardement qui menace tout le camp noir." },
+            { move_number: 36, color: "black", san: "Rf3+", comment: "Leela donne echec avec la tour en f3 ! Le roi blanc doit bouger. Un coup desespere pour gagner du temps et perturber la coordination blanche. Mais SupaEngine a tout calcule." },
+
+            // === Move 37 ===
+            { move_number: 37, color: "white", san: "Kg2", comment: "Le roi retourne en g2, parfaitement place. La tour noire en f3 est en fait mal placee car elle sera bientot chassee. SupaEngine maintient le calme et garde le controle total de la position." },
+            { move_number: 37, color: "black", san: "e3", comment: "Leela pousse le pion passe en e3 ! Un pion passe avance est toujours dangereux. Leela essaie de creer du contre-jeu avec cette menace de promotion. Le reseau de neurones joue ses dernieres cartes." },
+
+            // === Move 38 ===
+            { move_number: 38, color: "white", san: "Ne5+", comment: "ECHEC DU CAVALIER CENTRALISE ! Ne5+ est un coup puissant qui donne echec et centralise le cavalier sur sa case ideale. Le cavalier en e5 est une forteresse : il controle d7, f7, c4, d3, g4, f3. SupaEngine demontre la puissance du cavalier centralise en finale." },
+            { move_number: 38, color: "black", san: "Kg8", comment: "Le roi noir fuit en g8, dans le coin. La position de Leela est de plus en plus precaire. Le roi est confine et les pieces noires manquent de coordination. La fin approche." },
+
+            // === Move 39 ===
+            { move_number: 39, color: "white", san: "Rc8+", comment: "ECHEC DE TOUR ! La tour s'engouffre en c8 avec echec ! SupaEngine intensifie la pression avec des coups forcants. Le roi noir est pousse dans les cordes. Chaque echec rapproche les Blancs de la victoire." },
+            { move_number: 39, color: "black", san: "Kg7", comment: "Le roi se deplace en g7, fuyant l'echec. Mais il n'y a plus de refuge sur. Le filet se resserre autour du monarque noir. Leela est en grande difficulte." },
+
+            // === Move 40 ===
+            { move_number: 40, color: "white", san: "Nxf3", comment: "SupaEngine capture la tour noire avec le cavalier ! Gain de materiel decisif. Le cavalier reprend en f3, eliminant la derniere piece active de Leela. La tour et le cavalier blancs dominent completement. La victoire est maintenant une question de technique." },
+            { move_number: 40, color: "black", san: "f4", comment: "Leela pousse son pion en f4, creant un deuxieme pion passe. Avec e3 et f4, les Noirs ont deux pions passes connectes. C'est la derniere tentative de contre-jeu du reseau de neurones, mais SupaEngine a tout sous controle." },
+
+            // === Move 41 ===
+            { move_number: 41, color: "white", san: "Rc5", comment: "TOUR DOMINANTE ! La tour se place en c5, une case magnifique d'ou elle controle la 5eme rangee et attaque les pions noirs. Cette tour est une piece maitresse qui coupe le roi noir et empeche toute progression des pions noirs. SupaEngine demontre une technique finale irreprochable." },
+            { move_number: 41, color: "black", san: "b4", comment: "Leela pousse b4, essayant de creer un troisieme pion passe sur l'aile dame. Le reseau de neurones jette toutes ses forces dans la bataille mais la position est objectivement perdue. Les pions avancent mais sans soutien de pieces." },
+
+            // === Move 42 ===
+            { move_number: 42, color: "white", san: "Rxd5", comment: "La tour capture le pion d5 avec le fou ! Non, la tour prend en d5, gagnant encore du materiel. SupaEngine nettoie les pions centraux de Leela un par un. La superiorite materielle est maintenant ecrasante." },
+            { move_number: 42, color: "black", san: "exd5", comment: "Leela reprend avec le pion e. Mais les pions noirs sont maintenant disperses et incapables de creer des menaces serieuses. Le fou en d5 a disparu et avec lui le dernier espoir de coordination." },
+
+            // === Move 43 ===
+            { move_number: 43, color: "white", san: "Ne5", comment: "Le cavalier retourne en e5, sa case de predilection ! Depuis cet avant-poste central, le cavalier domine l'echiquier entier. Il vise d7, f7, g6, c4. SupaEngine centralise ses pieces pour le coup de grace final." },
+            { move_number: 43, color: "black", san: "Kg8", comment: "Le roi noir recule en g8, passif et sans ressources. Leela est reduite a faire des coups d'attente pendant que SupaEngine prepare l'execution finale. La resignation du reseau de neurones est palpable." },
+
+            // === Move 44 ===
+            { move_number: 44, color: "white", san: "Bxb4", comment: "SupaEngine capture le pion b4 avec le fou ! Un pion de plus et le fou retrouve une diagonale active. Le materiel s'accumule du cote blanc. Leela n'a plus aucune compensation pour son deficit materiel grandissant." },
+            { move_number: 44, color: "black", san: "Kh7", comment: "Le roi noir tente de fuir vers h7, cherchant a s'eloigner des pieces blanches centralisees. Mais le filet est trop serre. SupaEngine controle toutes les cases de fuite." },
+
+            // === Move 45 ===
+            { move_number: 45, color: "white", san: "Kf3", comment: "Le roi blanc s'avance activement en f3 ! En finale, le roi est une piece d'attaque et SupaEngine l'utilise parfaitement. Le roi aide a stopper les pions passes noirs (e3, f4) tout en progressant vers le centre. Technique exemplaire." },
+            { move_number: 45, color: "black", san: "Kg8", comment: "Le roi noir va et vient, impuissant. Leela n'a plus de plan constructif. Le reseau de neurones est completement paralyse par la domination positionnelle de SupaEngine." },
+
+            // === Move 46 ===
+            { move_number: 46, color: "white", san: "Nxg6", comment: "DEMOLITION ! SupaEngine elimine le pion g6 avec le cavalier ! Ce coup detruit les derniers vestiges de la couverture du roi noir et libere le pion g5. Le pion g va maintenant devenir un pion passe mortel qui fonce vers la promotion. Un coup devastateur qui scelle le sort de Leela !" },
+            { move_number: 46, color: "black", san: "Kf7", comment: "Le roi tente de se rapprocher du cavalier mais c'est trop tard. Les degats sont faits. Le pion g5 est libre et le cavalier en g6 est invulnerable. Leela ne peut qu'observer l'effondrement de sa position." },
+
+            // === Move 47 ===
+            { move_number: 47, color: "white", san: "Ne5+", comment: "Encore un echec de cavalier centralise ! Ne5+ force le roi a se deplacer et le cavalier retrouve son poste de commandement ideal. SupaEngine joue avec une precision mathematique, chaque coup est le meilleur. Le cavalier est un cauchemar pour Leela." },
+            { move_number: 47, color: "black", san: "Ke6", comment: "Le roi est force en e6, au centre de l'echiquier. Paradoxalement, le roi noir est centralise mais sans aucune piece pour le proteger. C'est un roi nu dans la tempete, face a l'armee blanche coordonnee." },
+
+            // === Move 48 ===
+            { move_number: 48, color: "white", san: "g6", comment: "LE PION PASSE AVANCE ! g6 est un coup historique. Ce pion fonce vers la promotion et rien ne peut l'arreter. Le cavalier e5 couvre g6, le fou b4 controle la diagonale. SupaEngine a cree un pion passe imparable. La promotion est inevitable !" },
+            { move_number: 48, color: "black", san: "Kf6", comment: "Le roi noir essaie desesperement de bloquer le pion g6 en se placant devant. Mais SupaEngine a prevu cette defense et a la reponse parfaite pour continuer. Leela joue ses derniers coups dans une position perdue." },
+
+            // === Move 49 ===
+            { move_number: 49, color: "white", san: "Bf8", comment: "COUP MAGISTRAL ! Le fou se place en f8, coupant completement le roi noir de la case g7 ! C'est un coup de genie strategique : le fou empeche le roi d'atteindre g7 pour bloquer le pion. Le chemin vers la promotion est degage. SupaEngine joue comme un Grand Maitre dans cette finale." },
+            { move_number: 49, color: "black", san: "e2", comment: "Leela pousse desesprement e2, a une case de la promotion ! C'est la derniere tentative du reseau de neurones : creer une dame noire avant que le pion g ne promotionne. Mais SupaEngine a tout calcule avec precision." },
+
+            // === Move 50 ===
+            { move_number: 50, color: "white", san: "Kxe2", comment: "SupaEngine capture le pion e2 avec le roi ! Froidement, methodiquement. Le roi elimine la menace de promotion noire. La superiorite de SupaEngine est totale : pion g6 prêt a promouvoir, fou en f8, cavalier en e5. Leela n'a plus rien." },
+            { move_number: 50, color: "black", san: "f3+", comment: "Leela pousse f3+ avec echec ! Le dernier souffle du reseau de neurones. Ce pion donne echec mais ne change rien au resultat. SupaEngine va simplement capturer et continuer son plan de promotion." },
+
+            // === Move 51 ===
+            { move_number: 51, color: "white", san: "Kxf3", comment: "Le roi capture f3 sans souci. Tous les pions passes noirs sont elimines. Il ne reste plus que le pion g6 blanc, soutenu par le cavalier e5 et le fou f8. La promotion est maintenant une certitude mathematique. SupaEngine a neutralise toutes les contre-menaces." },
+            { move_number: 51, color: "black", san: "Kf5", comment: "Le roi noir avance en f5, tentant une derniere resistance contre le pion g. Mais la coordination parfaite des pieces blanches rend toute defense impossible. Leela est dans le zugzwang total." },
+
+            // === Move 52 ===
+            { move_number: 52, color: "white", san: "g7", comment: "LE PION ATTEINT LA 7EME RANGEE ! g7 est le coup decisif ! Le pion est maintenant a une seule case de la promotion en dame. Le fou f8 protege g7 et le cavalier e5 controle toutes les approches. La transformation est INEVITABLE. SupaEngine est a un coup de creer une dame !" },
+            { move_number: 52, color: "black", san: "Kg5", comment: "Le roi noir joue Kg5, completement impuissant. Il n'y a aucun moyen d'empecher la promotion. Leela sait que la partie est terminee mais continue de jouer par protocole. Le reseau de neurones le plus celebre du monde est vaincu." },
+
+            // === Move 53 ===
+            { move_number: 53, color: "white", san: "g8=Q+", comment: "PROMOTION EN DAME AVEC ECHEC ! g8=Q+ ! Le pion se transforme en dame et donne echec au roi noir ! C'est un moment historique : SupaEngine, notre moteur hybride maison, promotionne contre la legendaire Leela Chess Zero ! La nouvelle dame blanche est devastatrice, combinee avec le cavalier e5 et le fou f8. MAGNIFIQUE !" },
+            { move_number: 53, color: "black", san: "Kf6", comment: "Le roi noir fuit en f6, seul coup legal. Mais c'est la fin. Avec dame, cavalier et fou contre un roi nu, le mat est imminent. Leela est dans une position sans espoir. Le dernier coup approche." },
+
+            // === Move 54 ===
+            { move_number: 54, color: "white", san: "Qg6#", comment: "ECHEC ET MAT !!! Qg6# ! La dame blanche delivre le mat final en g6 ! SupaEngine v3.1 bat Leela Chess Zero par ECHEC ET MAT en 54 coups ! Une victoire absolument historique ! Notre moteur hybride, melange de Stockfish, evaluation custom et Q-learning, vient de terrasser le reseau de neurones le plus celebre du monde ! Cette partie restera dans les annales comme la preuve que l'approche hybride peut surpasser les reseaux de neurones purs. VICTOIRE LEGENDAIRE !" }
+        ];
+
+        // =====================================================
+        // GAME ENGINE
+        // =====================================================
+        var game = new Chess();
+        var board = null;
+        var currentMoveIndex = -1;
+        var totalMoves = movesData.length;
+
+        var pgnString = '1. Nf3 d5 2. g3 g6 3. Bg2 Bg7 4. d4 Nf6 5. c4 c6 6. cxd5 cxd5 7. Nc3 Nc6 8. Ne5 Qb6 9. Nxc6 bxc6 10. O-O O-O 11. Na4 Qb5 12. b3 Re8 13. h3 Ne4 14. Bb2 Ba6 15. Re1 Rad8 16. Qc2 Bc8 17. Rac1 Bd7 18. g4 f5 19. f3 Ng5 20. f4 Ne4 21. Bxe4 dxe4 22. g5 h6 23. h4 Kf7 24. e3 Rh8 25. Kg2 hxg5 26. hxg5 Rh4 27. Rh1 Rdh8 28. Rxh4 Rxh4 29. Qc4+ Be6 30. Qxb5 cxb5 31. Nc5 Rg4+ 32. Kh3 Bd5 33. Bc3 e6 34. Ba5 Bxd4 35. exd4 Rxf4 36. Nd7 Rf3+ 37. Kg2 e3 38. Ne5+ Kg8 39. Rc8+ Kg7 40. Nxf3 f4 41. Rc5 b4 42. Rxd5 exd5 43. Ne5 Kg8 44. Bxb4 Kh7 45. Kf3 Kg8 46. Nxg6 Kf7 47. Ne5+ Ke6 48. g6 Kf6 49. Bf8 e2 50. Kxe2 f3+ 51. Kxf3 Kf5 52. g7 Kg5 53. g8=Q+ Kf6 54. Qg6# 1-0';
+
+        // Initialize the board
+        function initBoard() {
+            var config = {
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                draggable: false
+            };
+            board = Chessboard('board', config);
+        }
+
+        // Render the moves list in the side panel
+        function renderMovesList() {
+            var container = document.getElementById('movesList');
+            container.innerHTML = '';
+
+            for (var i = 0; i < movesData.length; i++) {
+                var m = movesData[i];
+                var div = document.createElement('div');
+                div.className = 'move-item';
+                div.dataset.index = i;
+
+                if (m.color === 'white') {
+                    div.classList.add('white-move');
+                } else {
+                    div.classList.add('black-move');
+                }
+
+                // Mark key moments
+                var isKeyMoment = false;
+                var keyMoves = ['Ne5', 'Nxc6', 'g4', 'Bxe4', 'g5', 'Qc4+', 'Nc5', 'Nd7', 'Ne5+', 'Nxf3', 'Rc5', 'Nxg6', 'g6', 'Bf8', 'g7', 'g8=Q+', 'Qg6#'];
+                if (m.color === 'white' && keyMoves.indexOf(m.san) !== -1) {
+                    div.classList.add('brilliant');
+                    isKeyMoment = true;
+                }
+
+                var colorDot = m.color === 'white'
+                    ? '<span class="move-color-dot white"></span>'
+                    : '<span class="move-color-dot black"></span>';
+
+                var moveLabel = m.color === 'white'
+                    ? m.move_number + '.'
+                    : m.move_number + '...';
+
+                div.innerHTML =
+                    '<div class="move-header">' +
+                        '<span class="move-number-badge">' + moveLabel + '</span>' +
+                        colorDot +
+                        '<span class="move-notation">' + m.san + '</span>' +
+                    '</div>' +
+                    '<div class="move-comment">' + m.comment + '</div>';
+
+                (function(idx) {
+                    div.addEventListener('click', function() {
+                        goToMove(idx);
+                    });
+                })(i);
+
+                container.appendChild(div);
+            }
+        }
+
+        // Navigate to a specific move index
+        function goToMove(index) {
+            if (index < -1 || index >= totalMoves) return;
+
+            // Reset and replay
+            game.reset();
+            for (var i = 0; i <= index; i++) {
+                var result = game.move(movesData[i].san, { sloppy: true });
+                if (!result) {
+                    console.error('Invalid move at index ' + i + ': ' + movesData[i].san);
+                    return;
+                }
+            }
+
+            currentMoveIndex = index;
+            board.position(game.fen());
+            updateMoveInfo();
+            highlightActiveMove();
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < totalMoves - 1) {
+                goToMove(currentMoveIndex + 1);
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                goToMove(currentMoveIndex - 1);
+            }
+        }
+
+        function goToStart() {
+            game.reset();
+            currentMoveIndex = -1;
+            board.position('start');
+            updateMoveInfo();
+            highlightActiveMove();
+        }
+
+        function goToEnd() {
+            goToMove(totalMoves - 1);
+        }
+
+        function updateMoveInfo() {
+            var info = document.getElementById('moveInfo');
+            if (currentMoveIndex === -1) {
+                info.innerHTML = 'Position initiale - Cliquez Suivant ou appuyez sur la fleche droite';
+                return;
+            }
+
+            var m = movesData[currentMoveIndex];
+            var colorLabel = m.color === 'white' ? 'SupaEngine (Blanc)' : 'Leela (Noir)';
+            var moveLabel = m.color === 'white'
+                ? m.move_number + '. ' + m.san
+                : m.move_number + '... ' + m.san;
+
+            info.innerHTML = '<strong>Coup ' + moveLabel + '</strong> &mdash; ' + colorLabel;
+
+            if (currentMoveIndex === totalMoves - 1) {
+                info.innerHTML += ' &mdash; <span style="color: var(--gold); font-weight: 700;">ECHEC ET MAT! 1-0</span>';
+            }
+        }
+
+        function highlightActiveMove() {
+            var items = document.querySelectorAll('.move-item');
+            items.forEach(function(item) {
+                item.classList.remove('active');
+            });
+
+            if (currentMoveIndex >= 0 && currentMoveIndex < items.length) {
+                items[currentMoveIndex].classList.add('active');
+                items[currentMoveIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // PGN functions
+        function togglePGN() {
+            var section = document.getElementById('pgnSection');
+            section.classList.toggle('visible');
+        }
+
+        function copyPGN() {
+            var text = document.getElementById('pgnText').textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                alert('PGN copie dans le presse-papier !');
+            }).catch(function() {
+                // Fallback
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('PGN copie !');
+            });
+        }
+
+        function downloadPGN() {
+            var headers = '[Event "Tournoi Multi-Moteurs 2026"]\n' +
+                '[Site "SupaChess"]\n' +
+                '[Date "2026.02.08"]\n' +
+                '[White "SupaEngine v3.1"]\n' +
+                '[Black "Leela Chess Zero (Lc0)"]\n' +
+                '[Result "1-0"]\n' +
+                '[Opening "Reti / Grunfeld inverse"]\n' +
+                '[TimeControl "Bullet 0.5s/coup"]\n\n';
+
+            var pgn = headers + pgnString;
+            var blob = new Blob([pgn], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'supaengine_vs_leela_v31.pgn';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch (e.key) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextMove();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousMove();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    goToStart();
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToEnd();
+                    break;
+            }
+        });
+
+        // Initialize on page load
+        $(document).ready(function() {
+            initBoard();
+            renderMovesList();
+            updateMoveInfo();
+        });
+    </script>
+</body>
+</html>

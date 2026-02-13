@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100% Accuracy - Nakamura vs Van Wely 2010</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+            text-align: center; margin-bottom: 30px; padding: 20px;
+            background: rgba(255, 215, 0, 0.08); border-radius: 15px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,215,0,0.2);
+        }
+        h1 {
+            font-size: 2.5em; margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { color: #aaa; font-size: 1.2em; }
+        .accuracy-badge {
+            display: inline-block; padding: 8px 24px; margin-top: 10px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000;
+            border-radius: 20px; font-weight: bold; font-size: 1.1em;
+            animation: goldPulse 2s ease-in-out infinite;
+        }
+        @keyframes goldPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 25px rgba(255,215,0,0.9), 0 0 40px rgba(255,165,0,0.4); }
+        }
+        .main-content {
+            display: grid; grid-template-columns: 1fr 560px 1fr;
+            gap: 25px; align-items: start;
+        }
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05); padding: 25px;
+            border-radius: 15px; backdrop-filter: blur(10px);
+        }
+        .info-panel h2 { color: #ffd700; margin-bottom: 15px; font-size: 1.4em; }
+        .stat-item {
+            margin: 12px 0; padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 8px;
+            border-left: 3px solid #ffd700;
+        }
+        .stat-label { color: #888; font-size: 0.9em; margin-bottom: 4px; }
+        .stat-value { font-size: 1.1em; font-weight: bold; color: #fff; }
+        .board-container {
+            background: rgba(255, 255, 255, 0.05); padding: 20px;
+            border-radius: 15px; backdrop-filter: blur(10px);
+        }
+        #chessboard {
+            display: grid; grid-template-columns: repeat(8, 65px);
+            grid-template-rows: repeat(8, 65px); gap: 0; margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;
+        }
+        .square {
+            width: 65px; height: 65px; display: flex; align-items: center;
+            justify-content: center; font-size: 42px; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .square.light { background: #f0d9b5; }
+        .square.dark { background: #b58863; }
+        .piece-black {
+            color: #000 !important; background: rgba(0,0,0,0.7);
+            padding: 2px 5px; border-radius: 4px; display: inline-block;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.8), -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8), -1px 1px 0 rgba(255,255,255,0.8);
+        }
+        .piece-white {
+            color: #000 !important; background: rgba(255,255,255,0.95);
+            padding: 2px 5px; border-radius: 4px; display: inline-block;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5), -1px -1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+        .square:hover { filter: brightness(1.2); transform: scale(1.05); }
+        .controls {
+            display: flex; justify-content: center; gap: 12px;
+            margin-top: 18px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            font-size: 1em; cursor: pointer; transition: all 0.3s ease;
+            font-weight: bold; color: #000;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,215,0,0.4); }
+        .move-info {
+            margin-top: 18px; padding: 18px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 10px; min-height: 100px;
+        }
+        .move-number { font-size: 1.1em; color: #ffd700; margin-bottom: 8px; }
+        .move-comment { color: #ccc; line-height: 1.6; font-size: 0.95em; }
+        .timeline {
+            margin-top: 15px; padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 10px;
+            max-height: 350px; overflow-y: auto;
+        }
+        .timeline-move {
+            padding: 6px 8px; margin: 3px 0;
+            background: rgba(255, 255, 255, 0.05); border-radius: 5px;
+            cursor: pointer; transition: all 0.2s ease; font-size: 0.9em;
+        }
+        .timeline-move:hover { background: rgba(255,215,0,0.3); transform: translateX(5px); }
+        .timeline-move.active { background: rgba(255,215,0,0.5); border-left: 3px solid #ffd700; }
+        .back-btn {
+            position: fixed; top: 20px; left: 20px; padding: 10px 20px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; color: white; text-decoration: none;
+            transition: all 0.3s ease; backdrop-filter: blur(10px); z-index: 100;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.2); transform: translateX(-5px); }
+        .highlight-box {
+            margin-top: 15px; padding: 15px; border-radius: 8px;
+            border-left: 3px solid #ffd700; background: rgba(255,215,0,0.08);
+        }
+        .highlight-box strong { color: #ffd700; }
+        .highlight-box p { margin-top: 8px; color: #ccc; line-height: 1.5; }
+        @media (max-width: 1200px) {
+            .main-content { grid-template-columns: 1fr; justify-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <a href="hub.html" class="back-btn">&larr; Retour au Hub</a>
+    <div class="container">
+        <header>
+            <h1>Nakamura vs Van Wely</h1>
+            <p class="subtitle">Tata Steel 2010 - Precision brutale dans la Najdorf</p>
+            <div class="accuracy-badge">NAKAMURA : 100% ACCURACY</div>
+        </header>
+        <div class="main-content">
+            <div class="info-panel">
+                <h2>Informations</h2>
+                <div class="stat-item">
+                    <div class="stat-label">Blancs</div>
+                    <div class="stat-value">Hikaru Nakamura (2708)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Loek van Wely (2641)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Tournoi</div>
+                    <div class="stat-value">Tata Steel Group A, Rd 2</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Lieu</div>
+                    <div class="stat-value">Wijk aan Zee, 17 Jan 2010</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Ouverture</div>
+                    <div class="stat-value">Sicilienne Najdorf (B96)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Resultat</div>
+                    <div class="stat-value">1-0 (Nakamura)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Precision</div>
+                    <div class="stat-value" style="color:#ffd700">Nakamura: 100%</div>
+                </div>
+                <div class="highlight-box">
+                    <strong>La performance :</strong>
+                    <p>39 coups de precision parfaite dans la Najdorf, l'une des ouvertures les plus complexes des echecs. Nakamura a joue chaque coup comme un engine contre un GM a 2641 ELO.</p>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">&#9198; Debut</button>
+                    <button class="btn" onclick="previousMove()">&#9664; Precedent</button>
+                    <button class="btn" onclick="nextMove()">Suivant &#9654;</button>
+                    <button class="btn" onclick="goToEnd()">Fin &#9197;</button>
+                </div>
+                <div class="move-info">
+                    <div class="move-number" id="moveNumber">Position initiale</div>
+                    <div class="move-comment" id="moveComment">Nakamura demontre une precision inhumaine dans la Najdorf. Cliquez sur "Suivant" pour decouvrir cette masterclass.</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>Timeline</h2>
+                <div class="timeline" id="timeline"></div>
+                <div class="highlight-box">
+                    <strong>Contexte :</strong>
+                    <p>La Sicilienne Najdorf est consideree comme l'ouverture la plus complexe des echecs. Jouer 39 coups a 100% de precision dans cette jungle theorique est un exploit quasiment surhumain. Nakamura a joue comme une machine.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script>
+        const chess = new Chess();
+        const gameMoves = [
+            { move: 'e4', comment: '1.e4 - Le debut classique. Nakamura ouvre avec le pion roi, invitant la Sicilienne.' },
+            { move: 'c5', comment: '1...c5 - La Sicilienne! Van Wely accepte le defi. L\'ouverture la plus jouee au plus haut niveau.' },
+            { move: 'Nf3', comment: '2.Cf3 - Developpement naturel, preparant d4.' },
+            { move: 'd6', comment: '2...d6 - Van Wely opte pour la variante classique qui peut mener a la Najdorf.' },
+            { move: 'd4', comment: '3.d4 - Nakamura ouvre le centre. Le debut de la Sicilienne Ouverte.' },
+            { move: 'cxd4', comment: '3...cxd4 - Echange thematique. Les noirs obtiennent une majorite centrale potentielle.' },
+            { move: 'Nxd4', comment: '4.Cxd4 - Le cavalier reprend, centralise et puissant.' },
+            { move: 'Nf6', comment: '4...Cf6 - Attaque sur e4. Preparation de la Najdorf.' },
+            { move: 'Nc3', comment: '5.Cc3 - Developpement et protection de e4.' },
+            { move: 'a6', comment: '5...a6! - LA NAJDORF! Le coup signature de Kasparov et Fischer. Flexible et ambitieux.' },
+            { move: 'Bg5', comment: '6.Fg5 - L\'attaque anglaise! Nakamura choisit la ligne la plus agressive contre la Najdorf, mettant immediatement la pression sur f6.' },
+            { move: 'e6', comment: '6...e6 - Solid et classique. Le pion protege d5 et prepare le developpement du fou.' },
+            { move: 'f4', comment: '7.f4 - Nakamura renforce son centre et prepare l\'attaque sur le flanc roi. L\'atmosphere est electrique!' },
+            { move: 'Nbd7', comment: '7...Cbd7 - Le cavalier se developpe en d7, soutenant e5 et c5. Schema typique de la Najdorf.' },
+            { move: 'Qf3', comment: '8.Df3 - La dame se place en f3, une ligne moderne. Elle vise a2-g8 et soutient e4.' },
+            { move: 'Qc7', comment: '8...Dc7 - La dame noire se centralise et prepare le roque long eventuel. Position typique de la Najdorf Classique.' },
+            { move: 'Bxf6', comment: '9.Fxf6 - Nakamura echange le fou contre le cavalier! Il double les pions noirs mais cede la paire de fous.' },
+            { move: 'Nxf6', comment: '9...Cxf6 - Reprise forcee avec le cavalier dame.' },
+            { move: 'g4', comment: '10.g4!! - ATTAQUE DEVASTATRICE! Nakamura lance les pions sur le flanc roi. Le message est clair: la guerre est declaree!' },
+            { move: 'b5', comment: '10...b5 - Van Wely contre-attaque au flanc dame. Course entre les deux flancs!' },
+            { move: 'g5', comment: '11.g5 - Le pion continue sa marche! Le cavalier f6 est chasse.' },
+            { move: 'Nd7', comment: '11...Cd7 - Le cavalier recule. Les noirs doivent reorganiser leur defense.' },
+            { move: 'O-O-O', comment: '12.O-O-O - Nakamura roque long! Le roi est a l\'abri et la tour h1 sera bientot en jeu pour l\'attaque.' },
+            { move: 'Nc5', comment: '12...Cc5 - Le cavalier vise e4 ou a4. Contre-jeu actif de Van Wely.' },
+            { move: 'a3', comment: '13.a3 - Prophylaxie. Nakamura empeche b4 et securise son flanc dame.' },
+            { move: 'Rb8', comment: '13...Tb8 - La tour se prepare pour la poussee b4.' },
+            { move: 'b4', comment: '14.b4! - Nakamura prend les devants! Il repousse le cavalier et ferme le flanc dame.' },
+            { move: 'Nd7', comment: '14...Cd7 - Le cavalier doit reculer. Nakamura a gagne du temps.' },
+            { move: 'Nd5', comment: '15.Cd5!! - SACRIFICE POSITIONNEL BRILLANT! Le cavalier saute au centre avec une force devastatrice. exd5 ouvre la diagonale e pour l\'attaque.' },
+            { move: 'exd5', comment: '15...exd5 - Van Wely accepte le sacrifice. La colonne e et les diagonales s\'ouvrent.' },
+            { move: 'exd5', comment: '16.exd5 - Le pion reprend. La position noire est dechiquetee. Les cases e6 et c6 sont des trous beants.' },
+            { move: 'Be7', comment: '16...Fe7 - Developpement force. Le fou doit proteger le flanc roi.' },
+            { move: 'Re1', comment: '17.Te1! - La tour saute sur la colonne e ouverte avec un tempo enorme! Le fou e7 est cloue.' },
+            { move: 'Ne5', comment: '17...Ce5 - Van Wely tente de bloquer avec le cavalier.' },
+            { move: 'fxe5', comment: '18.fxe5! - Nakamura capture et ouvre la colonne f. La position noire s\'effondre sur les cases noires.' },
+            { move: 'Bxg5+', comment: '18...Fxg5+ - Van Wely prend le pion avec echec pour gagner un tempo.' },
+            { move: 'Kb1', comment: '19.Rb1 - Le roi se met a l\'abri simplement. L\'attaque blanche est bien trop forte.' },
+            { move: 'dxe5', comment: '19...dxe5 - Van Wely prend le pion central. Mais les blancs ont une attaque decisive.' },
+            { move: 'Nc6', comment: '20.Cc6! - Le cavalier atterrit sur la case ideale! Il attaque la dame ET la tour b8 simultanement. Fourchette royale!' },
+            { move: 'Bf6', comment: '20...Ff6 - Le fou tente de couvrir les cases sombres.' },
+            { move: 'Bd3', comment: '21.Fd3! - Le fou vise h7 et complete le dispositif d\'attaque. La menace Fxh7+ est dans l\'air.' },
+            { move: 'h5', comment: '21...h5 - Van Wely tente de fermer la colonne h. Mesure desperee.' },
+            { move: 'Rxe5+', comment: '22.Txe5+! - SACRIFICE DE TOUR! Nakamura donne la qualite pour demolir la position noire.' },
+            { move: 'Bxe5', comment: '22...Fxe5 - Capture forcee.' },
+            { move: 'Re1', comment: '23.Te1 - La deuxieme tour entre en jeu avec un tempo sur le fou! L\'attaque est irresistible.' },
+            { move: 'Bg4', comment: '23...Fg4 - Van Wely tente un dernier piege.' },
+            { move: 'Qf4', comment: '24.Df4! - La dame se centralise parfaitement, attaquant e5 et menaçant l\'infiltration.' },
+            { move: 'O-O', comment: '24...O-O - Van Wely roque finalement, mais la position est deja perdue.' },
+            { move: 'Rxe5', comment: '25.Txe5! - Nakamura reprend le fou. Le materiel est maintenant egal mais la position blanche est ecrasante.' },
+            { move: 'g6', comment: '25...g6 - Tentative de creer une case de fuite pour le roi.' },
+            { move: 'Qf6', comment: '26.Df6! - La dame s\'infiltre en f6. La menace de mat sur g7 est imparable!' },
+            { move: 'Rbe8', comment: '26...Tbe8 - Desperado! Van Wely cherche des echanges.' },
+            { move: 'Ne7+', comment: '27.Ce7+! - Echec du cavalier! Le roi noir est repousse dans le coin.' },
+            { move: 'Rxe7', comment: '27...Txe7 - Capture forcee de la tour.' },
+            { move: 'Rxe7', comment: '28.Txe7 - Nakamura reprend. La menace Dxa6 ou Dxg6 arrive.' },
+            { move: 'Qxh2', comment: '28...Dxh2 - Van Wely prend un pion en esperant un perpetuel.' },
+            { move: 'Bxg6', comment: '29.Fxg6! - Le coup final commence. Le fou detruit le bouclier de pions.' },
+            { move: 'Qh1+', comment: '29...Dh1+ - Echec desespere.' },
+            { move: 'Kb2', comment: '30.Rb2 - Le roi se deplace calmement. Aucun danger.' },
+            { move: 'Qxd5', comment: '30...Dxd5 - Van Wely recupere du materiel mais la position est perdue.' },
+            { move: 'Bxf7+', comment: '31.Fxf7+! - Le fou sacrifie sur f7 avec echec! Demolition finale.' },
+            { move: 'Qxf7', comment: '31...Dxf7 - Capture forcee.' },
+            { move: 'Rxf7', comment: '32.Txf7 - Nakamura reprend. Finale de tour avec un pion de plus et une position dominante.' },
+            { move: 'Rxf7', comment: '32...Txf7 - Echange des pieces restantes.' },
+            { move: 'Qxa6', comment: '33.Dxa6 - Nakamura recupere le pion a6. Avantage materiel decisif.' },
+            { move: 'Kg7', comment: '33...Rg7 - Le roi se centralise mais c\'est trop tard.' },
+            { move: 'Qxb5', comment: '34.Dxb5 - Un autre pion tombe. Nakamura nettoie methodiquement.' },
+            { move: 'Kg6', comment: '34...Rg6 - Van Wely avance son roi.' },
+            { move: 'Qc4', comment: '35.Dc4 - La dame se repositionne pour controler les cases cles.' },
+            { move: 'Rd7', comment: '35...Td7 - La tour tente de rester active.' },
+            { move: 'b5', comment: '36.b5 - Le pion passe avance! Course a la promotion.' },
+            { move: 'Kg5', comment: '36...Rg5 - Le roi noir essaie de participer mais c\'est insuffisant.' },
+            { move: 'b6', comment: '37.b6! - Le pion continue sa marche vers la promotion. Imparable!' },
+            { move: 'Bf3', comment: '37...Ff3 - Dernier espoir de Van Wely.' },
+            { move: 'Qb5+', comment: '38.Db5+! - Echec! Le roi est repousse et le pion b ne peut etre arrete.' },
+            { move: 'Rd5', comment: '38...Td5 - Interposition forcee.' },
+            { move: 'Qb3', comment: '39.Db3! - ABANDON! Van Wely abandonne. Le pion b7 va promouvoir et la position est completement perdue. 39 coups de precision parfaite de Nakamura dans la Najdorf!' }
+        ];
+
+        let currentMoveIndex = -1;
+        const pieces = {
+            'r': '\u2656', 'n': '\u2658', 'b': '\u2657', 'q': '\u2655', 'k': '\u2654', 'p': '\u2659',
+            'R': '\u2656', 'N': '\u2658', 'B': '\u2657', 'Q': '\u2655', 'K': '\u2654', 'P': '\u2659'
+        };
+
+        function renderBoard() {
+            const board = chess.board();
+            const el = document.getElementById('chessboard');
+            el.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = 'square ' + ((r+c)%2===0 ? 'light' : 'dark');
+                    const p = board[r][c];
+                    if (p) {
+                        const sp = document.createElement('span');
+                        sp.textContent = pieces[p.type.toUpperCase()];
+                        sp.className = p.color === 'w' ? 'piece-white' : 'piece-black';
+                        sq.appendChild(sp);
+                    }
+                    el.appendChild(sq);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            const mn = document.getElementById('moveNumber');
+            const mc = document.getElementById('moveComment');
+            if (currentMoveIndex === -1) {
+                mn.textContent = 'Position initiale';
+                mc.textContent = 'Nakamura demontre une precision inhumaine dans la Najdorf. Cliquez sur "Suivant".';
+            } else {
+                const num = Math.floor(currentMoveIndex / 2) + 1;
+                const col = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                mn.textContent = 'Coup ' + num + '. ' + col + ': ' + gameMoves[currentMoveIndex].move;
+                mc.textContent = gameMoves[currentMoveIndex].comment;
+            }
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            const tl = document.getElementById('timeline');
+            tl.innerHTML = '';
+            gameMoves.forEach(function(m, i) {
+                const d = document.createElement('div');
+                d.className = 'timeline-move' + (i === currentMoveIndex ? ' active' : '');
+                const num = Math.floor(i / 2) + 1;
+                const col = i % 2 === 0 ? 'W' : 'B';
+                d.textContent = num + '.' + col + ' ' + m.move;
+                d.onclick = function() { goToMove(i); };
+                tl.appendChild(d);
+            });
+            var active = tl.querySelector('.active');
+            if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                chess.move(gameMoves[currentMoveIndex].move, { sloppy: true });
+                renderBoard(); updateMoveInfo();
+            }
+        }
+        function previousMove() {
+            if (currentMoveIndex >= 0) { chess.undo(); currentMoveIndex--; renderBoard(); updateMoveInfo(); }
+        }
+        function goToStart() { chess.reset(); currentMoveIndex = -1; renderBoard(); updateMoveInfo(); }
+        function goToEnd() { goToStart(); for (var i = 0; i < gameMoves.length; i++) nextMove(); }
+        function goToMove(index) {
+            chess.reset(); currentMoveIndex = -1;
+            for (var i = 0; i <= index; i++) { currentMoveIndex++; chess.move(gameMoves[currentMoveIndex].move, { sloppy: true }); }
+            renderBoard(); updateMoveInfo();
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') nextMove();
+            else if (e.key === 'ArrowLeft') previousMove();
+            else if (e.key === 'Home') goToStart();
+            else if (e.key === 'End') goToEnd();
+        });
+        renderBoard(); updateMoveInfo();
+    </script>
+</body>
+</html>

@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Radar des Capacités - Stockfish vs ChessNova</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(120deg, #fff, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-top: 15px;
+        }
+
+        .nav-back {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-5px);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-section h2 {
+            font-size: 2em;
+            margin-bottom: 25px;
+            color: #00f2fe;
+            border-bottom: 2px solid rgba(0, 242, 254, 0.3);
+            padding-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3);
+            border-color: #00f2fe;
+        }
+
+        .stat-card .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .stat-card .label {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00f2fe;
+            margin: 10px 0;
+        }
+
+        .stat-card .description {
+            font-size: 0.95em;
+            opacity: 0.8;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: rgba(0, 242, 254, 0.2);
+            padding: 15px;
+            text-align: left;
+            font-size: 1.2em;
+            color: #00f2fe;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .score-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-value {
+            min-width: 50px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 1s ease-out;
+        }
+
+        .bar-stockfish {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+        }
+
+        .bar-chessnova {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.1));
+            border-left: 4px solid #00f2fe;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h3 {
+            color: #00f2fe;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .highlight-box p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Retour au Hub</a>
+        <a href="https://chessnova-chess-engine-web.pages.dev" class="nav-back" style="position: fixed; top: 20px; right: 20px;">🌐 Version en ligne</a>
+
+        <div class="header">
+            <h1>🎯 Carte Radar des Capacités</h1>
+            <p class="subtitle">Analyse Comparative Complète: Stockfish 17.1 vs ChessNova</p>
+            <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.85;">
+                Visualisation des forces et faiblesses sur 10 dimensions stratégiques
+            </p>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f);"></div>
+                <span><strong>Stockfish 17.1 FULL</strong> (ELO ~3676)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #4facfe, #00f2fe);"></div>
+                <span><strong>ChessNova Hybrid</strong> (ELO ~3150)</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Graphique Radar Principal -->
+            <div class="chart-section full-width">
+                <h2>📊 Profil Stratégique Complet (10 Dimensions)</h2>
+                <div class="chart-container">
+                    <canvas id="mainRadarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Stats Stockfish -->
+            <div class="chart-section">
+                <h2>⚡ Stockfish 17.1 FULL - Le Titan</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="icon">🎯</div>
+                        <div class="label">Précision</div>
+                        <div class="value">10/10</div>
+                        <div class="description">Calcul parfait jusqu'à 80+ coups</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">🧮</div>
+                        <div class="label">Tactique</div>
+                        <div class="value">10/10</div>
+                        <div class="description">Trouve toutes les combinaisons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">🏰</div>
+                        <div class="label">Finales</div>
+                        <div class="value">10/10</div>
+                        <div class="description">Technique parfaite, tablebases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">♟️</div>
+                        <div class="label">Structure</div>
+                        <div class="value">9.5/10</div>
+                        <div class="description">Évaluation optimale des pions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats ChessNova -->
+            <div class="chart-section">
+                <h2>🤖 ChessNova Hybrid - Le Créatif</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="icon">🎨</div>
+                        <div class="label">Créativité</div>
+                        <div class="value">9.5/10</div>
+                        <div class="description">Coups ultra-rares, style Tal</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">⚔️</div>
+                        <div class="label">Agressivité</div>
+                        <div class="value">9.2/10</div>
+                        <div class="description">Attaques constantes, sacrifices</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">🎯</div>
+                        <div class="label">Tactique</div>
+                        <div class="value">9.2/10</div>
+                        <div class="description">Excellent en complications</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">🔥</div>
+                        <div class="label">Initiative</div>
+                        <div class="value">9.5/10</div>
+                        <div class="description">Force l'adversaire à réagir</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableau Comparatif Détaillé -->
+            <div class="chart-section full-width">
+                <h2>📋 Comparaison Détaillée par Dimension</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Dimension</th>
+                            <th style="text-align: center;">Stockfish 17.1</th>
+                            <th style="text-align: center;">ChessNova Hybrid</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>🎯 Précision Tactique</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">10/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">9.2/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 92%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Stockfish ne rate jamais une tactique. ChessNova excellent mais quelques imprécisions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🏰 Évaluation Positionnelle</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">9.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 95%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">6.8/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 68%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>ChessNova sous-estime parfois les positions calmes, préfère les complications</td>
+                        </tr>
+                        <tr>
+                            <td><strong>👑 Finales (Technique)</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">10/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">6.2/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 62%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Plus grande faiblesse d'ChessNova. Stockfish a les tablebases et technique parfaite</td>
+                        </tr>
+                        <tr>
+                            <td><strong>♟️ Structure de Pions</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">9.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 95%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">6.8/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 68%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>ChessNova accepte des structures faibles pour activité de pièces</td>
+                        </tr>
+                        <tr>
+                            <td><strong>⚡ Vitesse de Calcul</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">10/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">8.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Stockfish: 100M+ nœuds/sec. ChessNova: Hybride multi-modèles plus lent</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🎨 Créativité / Originalité</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">4.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 45%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">9.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 95%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Force d'ChessNova! Joue Krejcik Attack (<0.1%), Na4, g4, sacrifices audacieux</td>
+                        </tr>
+                        <tr>
+                            <td><strong>⚔️ Agressivité</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">7.8/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 78%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">9.2/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 92%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>ChessNova ULTRA-AGRESSIF! Style Tal/Nezhmetdinov. Stockfish plus équilibré</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🔥 Initiative / Tempo</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">8.0/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 80%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">9.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 95%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>ChessNova valorise énormément l'initiative, sacrifice matériel pour tempo</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🛡️ Défense</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">9.0/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 90%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">5.8/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 58%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Faiblesse d'ChessNova: préfère contre-attaquer que défendre solidement</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🔮 Profondeur d'Analyse</strong></td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #ff6b6b;">10/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-stockfish" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-bar">
+                                    <span class="score-value" style="color: #00f2fe;">8.5/10</span>
+                                    <div class="bar-container">
+                                        <div class="bar-fill bar-chessnova" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Stockfish calcule 80+ coups. ChessNova: ~40-50 coups mais avec intuition stratégique</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Highlights -->
+            <div class="chart-section full-width">
+                <h2>💡 Points Clés</h2>
+
+                <div class="highlight-box">
+                    <h3>🏆 Forces de Stockfish 17.1</h3>
+                    <p>
+                        <strong>• Précision absolue:</strong> 10/10 en tactique, ne rate jamais une combinaison<br>
+                        <strong>• Finales parfaites:</strong> Technique irréprochable + tablebases 7 pièces<br>
+                        <strong>• Évaluation optimale:</strong> 9.5/10 en positionnel, structure de pions<br>
+                        <strong>• Vitesse:</strong> 100M+ nœuds/seconde, calcul instantané de variantes complexes<br>
+                        <strong>• Profondeur:</strong> Analyse jusqu'à 80+ coups en avant
+                    </p>
+                </div>
+
+                <div class="highlight-box" style="border-left-color: #00f2fe; background: linear-gradient(135deg, rgba(79, 172, 254, 0.2), rgba(0, 242, 254, 0.1));">
+                    <h3>🎨 Forces d'ChessNova Hybrid</h3>
+                    <p>
+                        <strong>• Créativité exceptionnelle:</strong> 9.5/10 - Joue des coups ultra-rares (Krejcik <0.1%)<br>
+                        <strong>• Ultra-agressif:</strong> 9.2/10 - Style Tal/Nezhmetdinov, attaques constantes<br>
+                        <strong>• Initiative maximale:</strong> 9.5/10 - Valorise tempo et dynamisme sur matériel<br>
+                        <strong>• Tactique excellente:</strong> 9.2/10 - Très fort dans positions complexes<br>
+                        <strong>• Imprévisible:</strong> Coups signature (h4/h5, Na4, g4) déstabilisent l'adversaire
+                    </p>
+                </div>
+
+                <div class="highlight-box" style="border-left-color: #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));">
+                    <h3>⚡ Différence Clé</h3>
+                    <p style="font-size: 1.2em;">
+                        <strong>Stockfish</strong> joue le coup <em>objectivement meilleur</em> selon l'évaluation.<br>
+                        <strong>ChessNova</strong> joue le coup <em>le plus créatif et déstabilisant</em> pour l'adversaire.<br><br>
+                        Stockfish optimise pour +0.3. ChessNova optimise pour +complications + initiative + surprise.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Graphiques Secondaires -->
+            <div class="chart-section">
+                <h2>🎯 Phases de Jeu</h2>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="phasesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h2>🧠 Style de Pensée</h2>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="thinkingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Graphique Radar Principal - 10 Dimensions
+        const mainRadarCtx = document.getElementById('mainRadarChart').getContext('2d');
+        new Chart(mainRadarCtx, {
+            type: 'radar',
+            data: {
+                labels: [
+                    'Précision Tactique',
+                    'Évaluation Positionnelle',
+                    'Finales',
+                    'Structure Pions',
+                    'Vitesse Calcul',
+                    'Créativité',
+                    'Agressivité',
+                    'Initiative',
+                    'Défense',
+                    'Profondeur'
+                ],
+                datasets: [
+                    {
+                        label: 'Stockfish 17.1 FULL',
+                        data: [100, 95, 100, 95, 100, 45, 78, 80, 90, 100],
+                        backgroundColor: 'rgba(255, 107, 107, 0.25)',
+                        borderColor: 'rgba(255, 107, 107, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgba(255, 107, 107, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: 'ChessNova Hybrid',
+                        data: [92, 68, 62, 68, 85, 95, 92, 95, 58, 85],
+                        backgroundColor: 'rgba(0, 242, 254, 0.25)',
+                        borderColor: 'rgba(0, 242, 254, 1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgba(0, 242, 254, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        min: 0,
+                        ticks: {
+                            stepSize: 20,
+                            color: '#fff',
+                            backdropColor: 'transparent',
+                            font: { size: 12 }
+                        },
+                        pointLabels: {
+                            color: '#fff',
+                            font: { size: 14, weight: 'bold' }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.2)',
+                            circular: true
+                        },
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.2)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#fff',
+                            font: { size: 16, weight: 'bold' },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 },
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.r + '/100';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique Phases de Jeu
+        const phasesCtx = document.getElementById('phasesChart').getContext('2d');
+        new Chart(phasesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Ouverture', 'Milieu de Jeu', 'Finale'],
+                datasets: [
+                    {
+                        label: 'Stockfish 17.1',
+                        data: [95, 98, 100],
+                        backgroundColor: 'rgba(255, 107, 107, 0.7)',
+                        borderColor: 'rgba(255, 107, 107, 1)',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'ChessNova',
+                        data: [88, 92, 62],
+                        backgroundColor: 'rgba(0, 242, 254, 0.7)',
+                        borderColor: 'rgba(0, 242, 254, 1)',
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { color: '#fff', font: { size: 12 } },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#fff', font: { size: 13, weight: 'bold' } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff',
+                            font: { size: 14 },
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique Style de Pensée
+        const thinkingCtx = document.getElementById('thinkingChart').getContext('2d');
+        new Chart(thinkingCtx, {
+            type: 'polarArea',
+            data: {
+                labels: ['Calcul Brut', 'Intuition', 'Mémoire Patterns', 'Créativité', 'Pragmatisme'],
+                datasets: [{
+                    label: 'Stockfish',
+                    data: [100, 30, 85, 40, 95],
+                    backgroundColor: [
+                        'rgba(255, 107, 107, 0.6)',
+                        'rgba(255, 152, 0, 0.6)',
+                        'rgba(255, 193, 7, 0.6)',
+                        'rgba(76, 175, 80, 0.6)',
+                        'rgba(33, 150, 243, 0.6)'
+                    ],
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        ticks: {
+                            display: false,
+                            backdropColor: 'transparent'
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                        pointLabels: {
+                            color: '#fff',
+                            font: { size: 13, weight: 'bold' }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12
+                    }
+                }
+            }
+        });
+
+        // Animation des barres au chargement
+        window.addEventListener('load', function() {
+            const bars = document.querySelectorAll('.bar-fill');
+            bars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

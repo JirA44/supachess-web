@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carlsen vs Lazavik - SCC 2025 Semifinals | La Masterclass du Champion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #330066 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(120deg, #00ffff, #00ff00, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .nav-back {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-5px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .board-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .board-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        #chessboard {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 3px solid #00ffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .square {
+            font-weight: bold;
+        }
+
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square.highlight {
+            background: rgba(0, 255, 255, 0.5) !important;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .square.last-move {
+            background: rgba(0, 255, 0, 0.4) !important;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00ffff 0%, #00ff00 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .move-info {
+            text-align: center;
+            font-size: 1.3em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .moves-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.5);
+            padding-bottom: 10px;
+        }
+
+        .move-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #00ffff;
+            transform: translateX(5px);
+        }
+
+        .move-item.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-left-color: #00ffff;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+
+        .move-item.blunder {
+            background: linear-gradient(135deg, rgba(255,50,50,0.2) 0%, rgba(200,0,0,0.15) 100%) !important;
+            border-left: 4px solid #ff3333 !important;
+        }
+
+        .move-item.blunder .move-comment {
+            color: #ff6666 !important;
+        }
+
+        .move-item.inaccuracy {
+            background: linear-gradient(135deg, rgba(255,165,0,0.15) 0%, rgba(200,120,0,0.1) 100%) !important;
+            border-left: 4px solid #ffa500 !important;
+        }
+
+        .move-item.inaccuracy .move-comment {
+            color: #ffb347 !important;
+        }
+
+        .move-number {
+            font-weight: bold;
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .move-notation {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .move-comment {
+            margin-top: 8px;
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .eval-bar {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .eval-white { background: rgba(255,255,255,0.2); color: #00ff00; }
+        .eval-black { background: rgba(0,0,0,0.3); color: #ff6666; }
+        .eval-equal { background: rgba(128,128,128,0.2); color: #aaa; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">&#8592; Retour au Hub</a>
+
+        <div class="header">
+            <h1>Carlsen vs Lazavik - SCC 2025</h1>
+            <p class="subtitle">Speed Chess Championship 2025 Semifinals | Round 3.3 | 7 Fevrier 2026</p>
+            <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
+                Carlsen demontre sa technique legendaire dans la Ruy Lopez - un blunder en finale coute la partie a Lazavik
+            </p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Blanc</div>
+                <div class="stat-value" style="font-size: 1.3em;">Carlsen (2869)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Noir</div>
+                <div class="stat-value" style="font-size: 1.3em;">Lazavik (2641)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ouverture</div>
+                <div class="stat-value" style="font-size: 1.3em;">Ruy Lopez</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Coups</div>
+                <div class="stat-value">52</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ECO</div>
+                <div class="stat-value" style="font-size: 1.3em;">C90</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Resultat</div>
+                <div class="stat-value">1-0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.8em;">Position Actuelle</h2>
+                <div class="board-container">
+                    <div id="chessboard"></div>
+                </div>
+                <div class="move-info" id="moveInfo">
+                    Position initiale
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">&#9198; Debut</button>
+                    <button class="btn" onclick="previousMove()">&#9664; Precedent</button>
+                    <button class="btn" onclick="nextMove()">Suivant &#9654;</button>
+                    <button class="btn" onclick="goToEnd()">Fin &#9197;</button>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2>Coups de la Partie</h2>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotheque chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // Initialisation du moteur chess.js
+        const chess = new Chess();
+
+        // SCC 2025 Semifinals - Carlsen vs Lazavik - Round 3.3
+        // Ruy Lopez: Closed, Pilnik Variation (C90)
+        // 7 Fevrier 2026
+        const gameMoves = [
+            // 1. e4 e5
+            { move: 'e4', eval: 0.18, comment: 'Carlsen ouvre avec 1.e4 - son arme preferee en rapide. Controle immediat du centre.' },
+            { move: 'e5', eval: 0.22, comment: 'Lazavik repond symetriquement. La Double du Roi, un classique indemodable.' },
+            // 2. Nf3 Nc6
+            { move: 'Nf3', eval: 0.18, comment: 'Developpement naturel du cavalier, attaquant le pion e5 et preparant la Ruy Lopez.' },
+            { move: 'Nc6', eval: 0.21, comment: 'Defense du pion e5. Le cavalier se developpe sur sa case naturelle.' },
+            // 3. Bb5 a6
+            { move: 'Bb5', eval: 0.15, comment: 'La Ruy Lopez! Le fou attaque le defenseur du pion e5. Ouverture favorite de Carlsen.' },
+            { move: 'a6', eval: 0.21, comment: 'La variante Morphy. Lazavik pose la question au fou: reculer ou echanger?' },
+            // 4. Ba4 Nf6
+            { move: 'Ba4', eval: 0.11, comment: 'Le fou recule en gardant la pression sur le cavalier c6 et la diagonale.' },
+            { move: 'Nf6', eval: 0.28, comment: 'Developpement et contre-attaque sur e4. Pression sur le centre blanc.' },
+            // 5. O-O Be7
+            { move: 'O-O', eval: 0.16, comment: 'Carlsen roque tot, mettant son roi en securite avant la bataille.' },
+            { move: 'Be7', eval: 0.24, comment: 'Developpement calme. Lazavik prepare le petit roque avec une structure solide.' },
+            // 6. d3 b5
+            { move: 'd3', eval: 0.15, comment: 'La variante anti-Marshall! Carlsen evite les lignes forcees et prepare un jeu positionnel.' },
+            { move: 'b5', eval: 0.20, comment: 'Lazavik gagne de l\'espace a l\'aile dame et chasse le fou de la diagonale.' },
+            // 7. Bb3 d6
+            { move: 'Bb3', eval: 0.09, comment: 'Le fou recule sur une case stable, visant toujours la diagonale a2-g8.' },
+            { move: 'd6', eval: 0.10, comment: 'Renforcement solide du centre. La structure Ruy Lopez classique prend forme.' },
+            // 8. c3 O-O
+            { move: 'c3', eval: 0.18, comment: 'Preparation de d4. Le pion c3 soutient l\'expansion centrale de Carlsen.' },
+            { move: 'O-O', eval: 0.16, comment: 'Lazavik roque. Les deux rois sont en securite - la lutte strategique commence.' },
+            // 9. Re1 Na5
+            { move: 'Re1', eval: 0.11, comment: 'La tour soutient le pion e4 et prepare les plans centraux.' },
+            { move: 'Na5', eval: 0.12, comment: 'Le cavalier vise le fou b3. Plan typique pour echanger ce fou dangereux.' },
+            // 10. Bc2 c5
+            { move: 'Bc2', eval: 0.00, comment: 'Le fou se retire sur c2, gardant la diagonale et liberant b3.' },
+            { move: 'c5', eval: 0.01, comment: 'Lazavik gagne de l\'espace au centre et a l\'aile dame. Jeu dynamique!' },
+            // 11. Nbd2 Nc6
+            { move: 'Nbd2', eval: 0.03, comment: 'Developpement methodique. Le cavalier prepare Nf1-g3 ou Nf1-e3.' },
+            { move: 'Nc6', eval: 0.00, comment: 'Le cavalier revient sur c6, une case plus active et centralisee.' },
+            // 12. Nf1 h6
+            { move: 'Nf1', eval: -0.03, comment: 'Manoeuvre typique Ruy Lopez. Le cavalier transitera via g3 ou e3.' },
+            { move: 'h6', eval: 0.01, comment: 'Prophylaxie contre Bg5. Lazavik empeche les pins sur le cavalier f6.' },
+            // 13. Ne3 Re8
+            { move: 'Ne3', eval: 0.02, comment: 'Le cavalier atteint e3, une case flexible d\'ou il peut aller vers d5, f5 ou g4.' },
+            { move: 'Re8', eval: 0.03, comment: 'La tour se centralise sur la colonne e semi-ouverte. Bonne preparation.' },
+            // 14. a4 Rb8
+            { move: 'a4', eval: 0.02, comment: 'Carlsen lance l\'action a l\'aile dame! Attaque du pion b5 pour ouvrir des lignes.' },
+            { move: 'Rb8', eval: 0.18, comment: 'La tour protege le pion b5 et prepare un eventuel contre-jeu sur la colonne b.' },
+            // 15. axb5 axb5
+            { move: 'axb5', eval: 0.10, comment: 'Echange de pions. Carlsen ouvre la colonne a pour ses pieces lourdes.' },
+            { move: 'axb5', eval: 0.13, comment: 'Reprise naturelle. La colonne a est maintenant ouverte - terrain de manoeuvre.' },
+            // 16. Nd5 Bf8
+            { move: 'Nd5', eval: 0.00, comment: 'Le cavalier bondit sur la case ideale d5! Centralisation dominante.' },
+            { move: 'Bf8', eval: 0.00, comment: 'Le fou recule pour se repositionner. Lazavik reorganise sa defense.' },
+            // 17. Nxf6+ Qxf6
+            { move: 'Nxf6+', eval: 0.04, comment: 'Carlsen echange le cavalier dominant. Transformation strategique de l\'avantage.' },
+            { move: 'Qxf6', eval: 0.05, comment: 'La dame reprend et se centralise. Lazavik garde une position solide.' },
+            // 18. Nd2 Be6
+            { move: 'Nd2', eval: -0.19, comment: 'Reorganisation des pieces. Carlsen redirige le cavalier vers des cases plus actives.' },
+            { move: 'Be6', eval: -0.11, comment: 'Le fou se developpe activement, controlant d5 et a2.' },
+            // 19. Nf1 Ra8
+            { move: 'Nf1', eval: -0.25, comment: 'Encore la manoeuvre Nf1! Carlsen joue avec une patience characteristique.' },
+            { move: 'Ra8', eval: -0.10, comment: 'La tour occupe la colonne a ouverte. Piece active et bien placee.' },
+            // 20. Bd2 Qe7
+            { move: 'Bd2', eval: -0.13, comment: 'Le fou se developpe enfin. Carlsen complete son developpement methodiquement.' },
+            { move: 'Qe7', eval: -0.15, comment: 'La dame se repositionne sur e7, connectant les tours et restant flexible.' },
+            // 21. Ne3 Qb7
+            { move: 'Ne3', eval: -0.15, comment: 'Le cavalier retrouve e3. Structure solide pour le milieu de partie.' },
+            { move: 'Qb7', eval: -0.02, comment: 'La dame vise la diagonale a8-h1 et met la pression sur e4.' },
+            // 22. Rxa8 Rxa8
+            { move: 'Rxa8', eval: -0.15, comment: 'Echange de tours sur la colonne a. Simplification du jeu.' },
+            { move: 'Rxa8', eval: -0.13, comment: 'Reprise naturelle. Lazavik garde une tour active.' },
+            // 23. Bb3 Bxb3
+            { move: 'Bb3', eval: -0.11, comment: 'Le fou revient en b3, proposant l\'echange des fous.' },
+            { move: 'Bxb3', eval: 0.02, comment: 'Lazavik accepte l\'echange. Simplification vers une position egale.' },
+            // 24. Qxb3 Ne7
+            { move: 'Qxb3', eval: 0.10, comment: 'Carlsen reprend avec la dame, maintenant active sur b3.' },
+            { move: 'Ne7', eval: 0.10, comment: 'Le cavalier se redirige vers d5 via e7. Plan logique de centralisation.' },
+            // 25. h3 Qc6
+            { move: 'h3', eval: 0.00, comment: 'Prophylaxie. Carlsen evite tout probleme de rangee arriere et de pieces sur g4.' },
+            { move: 'Qc6', eval: 0.01, comment: 'La dame vise e4 et la colonne c. Position dynamique pour Lazavik.' },
+            // 26. h4 Rd8
+            { move: 'h4', eval: 0.00, comment: 'Carlsen gagne de l\'espace a l\'aile roi. Petit a petit, il ameliore sa position.' },
+            { move: 'Rd8', eval: 0.01, comment: 'La tour occupe la colonne d. Lazavik active sa derniere piece disponible.' },
+            // 27. h5 d5
+            { move: 'h5', eval: 0.00, comment: 'Le pion avance encore! Carlsen fixe la structure a l\'aile roi pour un eventuel assaut.' },
+            { move: 'd5', eval: -0.09, comment: 'Lazavik frappe au centre! Liberation avec d5, ouvrant le jeu.' },
+            // 28. exd5 Nxd5
+            { move: 'exd5', eval: -0.10, comment: 'Capture au centre. La position s\'ouvre et les pieces deviennent plus actives.' },
+            { move: 'Nxd5', eval: -0.02, comment: 'Le cavalier centralise magnifiquement sur d5. Position ideale!' },
+            // 29. Ng4 f6
+            { move: 'Ng4', eval: -0.06, comment: 'Le cavalier saute vers g4, visant e5 et h6. Pression sur l\'aile roi!' },
+            { move: 'f6', eval: 0.00, comment: 'Lazavik consolide et bloque le cavalier. Structure defensive solide.' },
+            // 30. c4 bxc4
+            { move: 'c4', eval: 0.00, comment: 'Carlsen ouvre le jeu! Le pion c4 attaque le cavalier centralise.' },
+            { move: 'bxc4', eval: 0.07, comment: 'Lazavik capture. La position devient plus ouverte et tactique.' },
+            // 31. Qxc4 Qe6
+            { move: 'Qxc4', eval: -0.03, comment: 'La dame reprend et attaque le pion c5. Pression constante de Carlsen.' },
+            { move: 'Qe6', eval: 0.00, comment: 'La dame defend et centralise. Position tendue mais equilibree.' },
+            // 32. g3 Nc7
+            { move: 'g3', eval: 0.00, comment: 'Le roi blanc s\'amenage une case de fuite. Prophylaxie typique de Carlsen.' },
+            { move: 'Nc7', eval: 0.08, comment: 'Le cavalier recule vers c7. Lazavik vise des cases comme d5 ou e6.' },
+            // 33. Ba5 Rd4
+            { move: 'Ba5', eval: 0.00, comment: 'Le fou active et attaque la tour d8 et le cavalier c7. Pression!' },
+            { move: 'Rd4', eval: 0.00, comment: 'La tour s\'active au centre! Lazavik obtient un bon contre-jeu.' },
+            // 34. Qxe6+ Nxe6
+            { move: 'Qxe6+', eval: -0.03, comment: 'Echange de dames! Carlsen dirige le jeu vers une finale technique.' },
+            { move: 'Nxe6', eval: 0.00, comment: 'Le cavalier reprend. Finale avec tour et cavalier contre tour et fou.' },
+            // 35. Ne3 Rxd3
+            { move: 'Ne3', eval: 0.00, comment: 'Le cavalier se centralise. Carlsen prepare la finale methodiquement.' },
+            { move: 'Rxd3', eval: 0.00, comment: 'Lazavik gagne le pion d3! La tour devient tres active en d3.' },
+            // 36. Bc3 Rd7
+            { move: 'Bc3', eval: -0.10, comment: 'Le fou se centralise et controle les cases noires. Defense solide.' },
+            { move: 'Rd7', eval: -0.04, comment: 'La tour recule pour proteger la 7eme rangee. Jeu precis.' },
+            // 37. Ra1 Kf7
+            { move: 'Ra1', eval: -0.07, comment: 'La tour occupe la colonne a. Carlsen augmente la pression progressivement.' },
+            { move: 'Kf7', eval: -0.02, comment: 'Le roi s\'active vers le centre. En finale, le roi est une piece puissante.' },
+            // 38. Kg2 Nd4
+            { move: 'Kg2', eval: -0.05, comment: 'Carlsen active son roi. Chaque tempo compte dans cette finale.' },
+            { move: 'Nd4', eval: -0.05, comment: 'Le cavalier centralise parfaitement sur d4. Piece dominante au centre!' },
+            // 39. g4 Be7
+            { move: 'g4', eval: -0.06, comment: 'Carlsen avance a l\'aile roi, gagnant de l\'espace et fixant des pions.' },
+            { move: 'Be7', eval: 0.00, comment: 'Le fou se developpe. Lazavik garde ses pieces coordonnees.' },
+            // 40. Ra6 Rd6
+            { move: 'Ra6', eval: 0.00, comment: 'La tour penetre sur la 6eme rangee! Pression sur le pion d6 et les pions noirs.' },
+            { move: 'Rd6', eval: 0.00, comment: 'Defense de la 6eme rangee. La tour protege et reste active.' },
+            // 41. Ra7 Ke6
+            { move: 'Ra7', eval: 0.00, comment: 'La tour sur la 7eme rangee! Position classique dominante pour la tour blanche.' },
+            { move: 'Ke6', eval: 0.00, comment: 'Le roi avance au centre. Position parfaitement equilibree... pour l\'instant.' },
+            // 42. Bxd4 exd4??
+            { move: 'Bxd4', eval: 0.00, comment: 'Carlsen capture le cavalier! L\'echange semble anodin mais pose un piege subtil.' },
+            { move: 'exd4', eval: 4.79, comment: 'BLUNDER DECISIF! Lazavik reprend avec le mauvais pion! cxd4 etait obligatoire pour garder une structure saine. Maintenant le pion c5 et d4 sont faibles, et le cavalier blanc va dominer. Eval: 0.00 -> +4.79!' },
+            // 43. Nf5 Rd7
+            { move: 'Nf5', eval: 4.43, comment: 'Le cavalier bondit sur f5! Piece dominante attaquant g7 et e7 simultanement. Carlsen exploite immediatement le blunder.' },
+            { move: 'Rd7', eval: 5.10, comment: 'Lazavik tente de defendre la 7eme rangee mais la position est deja perdante.' },
+            // 44. Nxg7+ Kd6
+            { move: 'Nxg7+', eval: 5.08, comment: 'Le cavalier devore le pion g7 avec echec! Destruction de la couverture du roi noir. Gain materiel decisif!' },
+            { move: 'Kd6', eval: 4.74, comment: 'Le roi fuit mais reste expose. La position noire s\'effondre.' },
+            // 45. Nf5+ Ke6
+            { move: 'Nf5+', eval: 5.32, comment: 'Encore echec! Le cavalier tourmente le roi noir sans relache. Technique impeccable de Carlsen.' },
+            { move: 'Ke6', eval: 5.38, comment: 'Le roi revient mais la situation est desesperee pour Lazavik.' },
+            // 46. Rxd7 Kxd7
+            { move: 'Rxd7', eval: 5.24, comment: 'La tour capture! Simplification vers une finale completement gagnante.' },
+            { move: 'Kxd7', eval: 5.13, comment: 'Reprise forcee. Lazavik est en finale avec cavalier contre fou, mais les pions blancs sont devastateurs.' },
+            // 47. Nxh6 c4
+            { move: 'Nxh6', eval: 4.61, comment: 'Le cavalier ramasse un autre pion! Carlsen a maintenant un avantage materiel ecrasant.' },
+            { move: 'c4', eval: 5.12, comment: 'Lazavik pousse son pion passe en desespoir de cause. Course de pions!' },
+            // 48. Kf3 c3
+            { move: 'Kf3', eval: 4.72, comment: 'Le roi avance avec precision. Carlsen active son roi pour stopper les pions passes.' },
+            { move: 'c3', eval: 5.95, comment: 'Le pion passe avance mais Carlsen controle tout.' },
+            // 49. bxc3 dxc3
+            { move: 'bxc3', eval: 5.75, comment: 'Carlsen elimine le pion passe dangereux.' },
+            { move: 'dxc3', eval: 5.57, comment: 'Un nouveau pion passe apparait mais il sera facilement bloque.' },
+            // 50. Ke2 Bc5
+            { move: 'Ke2', eval: 5.80, comment: 'Le roi se place devant le pion passe. Technique classique de finale.' },
+            { move: 'Bc5', eval: 8.78, comment: 'Imprécision. Bb4 etait meilleur pour garder des chances de resistance.' },
+            // 51. Nf5 Ke6
+            { move: 'Nf5', eval: 8.16, comment: 'Le cavalier revient sur sa case dominante f5. Position totalement gagnante pour Carlsen.' },
+            { move: 'Ke6', eval: 8.45, comment: 'Le roi tente de se centraliser mais c\'est trop tard. La position est perdue.' },
+            // 52. h6 1-0
+            { move: 'h6', eval: 8.22, comment: 'Le pion h avance vers la promotion! Lazavik abandonne - le pion h6 ne peut pas etre arrete. Victoire magistrale de Carlsen! 1-0' }
+        ];
+
+        // Mapping des pieces chess.js vers Unicode
+        const pieceSymbols = {
+            'p': '\u2659', 'r': '\u2656', 'n': '\u2658', 'b': '\u2657', 'q': '\u2655', 'k': '\u2654',
+            'P': '\u2659', 'R': '\u2656', 'N': '\u2658', 'B': '\u2657', 'Q': '\u2655', 'K': '\u2654'
+        };
+
+        let currentMoveIndex = -1;
+        let gameHistory = [];
+
+        function initBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            const position = chess.board();
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    const piece = position[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function getEvalClass(evalVal) {
+            if (evalVal > 0.3) return 'eval-white';
+            if (evalVal < -0.3) return 'eval-black';
+            return 'eval-equal';
+        }
+
+        function formatEval(evalVal) {
+            if (evalVal === undefined || evalVal === null) return '';
+            const sign = evalVal > 0 ? '+' : '';
+            return sign + evalVal.toFixed(2);
+        }
+
+        function createMovesList() {
+            const movesList = document.getElementById('movesList');
+            movesList.innerHTML = '';
+
+            const brilliantKeywords = /BLUNDER|DECISIF|BONDIT|devore|ECHEC|Victoire|dominante|CAPTURE/i;
+            const blunderKeywords = /BLUNDER/i;
+            const inaccuracyKeywords = /Imprecision|Imprécision/i;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+
+                // Determine move quality
+                const isBlunder = moveData.comment && blunderKeywords.test(moveData.comment);
+                const isInaccuracy = moveData.comment && inaccuracyKeywords.test(moveData.comment);
+                const isBrilliant = moveData.comment && brilliantKeywords.test(moveData.comment) && !isBlunder && !isInaccuracy;
+
+                // Check for big eval swings (key moments)
+                let evalSwing = 0;
+                if (index > 0 && moveData.eval !== undefined && gameMoves[index-1].eval !== undefined) {
+                    evalSwing = Math.abs(moveData.eval - gameMoves[index-1].eval);
+                }
+
+                if (isBlunder) {
+                    moveItem.classList.add('blunder');
+                } else if (isInaccuracy) {
+                    moveItem.classList.add('inaccuracy');
+                } else if (isBrilliant || evalSwing > 2) {
+                    moveItem.classList.add('brilliant');
+                }
+
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? 'W' : 'B';
+                const colorDot = index % 2 === 0 ? '\u26AA' : '\u26AB';
+
+                let evalBadge = '';
+                if (moveData.eval !== undefined) {
+                    const evalClass = getEvalClass(moveData.eval);
+                    evalBadge = '<span class="eval-bar ' + evalClass + '">' + formatEval(moveData.eval) + '</span>';
+                }
+
+                moveItem.innerHTML =
+                    '<div>' +
+                        '<span class="move-number">' + colorDot + ' ' + moveNumber + '.</span>' +
+                        '<span class="move-notation">' + moveData.move + '</span>' +
+                        evalBadge +
+                    '</div>' +
+                    '<div class="move-comment">' + moveData.comment + '</div>';
+
+                moveItem.onclick = function() { goToMove(index); };
+                movesList.appendChild(moveItem);
+            });
+        }
+
+        function updateMoveInfo() {
+            const info = document.getElementById('moveInfo');
+            if (currentMoveIndex === -1) {
+                info.textContent = 'Position initiale';
+            } else {
+                const moveNumber = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'Carlsen (Blanc)' : 'Lazavik (Noir)';
+                const evalVal = gameMoves[currentMoveIndex].eval;
+                const evalStr = evalVal !== undefined ? ' | Eval: ' + formatEval(evalVal) : '';
+                info.innerHTML = '<strong>Coup ' + moveNumber + '</strong> - ' + color + ': ' + gameMoves[currentMoveIndex].move + evalStr;
+            }
+
+            // Highlight active move
+            document.querySelectorAll('.move-item').forEach(function(item, index) {
+                item.classList.remove('active');
+                if (index === currentMoveIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const move = gameMoves[currentMoveIndex].move;
+                let success = false;
+
+                // Essayer plusieurs variations
+                const variations = [
+                    move,
+                    move.replace('+', '').replace('#', ''),
+                    move.replace('x', ''),
+                    move.toLowerCase()
+                ];
+
+                for (var i = 0; i < variations.length; i++) {
+                    try {
+                        var result = chess.move(variations[i], { sloppy: true });
+                        if (result) { success = true; break; }
+                    } catch (e) {}
+                }
+
+                if (!success) {
+                    console.warn('Coup echoue:', move, 'index:', currentMoveIndex);
+                }
+
+                initBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                currentMoveIndex--;
+                rebuildGame();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = -1;
+            chess.reset();
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            while (currentMoveIndex < gameMoves.length - 1) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            goToStart();
+            for (var i = 0; i <= index; i++) {
+                nextMove();
+            }
+        }
+
+        function rebuildGame() {
+            chess.reset();
+            for (var i = 0; i <= currentMoveIndex; i++) {
+                var move = gameMoves[i].move;
+                var variations = [move, move.replace('+', '').replace('#', ''), move.replace('x', '')];
+                for (var j = 0; j < variations.length; j++) {
+                    try {
+                        var result = chess.move(variations[j], { sloppy: true });
+                        if (result) break;
+                    } catch (e) {}
+                }
+            }
+            initBoard();
+        }
+
+        // Initialisation
+        initBoard();
+        createMovesList();
+        updateMoveInfo();
+
+        // Navigation au clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

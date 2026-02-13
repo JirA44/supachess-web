@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Avertissement V2 - SIMPLIFIÉ</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        #board { width: 400px; margin: 20px auto; }
+        #status { text-align: center; font-size: 18px; margin: 20px; }
+        #log { background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Test Système d'Avertissement V2</h1>
+    <div id="status">C'est à vous de jouer (Blancs)</div>
+    <div id="board"></div>
+    <div id="log"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <script>
+        let game = new Chess();
+        let board = null;
+        let logDiv = document.getElementById('log');
+
+        function log(msg) {
+            console.log(msg);
+            logDiv.innerHTML += msg + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function onDragStart(source, piece) {
+            if (game.game_over()) return false;
+            if (piece.search(/^b/) !== -1) return false;
+            return true;
+        }
+
+        function onDrop(source, target) {
+            log(`\n=== onDrop: ${source} -> ${target} ===`);
+
+            // 1. Tester si le coup est légal
+            const testMove = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (testMove === null) {
+                log('❌ Coup ILLÉGAL');
+                return 'snapback';
+            }
+
+            log(`✅ Coup légal: ${testMove.san}`);
+
+            // 2. Analyser les dangers APRÈS le coup
+            const warnings = [];
+
+            // Vérifier si on est en échec (coup illégal normalement)
+            if (game.in_check()) {
+                // Si c'est notre tour qui est en échec, c'est que le coup était illégal
+                if (game.turn() === testMove.color) {
+                    log('⚠️ Ce coup laisse le roi en échec (ILLÉGAL)');
+                    game.undo();
+                    return 'snapback';
+                }
+            }
+
+            // Vérifier si l'adversaire peut nous mater
+            if (game.in_checkmate()) {
+                warnings.push("🚨 ÉCHEC ET MAT pour l'adversaire!");
+            }
+
+            // Chercher les pièces en prise simple
+            const ourPiecesInDanger = findPiecesInDanger();
+            if (ourPiecesInDanger.length > 0) {
+                ourPiecesInDanger.forEach(p => {
+                    warnings.push(`⚠️ Votre ${p.name} en ${p.square} est en prise!`);
+                });
+            }
+
+            // 3. Si des avertissements, demander confirmation
+            if (warnings.length > 0) {
+                log('🚨 Avertissements détectés:');
+                warnings.forEach(w => log('  - ' + w));
+
+                // Annuler temporairement
+                game.undo();
+
+                const message =
+                    "⚠️ ATTENTION:\n\n" +
+                    warnings.join('\n') +
+                    "\n\nJouer quand même?";
+
+                const confirmed = confirm(message);
+
+                if (!confirmed) {
+                    log('🚫 Coup annulé par le joueur');
+                    return 'snapback';
+                }
+
+                // Rejouer si confirmé
+                game.move({
+                    from: source,
+                    to: target,
+                    promotion: 'q'
+                });
+                log('✅ Coup joué malgré avertissements');
+            } else {
+                log('✅ Aucun danger détecté');
+            }
+
+            updateStatus();
+        }
+
+        // Trouver NOS pièces qui peuvent être capturées au prochain coup
+        function findPiecesInDanger() {
+            const piecesInDanger = [];
+            const pieceNames = { p: 'Pion', n: 'Cavalier', b: 'Fou', r: 'Tour', q: 'Dame', k: 'Roi' };
+
+            // Tous les coups possibles de l'adversaire
+            const opponentMoves = game.moves({ verbose: true });
+
+            opponentMoves.forEach(move => {
+                // Si ce coup capture une de nos pièces
+                if (move.captured) {
+                    const piece = move.captured;
+                    const square = move.to;
+
+                    // Éviter les doublons
+                    if (!piecesInDanger.some(p => p.square === square)) {
+                        piecesInDanger.push({
+                            type: piece,
+                            name: pieceNames[piece],
+                            square: square
+                        });
+                    }
+                }
+            });
+
+            return piecesInDanger;
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('status');
+            if (game.in_checkmate()) {
+                status.innerHTML = '🎉 Échec et mat!';
+            } else if (game.in_draw()) {
+                status.innerHTML = 'Match nul';
+            } else if (game.in_check()) {
+                status.innerHTML = '⚠️ Échec!';
+            } else {
+                status.innerHTML = game.turn() === 'w' ? "C'est à vous (Blancs)" : "Tour des Noirs";
+            }
+        }
+
+        const config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+
+        board = Chessboard('board', config);
+
+        log('=== TEST CHARGÉ ===');
+        log('SCÉNARIO DE TEST:');
+        log('1. e2-e4 (coup normal - aucun avertissement)');
+        log('2. f2-f3');
+        log('3. g2-g4 (permet Qh4# - AVERTISSEMENT MAT!)');
+        log('');
+    </script>
+</body>
+</html>

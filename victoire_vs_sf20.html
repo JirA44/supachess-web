@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victoire Historique - SupaEngine vs Stockfish Skill 20</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --accent-gold: #ffd700;
+            --accent-gold-dark: #b8960f;
+            --accent-gold-light: #ffe44d;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #374151;
+            --border-gold: rgba(255, 215, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            padding: 1rem 2rem 2rem 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Back button */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, var(--accent-gold-dark), var(--accent-gold));
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+            font-size: 0.95rem;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light), var(--accent-gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-subtitle {
+            color: var(--accent-gold-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .game-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+
+        .game-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-info-item strong {
+            color: var(--accent-gold);
+        }
+
+        .result-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+            color: #000;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        /* Main layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Board section */
+        .board-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-gold);
+        }
+
+        #board {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .move-indicator {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            min-height: 1.8rem;
+        }
+
+        .move-indicator .move-num {
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        .move-indicator .move-san {
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Comment display */
+        .comment-display {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            min-height: 50px;
+            color: var(--accent-gold-light);
+            font-style: italic;
+            font-size: 0.95rem;
+            text-align: center;
+            display: none;
+        }
+
+        .comment-display.visible {
+            display: block;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold-dark);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--accent-gold-dark), var(--accent-gold));
+            color: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+            color: #000;
+        }
+
+        .autoplay-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0.75rem;
+        }
+
+        .speed-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .speed-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            outline: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+        }
+
+        .speed-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Moves panel */
+        .moves-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            max-height: 680px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            margin-bottom: 1rem;
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+        }
+
+        .moves-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+
+        .move-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .move-num-cell {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: right;
+            padding-right: 6px;
+            font-weight: 600;
+        }
+
+        .move-cell {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            transition: all 0.15s;
+        }
+
+        .move-cell:hover {
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .move-cell.active {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 215, 0, 0.1));
+            color: var(--accent-gold);
+            font-weight: 700;
+            border-radius: 4px;
+            box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.4);
+        }
+
+        .move-cell.has-comment {
+            position: relative;
+        }
+
+        .move-cell.has-comment::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+        }
+
+        .move-cell.key-moment {
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        .move-cell.checkmate {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.2));
+            animation: mateGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes mateGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 25px rgba(255, 165, 0, 0.3); }
+        }
+
+        /* Key moments section */
+        .key-moments-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 2px solid var(--border-gold);
+            margin-bottom: 2rem;
+        }
+
+        .key-moments-section h2 {
+            color: var(--accent-gold);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+        }
+
+        .phases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .phase-card {
+            background: linear-gradient(135deg, var(--bg-secondary), rgba(255, 215, 0, 0.05));
+            border-radius: 10px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-gold);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.2);
+            border-color: var(--accent-gold);
+        }
+
+        .phase-title {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-move {
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .phase-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Scrollbar styling */
+        .moves-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .moves-section::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .moves-section::-webkit-scrollbar-thumb {
+            background: var(--accent-gold-dark);
+            border-radius: 4px;
+        }
+
+        .moves-section::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-gold);
+        }
+
+        /* Trophy animation */
+        .trophy {
+            display: inline-block;
+            font-size: 1.8rem;
+            animation: trophyBounce 3s ease-in-out infinite;
+        }
+
+        @keyframes trophyBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(-5deg); }
+            75% { transform: translateY(-5px) rotate(5deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 960px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            .back-button {
+                position: relative;
+                top: 0;
+                left: 0;
+                display: inline-block;
+                margin-bottom: 1rem;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .game-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .phases-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .board-section {
+                padding: 1rem;
+            }
+
+            .controls {
+                gap: 0.3rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="ENSEIGNEMENTS_V2.html" class="back-button">&#8592; Retour aux Enseignements</a>
+
+    <div class="container">
+        <header>
+            <h1><span class="trophy">&#127942;</span> Victoire Historique - SupaEngine vs Stockfish Skill 20</h1>
+            <div class="game-subtitle">Premiere victoire de SupaEngine contre Stockfish au niveau maximum</div>
+            <div class="game-info">
+                <div class="game-info-item">
+                    <strong>Date:</strong> 5 fevrier 2026
+                </div>
+                <div class="game-info-item">
+                    <strong>Blancs:</strong> SupaEngine v1.2
+                </div>
+                <div class="game-info-item">
+                    <strong>Noirs:</strong> Stockfish 17.1 Skill 20
+                </div>
+                <div class="game-info-item">
+                    <strong>Resultat:</strong> <span class="result-badge">1-0</span>
+                </div>
+                <div class="game-info-item">
+                    <strong>Coups:</strong> 83
+                </div>
+                <div class="game-info-item">
+                    <strong>Finale:</strong> Qg7#
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div id="board"></div>
+                <div class="move-indicator" id="moveIndicator">Position initiale</div>
+                <div class="comment-display" id="commentDisplay"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()" title="Debut (Home)">&#9198; Debut</button>
+                    <button class="btn" onclick="previousMove()" title="Precedent (Fleche gauche)">&#9664; Prec</button>
+                    <button class="btn" onclick="nextMove()" title="Suivant (Fleche droite)">Suiv &#9654;</button>
+                    <button class="btn" onclick="goToEnd()" title="Fin (End)">Fin &#9197;</button>
+                    <button class="btn" id="autoplayBtn" onclick="toggleAutoplay()">&#9654; Auto</button>
+                </div>
+                <div class="autoplay-controls">
+                    <span class="speed-label">Rapide</span>
+                    <input type="range" class="speed-slider" id="speedSlider" min="200" max="3000" value="1200" step="100">
+                    <span class="speed-label">Lent</span>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2>&#9823; Liste des coups</h2>
+                <div class="moves-grid" id="movesList"></div>
+            </div>
+        </div>
+
+        <!-- Key Moments Section -->
+        <div class="key-moments-section">
+            <h2>&#9733; Moments Cles de la Partie</h2>
+            <div class="phases-grid">
+                <div class="phase-card" onclick="goToMoveIndex(4)">
+                    <div class="phase-title">Ouverture</div>
+                    <div class="phase-move">3. d4 - Ecossaise</div>
+                    <div class="phase-desc">SupaEngine choisit une ouverture active et dynamique, prenant le centre immediatement.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(10)">
+                    <div class="phase-title">Echange strategique</div>
+                    <div class="phase-move">6. Nxc6 - Double les pions</div>
+                    <div class="phase-desc">Echange du cavalier central qui double les pions noirs sur la colonne c, creant une faiblesse durable.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(32)">
+                    <div class="phase-title">Sacrifice du fou!</div>
+                    <div class="phase-move">17. Bxf6 - Ruine le roque</div>
+                    <div class="phase-desc">Le sacrifice positionnel du fou detruit la structure de pions protectrice du roi noir. Coup decisif.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(44)">
+                    <div class="phase-title">Initiative blanche</div>
+                    <div class="phase-move">23. Rxd5 - Pion central</div>
+                    <div class="phase-desc">Capture du pion central avec la tour, consolidant l'avantage positionnel de SupaEngine.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(76)">
+                    <div class="phase-title">Le pion passe!</div>
+                    <div class="phase-move">39. a5 - Course a la promotion</div>
+                    <div class="phase-desc">Le pion passe commence sa marche vers la promotion. Stockfish ne peut l'arreter.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(112)">
+                    <div class="phase-title">PROMOTION!</div>
+                    <div class="phase-move">57. a8=Q - Deux dames!</div>
+                    <div class="phase-desc">Le moment decisif! Le pion a arrive en a8 et se transforme en dame. SupaEngine a maintenant deux dames.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(116)">
+                    <div class="phase-title">Echange victorieux</div>
+                    <div class="phase-move">59. Qxe4+ - Avantage materiel</div>
+                    <div class="phase-desc">Echange d'une dame contre la dame adverse. SupaEngine garde une dame supplementaire.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(140)">
+                    <div class="phase-title">Victoire technique</div>
+                    <div class="phase-move">71. Kxh2 - Pions elimines</div>
+                    <div class="phase-desc">Tous les pions noirs sont captures. La victoire est desormais une question de technique.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(154)">
+                    <div class="phase-title">Marche du roi</div>
+                    <div class="phase-move">78-82. Kf2, Kg3, Kf4, Ke5, Kf6</div>
+                    <div class="phase-desc">Le roi blanc s'avance methodiquement vers le roi noir, coupant ses cases de fuite pour preparer le mat.</div>
+                </div>
+                <div class="phase-card" onclick="goToMoveIndex(164)">
+                    <div class="phase-title">ECHEC ET MAT!</div>
+                    <div class="phase-move">83. Qg7# - Victoire!</div>
+                    <div class="phase-desc">La dame blanche donne le mat final en g7! Victoire historique de SupaEngine contre Stockfish Skill 20!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // ============================================================
+        // MOVES DATA - SupaEngine vs Stockfish Skill 20 (5 Feb 2026)
+        // ============================================================
+        const allMoves = [
+            "e4","e5","Nf3","Nc6","d4","exd4","Nxd4","Nf6","Nc3","Bb4",
+            "Nxc6","bxc6","Bd3","O-O","O-O","d5","exd5","cxd5","Bg5","c6",
+            "h3","h6","Bh4","Rb8","Re1","Ba5","Rb1","Rb4","Bg3","c5",
+            "Be5","Rb6","Bxf6","gxf6","Qh5","Bxc3","bxc3","Rxb1","Rxb1","c4",
+            "Bf1","Kg7","Rd1","Qb6","Rxd5","Qb1","Qf3","Be6","Rd4","Qc1",
+            "a4","Rg8","Kh2","Rc8","Bxc4","Rxc4","Rxc4","Bxc4","Qg4+","Kf8",
+            "Qc8+","Kg7","Qg4+","Qg5","Qxc4","h5","Qc7","Qd2","Qxa7","Qxc3",
+            "h4","Qxc2","g3","f5","Qd4+","f6","a5","Qa2","Qa7+","Kg6",
+            "a6","f4","gxf4","Qc4","Qa8","Qxf4+","Kg1","Kh6","a7","Qg4+",
+            "Qg2","Qd1+","Kh2","Qd6+","Kg1","Qd1+","Kh2","Qd6+","Qg3","Qa6",
+            "Qf4+","Kg7","Qc7+","Kg6","Qb8","Qa4","Qg8+","Kf5","Qd5+","Kg6",
+            "Qg8+","Kf5","a8=Q","Qxh4+","Kg2","Qe4+","Qxe4+","Kxe4","Qh7+","Ke5",
+            "Kg3","f5","Qh8+","Ke4","f3+","Ke3","Qc3+","Ke2","Qc2+","Ke3",
+            "Qc3+","Ke2","f4","h4+","Kg2","h3+","Kg3","h2","Qc2+","Ke3",
+            "Kxh2","Kxf4","Qe2","Kg5","Kg1","Kg6","Qe6+","Kh7","Qxf5+","Kh8",
+            "Qg5","Kh7","Qg4","Kh8","Kf2","Kh7","Kg3","Kh8","Kf4","Kh7",
+            "Ke5","Kh6","Kf6","Kh7","Qg7#"
+        ];
+
+        // Annotations for key moments (index in allMoves array, 0-based)
+        const annotations = {
+            4: "Ecossaise - SupaEngine choisit une ouverture active",
+            10: "Echange strategique - double les pions noirs",
+            32: "Sacrifice du fou! Ruine la structure de pions du roque noir",
+            44: "Capture le pion central - initiative blanche",
+            54: "Echange des fous - simplifie vers la finale",
+            58: "Serie d'echecs - gagne du temps et active la dame",
+            76: "Le pion passe commence sa course!",
+            88: "Le pion est a une case de la promotion!",
+            112: "PROMOTION! Deux dames blanches! Le moment decisif",
+            116: "Echange de dames - SupaEngine garde l'avantage avec D vs rien",
+            140: "Tous les pions noirs sont elimines - victoire technique",
+            154: "Marche du roi - le roi blanc s'approche pour le mat",
+            156: "Marche du roi - Kg3",
+            158: "Marche du roi - Kf4",
+            160: "Marche du roi - Ke5",
+            162: "Marche du roi - Kf6",
+            164: "ECHEC ET MAT! Victoire historique de SupaEngine!"
+        };
+
+        // State
+        let currentMoveIndex = -1; // -1 = start position
+        let game = new Chess();
+        let board = null;
+        let autoplayInterval = null;
+        let isAutoPlaying = false;
+
+        // Precompute FENs for each position
+        const fenHistory = [];
+        function precomputeFens() {
+            const g = new Chess();
+            fenHistory.push(g.fen()); // index 0 = start
+            for (let i = 0; i < allMoves.length; i++) {
+                const result = g.move(allMoves[i]);
+                if (!result) {
+                    console.error('Invalid move at index ' + i + ': ' + allMoves[i]);
+                    console.error('FEN: ' + g.fen());
+                    break;
+                }
+                fenHistory.push(g.fen()); // index i+1 = after move i
+            }
+        }
+        precomputeFens();
+
+        function initBoard() {
+            board = Chessboard('board', {
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+        }
+
+        function renderMovesList() {
+            const container = document.getElementById('movesList');
+            container.innerHTML = '';
+
+            let moveNum = 1;
+            let i = 0;
+            while (i < allMoves.length) {
+                const row = document.createElement('div');
+                row.className = 'move-row';
+
+                // Move number
+                const numCell = document.createElement('div');
+                numCell.className = 'move-num-cell';
+                numCell.textContent = moveNum + '.';
+                row.appendChild(numCell);
+
+                // White move
+                const whiteCell = document.createElement('div');
+                whiteCell.className = 'move-cell';
+                whiteCell.dataset.index = i;
+                whiteCell.textContent = allMoves[i];
+                whiteCell.onclick = (function(idx) {
+                    return function() { goToMoveIndex(idx); };
+                })(i);
+                if (annotations[i]) {
+                    whiteCell.classList.add('has-comment');
+                    whiteCell.title = annotations[i];
+                }
+                if (i === allMoves.length - 1 && allMoves[i] === 'Qg7#') {
+                    whiteCell.classList.add('checkmate');
+                }
+                row.appendChild(whiteCell);
+
+                i++;
+
+                // Black move (if exists)
+                if (i < allMoves.length) {
+                    const blackCell = document.createElement('div');
+                    blackCell.className = 'move-cell';
+                    blackCell.dataset.index = i;
+                    blackCell.textContent = allMoves[i];
+                    blackCell.onclick = (function(idx) {
+                        return function() { goToMoveIndex(idx); };
+                    })(i);
+                    if (annotations[i]) {
+                        blackCell.classList.add('has-comment');
+                        blackCell.title = annotations[i];
+                    }
+                    row.appendChild(blackCell);
+                    i++;
+                } else {
+                    // Empty cell
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'move-cell';
+                    row.appendChild(emptyCell);
+                }
+
+                container.appendChild(row);
+                moveNum++;
+            }
+        }
+
+        function goToMoveIndex(index) {
+            if (index < -1 || index >= allMoves.length) return;
+
+            currentMoveIndex = index;
+
+            // Set board position from precomputed FEN
+            const fenIdx = index + 1; // fenHistory[0] = start, fenHistory[1] = after move 0, etc.
+            if (fenIdx >= 0 && fenIdx < fenHistory.length) {
+                board.position(fenHistory[fenIdx], false);
+            }
+
+            // Update move indicator
+            const indicator = document.getElementById('moveIndicator');
+            if (index === -1) {
+                indicator.innerHTML = 'Position initiale';
+            } else {
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = (index % 2 === 0) ? 'Blancs' : 'Noirs';
+                indicator.innerHTML = '<span class="move-num">' + moveNumber + '. </span>' +
+                    '<span class="move-san">' + allMoves[index] + '</span>' +
+                    ' (' + color + ')';
+            }
+
+            // Update comment display
+            const commentDiv = document.getElementById('commentDisplay');
+            if (index >= 0 && annotations[index]) {
+                commentDiv.textContent = annotations[index];
+                commentDiv.classList.add('visible');
+            } else {
+                commentDiv.classList.remove('visible');
+            }
+
+            // Highlight active move in list
+            document.querySelectorAll('.move-cell').forEach(function(cell) {
+                cell.classList.remove('active');
+            });
+            const activeCell = document.querySelector('.move-cell[data-index="' + index + '"]');
+            if (activeCell) {
+                activeCell.classList.add('active');
+                activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < allMoves.length - 1) {
+                goToMoveIndex(currentMoveIndex + 1);
+            } else {
+                if (isAutoPlaying) stopAutoplay();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                goToMoveIndex(currentMoveIndex - 1);
+            }
+        }
+
+        function goToStart() {
+            stopAutoplay();
+            goToMoveIndex(-1);
+        }
+
+        function goToEnd() {
+            stopAutoplay();
+            goToMoveIndex(allMoves.length - 1);
+        }
+
+        function toggleAutoplay() {
+            if (isAutoPlaying) {
+                stopAutoplay();
+            } else {
+                startAutoplay();
+            }
+        }
+
+        function startAutoplay() {
+            if (currentMoveIndex >= allMoves.length - 1) {
+                goToStart();
+            }
+            isAutoPlaying = true;
+            var btn = document.getElementById('autoplayBtn');
+            btn.textContent = '\u23F8 Pause';
+            btn.classList.add('active');
+            var speed = parseInt(document.getElementById('speedSlider').value);
+            autoplayInterval = setInterval(function() {
+                nextMove();
+            }, speed);
+        }
+
+        function stopAutoplay() {
+            isAutoPlaying = false;
+            var btn = document.getElementById('autoplayBtn');
+            btn.textContent = '\u25B6 Auto';
+            btn.classList.remove('active');
+            if (autoplayInterval) {
+                clearInterval(autoplayInterval);
+                autoplayInterval = null;
+            }
+        }
+
+        // Speed slider updates autoplay interval live
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            if (isAutoPlaying) {
+                clearInterval(autoplayInterval);
+                var speed = parseInt(this.value);
+                autoplayInterval = setInterval(function() {
+                    nextMove();
+                }, speed);
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextMove();
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousMove();
+            }
+            if (e.key === 'Home') {
+                e.preventDefault();
+                goToStart();
+            }
+            if (e.key === 'End') {
+                e.preventDefault();
+                goToEnd();
+            }
+            if (e.key === ' ') {
+                e.preventDefault();
+                toggleAutoplay();
+            }
+        });
+
+        // Responsive board resize
+        $(window).resize(function() {
+            if (board) board.resize();
+        });
+
+        // Initialize
+        initBoard();
+        renderMovesList();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

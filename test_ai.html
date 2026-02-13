@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChessNova - Tests Automatiques</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; color: #eee; padding: 20px; }
+        .test-pass { color: #4ade80; }
+        .test-fail { color: #f87171; }
+        .test-info { color: #00d9ff; }
+        pre { background: #0d1117; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        h1 { color: #00d9ff; }
+        .summary { margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>ChessNova - Tests Automatiques Pro</h1>
+    <pre id="output"></pre>
+    <div class="summary" id="summary"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        const summary = document.getElementById('summary');
+        let passed = 0, failed = 0;
+
+        function log(msg, type = 'info') {
+            const color = type === 'pass' ? 'test-pass' : (type === 'fail' ? 'test-fail' : 'test-info');
+            output.innerHTML += `<span class="${color}">${msg}</span>\n`;
+        }
+
+        function assert(condition, testName) {
+            if (condition) {
+                log(`[PASS] ${testName}`, 'pass');
+                passed++;
+            } else {
+                log(`[FAIL] ${testName}`, 'fail');
+                failed++;
+            }
+        }
+
+        // ========================================
+        // CODE DE L'IA (copié depuis index.html)
+        // ========================================
+        const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
+        const pawnTable = [
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5, -5,-10,  0,  0,-10, -5,  5,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        ];
+
+        const knightTable = [
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50
+        ];
+
+        const bishopTable = [
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+        ];
+
+        const rookTable = [
+            0,  0,  0,  0,  0,  0,  0,  0,
+            5, 10, 10, 10, 10, 10, 10,  5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            0,  0,  0,  5,  5,  0,  0,  0
+        ];
+
+        const difficultyLevels = {
+            beginner: { elo: '800-1000', depth: 2, error_rate: 0.3 },
+            intermediate: { elo: '1200-1400', depth: 3, error_rate: 0.15 },
+            advanced: { elo: '1600-1800', depth: 4, error_rate: 0.05 },
+            expert: { elo: '2000-2200', depth: 5, error_rate: 0.01 }
+        };
+
+        function getPieceSquareValue(piece, square, isEndgame) {
+            const file = square.charCodeAt(0) - 97;
+            const rank = parseInt(square[1]) - 1;
+            const index = piece.color === 'w' ? (7 - rank) * 8 + file : rank * 8 + file;
+
+            switch(piece.type) {
+                case 'p': return pawnTable[index];
+                case 'n': return knightTable[index];
+                case 'b': return bishopTable[index];
+                case 'r': return rookTable[index];
+                case 'q': return bishopTable[index] * 0.5;
+                default: return 0;
+            }
+        }
+
+        function evaluateBoard(game) {
+            if (game.in_checkmate()) {
+                return game.turn() === 'w' ? -99999 : 99999;
+            }
+            if (game.in_draw()) return 0;
+
+            let score = 0;
+            const boardState = game.board();
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = boardState[i][j];
+                    if (piece) {
+                        const square = String.fromCharCode(97 + j) + (8 - i);
+                        let value = pieceValues[piece.type] + getPieceSquareValue(piece, square, false);
+                        score += piece.color === 'w' ? value : -value;
+                    }
+                }
+            }
+
+            const mobility = game.moves().length;
+            score += game.turn() === 'w' ? mobility * 2 : -mobility * 2;
+
+            return score;
+        }
+
+        function minimax(game, depth, alpha, beta, isMaximizing) {
+            if (depth === 0 || game.game_over()) {
+                return evaluateBoard(game);
+            }
+
+            const moves = game.moves();
+
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const move of moves) {
+                    game.move(move);
+                    const eval_ = minimax(game, depth - 1, alpha, beta, false);
+                    game.undo();
+                    maxEval = Math.max(maxEval, eval_);
+                    alpha = Math.max(alpha, eval_);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const move of moves) {
+                    game.move(move);
+                    const eval_ = minimax(game, depth - 1, alpha, beta, true);
+                    game.undo();
+                    minEval = Math.min(minEval, eval_);
+                    beta = Math.min(beta, eval_);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+
+        function findBestMove(game, depth) {
+            const moves = game.moves({ verbose: true });
+            let bestMove = null;
+            let bestValue = Infinity;
+
+            for (const move of moves) {
+                game.move(move);
+                const value = minimax(game, depth - 1, -Infinity, Infinity, true);
+                game.undo();
+
+                if (value < bestValue) {
+                    bestValue = value;
+                    bestMove = move;
+                }
+            }
+
+            return bestMove;
+        }
+
+        // ========================================
+        // TESTS
+        // ========================================
+        async function runTests() {
+            log('========================================');
+            log('DEMARRAGE DES TESTS ChessNova');
+            log('========================================\n');
+
+            // Test 1: Chess.js fonctionne
+            log('--- Test 1: Initialisation Chess.js ---');
+            const game1 = new Chess();
+            assert(game1 !== null, 'Chess.js initialise correctement');
+            assert(game1.fen() === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'Position initiale correcte');
+
+            // Test 2: Evaluation de position
+            log('\n--- Test 2: Evaluation de position ---');
+            const game2 = new Chess();
+            const evalStart = evaluateBoard(game2);
+            log(`Evaluation position initiale: ${evalStart}`);
+            assert(Math.abs(evalStart) < 100, 'Position initiale equilibree (proche de 0)');
+
+            // Test 3: IA trouve un coup (Debutant)
+            log('\n--- Test 3: IA Debutant (depth 2) ---');
+            const game3 = new Chess();
+            game3.move('e4');
+            const startTime3 = performance.now();
+            const move3 = findBestMove(game3, 2);
+            const time3 = performance.now() - startTime3;
+            log(`Coup trouve: ${move3 ? move3.san : 'AUCUN'} en ${time3.toFixed(0)}ms`);
+            assert(move3 !== null, 'IA Debutant trouve un coup');
+            assert(time3 < 2000, `Temps acceptable (<2s): ${time3.toFixed(0)}ms`);
+
+            // Test 4: IA trouve un coup (Intermediaire)
+            log('\n--- Test 4: IA Intermediaire (depth 3) ---');
+            const game4 = new Chess();
+            game4.move('e4');
+            const startTime4 = performance.now();
+            const move4 = findBestMove(game4, 3);
+            const time4 = performance.now() - startTime4;
+            log(`Coup trouve: ${move4 ? move4.san : 'AUCUN'} en ${time4.toFixed(0)}ms`);
+            assert(move4 !== null, 'IA Intermediaire trouve un coup');
+            assert(time4 < 5000, `Temps acceptable (<5s): ${time4.toFixed(0)}ms`);
+
+            // Test 5: IA trouve un coup (Avance)
+            log('\n--- Test 5: IA Avance (depth 4) ---');
+            const game5 = new Chess();
+            game5.move('e4');
+            const startTime5 = performance.now();
+            const move5 = findBestMove(game5, 4);
+            const time5 = performance.now() - startTime5;
+            log(`Coup trouve: ${move5 ? move5.san : 'AUCUN'} en ${time5.toFixed(0)}ms`);
+            assert(move5 !== null, 'IA Avance trouve un coup');
+            assert(time5 < 15000, `Temps acceptable (<15s): ${time5.toFixed(0)}ms`);
+
+            // Test 6: IA capture une piece gratuite
+            log('\n--- Test 6: IA capture piece gratuite ---');
+            const game6 = new Chess('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2');
+            game6.move('Qh5'); // Dame menace
+            game6.move('Nc6');
+            game6.move('Qxe5'); // Dame prend pion
+            // Maintenant les noirs devraient capturer si possible
+            const game6b = new Chess('r1bqkbnr/pppp1ppp/2n5/4Q3/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 3');
+            const move6 = findBestMove(game6b, 3);
+            log(`Position: Dame blanche en e5, coup noir: ${move6 ? move6.san : 'AUCUN'}`);
+            assert(move6 !== null, 'IA trouve un coup');
+
+            // Test 7: Simulation de 5 coups
+            log('\n--- Test 7: Simulation partie (5 coups chaque) ---');
+            const game7 = new Chess();
+            let moves7 = [];
+            for (let i = 0; i < 5; i++) {
+                // Blanc joue
+                const whiteMoves = game7.moves();
+                if (whiteMoves.length === 0) break;
+                game7.move(whiteMoves[Math.floor(Math.random() * whiteMoves.length)]);
+
+                // Noir (IA) joue
+                if (game7.game_over()) break;
+                const blackMove = findBestMove(game7, 2);
+                if (!blackMove) break;
+                game7.move(blackMove);
+                moves7.push(blackMove.san);
+            }
+            log(`Coups IA: ${moves7.join(', ')}`);
+            assert(moves7.length >= 3, `IA a joue ${moves7.length} coups (min 3)`);
+
+            // Test 8: Pas d'erreur sur position vide
+            log('\n--- Test 8: Gestion positions speciales ---');
+            const game8 = new Chess('8/8/8/8/8/8/8/4K2k w - - 0 1');
+            const move8 = findBestMove(game8, 2);
+            log(`Position presque vide, coup: ${move8 ? move8.san : 'AUCUN'}`);
+            assert(true, 'Pas de crash sur position speciale');
+
+            // Test 9: Detection mat en 1
+            log('\n--- Test 9: Detection mat en 1 ---');
+            const game9 = new Chess('k7/8/1K6/8/8/8/8/R7 w - - 0 1');
+            const move9 = findBestMove(game9, 2);
+            log(`Position mat en 1, coup: ${move9 ? move9.san : 'AUCUN'}`);
+            // Ra8# est le mat
+            assert(move9 && move9.san === 'Ra8#', 'IA trouve le mat en 1');
+
+            // Test 10: Performance globale
+            log('\n--- Test 10: Benchmark performance ---');
+            const times = [];
+            for (let i = 0; i < 3; i++) {
+                const g = new Chess();
+                g.move('e4');
+                const start = performance.now();
+                findBestMove(g, 3);
+                times.push(performance.now() - start);
+            }
+            const avgTime = times.reduce((a,b) => a+b) / times.length;
+            log(`Temps moyen (depth 3): ${avgTime.toFixed(0)}ms`);
+            assert(avgTime < 3000, `Performance OK (moy < 3s)`);
+
+            // Resume
+            log('\n========================================');
+            log('RESUME DES TESTS');
+            log('========================================');
+
+            const total = passed + failed;
+            const pct = ((passed / total) * 100).toFixed(0);
+
+            summary.innerHTML = `
+                <h2 style="color: ${failed === 0 ? '#4ade80' : '#f87171'}">
+                    ${failed === 0 ? 'TOUS LES TESTS PASSENT!' : 'CERTAINS TESTS ECHOUENT'}
+                </h2>
+                <p>Tests reussis: <strong class="test-pass">${passed}</strong> / ${total} (${pct}%)</p>
+                <p>Tests echoues: <strong class="test-fail">${failed}</strong></p>
+            `;
+
+            if (failed === 0) {
+                log(`\n[SUCCESS] Tous les ${total} tests passent!`, 'pass');
+            } else {
+                log(`\n[WARNING] ${failed} test(s) echoue(s) sur ${total}`, 'fail');
+            }
+        }
+
+        // Lancer les tests
+        runTests();
+    </script>
+</body>
+</html>

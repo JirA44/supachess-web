@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Déploiement ChessNova - MAINTENANT</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .step {
+            background: rgba(255,255,255,0.2);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .step-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        .step-content {
+            font-size: 1.2em;
+            line-height: 1.8;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px 50px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.5em;
+            margin: 20px 10px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        .files {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+        }
+        .file-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+        .highlight {
+            background: rgba(255,215,0,0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .countdown {
+            font-size: 2em;
+            color: #ffd700;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DÉPLOIEMENT EN 3 MINUTES</h1>
+        <p style="font-size: 1.3em; margin: 20px 0;">ChessNova Pro v2.0 → Cloudflare Pages</p>
+
+        <div class="countdown" id="timer">Prêt à déployer!</div>
+
+        <div class="step">
+            <div class="step-title">📂 ÉTAPE 1: Les Fichiers</div>
+            <div class="step-content">
+                <p style="margin-bottom: 15px;">Ces fichiers sont prêts dans:</p>
+                <p style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; font-family: monospace;">
+                    C:\Users\Hugop\chessnova-cloudflare\
+                </p>
+                <div class="files">
+                    <div class="file-item">✅ ChessNova_TEACHER_ENHANCED.html (35 KB)</div>
+                    <div class="file-item">✅ index.html (1 KB)</div>
+                    <div class="file-item">✅ _headers (1 KB)</div>
+                    <div class="file-item">✅ _redirects (0.5 KB)</div>
+                    <div class="file-item">✅ README.md (5 KB)</div>
+                    <div class="file-item">✅ wrangler.toml (0.3 KB)</div>
+                </div>
+                <button onclick="openFolder()" class="btn" style="font-size: 1.2em; padding: 15px 30px;">
+                    📁 Ouvrir le Dossier
+                </button>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">🌐 ÉTAPE 2: Cloudflare Dashboard</div>
+            <div class="step-content">
+                <p>Cliquez sur ce bouton pour ouvrir Cloudflare:</p>
+                <a href="https://dash.cloudflare.com/" target="_blank" class="btn">
+                    🚀 Ouvrir Cloudflare
+                </a>
+                <p style="margin-top: 20px; font-size: 1.1em;">
+                    Ensuite:<br>
+                    1. Menu gauche → <span class="highlight">Pages</span><br>
+                    2. Projet → <span class="highlight">chessnova-chess</span><br>
+                    3. Onglet → <span class="highlight">Deployments</span><br>
+                    4. Bouton → <span class="highlight">Create deployment</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">📤 ÉTAPE 3: Upload</div>
+            <div class="step-content">
+                <p style="font-size: 1.2em; margin-bottom: 15px;">
+                    <strong>Glissez les 6 fichiers</strong> du dossier vers Cloudflare
+                </p>
+                <p style="font-size: 1.1em;">
+                    OU cliquez <span class="highlight">"Select from computer"</span> et sélectionnez-les
+                </p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">✅ ÉTAPE 4: Déployer</div>
+            <div class="step-content">
+                <p style="font-size: 1.2em; margin-bottom: 15px;">
+                    Branch: <span class="highlight">production</span>
+                </p>
+                <p style="font-size: 1.2em;">
+                    Cliquez <span class="highlight">"Save and Deploy"</span>
+                </p>
+                <p style="margin-top: 20px; font-size: 1.1em; color: #ffd700;">
+                    ⏱️ Attendez 2-3 minutes...
+                </p>
+            </div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; border-radius: 20px; margin: 40px 0;">
+            <h2 style="font-size: 2.5em; margin-bottom: 15px;">🎉 SUCCÈS!</h2>
+            <p style="font-size: 1.3em; margin: 15px 0;">Votre site sera accessible sur:</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; font-family: monospace; font-size: 1.5em; margin: 20px 0;">
+                https://chessnova-chess.pages.dev
+            </div>
+            <a href="https://chessnova-chess.pages.dev" target="_blank" class="btn" style="background: white; color: #059669;">
+                🌐 Voir Mon Site
+            </a>
+        </div>
+
+        <div style="margin-top: 50px;">
+            <button onclick="startDeployment()" class="btn" style="font-size: 1.8em; padding: 25px 60px; animation: pulse 2s ease-in-out infinite;">
+                🚀 COMMENCER LE DÉPLOIEMENT
+            </button>
+        </div>
+
+        <p style="margin-top: 30px; font-size: 1.1em; opacity: 0.8;">
+            Version 2.0 • Production Ready ✅
+        </p>
+    </div>
+
+    <script>
+        let secondsLeft = 180; // 3 minutes
+
+        function updateTimer() {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer').textContent = `Temps estimé: ${display}`;
+
+            if (secondsLeft > 0) {
+                secondsLeft--;
+                setTimeout(updateTimer, 1000);
+            } else {
+                document.getElementById('timer').textContent = '🎉 Déploiement terminé!';
+                document.getElementById('timer').style.color = '#10b981';
+            }
+        }
+
+        function openFolder() {
+            alert('📁 Ouvrez le dossier:\n\nC:\\Users\\Hugop\\chessnova-cloudflare\\\n\nSélectionnez les 6 fichiers et glissez-les dans Cloudflare!');
+            // Tentative d'ouverture
+            window.open('file:///C:/Users/Hugop/chessnova-cloudflare');
+        }
+
+        function startDeployment() {
+            // Ouvrir le dossier et Cloudflare
+            openFolder();
+            window.open('https://dash.cloudflare.com/', '_blank');
+
+            // Démarrer le timer
+            updateTimer();
+
+            // Changer le bouton
+            event.target.textContent = '⏳ Déploiement en cours...';
+            event.target.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        }
+
+        // Message au chargement
+        console.log('🚀 Guide de déploiement chargé!');
+        console.log('📂 Dossier: C:\\Users\\Hugop\\chessnova-cloudflare');
+        console.log('🌐 Dashboard: https://dash.cloudflare.com/');
+        console.log('🎯 URL finale: https://chessnova-chess.pages.dev');
+    </script>
+</body>
+</html>

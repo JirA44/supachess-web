@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaZero vs Stockfish - Game 10 | La Révolution de l'IA aux Échecs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 50%, #330066 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(120deg, #00ffff, #00ff00, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .nav-back {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-5px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .board-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .board-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        #chessboard {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 3px solid #00ffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        /* Forcer toutes les pièces à avoir des couleurs contrastées */
+        .square {
+            font-weight: bold;
+        }
+
+        /* Pièces noires en noir pur avec contour blanc */
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        /* Pièces blanches avec fond blanc complet */
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square.highlight {
+            background: rgba(0, 255, 255, 0.5) !important;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .square.last-move {
+            background: rgba(0, 255, 0, 0.4) !important;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00ffff 0%, #00ff00 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .move-info {
+            text-align: center;
+            font-size: 1.3em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .moves-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.5);
+            padding-bottom: 10px;
+        }
+
+        .move-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #00ffff;
+            transform: translateX(5px);
+        }
+
+        .move-item.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-left-color: #00ffff;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+
+        .move-number {
+            font-weight: bold;
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .move-notation {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .move-comment {
+            margin-top: 8px;
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Retour au Hub</a>
+
+        <div class="header">
+            <h1>🤖 AlphaZero vs Stockfish 8 - Game 10</h1>
+            <p class="subtitle">DeepMind Match, Décembre 2017 | La Révolution de l'IA</p>
+            <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
+                "AlphaZero a appris à jouer aux échecs en 4 heures et a battu le meilleur moteur du monde" - DeepMind
+            </p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">🤖 Blanc (IA)</div>
+                <div class="stat-value" style="font-size: 1.3em;">AlphaZero</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚙️ Noir (Engine)</div>
+                <div class="stat-value" style="font-size: 1.3em;">Stockfish 8</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📅 Date</div>
+                <div class="stat-value" style="font-size: 1.3em;">Déc 2017</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🎯 Ouverture</div>
+                <div class="stat-value" style="font-size: 1.3em;">Queen's Indian</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚡ Coups</div>
+                <div class="stat-value">56</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🌟 Résultat</div>
+                <div class="stat-value">1-0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.8em;">🎯 Position Actuelle</h2>
+                <div class="board-container">
+                    <div id="chessboard"></div>
+                </div>
+                <div class="move-info" id="moveInfo">
+                    Position initiale
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮️ Début</button>
+                    <button class="btn" onclick="previousMove()">◀️ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶️</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭️</button>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2>📋 Coups de la Partie</h2>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliothèque chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // Initialisation du moteur chess.js
+        const chess = new Chess();
+
+        // PGN de la partie légendaire AlphaZero vs Stockfish - Queen's Indian Defense (E17)
+        // Match DeepMind, Londres, 4 Décembre 2017
+        const gameMoves = [
+            { move: 'Nf3', comment: '🤖 AlphaZero ouvre avec le cavalier roi! Une ouverture flexible qui peut transposer vers de nombreux systèmes. Contrôle immédiat de e5 et d4.' },
+            { move: 'Nf6', comment: 'Stockfish répond symétriquement. Le cavalier contrôle d5 et e4, gardant toutes les options ouvertes.' },
+            { move: 'd4', comment: 'AlphaZero prend le centre! Le pion d4 revendique l\'espace et prépare un développement classique.' },
+            { move: 'e6', comment: 'Stockfish prépare la Défense Indienne de la Dame. Le pion e6 soutient d5 et libère le fou dame.' },
+            { move: 'c4', comment: 'Le Gambit de la Dame! AlphaZero établit un puissant duo de pions au centre avec c4 et d4.' },
+            { move: 'b6', comment: '⚡ LA DÉFENSE INDIENNE DE LA DAME! Stockfish fianchette son fou dame vers b7, visant la grande diagonale a8-h1.' },
+            { move: 'g3', comment: 'AlphaZero prépare le fianchetto de son fou roi. Le système g3 est très flexible et positionnel.' },
+            { move: 'Bb7', comment: 'Le fou se développe sur sa diagonale naturelle. Le fou b7 exerce une pression constante sur e4 et le centre.' },
+            { move: 'Bg2', comment: 'Le fou blanc se place en fianchetto. Les deux fous se font face sur les grandes diagonales - bataille stratégique!' },
+            { move: 'Be7', comment: 'Développement harmonieux du fou roi. Stockfish prépare le petit roque avec une structure solide.' },
+            { move: 'O-O', comment: 'AlphaZero met son roi en sécurité. Le roque court est naturel dans cette structure.' },
+            { move: 'O-O', comment: 'Stockfish roque également. Les deux rois sont maintenant en sécurité - la bataille au centre peut commencer!' },
+            { move: 'd5', comment: '🔥 COUP THÉMATIQUE! AlphaZero avance au centre, créant une tension immédiate! Le Gambit Polugaevsky commence!' },
+            { move: 'exd5', comment: 'Stockfish capture le pion central. L\'ouverture des lignes va favoriser le jeu dynamique.' },
+            { move: 'Nh4', comment: '⚡ Le cavalier saute vers h4! AlphaZero vise f5, une case clé pour contrôler le centre et attaquer.' },
+            { move: 'c6', comment: 'Stockfish renforce son centre avec c6. Le pion protège d5 et prépare des manoeuvres défensives.' },
+            { move: 'cxd5', comment: 'AlphaZero échange au centre. La structure de pions s\'ouvre, créant des possibilités tactiques.' },
+            { move: 'Nxd5', comment: 'Le cavalier noir centralise magnifiquement sur d5. Une pièce dominante au coeur de l\'échiquier!' },
+            { move: 'Nf5', comment: '🤖 CAVALIER EN F5! AlphaZero place son cavalier sur une case agressive, menaçant g7 et e7.' },
+            { move: 'Nc7', comment: 'Le cavalier noir recule vers c7 pour défendre. Manoeuvre défensive nécessaire mais passive.' },
+            { move: 'e4', comment: '💥 LE CENTRE EXPLOSE! AlphaZero pousse e4, gagnant de l\'espace et activant ses pièces!' },
+            { move: 'd5', comment: 'Stockfish contre-attaque au centre avec d5! Tentative de bloquer l\'avance des pions blancs.' },
+            { move: 'exd5', comment: 'Capture au centre. AlphaZero ouvre des lignes pour ses pièces lourdes.' },
+            { move: 'Nxd5', comment: 'Le cavalier de c7 reprend en d5. Stockfish maintient une pièce centralisée.' },
+            { move: 'Nc3', comment: 'Développement du cavalier dame. AlphaZero attaque le cavalier noir centralisé.' },
+            { move: 'Nxc3', comment: 'Échange de cavaliers. Stockfish simplifie la position au centre.' },
+            { move: 'Qg4', comment: '⚡ LA DAME ENTRE EN JEU! AlphaZero place sa dame agressivement, visant g7 et créant des menaces!' },
+            { move: 'g6', comment: 'Stockfish doit affaiblir son roque pour chasser le cavalier f5. Le pion g6 crée des faiblesses.' },
+            { move: 'Nh6+', comment: '🔥 ÉCHEC DU CAVALIER! AlphaZero sacrifie positionellement pour déloger le roi!' },
+            { move: 'Kg7', comment: 'Le roi noir est forcé de sortir! Position inhabituelle avec le roi sur g7.' },
+            { move: 'bxc3', comment: 'AlphaZero reprend avec le pion b. La structure de pions blancs est endommagée mais les lignes sont ouvertes.' },
+            { move: 'Bc8', comment: 'Le fou noir recule vers c8 pour chasser le cavalier h6. Manoeuvre défensive logique.' },
+            { move: 'Qf4', comment: 'La dame se repositionne. AlphaZero maintient la pression sur la position noire.' },
+            { move: 'Qd6', comment: 'Stockfish centralise sa dame. Qd6 protège et prépare des contre-attaques.' },
+            { move: 'Qa4', comment: 'La dame blanche change de cible! AlphaZero vise maintenant l\'aile dame et les faiblesses noires.' },
+            { move: 'g5', comment: '💥 CONTRE-ATTAQUE! Stockfish pousse g5 pour piéger le cavalier h6!' },
+            { move: 'Re1', comment: 'La tour se centralise sur la colonne e ouverte. AlphaZero prépare Re1-e7.' },
+            { move: 'Kxh6', comment: '👑 LE ROI CAPTURE LE CAVALIER! Stockfish gagne du matériel mais son roi est maintenant exposé sur h6!' },
+            { move: 'h4', comment: '⚡ ASSAUT SUR LE ROI! AlphaZero lance immédiatement l\'attaque contre le roi exposé!' },
+            { move: 'f6', comment: 'Stockfish tente de consolider. Le pion f6 protège g5 et crée une barrière.' },
+            { move: 'Be3', comment: 'Développement du fou avec tempo. AlphaZero améliore sa coordination de pièces.' },
+            { move: 'Bf5', comment: 'Le fou sort de c8 vers f5. Stockfish active ses pièces et contrôle des cases clés.' },
+            { move: 'Rad1', comment: 'La tour dame entre en jeu sur la colonne d. Coordination maximale des pièces blanches!' },
+            { move: 'Qa3', comment: 'La dame noire devient active! Stockfish menace le pion c3 et cherche du contre-jeu.' },
+            { move: 'Qc4', comment: 'La dame blanche se repositionne. AlphaZero garde le contrôle de la position.' },
+            { move: 'b5', comment: 'Stockfish avance sur l\'aile dame! Gain d\'espace et menace sur la dame blanche.' },
+            { move: 'hxg5+', comment: '🔥 ÉCHEC! AlphaZero ouvre la position du roi noir avec un sacrifice de pion!' },
+            { move: 'fxg5', comment: 'Le roi noir reste exposé après cette capture. La structure de protection est détruite.' },
+            { move: 'Qh4+', comment: '⚡ ÉCHEC DÉVASTATEUR! La dame blanche attaque le roi exposé sur h6!' },
+            { move: 'Kg6', comment: 'Le roi fuit vers g6. Mais les cases sûres sont rares dans cette position.' },
+            { move: 'Qh1', comment: 'Repositionnement stratégique de la dame. AlphaZero prépare Qh3 ou une autre manoeuvre.' },
+            { move: 'Kg7', comment: 'Le roi recule vers g7, cherchant plus de sécurité derrière ses pions.' },
+            { move: 'Be4', comment: '💎 LE FOU DEVIENT MONSTRE! Be4 attaque le fou f5 et vise la diagonale cruciale a8-h1!' },
+            { move: 'Bg6', comment: 'Le fou noir recule. Stockfish protège son fou mais perd de l\'activité.' },
+            { move: 'Bxg6', comment: 'Échange de fous! AlphaZero simplifie mais garde l\'initiative.' },
+            { move: 'hxg6', comment: 'Stockfish reprend avec le pion h. La colonne h s\'ouvre partiellement.' },
+            { move: 'Qh3', comment: 'La dame se place sur h3, visant h7 et le roi noir. Pression constante!' },
+            { move: 'Bf6', comment: 'Le fou noir se place en défense. Stockfish protège les cases critiques autour de son roi.' },
+            { move: 'Kg2', comment: 'Le roi blanc se met à l\'abri. AlphaZero sécurise son roi avant de continuer l\'attaque.' },
+            { move: 'Qxa2', comment: '♛ CONTRE-ATTAQUE! Stockfish capture le pion a2, gagnant du matériel sur l\'aile dame!' },
+            { move: 'Rh1', comment: '🔥 LA TOUR ENTRE EN JEU! Rh1 menace des coups dévastateurs sur la colonne h!' },
+            { move: 'Qg8', comment: 'La dame noire recule pour défendre. Stockfish protège la 8ème rangée.' },
+            { move: 'c4', comment: 'Le pion c avance! AlphaZero crée un pion passé potentiel et gagne de l\'espace.' },
+            { move: 'Re8', comment: 'La tour noire s\'active sur la colonne e. Stockfish améliore sa coordination défensive.' },
+            { move: 'Bd4', comment: '⚡ LE FOU DOMINE! Bd4 contrôle la grande diagonale et menace le fou f6!' },
+            { move: 'Bxd4', comment: 'Échange forcé. Stockfish doit capturer le fou dominant.' },
+            { move: 'Rxd4', comment: 'La tour reprend avec une excellente centralisation. Contrôle total de la colonne d!' },
+            { move: 'Rd8', comment: 'Stockfish active sa tour sur la colonne d. Tentative de créer des contre-menaces.' },
+            { move: 'Rxd8', comment: 'Échange de tours. AlphaZero simplifie vers une finale favorable.' },
+            { move: 'Qxd8', comment: 'La dame noire reprend. Position simplifiée mais toujours difficile pour les Noirs.' },
+            { move: 'Qe6', comment: '💎 LA DAME ENVAHIT! Qe6 menace Qe7+ et contrôle des cases cruciales!' },
+            { move: 'Nd7', comment: 'Le cavalier sort enfin. Stockfish développe sa dernière pièce mineure.' },
+            { move: 'Rd1', comment: 'La tour se place sur la colonne d ouverte. AlphaZero domine toutes les colonnes!' },
+            { move: 'Nc5', comment: 'Le cavalier avance vers c5, attaquant la dame blanche. Contre-jeu de Stockfish.' },
+            { move: 'Rxd8', comment: 'Échange de dames et de tours! AlphaZero simplifie vers une finale gagnante!' },
+            { move: 'Nxe6', comment: 'Le cavalier capture la dame! Stockfish récupère du matériel mais la finale reste difficile.' },
+            { move: 'Rxa8', comment: '🏆 LA TOUR CAPTURE! AlphaZero gagne la tour a8 et entre en finale avec avantage matériel!' },
+            { move: 'Kf6', comment: 'Le roi noir s\'active vers le centre. En finale, le roi doit participer au combat!' },
+            { move: 'cxb5', comment: 'Capture du pion b5. AlphaZero crée un pion passé sur la colonne b.' },
+            { move: 'cxb5', comment: 'Stockfish reprend. Les pions passés des deux côtés vont jouer un rôle crucial.' },
+            { move: 'Kf3', comment: 'Le roi blanc avance! En finale, le roi est une pièce forte qui doit s\'activer.' },
+            { move: 'Nd4+', comment: '⚡ ÉCHEC! Le cavalier noir donne échec et s\'active dans la position.' },
+            { move: 'Ke4', comment: 'Le roi avance avec courage vers le centre! AlphaZero ne craint pas les échecs.' },
+            { move: 'Nc6', comment: 'Le cavalier recule vers c6, défendant et restant actif.' },
+            { move: 'Rc8', comment: 'La tour attaque le cavalier! AlphaZero met la pression sur les pièces noires.' },
+            { move: 'Ne7', comment: 'Le cavalier fuit vers e7. Stockfish protège ses pions et reste actif.' },
+            { move: 'Rb8', comment: 'La tour se place derrière le pion passé! Technique classique de finale.' },
+            { move: 'Nf5', comment: 'Le cavalier attaque le roi! Stockfish crée des menaces avec son cavalier.' },
+            { move: 'g4', comment: '💥 LE PION AVANCE! AlphaZero pousse son pion passé vers la promotion!' },
+            { move: 'Nh6', comment: 'Le cavalier attaque le pion g4. Stockfish essaie de bloquer l\'avance.' },
+            { move: 'f3', comment: 'Protection du pion g4. AlphaZero garde son pion passé en sécurité.' },
+            { move: 'Nf7', comment: 'Le cavalier se repositionne. Stockfish essaie de trouver une case active.' },
+            { move: 'Ra8', comment: 'La tour se place en a8 pour attaquer le pion a7. Menace directe!' },
+            { move: 'Nd6+', comment: '⚡ ÉCHEC! Le cavalier noir donne échec et attaque la tour!' },
+            { move: 'Kd5', comment: '👑 LE ROI AVANCE! AlphaZero centralise son roi malgré l\'échec - aucune peur!' },
+            { move: 'Nc4', comment: 'Le cavalier attaque la tour. Stockfish essaie de gagner du matériel.' },
+            { move: 'Rxa7', comment: '🔥 CAPTURE! AlphaZero prend le pion a7, créant un avantage matériel décisif!' },
+            { move: 'Ne3+', comment: 'Échec du cavalier! Stockfish essaie de créer des complications.' },
+            { move: 'Ke4', comment: 'Le roi reste au centre, dominant la position. AlphaZero contrôle tout!' },
+            { move: 'Nc4', comment: 'Le cavalier revient en c4, restant actif dans la défense.' },
+            { move: 'Ra6+', comment: '⚡ ÉCHEC! La tour donne échec et force le roi noir à bouger!' },
+            { move: 'Kg7', comment: 'Le roi fuit vers g7. Stockfish essaie de garder son roi actif.' },
+            { move: 'Rc6', comment: 'La tour se place sur c6, attaquant le cavalier et contrôlant la 6ème rangée.' },
+            { move: 'Kf7', comment: 'Le roi avance vers f7. Stockfish essaie d\'activer son roi en finale.' },
+            { move: 'Rc5', comment: 'La tour attaque le pion g5! AlphaZero vise les pions noirs restants.' },
+            { move: 'Ke6', comment: 'Le roi noir s\'active. Stockfish essaie de participer à la défense.' },
+            { move: 'Rxg5', comment: '💎 CAPTURE! AlphaZero gagne un autre pion, l\'avantage est maintenant écrasant!' },
+            { move: 'Kf6', comment: 'Le roi attaque la tour. Stockfish tente de gagner un tempo.' },
+            { move: 'Rc5', comment: 'La tour reste active. AlphaZero garde le contrôle total de la finale.' },
+            { move: 'g5', comment: 'Le pion g avance. Stockfish crée un pion passé mais c\'est trop tard.' },
+            { move: 'Kd4', comment: '🏆 POSITION GAGNANTE! Le roi blanc domine le centre. Stockfish abandonne - victoire magistrale d\'AlphaZero! 1-0' }
+        ];
+
+        // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)
+        const pieceSymbols = {
+            'p': '♙', 'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔',
+            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        };
+
+        let currentMoveIndex = -1;
+        let gameHistory = [];
+
+        function initBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            const position = chess.board();
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    const piece = position[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function createMovesList() {
+            const movesList = document.getElementById('movesList');
+            movesList.innerHTML = '';
+
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveItem.classList.add('brilliant');
+                }
+
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+
+                moveItem.innerHTML = `
+                    <div>
+                        <span class="move-number">${color} ${moveNumber}.</span>
+                        <span class="move-notation">${moveNotation}</span>
+                    </div>
+                    <div class="move-comment">${moveData.comment}</div>
+                `;
+
+                moveItem.onclick = () => goToMove(index);
+                movesList.appendChild(moveItem);
+            });
+        }
+
+        function updateMoveInfo() {
+            const info = document.getElementById('moveInfo');
+            if (currentMoveIndex === -1) {
+                info.textContent = 'Position initiale';
+            } else {
+                const moveNumber = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'AlphaZero (Blanc)' : 'Stockfish (Noir)';
+                info.innerHTML = `<strong>Coup ${moveNumber}</strong> - ${color}: ${gameMoves[currentMoveIndex].move}`;
+            }
+
+            // Highlight active move - each move has its own item now
+            document.querySelectorAll('.move-item').forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === currentMoveIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const move = gameMoves[currentMoveIndex].move;
+                let success = false;
+                
+                // Essayer plusieurs variations
+                const variations = [
+                    move,
+                    move.replace('+', '').replace('#', ''),
+                    move.replace('x', ''),
+                    move.toLowerCase()
+                ];
+                
+                for (const v of variations) {
+                    try {
+                        const result = chess.move(v, { sloppy: true });
+                        if (result) { success = true; break; }
+                    } catch (e) {}
+                }
+                
+                if (!success) {
+                    console.warn('Coup echoue:', move, 'index:', currentMoveIndex);
+                    // Continuer quand meme
+                }
+                
+                initBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                currentMoveIndex--;
+                rebuildGame();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = -1;
+            chess.reset();
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            while (currentMoveIndex < gameMoves.length - 1) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            goToStart();
+            for (let i = 0; i <= index; i++) {
+                nextMove();
+            }
+        }
+
+        function rebuildGame() {
+            chess.reset();
+            for (let i = 0; i <= currentMoveIndex; i++) {
+                const move = gameMoves[i].move;
+                const variations = [move, move.replace('+', '').replace('#', ''), move.replace('x', '')];
+                for (const v of variations) {
+                    try {
+                        const result = chess.move(v, { sloppy: true });
+                        if (result) break;
+                    } catch (e) {}
+                }
+            }
+            initBoard();
+        }
+
+        // Initialisation
+        initBoard();
+        createMovesList();
+        updateMoveInfo();
+
+        // Navigation au clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

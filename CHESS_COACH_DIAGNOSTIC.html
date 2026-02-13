@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Coach - Diagnostic System</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', monospace;
+            background: #0a0a1a;
+            color: #eee;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #00d9ff; margin-bottom: 20px; }
+        h2 { color: #667eea; margin: 30px 0 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+
+        .test-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            gap: 15px;
+        }
+
+        .status {
+            width: 80px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .status.pending { background: #555; color: #aaa; }
+        .status.testing { background: #f59e0b; color: #000; animation: pulse 1s infinite; }
+        .status.pass { background: #10b981; color: #fff; }
+        .status.fail { background: #ef4444; color: #fff; }
+        .status.warn { background: #f97316; color: #fff; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .test-name { flex: 1; }
+        .test-detail { color: #888; font-size: 0.9em; max-width: 400px; overflow: hidden; text-overflow: ellipsis; }
+        .test-time { color: #667eea; width: 80px; text-align: right; }
+
+        .btn {
+            background: linear-gradient(90deg, #00d9ff, #667eea);
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .summary-card .value { font-size: 2.5em; font-weight: bold; }
+        .summary-card .label { color: #888; margin-top: 5px; }
+        .summary-card.pass .value { color: #10b981; }
+        .summary-card.fail .value { color: #ef4444; }
+        .summary-card.warn .value { color: #f97316; }
+        .summary-card.total .value { color: #00d9ff; }
+
+        .log {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin-top: 20px;
+        }
+        .log-entry { margin: 3px 0; }
+        .log-entry.info { color: #00d9ff; }
+        .log-entry.success { color: #10b981; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.warn { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Chess Coach - Système de Diagnostic</h1>
+        <p style="color: #888; margin-bottom: 20px;">Tests automatiques pour vérifier que tout fonctionne correctement.</p>
+
+        <div class="summary" id="summary">
+            <div class="summary-card total"><div class="value" id="total-count">0</div><div class="label">Total Tests</div></div>
+            <div class="summary-card pass"><div class="value" id="pass-count">0</div><div class="label">Réussis</div></div>
+            <div class="summary-card fail"><div class="value" id="fail-count">0</div><div class="label">Échoués</div></div>
+            <div class="summary-card warn"><div class="value" id="warn-count">0</div><div class="label">Avertissements</div></div>
+        </div>
+
+        <button class="btn" id="run-all" onclick="runAllTests()">▶️ Lancer Tous les Tests</button>
+        <button class="btn" onclick="runStockfishTests()" style="background: linear-gradient(90deg, #667eea, #764ba2);">🤖 Test Stockfish</button>
+        <button class="btn" onclick="runPGNTests()" style="background: linear-gradient(90deg, #10b981, #059669);">♟️ Test PGNs</button>
+
+        <h2>🤖 Stockfish Engine</h2>
+        <div class="test-section" id="stockfish-tests"></div>
+
+        <h2>♟️ Parties Légendaires (PGN)</h2>
+        <div class="test-section" id="pgn-tests"></div>
+
+        <h2>🖼️ Ressources (Images, CDN)</h2>
+        <div class="test-section" id="resource-tests"></div>
+
+        <h2>📋 Log Détaillé</h2>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        // ========================================
+        // TEST DATA
+        // ========================================
+
+        const legendaryGames = [
+            {
+                id: 'fischer-byrne-1956',
+                title: 'Fischer - Game of the Century',
+                pgn: `[Event "Rosenwald Memorial"]
+[Site "New York"]
+[Date "1956.10.17"]
+[White "Donald Byrne"]
+[Black "Robert James Fischer"]
+[Result "0-1"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. Bf4 d5 6. Qb3 dxc4 7. Qxc4 c6 8. e4 Nbd7 9. Rd1 Nb6 10. Qc5 Bg4 11. Bg5 Na4 12. Qa3 Nxc3 13. bxc3 Nxe4 14. Bxe7 Qb6 15. Bc4 Nxc3 16. Bc5 Rfe8+ 17. Kf1 Be6 18. Bxb6 Bxc4+ 19. Kg1 Ne2+ 20. Kf1 Nxd4+ 21. Kg1 Ne2+ 22. Kf1 Nc3+ 23. Kg1 axb6 24. Qb4 Ra4 25. Qxb6 Nxd1 26. h3 Rxa2 27. Kh2 Nxf2 28. Re1 Rxe1 29. Qd8+ Bf8 30. Nxe1 Bd5 31. Nf3 Ne4 32. Qb8 b5 33. h4 h5 34. Ne5 Kg7 35. Kg1 Bc5+ 36. Kf1 Ng3+ 37. Ke1 Bb4+ 38. Kd1 Bb3+ 39. Kc1 Ne2+ 40. Kb1 Nc3+ 41. Kc1 Rc2# 0-1`
+            },
+            {
+                id: 'kasparov-topalov-1999',
+                title: 'Kasparov Immortal',
+                pgn: `[Event "Wijk aan Zee"]
+[Site "Wijk aan Zee"]
+[Date "1999.01.20"]
+[White "Garry Kasparov"]
+[Black "Veselin Topalov"]
+[Result "1-0"]
+
+1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7 8. Bh6 Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O 14. Nb3 exd4 15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5 20. Qf4+ Ka7 21. Rhe1 d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 cxd4 25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+ Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+ Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8 Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7 1-0`
+            },
+            {
+                id: 'tal-vasiukov-1958',
+                title: 'Tal Masterpiece',
+                pgn: `[Event "USSR Championship"]
+[Site "Riga"]
+[Date "1958.01.15"]
+[White "Mikhail Tal"]
+[Black "Evgeni Vasiukov"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Be7 8. Qf3 Qc7 9. O-O-O Nbd7 10. g4 b5 11. Bxf6 Nxf6 12. g5 Nd7 13. f5 Nc5 14. f6 gxf6 15. gxf6 Bf8 16. Rg1 h5 17. Qh3 b4 18. Na4 Nxa4 19. Bxa6 Qc5 20. b3 Nc3 21. Kb2 Nxa2 22. Bb5+ Kd8 23. Rg7 Qd5 24. Rxf7 Qxb5 25. Rxf8+ Rxf8 26. Qxe6 Nc3 27. Qe7+ Kc8 28. Rc1 Rf7 29. Qe8+ Kb7 30. Rxc3 1-0`
+            },
+            {
+                id: 'karpov-korchnoi-1978',
+                title: 'Karpov Positional',
+                pgn: `[Event "World Championship"]
+[Site "Baguio City"]
+[Date "1978.10.18"]
+[White "Anatoly Karpov"]
+[Black "Viktor Korchnoi"]
+[Result "1-0"]
+
+1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. g3 Bb4 5. Bg2 O-O 6. O-O e4 7. Ng5 Bxc3 8. bxc3 Re8 9. f3 exf3 10. Nxf3 d5 11. d4 dxc4 12. Bg5 h6 13. Bxf6 Qxf6 14. Ne5 Qxd4+ 15. Qxd4 Nxd4 16. Nxc4 b5 17. Ne3 Bb7 18. Rad1 Bxg2 19. Kxg2 c5 20. Rd2 Rad8 21. Rfd1 Kf8 22. Kf2 Ke7 23. a4 bxa4 24. Ra1 Nb3 25. Rxa4 Rxd2 26. Kxd2 Rd8+ 27. Ke2 Nc1+ 28. Kf3 Rd3 29. Ra5 Nd3 30. Rxc5 Nxe3 31. Kxe3 Rxc3+ 32. Kd4 Rxg3 33. Rc7+ Kf6 34. Rxa7 Rg4+ 35. Kd5 Rg5+ 36. Kc6 Rg6+ 37. Kb5 Rg5+ 38. Kb4 Rg4+ 39. Kb3 Rg3+ 40. Kc2 Rg2 41. Ra6+ Kg5 42. Kd3 Rxh2 43. Ke4 h5 44. Kf3 Rb2 45. Ra5+ Kh4 46. Kg2 f5 47. Ra4+ Kg5 48. Ra5 Kf4 49. Rxh5 g5 50. Rh8 Rb5 51. Rf8 Ke4 52. Re8+ Kf4 53. Re5 Rxe5 54. Kf1 1-0`
+            },
+            {
+                id: 'carlsen-anand-2013',
+                title: 'Carlsen Brilliancy',
+                pgn: `[Event "World Championship"]
+[Site "Chennai"]
+[Date "2013.11.22"]
+[White "Magnus Carlsen"]
+[Black "Viswanathan Anand"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Bc5 5. c3 O-O 6. O-O Re8 7. Re1 a6 8. Ba4 b5 9. Bb3 d6 10. Bg5 Be6 11. Nbd2 h6 12. Bh4 Bxb3 13. axb3 Nb8 14. h3 Nbd7 15. Nh2 Qe7 16. Ndf1 Bb6 17. Ne3 Qe6 18. b4 a5 19. bxa5 Bxa5 20. Nhg4 Nxg4 21. hxg4 Bb6 22. g5 hxg5 23. Bxg5 Nc5 24. Qf3 Qd7 25. Kf1 Ne6 26. Qh5 Nxg5 27. Qxg5 Qe7 28. Qh5 c6 29. Nf5 Qf6 30. Qg4 Bc7 31. Ra6 Re6 32. Rea1 Rea6 33. Rxa6 Rxa6 34. Rxa6 Kf8 35. Qh5 Qh6 36. Qxh6 gxh6 37. Ra7 Bb6 38. Rb7 Ba5 39. Nxh6 Kg7 40. Nf5+ Kg6 41. g4 Bd2 42. Kg2 Be1 43. f3 Bc3 44. Ne3 d5 45. Rb6 Bd4 46. Nf5 dxe4 47. fxe4 1-0`
+            },
+            {
+                id: 'alphazero-stockfish-2017',
+                title: 'AlphaZero vs Stockfish Game 10',
+                pgn: `[Event "AlphaZero vs Stockfish"]
+[Site "London"]
+[Date "2017.12.04"]
+[White "AlphaZero"]
+[Black "Stockfish 8"]
+[Result "1-0"]
+
+1. Nf3 Nf6 2. c4 b6 3. d4 e6 4. g3 Ba6 5. Qc2 c5 6. d5 exd5 7. cxd5 Bb7 8. Bg2 Nxd5 9. O-O Be7 10. Rd1 Nc6 11. Qf5 Nf6 12. e4 g6 13. Qf4 O-O 14. e5 Nh5 15. Qg4 Re8 16. Nc3 Qc8 17. Nd5 Bd8 18. Bf4 Ng7 19. Rd2 Nf5 20. Rad1 d6 21. Bh6 Nce7 22. h4 dxe5 23. Nxe7+ Bxe7 24. Qxc8 Raxc8 25. Nxe5 Bxg2 26. Kxg2 Nd6 27. Bf4 Ne4 28. Rd7 Bf8 29. Nf3 f6 30. b3 Nc3 31. Rd8 Rxd8 32. Rxd8 Kf7 33. Nd4 Nb1 34. a4 Nc3 35. Nb5 Nxb5 36. axb5 Rb8 37. Bd6 1-0`
+            },
+            {
+                id: 'deep-blue-kasparov-1997',
+                title: 'Deep Blue vs Kasparov Game 6',
+                pgn: `[Event "IBM Man-Machine"]
+[Site "New York"]
+[Date "1997.05.11"]
+[White "Deep Blue"]
+[Black "Garry Kasparov"]
+[Result "1-0"]
+
+1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Ng5 Ngf6 6. Bd3 e6 7. N1f3 h6 8. Nxe6 Qe7 9. O-O fxe6 10. Bg6+ Kd8 11. Bf4 b5 12. a4 Bb7 13. Re1 Nd5 14. Bg3 Kc8 15. axb5 cxb5 16. Qd3 Bc6 17. Bf5 exf5 18. Rxe7 Bxe7 19. c4 1-0`
+            },
+            {
+                id: 'morphy-duke-1858',
+                title: 'Morphy Opera Game',
+                pgn: `[Event "Paris Opera"]
+[Site "Paris"]
+[Date "1858.11.02"]
+[White "Paul Morphy"]
+[Black "Duke of Brunswick"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# 1-0`
+            }
+        ];
+
+        const stockfishUrls = [
+            { name: 'jsdelivr stockfish.wasm', url: 'https://cdn.jsdelivr.net/npm/stockfish.wasm@0.10.0/stockfish.js' },
+            { name: 'unpkg stockfish.js', url: 'https://unpkg.com/stockfish.js@10.0.2/stockfish.js' },
+            { name: 'jsdelivr stockfish.js', url: 'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js' }
+        ];
+
+        const resourceUrls = [
+            { name: 'jQuery', url: 'https://code.jquery.com/jquery-3.6.0.min.js' },
+            { name: 'chess.js', url: 'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js' },
+            { name: 'chessboard.js', url: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js' },
+            { name: 'Pièce wK (Roi blanc)', url: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/wK.png' },
+            { name: 'Pièce bQ (Dame noire)', url: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/bQ.png' },
+            { name: 'Chart.js', url: 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' }
+        ];
+
+        // ========================================
+        // LOGGING
+        // ========================================
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${time}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // ========================================
+        // TEST FRAMEWORK
+        // ========================================
+
+        let testResults = { pass: 0, fail: 0, warn: 0, total: 0 };
+
+        function updateSummary() {
+            document.getElementById('total-count').textContent = testResults.total;
+            document.getElementById('pass-count').textContent = testResults.pass;
+            document.getElementById('fail-count').textContent = testResults.fail;
+            document.getElementById('warn-count').textContent = testResults.warn;
+        }
+
+        function createTestItem(container, id, name) {
+            const div = document.createElement('div');
+            div.className = 'test-item';
+            div.id = 'test-' + id;
+            div.innerHTML = `
+                <span class="status pending">EN ATTENTE</span>
+                <span class="test-name">${name}</span>
+                <span class="test-detail"></span>
+                <span class="test-time">-</span>
+            `;
+            document.getElementById(container).appendChild(div);
+            return div;
+        }
+
+        function updateTest(id, status, detail = '', time = '') {
+            const div = document.getElementById('test-' + id);
+            if (!div) return;
+
+            const statusEl = div.querySelector('.status');
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = status === 'pass' ? '✓ RÉUSSI' :
+                                   status === 'fail' ? '✗ ÉCHOUÉ' :
+                                   status === 'warn' ? '⚠ ATTENTION' :
+                                   status === 'testing' ? '⏳ TEST...' : 'EN ATTENTE';
+
+            if (detail) div.querySelector('.test-detail').textContent = detail;
+            if (time) div.querySelector('.test-time').textContent = time;
+
+            if (status === 'pass') testResults.pass++;
+            else if (status === 'fail') testResults.fail++;
+            else if (status === 'warn') testResults.warn++;
+
+            if (status !== 'testing' && status !== 'pending') {
+                testResults.total++;
+                updateSummary();
+            }
+        }
+
+        // ========================================
+        // STOCKFISH TESTS
+        // ========================================
+
+        async function runStockfishTests() {
+            log('=== Début des tests Stockfish ===', 'info');
+
+            for (let i = 0; i < stockfishUrls.length; i++) {
+                const sf = stockfishUrls[i];
+                const id = 'sf-' + i;
+                createTestItem('stockfish-tests', id, sf.name);
+                updateTest(id, 'testing');
+
+                const start = Date.now();
+                try {
+                    const result = await testStockfishWorker(sf.url);
+                    const time = Date.now() - start;
+
+                    if (result.success) {
+                        updateTest(id, 'pass', result.message, time + 'ms');
+                        log(`✓ ${sf.name}: OK (${time}ms)`, 'success');
+                    } else {
+                        updateTest(id, 'fail', result.message, time + 'ms');
+                        log(`✗ ${sf.name}: ${result.message}`, 'error');
+                    }
+                } catch (e) {
+                    updateTest(id, 'fail', e.message, '-');
+                    log(`✗ ${sf.name}: Exception - ${e.message}`, 'error');
+                }
+            }
+
+            log('=== Fin des tests Stockfish ===', 'info');
+        }
+
+        function testStockfishWorker(url) {
+            return new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    resolve({ success: false, message: 'Timeout (10s)' });
+                }, 10000);
+
+                try {
+                    const worker = new Worker(url);
+                    let gotUciok = false;
+                    let gotReadyok = false;
+
+                    worker.onerror = (e) => {
+                        clearTimeout(timeout);
+                        worker.terminate();
+                        resolve({ success: false, message: 'Worker error: ' + (e.message || 'Unknown') });
+                    };
+
+                    worker.onmessage = (e) => {
+                        const line = e.data;
+                        if (line === 'uciok') {
+                            gotUciok = true;
+                            worker.postMessage('isready');
+                        } else if (line === 'readyok') {
+                            gotReadyok = true;
+                            clearTimeout(timeout);
+                            worker.terminate();
+                            resolve({ success: true, message: 'UCI + Ready OK' });
+                        }
+                    };
+
+                    worker.postMessage('uci');
+                } catch (e) {
+                    clearTimeout(timeout);
+                    resolve({ success: false, message: 'Creation failed: ' + e.message });
+                }
+            });
+        }
+
+        // ========================================
+        // PGN TESTS
+        // ========================================
+
+        async function runPGNTests() {
+            log('=== Début des tests PGN ===', 'info');
+
+            for (let i = 0; i < legendaryGames.length; i++) {
+                const game = legendaryGames[i];
+                const id = 'pgn-' + i;
+                createTestItem('pgn-tests', id, game.title);
+                updateTest(id, 'testing');
+
+                const start = Date.now();
+                const result = testPGN(game.pgn);
+                const time = Date.now() - start;
+
+                if (result.success) {
+                    updateTest(id, 'pass', `${result.moves} coups parsés`, time + 'ms');
+                    log(`✓ ${game.title}: ${result.moves} coups`, 'success');
+                } else {
+                    updateTest(id, 'fail', result.error, time + 'ms');
+                    log(`✗ ${game.title}: ${result.error}`, 'error');
+                }
+            }
+
+            log('=== Fin des tests PGN ===', 'info');
+        }
+
+        function testPGN(pgn) {
+            try {
+                const chess = new Chess();
+                const success = chess.load_pgn(pgn);
+
+                if (!success) {
+                    // Try cleaning the PGN
+                    const cleanedPgn = pgn.replace(/\r\n/g, '\n').trim();
+                    const success2 = chess.load_pgn(cleanedPgn);
+                    if (!success2) {
+                        return { success: false, error: 'PGN invalide (load_pgn failed)' };
+                    }
+                }
+
+                const history = chess.history();
+                if (history.length === 0) {
+                    return { success: false, error: 'Aucun coup trouvé' };
+                }
+
+                return { success: true, moves: history.length };
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        }
+
+        // ========================================
+        // RESOURCE TESTS
+        // ========================================
+
+        async function runResourceTests() {
+            log('=== Début des tests Ressources ===', 'info');
+
+            for (let i = 0; i < resourceUrls.length; i++) {
+                const res = resourceUrls[i];
+                const id = 'res-' + i;
+                createTestItem('resource-tests', id, res.name);
+                updateTest(id, 'testing');
+
+                const start = Date.now();
+                try {
+                    const response = await fetch(res.url, { method: 'HEAD', mode: 'cors' });
+                    const time = Date.now() - start;
+
+                    if (response.ok) {
+                        updateTest(id, 'pass', `HTTP ${response.status}`, time + 'ms');
+                        log(`✓ ${res.name}: OK (${time}ms)`, 'success');
+                    } else {
+                        updateTest(id, 'fail', `HTTP ${response.status}`, time + 'ms');
+                        log(`✗ ${res.name}: HTTP ${response.status}`, 'error');
+                    }
+                } catch (e) {
+                    const time = Date.now() - start;
+                    // CORS errors are common for CDNs, try with no-cors
+                    try {
+                        const response2 = await fetch(res.url, { method: 'GET', mode: 'no-cors' });
+                        updateTest(id, 'warn', 'CORS bloqué mais ressource existe', time + 'ms');
+                        log(`⚠ ${res.name}: CORS bloqué`, 'warn');
+                    } catch (e2) {
+                        updateTest(id, 'fail', e.message, time + 'ms');
+                        log(`✗ ${res.name}: ${e.message}`, 'error');
+                    }
+                }
+            }
+
+            log('=== Fin des tests Ressources ===', 'info');
+        }
+
+        // ========================================
+        // RUN ALL TESTS
+        // ========================================
+
+        async function runAllTests() {
+            document.getElementById('run-all').disabled = true;
+            document.getElementById('stockfish-tests').innerHTML = '';
+            document.getElementById('pgn-tests').innerHTML = '';
+            document.getElementById('resource-tests').innerHTML = '';
+            document.getElementById('log').innerHTML = '';
+            testResults = { pass: 0, fail: 0, warn: 0, total: 0 };
+            updateSummary();
+
+            log('🚀 Démarrage de tous les tests...', 'info');
+
+            await runResourceTests();
+            await runPGNTests();
+            await runStockfishTests();
+
+            log('✅ Tous les tests terminés!', 'success');
+            log(`Résumé: ${testResults.pass} réussis, ${testResults.fail} échoués, ${testResults.warn} avertissements`, 'info');
+
+            document.getElementById('run-all').disabled = false;
+        }
+
+        // Auto-run on load
+        window.onload = () => {
+            log('Page de diagnostic chargée. Cliquez sur "Lancer Tous les Tests" pour commencer.', 'info');
+        };
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

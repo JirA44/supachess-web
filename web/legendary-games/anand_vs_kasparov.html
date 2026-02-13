@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 Anand vs Kasparov 1995 - The Tiger Strikes</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.3);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.8em;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #e0e0e0;
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 10px 18px;
+            margin: 5px;
+            border-radius: 20px;
+            background: rgba(255, 107, 53, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            font-size: 0.95em;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 15px 35px;
+            background: linear-gradient(135deg, #ff6b35, #f7931a);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.6);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 650px 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .board-section {
+            background: rgba(0,0,0,0.4);
+            padding: 35px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+
+        #board {
+            width: 580px;
+            margin: 0 auto;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px;
+            margin: 15px 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,140,0,0.15));
+            border: 2px solid rgba(255,215,0,0.4);
+        }
+
+        .player-info.black {
+            background: linear-gradient(135deg, rgba(100,100,100,0.35), rgba(50,50,50,0.25));
+            border-color: rgba(180,180,180,0.4);
+        }
+
+        .player-name {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .player-rating {
+            font-size: 1em;
+            opacity: 0.85;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 15px 26px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        .btn-first { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .btn-prev { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .btn-next { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .btn-last { background: linear-gradient(135deg, #30cfd0, #330867); }
+
+        .move-info {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            padding: 22px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-top: 20px;
+            font-size: 1.15em;
+        }
+
+        .moves-section {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .move-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 18px;
+            padding: 28px;
+            margin-bottom: 22px;
+            border-left: 6px solid #ff6b35;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-card:hover {
+            transform: translateX(12px);
+            background: rgba(255,215,0,0.15);
+            border-left-color: #ffd700;
+        }
+
+        .move-card.active {
+            border-left-color: #ff4500;
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,107,53,0.15));
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .move-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .move-rating {
+            font-size: 1.6em;
+            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            color: #1a1a2e;
+        }
+
+        .move-notation {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+
+        .move-comment {
+            font-size: 1.08em;
+            line-height: 1.8;
+            color: #e0e0e0;
+            margin-top: 12px;
+        }
+
+        .move-analysis {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 2px solid rgba(255,215,0,0.2);
+        }
+
+        .analysis-section {
+            margin-bottom: 14px;
+        }
+
+        .analysis-title {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .analysis-item {
+            padding: 8px 14px;
+            margin: 5px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            font-size: 0.95em;
+        }
+
+        .advantage { border-left: 4px solid #4caf50; }
+        .benefit { border-left: 4px solid #2196f3; }
+        .weakness { border-left: 4px solid #ff5252; }
+
+        .game-info-box {
+            background: rgba(0,0,0,0.4);
+            padding: 30px;
+            border-radius: 18px;
+            margin-bottom: 35px;
+            border: 2px solid rgba(255,215,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-info-box h3 {
+            color: #ffd700;
+            margin-bottom: 18px;
+            font-size: 1.5em;
+        }
+
+        .game-info-box p {
+            line-height: 1.9;
+            margin-bottom: 12px;
+            color: #f0f0f0;
+            font-size: 1.05em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐅 Anand vs Kasparov - PCA/Intel Rapid 1995</h1>
+            <div class="subtitle">Viswanathan Anand vs Garry Kasparov - Le Tigre de Madras rugit!</div>
+            <div>
+                <span class="badge">🔥 Nimzo-Indienne</span>
+                <span class="badge">⚡ Partie Rapide</span>
+                <span class="badge">1-0 Victoire Anand!</span>
+            </div>
+            <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+        </header>
+
+        <div class="game-info-box">
+            <h3>📖 À Propos de Cette Partie Légendaire</h3>
+            <p><strong>Contexte:</strong> Lors du championnat rapide PCA/Intel à New York 1995, Anand affronte le champion du monde Kasparov en finale.</p>
+            <p><strong>Importance:</strong> Une des rares victoires d'Anand contre Kasparov dans une partie de haut niveau. Démonstration du style rapide et tactique d'Anand.</p>
+            <p><strong>Brillance:</strong> Anand sacrifie un pion pour obtenir une initiative dévastatrice. Combinaison tactique magnifique au milieu de jeu.</p>
+            <p><strong>Legacy:</strong> Cette victoire confirme Anand comme l'un des meilleurs joueurs rapides de tous les temps. Il deviendra Champion du Monde en 2007.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div class="player-info black">
+                    <div>
+                        <div class="player-name">♚ Garry Kasparov</div>
+                        <div class="player-rating">ELO: 2804 | Champion du Monde</div>
+                    </div>
+                    <div style="font-size: 3.5em;">♚</div>
+                </div>
+
+                <div id="board"></div>
+
+                <div class="player-info">
+                    <div style="font-size: 3.5em;">♔</div>
+                    <div style="text-align: right;">
+                        <div class="player-name">♔ Viswanathan Anand</div>
+                        <div class="player-rating">ELO: 2725 | Tiger of Madras</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-first" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn btn-prev" onclick="goToPrevious()">◀ Préc</button>
+                    <button class="btn btn-next" onclick="goToNext()">Suiv ▶</button>
+                    <button class="btn btn-last" onclick="goToEnd()">⏭ Fin</button>
+                </div>
+
+                <div class="move-info" id="moveInfo">Position de départ</div>
+            </div>
+
+            <div class="moves-section" id="movesSection"></div>
+        </div>
+    </div>
+
+    <script>
+        const gamePGN = `[Event "PCA/Intel-GP"]
+[Site "New York, NY USA"]
+[Date "1995.??.??"]
+[Round "?"]
+[White "Viswanathan Anand"]
+[Black "Garry Kasparov"]
+[Result "1-0"]
+[WhiteElo "2725"]
+[BlackElo "2804"]
+[ECO "E20"]
+
+1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.Nf3 c5 5.g3 cxd4 6.Nxd4 O-O 7.Bg2 d5
+8.cxd5 Nxd5 9.Qb3 Qa5 10.Bd2 Nc6 11.Nxc6 bxc6 12.O-O Bxc3 13.bxc3 Ba6
+14.Rfd1 Qc5 15.e4 Bc4 16.Qa4 Nb6 17.Qc2 Rfd8 18.Be3 Qa5 19.Rab1 Rxd1+
+20.Rxd1 Rd8 21.Rxd8+ Qxd8 22.Qd2 Qxd2 23.Bxd2 Kf8 24.f3 Ke7 25.Kf2 Nd7
+26.Ke3 Kd6 27.Kd4 f6 28.f4 Nb6 29.Bc1 Nd7 30.e5+ fxe5+ 31.fxe5+ Nxe5
+32.Bxc6 Nxc6+ 33.Kxc4 Ne5+ 34.Kb5 Nf3 35.h3 Nd2 36.Bf4+ Ke7 37.Kc5 Nf1
+38.Bg5+ Kf7 39.Kd6 Nxg3 40.Kxe6 Ne4 41.Be3 Nc5+ 42.Bxc5 1-0`;
+
+        const moveAnnotations = {
+            1: { rating: 7.5, comment: "d4 - Anand ouvre de manière classique.", advantages: ["✓ Contrôle centre"], benefits: ["✓ Répertoire solide"], weaknesses: [] },
+            3: { rating: 8.0, comment: "Nimzo-Indienne! Kasparov choisit sa défense favorite.", advantages: ["✓ Cloue cavalier", "✓ Contrôle e4"], benefits: ["✓ Système solide"], weaknesses: [] },
+            7: { rating: 7.5, comment: "Bg2 fianchetto - système flexible d'Anand.", advantages: ["✓ Fou actif"], benefits: ["✓ Roi en sécurité"], weaknesses: [] },
+            9: { rating: 7.0, comment: "Qa5 - Kasparov met pression sur les blancs.", advantages: ["✓ Dame active"], benefits: ["✓ Cible c3"], weaknesses: [] },
+            13: { rating: 8.0, comment: "bxc3 - Anand accepte la structure de pions doublés.", advantages: ["✓ Colonne b ouverte"], benefits: ["✓ Initiative"], weaknesses: ["✗ Pions doublés"] },
+            15: { rating: 8.5, comment: "e4! Anand pousse au centre avec tempo!", advantages: ["✓ Gain d'espace", "✓ Attaque Bc4"], benefits: ["✓ Initiative centrale"], weaknesses: [] },
+            18: { rating: 8.0, comment: "Rab1 - Anand double sur la colonne b, pression!", advantages: ["✓ Tours doublées"], benefits: ["✓ Menaces concrètes"], weaknesses: [] },
+            23: { rating: 8.5, comment: "Échange de Dames - Anand va chercher la finale!", advantages: ["✓ Finale meilleure"], benefits: ["✓ Paire de fous"], weaknesses: [] },
+            28: { rating: 9.0, comment: "f4! Poussée agressive, les pions blancs avancent!", advantages: ["✓ Gain d'espace", "✓ Menace e5"], benefits: ["✓ Avantage clair"], weaknesses: [] },
+            30: { rating: 9.5, comment: "e5+! BRILLANT! Sacrifice de pion pour activer les pièces!", advantages: ["✓ Roi blanc actif", "✓ Pièces dominantes"], benefits: ["✓ Avantage décisif"], weaknesses: [] },
+            32: { rating: 9.0, comment: "Bxc6! Anand gagne le fou, l'avantage matériel!", advantages: ["✓ Gagne pièce"], benefits: ["✓ Position gagnante"], weaknesses: [] },
+            40: { rating: 10.0, comment: "Kxe6!! Le roi marche! Domination totale! 1-0", advantages: ["✓ Roi centralisé", "✓ Pion e passé"], benefits: ["✓ Victoire assurée"], weaknesses: [] }
+        };
+
+        let game = new Chess();
+        let board = null;
+        let moveHistory = [];
+        let currentMoveIndex = 0;
+
+        function parsePGN() {
+            game.load_pgn(gamePGN);
+            moveHistory = game.history({ verbose: true });
+            game.reset();
+        }
+
+        function init() {
+            parsePGN();
+
+            board = Chessboard('board', {
+                draggable: false,
+                position: 'start',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+
+            drawMovesList();
+            updateMoveInfo();
+        }
+
+        function drawMovesList() {
+            const movesDiv = $('#movesSection');
+            movesDiv.html('<h2 style="margin-bottom: 25px; font-size: 2em; color: #ffd700;">🎯 Coups Analysés</h2>');
+
+            moveHistory.forEach((move, index) => {
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const isBlackMove = index % 2 === 1;
+
+                const annotation = moveAnnotations[moveNum] || {
+                    rating: 7.0,
+                    comment: "Coup standard."
+                };
+
+                let cardHTML = `
+                    <div class="move-card" data-move="${index + 1}">
+                        <div class="move-header">
+                            <div class="move-number">${color} ${moveNum}.</div>
+                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
+                        </div>
+                        <div class="move-notation">${move.san}</div>
+                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                    </div>
+                `;
+
+                const $card = $(cardHTML);
+                $card.on('click', () => goToMoveNumber(index + 1));
+                movesDiv.append($card);
+            });
+        }
+
+        function updateMoveInfo() {
+            if (currentMoveIndex === 0) {
+                $('#moveInfo').text('Position de départ');
+            } else {
+                const moveNum = Math.floor((currentMoveIndex - 1) / 2) + 1;
+                const move = moveHistory[currentMoveIndex - 1];
+                $('#moveInfo').text(`Coup ${moveNum}: ${move.san}`);
+            }
+
+            $('.move-card').removeClass('active');
+            if (currentMoveIndex > 0) {
+                const activeCard = $(`.move-card[data-move="${currentMoveIndex}"]`);
+                activeCard.addClass('active');
+                // Scroll active move into view centered
+                if (activeCard.length > 0) {
+                    activeCard[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function goToNext() {
+            if (currentMoveIndex < moveHistory.length) {
+                game.move(moveHistory[currentMoveIndex].san);
+                currentMoveIndex++;
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToPrevious() {
+            if (currentMoveIndex > 0) {
+                currentMoveIndex--;
+                game.reset();
+                for (let i = 0; i < currentMoveIndex; i++) {
+                    game.move(moveHistory[i].san);
+                }
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = 0;
+            game.reset();
+            board.position('start');
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            while (currentMoveIndex < moveHistory.length) {
+                goToNext();
+            }
+        }
+
+        function goToMoveNumber(moveIndex) {
+            goToStart();
+            for (let i = 0; i < moveIndex && i < moveHistory.length; i++) {
+                goToNext();
+            }
+        }
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                goToNext();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToPrevious();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToStart();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToEnd();
+            }
+        });
+
+        $(document).ready(init);
+    </script>
+
+    <!-- Bouton retour en bas -->
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+    </div>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

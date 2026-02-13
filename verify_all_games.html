@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verification REELLE des parties legendaires</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        .game { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 10px; }
+        .ok { color: #4CAF50; }
+        .error { color: #f44336; }
+        h2 { margin-bottom: 10px; }
+        pre { background: #0f0f1a; padding: 10px; border-radius: 5px; white-space: pre-wrap; font-size: 12px; }
+        .summary { padding: 20px; background: #0f3460; border-radius: 10px; margin-bottom: 20px; }
+        #loading { text-align: center; padding: 50px; font-size: 1.5em; }
+    </style>
+</head>
+<body>
+    <h1>Verification REELLE des Parties Legendaires</h1>
+    <div id="loading">Chargement des fichiers...</div>
+    <div class="summary" id="summary" style="display:none;"></div>
+    <div id="results"></div>
+
+    <script>
+    // Liste des fichiers a verifier avec leur format
+    const gameFiles = [
+        { name: 'Fischer - Game of Century', file: 'fischer_game_of_century_interactive_v2.html', type: 'pgn' },
+        { name: 'Kasparov Immortal 1999', file: 'kasparov_immortal_1999.html', type: 'array' },
+        { name: 'Deep Blue vs Kasparov 1997', file: 'deep_blue_kasparov_1997.html', type: 'array' },
+        { name: 'AlphaZero vs Stockfish', file: 'alphazero_vs_stockfish.html', type: 'array' },
+        { name: 'Tal Masterpiece 1958', file: 'tal_masterpiece_1958.html', type: 'array' },
+        { name: 'Karpov Positional 1978', file: 'karpov_positional_1978.html', type: 'array' },
+        { name: 'Carlsen Brilliancy 2013', file: 'carlsen_brilliancy_2013.html', type: 'array' },
+        { name: 'Leela vs Stockfish 2019', file: 'leela_vs_stockfish_2019.html', type: 'array' },
+        { name: 'AlphaZero vs Stockfish Game 2', file: 'alphazero_vs_stockfish_game2.html', type: 'array' },
+        { name: 'Stockfish vs Komodo 2018', file: 'stockfish_vs_komodo_2018.html', type: 'array' },
+        { name: 'AlphaZero Sacrificial', file: 'alphazero_sacrificial_masterpiece.html', type: 'array' }
+    ];
+
+    async function loadAndVerify() {
+        let html = '';
+        let totalGames = 0;
+        let gamesOK = 0;
+        let gamesWithErrors = 0;
+
+        for (const game of gameFiles) {
+            totalGames++;
+            try {
+                const response = await fetch(game.file);
+                const content = await response.text();
+
+                let moves = [];
+
+                if (game.type === 'pgn') {
+                    // Extract PGN string
+                    const pgnMatch = content.match(/pgnMoves\s*=\s*"([^"]+)"/);
+                    if (pgnMatch) {
+                        const pgnText = pgnMatch[1];
+                        // Parse PGN: "1. e4 e5 2. Nf3 Nc6..."
+                        const moveMatches = pgnText.match(/\d+\.\s*(\S+)\s*(\S+)?/g);
+                        if (moveMatches) {
+                            moveMatches.forEach(m => {
+                                const parts = m.match(/\d+\.\s*(\S+)\s*(\S+)?/);
+                                if (parts[1]) moves.push(parts[1]);
+                                if (parts[2]) moves.push(parts[2]);
+                            });
+                        }
+                    }
+                } else {
+                    // Extract from gameMoves array: { move: 'e4', ...}
+                    const moveMatches = content.match(/move:\s*'([^']+)'/g);
+                    if (moveMatches) {
+                        moves = moveMatches.map(m => m.match(/move:\s*'([^']+)'/)[1]);
+                    }
+                }
+
+                // Filter out result notations
+                moves = moves.filter(m => !['1-0', '0-1', '1/2-1/2', '*'].includes(m));
+
+                // Verify moves
+                const chess = new Chess();
+                let errors = [];
+                let lastValid = 0;
+
+                for (let i = 0; i < moves.length; i++) {
+                    try {
+                        const result = chess.move(moves[i], { sloppy: true });
+                        if (!result) {
+                            errors.push({ index: i+1, move: moves[i], fen: chess.fen() });
+                        } else {
+                            lastValid = i+1;
+                        }
+                    } catch(e) {
+                        errors.push({ index: i+1, move: moves[i], error: e.message, fen: chess.fen() });
+                    }
+                }
+
+                const status = errors.length === 0 ? 'ok' : 'error';
+                if (errors.length === 0) gamesOK++;
+                else gamesWithErrors++;
+
+                html += '<div class="game">';
+                html += '<h2 class="' + status + '">' + (status === 'ok' ? '✅' : '❌') + ' ' + game.name + '</h2>';
+                html += '<p>Fichier: ' + game.file + ' | Coups: ' + moves.length + ' | Dernier valide: ' + lastValid + '</p>';
+
+                if (errors.length > 0) {
+                    html += '<pre>';
+                    errors.slice(0, 10).forEach(e => {
+                        html += 'Coup ' + e.index + ': "' + e.move + '" INVALIDE\n';
+                        html += 'FEN: ' + e.fen + '\n\n';
+                    });
+                    if (errors.length > 10) {
+                        html += '... et ' + (errors.length - 10) + ' autres erreurs\n';
+                    }
+                    html += '</pre>';
+                }
+                html += '</div>';
+
+            } catch(e) {
+                html += '<div class="game"><h2 class="error">❌ ' + game.name + '</h2>';
+                html += '<p>Erreur de chargement: ' + e.message + '</p></div>';
+                gamesWithErrors++;
+            }
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('summary').style.display = 'block';
+        document.getElementById('summary').innerHTML =
+            '<h2>Resume</h2>' +
+            '<p>Parties verifiees: ' + totalGames + '</p>' +
+            '<p class="ok">Parties OK: ' + gamesOK + '</p>' +
+            '<p class="' + (gamesWithErrors === 0 ? 'ok' : 'error') + '">Parties avec erreurs: ' + gamesWithErrors + '</p>';
+        document.getElementById('results').innerHTML = html;
+    }
+
+    loadAndVerify();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

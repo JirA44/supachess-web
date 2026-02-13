@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carlsen - Modern Brilliancy 2013</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 600px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel h2 {
+            color: #2ecc71;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .stat-item {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 3px solid #2ecc71;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .board-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        #chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 70px);
+            grid-template-rows: repeat(8, 70px);
+            gap: 0;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .square {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .move-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .move-number {
+            font-size: 1.1em;
+            color: #2ecc71;
+            margin-bottom: 10px;
+        }
+
+        .move-comment {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 1em;
+        }
+
+        .timeline {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .timeline-move {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-move:hover {
+            background: rgba(46, 204, 113, 0.3);
+            transform: translateX(5px);
+        }
+
+        .timeline-move.active {
+            background: rgba(46, 204, 113, 0.5);
+            border-left: 3px solid #2ecc71;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                justify-items: center;
+            }
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before, .timeline-move.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Retour au menu</a>
+
+    <div class="container">
+        <header>
+            <h1>Carlsen - Modern Brilliancy 2013</h1>
+            <p class="subtitle">Le Mozart des échecs s'empare de la couronne mondiale</p>
+        </header>
+
+        <div class="main-content">
+            <div class="info-panel">
+                <h2>Informations de la partie</h2>
+                <div class="stat-item">
+                    <div class="stat-label">Blancs</div>
+                    <div class="stat-value">Viswanathan Anand</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Magnus Carlsen</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Tournoi</div>
+                    <div class="stat-value">World Championship Match</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Ouverture</div>
+                    <div class="stat-value">Nimzo-Indian Defense (Saemisch)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Résultat</div>
+                    <div class="stat-value">0-1 (Carlsen)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Année</div>
+                    <div class="stat-value">2013 - Game 9</div>
+                </div>
+            </div>
+
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn" onclick="previousMove()">◀ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭</button>
+                </div>
+                <div class="move-info">
+                    <div class="move-number" id="moveNumber">Position initiale</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer la partie décisive où Carlsen devient Champion du Monde.</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>Analyse</h2>
+                <div class="timeline" id="timeline"></div>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(46, 204, 113, 0.1); border-radius: 8px; border-left: 3px solid #2ecc71;">
+                    <strong style="color: #2ecc71;">Le coup fatal 28.Cf1??:</strong>
+                    <p style="margin-top: 10px; color: #ccc;">Dans cette partie dramatique, Anand avait une position gagnante mais commit une gaffe historique au 28e coup. Au lieu de 28.Ff1! (couvrant h4), il joua 28.Cf1?? permettant 28...De1! avec echec et mat imminent. Cette erreur tragique donna a Carlsen une victoire decisive et le mit a une nulle du titre mondial. Le Mozart des echecs venait de recevoir un cadeau inattendu.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        const chess = new Chess();
+
+        // Partie célèbre Anand vs Carlsen - Game 9, World Championship 2013
+        // Nimzo-Indian Defense, Saemisch Variation - La gaffe historique d'Anand
+        const gameMoves = [
+            { move: 'd4', comment: 'Anand surprend! Pour la premiere fois du match, il joue 1.d4. Le public applaudit ce changement strategique.' },
+            { move: 'Nf6', comment: 'Carlsen repond classiquement. Le cavalier controle e4 et prepare plusieurs systemes defensifs.' },
+            { move: 'c4', comment: 'Le pion dame avance - systeme de la Dame. Anand vise une partie positionnelle.' },
+            { move: 'e6', comment: 'Carlsen prepare la Nimzo-Indienne ou la Defenese Est-Indienne. Flexible et solide.' },
+            { move: 'Nc3', comment: 'Developpement naturel. Le cavalier controle d5 et e4.' },
+            { move: 'Bb4', comment: 'La Nimzo-Indienne! Carlsen cloue le cavalier et cree un desequilibre immediat.' },
+            { move: 'f3', comment: 'La variante Saemisch! Anand choisit la ligne la plus agressive et la plus complexe.' },
+            { move: 'd5', comment: 'Carlsen frappe au centre immediatement. Reaction energique et principielle.' },
+            { move: 'a3', comment: 'Anand force la decision. Le fou doit prendre ou reculer.' },
+            { move: 'Bxc3+', comment: 'Carlsen echange! Il accepte de donner la paire de fous contre la structure blanche.' },
+            { move: 'bxc3', comment: 'Les Blancs ont la paire de fous mais des pions doubles. Double tranchant!' },
+            { move: 'c5', comment: 'Attaque sur la chaine de pions! Carlsen vise les faiblesses structurelles.' },
+            { move: 'cxd5', comment: 'Anand simplifie au centre. Ouverture des lignes.' },
+            { move: 'exd5', comment: 'Reprise avec le pion e. Structure solide et centralisee pour les Noirs.' },
+            { move: 'e3', comment: 'Consolidation. Anand prepare le developpement de son fou de cases blanches.' },
+            { move: 'c4', comment: 'COUP IMPORTANT! Carlsen ferme le flanc dame. Le pion avance profondement.' },
+            { move: 'Ne2', comment: 'Le cavalier se developpe vers g3. Anand prepare une attaque sur le flanc roi.' },
+            { move: 'Nc6', comment: 'Developpement naturel. Le cavalier vise d4 et a5.' },
+            { move: 'g4', comment: 'Anand lance les pions! Attaque agressive sur le flanc roi. La bataille commence!' },
+            { move: 'O-O', comment: 'Carlsen roque malgre lavancee des pions blancs. Il fait confiance a sa defense.' },
+            { move: 'Bg2', comment: 'Le fou fianchetto vise la grande diagonale. Pression sur d5.' },
+            { move: 'Na5', comment: 'Le cavalier manoeuvre vers b3 via a5. Plan strategique de Carlsen.' },
+            { move: 'O-O', comment: 'Anand roque aussi. Les deux rois sont maintenant en securite relative.' },
+            { move: 'Nb3', comment: 'Le cavalier noir atteint son objectif! Pression sur a1 et c1.' },
+            { move: 'Ra2', comment: 'La tour se deplace pour proteger la deuxieme rangee. Coup preventif.' },
+            { move: 'b5', comment: 'Carlsen avance sur le flanc dame! Il gagne de lespace et menace b4.' },
+            { move: 'Ng3', comment: 'Le cavalier blanc atteint g3. Il vise f5 et h5 pour lattaque.' },
+            { move: 'a5', comment: 'Expansion continue! Carlsen prepare la poussee decisive b4.' },
+            { move: 'g5', comment: 'Anand continue son attaque! Le pion g avance agressivement.' },
+            { move: 'Ne8', comment: 'Le cavalier recule pour se repositionner. Il vise c7 et d6.' },
+            { move: 'e4', comment: 'AVANCEE CENTRALE! Anand ouvre le jeu. Sacrifice de pion thematique.' },
+            { move: 'Nxc1', comment: 'Carlsen echange! Le cavalier prend le fou de cases noires.' },
+            { move: 'Qxc1', comment: 'La dame reprend. Elle vise maintenant le flanc roi.' },
+            { move: 'Ra6', comment: 'Coup defensif profond! La tour protege la sixieme rangee et prepare Nc7.' },
+            { move: 'e5', comment: 'Le centre blanc avance! Anand gagne beaucoup despace.' },
+            { move: 'Nc7', comment: 'Le cavalier se repositionne. Il vise a6 ou e6.' },
+            { move: 'f4', comment: 'Les pions blancs deviennent menacants! Attaque massive en preparation.' },
+            { move: 'b4', comment: 'CONTRE-ATTAQUE! Carlsen frappe sur le flanc dame. La partie devient critique.' },
+            { move: 'axb4', comment: 'Anand prend. Ouverture de la colonne a.' },
+            { move: 'axb4', comment: 'Reprise. La colonne a est maintenant ouverte.' },
+            { move: 'Rxa6', comment: 'Echange de tours. Simplification au flanc dame.' },
+            { move: 'Nxa6', comment: 'Le cavalier reprend. Il peut aller vers c5 ou b4.' },
+            { move: 'f5', comment: 'AVANCEE DECISIVE! Le pion f menace f6 avec destruction du roque.' },
+            { move: 'b3', comment: 'Le pion noir avance profondement! Menace de promotion a terme.' },
+            { move: 'Qf4', comment: 'La dame se centralise. Elle vise h6 et controle les cases noires.' },
+            { move: 'Nc7', comment: 'Le cavalier revient defendre. Protection de e6.' },
+            { move: 'f6', comment: 'COUP PUISSANT! Anand detruit le bouclier de pions noir. Attaque devastatrice!' },
+            { move: 'g6', comment: 'Carlsen ouvre une case de fuite pour le roi. Defense tenace.' },
+            { move: 'Qh4', comment: 'La dame fonce vers le roi! Menace Dh6 avec mat possible.' },
+            { move: 'Ne8', comment: 'Le cavalier bloque f6. Defense desperee mais necessaire.' },
+            { move: 'Qh6', comment: 'LA DAME ARRIVE! Menace de mat en g7 ou h8. Position critique!' },
+            { move: 'b2', comment: 'LE PION MENACE PROMOTION! Carlsen cree une contre-menace decisive.' },
+            { move: 'Rf4', comment: 'La tour se place en attaque. Anand cherche le mat.' },
+            { move: 'b1=Q+', comment: 'PROMOTION! La dame noire apparait avec echec. Coup spectaculaire!' },
+            { move: 'Nf1', comment: 'GAFFE HISTORIQUE! 28.Ff1! etait necessaire pour couvrir h4. Cette erreur est fatale!' },
+            { move: 'Qe1', comment: 'COUP GAGNANT! Echec et la tour h4 est menacee. Anand ne peut pas defendre les deux menaces. ABANDON! Carlsen remporte la partie 9 et se rapproche du titre mondial.' }
+        ];
+
+        let currentMoveIndex = -1;
+
+        // Outline symbols pour tous - différenciés par CSS background
+        const pieces = {
+            'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔', 'p': '♙',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        function renderBoard() {
+            const board = chess.board();
+            const chessboard = document.getElementById('chessboard');
+            chessboard.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieces[piece.type.toUpperCase()];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            const moveNumber = document.getElementById('moveNumber');
+            const moveComment = document.getElementById('moveComment');
+
+            if (currentMoveIndex === -1) {
+                moveNumber.textContent = 'Position initiale';
+                moveComment.textContent = 'Cliquez sur "Suivant" pour explorer la partie décisive où Carlsen devient Champion du Monde.';
+            } else {
+                const moveNum = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                moveNumber.textContent = `Coup ${moveNum}. ${color}: ${gameMoves[currentMoveIndex].move}`;
+                moveComment.textContent = gameMoves[currentMoveIndex].comment;
+            }
+
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+
+            // Brilliant move detection emojis
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'timeline-move';
+                if (index === currentMoveIndex) {
+                    moveDiv.classList.add('active');
+                }
+
+                // Check for brilliant moves based on emojis in comments
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveDiv.classList.add('brilliant');
+                }
+
+                const moveNum = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+                moveDiv.textContent = `${color} ${moveNum}. ${moveNotation}`;
+
+                moveDiv.onclick = () => {
+                    goToMove(index);
+                };
+
+                timeline.appendChild(moveDiv);
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const moveData = gameMoves[currentMoveIndex];
+                const result = chess.move(moveData.move, { sloppy: true });
+                if (!result) {
+                    // Try alternative notations
+                    const altMoves = [
+                        moveData.move,
+                        moveData.move.replace('+', ''),
+                        moveData.move.replace('#', ''),
+                        moveData.move.replace('x', '')
+                    ];
+                    let success = false;
+                    for (const altMove of altMoves) {
+                        const res = chess.move(altMove);
+                        if (res) { success = true; break; }
+                    }
+                    if (!success) {
+                        console.warn('Move failed:', moveData.move, 'at index', currentMoveIndex);
+                        // Skip this move and continue
+                    }
+                }
+                renderBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                chess.undo();
+                currentMoveIndex--;
+                renderBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            chess.reset();
+            currentMoveIndex = -1;
+            renderBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            goToStart();
+            for (let i = 0; i < gameMoves.length; i++) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            // Reset completely
+            chess.reset();
+            currentMoveIndex = -1;
+            // Replay all moves up to index
+            for (let i = 0; i <= index; i++) {
+                if (currentMoveIndex < gameMoves.length - 1) {
+                    currentMoveIndex++;
+                    const moveData = gameMoves[currentMoveIndex];
+                    const result = chess.move(moveData.move, { sloppy: true });
+                    if (!result) {
+                        chess.move(moveData.move.replace('+', '').replace('#', ''), { sloppy: true });
+                    }
+                }
+            }
+            renderBoard();
+            updateMoveInfo();
+        }
+
+        // Initialisation
+        renderBoard();
+        updateMoveInfo();
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaEngine vs Stockfish 17 - VICTOIRE HISTORIQUE! | Partie v31</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #374151;
+            --gold: #ffd700;
+            --deep-purple: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1000;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-button:hover {
+            background: var(--bg-secondary);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 30%, #1a1f2e 70%, #0f1419 100%);
+            border-bottom: 3px solid var(--gold);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gold), #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: none;
+        }
+
+        .header .subtitle {
+            color: var(--deep-purple);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .header .champion-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), #ff8c00);
+            color: #1a0a2e;
+            padding: 0.3rem 1.2rem;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .game-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .info-item .label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .info-item .value.gold {
+            color: var(--gold);
+        }
+
+        .info-item .value.green {
+            color: var(--accent-green);
+        }
+
+        .note-banner {
+            margin-top: 1rem;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 540px 1fr;
+            gap: 2rem;
+        }
+
+        .board-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #board {
+            width: 500px;
+            height: 500px;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--border-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .controls button {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            min-width: 50px;
+        }
+
+        .controls button:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .pgn-section {
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .pgn-toggle-btn {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .pgn-toggle-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .pgn-content {
+            display: none;
+            margin-top: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .pgn-content.show {
+            display: block;
+        }
+
+        .pgn-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .pgn-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .pgn-actions button {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .pgn-actions button:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .moves-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .moves-header {
+            background: var(--bg-secondary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--gold);
+        }
+
+        #moves-list {
+            padding: 1rem;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        #moves-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #moves-list::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        #moves-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        #moves-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+
+        .move-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .move-item:hover {
+            border-left-color: var(--accent-blue);
+            transform: translateX(4px);
+        }
+
+        .move-item.active {
+            border-left-color: var(--accent-green);
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-card));
+        }
+
+        .move-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .move-number {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+        }
+
+        .move-san {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .move-comment {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .copied-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--accent-green);
+            color: #fff;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.3s;
+            z-index: 9999;
+        }
+
+        .copied-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 1100px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            #board {
+                width: 100%;
+                max-width: 500px;
+                height: auto;
+            }
+
+            .board-section {
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+
+            .controls button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="back-button">&#8592; Retour</a>
+
+<div class="header">
+    <div class="champion-badge">CHAMPION - VICTOIRE HISTORIQUE</div>
+    <h1>SupaEngine vs Stockfish 17 - VICTOIRE HISTORIQUE!</h1>
+    <div class="subtitle">Bullet 0.5s/coup - Tournoi Multi-Moteurs Feb 2026</div>
+    <div class="game-info">
+        <div class="info-item">
+            <div class="label">Blancs</div>
+            <div class="value">Stockfish 17.1 Skill 20 (~3500 ELO)</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Noirs</div>
+            <div class="value gold">SupaEngine v3.0</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Resultat</div>
+            <div class="value green">0-1 (Victoire SupaEngine par Mat!)</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Date</div>
+            <div class="value">2026.02.08</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Coups</div>
+            <div class="value">66 (132 demi-coups)</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Ouverture</div>
+            <div class="value">Scandinavian Defense (1.e4 d5)</div>
+        </div>
+    </div>
+    <div class="note-banner">SupaEngine bat le moteur #1 mondial avec une double promotion!</div>
+</div>
+
+<div class="main-container">
+    <div class="board-section">
+        <div id="board"></div>
+        <div class="controls">
+            <button onclick="goToStart()" title="Debut (Home)">&#9198;</button>
+            <button onclick="previousMove()" title="Precedent (&#8592;)">&#9664;</button>
+            <button onclick="nextMove()" title="Suivant (&#8594;)">&#9654;</button>
+            <button onclick="goToEnd()" title="Fin (End)">&#9197;</button>
+        </div>
+        <div class="pgn-section">
+            <button class="pgn-toggle-btn" onclick="togglePGN()">Afficher / Masquer PGN</button>
+            <div class="pgn-content" id="pgn-content">
+                <div class="pgn-text" id="pgn-text"></div>
+                <div class="pgn-actions">
+                    <button onclick="copyPGN()">Copier PGN</button>
+                    <button onclick="downloadPGN()">Telecharger PGN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="moves-section">
+        <div class="moves-header">Analyse coup par coup (132 demi-coups)</div>
+        <div id="moves-list"></div>
+    </div>
+</div>
+
+<div class="copied-toast" id="copied-toast">PGN copie!</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+<script>
+var gamePGN = '[Event "Tournoi Multi-Moteurs Feb 2026"]\n[Site "Local"]\n[Date "2026.02.08"]\n[Round "31"]\n[White "Stockfish 17.1 Skill 20"]\n[Black "SupaEngine v3.0"]\n[Result "0-1"]\n[ECO "B01"]\n[Opening "Scandinavian Defense"]\n[TimeControl "0.5s/coup"]\n\n1. e4 d5 2. exd5 Qxd5 3. Nc3 Qd6 4. Nf3 Nf6 5. d4 g6 6. Bc4 Bg7 7. O-O Bg4 8. h3 Bxf3 9. Qxf3 Nc6 10. Be3 O-O 11. Rad1 e6 12. Bb3 Rad8 13. Rfe1 Qb4 14. d5 exd5 15. Nxd5 Nxd5 16. Bxd5 Bxb2 17. Bg5 Rd7 18. Bxc6 bxc6 19. Qxc6 Rxd1 20. Rxd1 Qa5 21. Be7 Rb8 22. Bd8 Qb5 23. Qxc7 Be5 24. Qxa7 Qd5 25. Re1 Rxd8 26. Qe7 Bd4 27. c4 Qa5 28. g3 Kg7 29. Kg2 Bf6 30. Qe2 h5 31. h4 Rd2 32. Qf3 Qxa2 33. Re4 Bd4 34. Rf4 Rxf2+ 35. Qxf2 Bxf2 36. Rxf2 Qxc4 37. Kh2 Qd3 38. Kg2 Qe3 39. Rb2 Qd3 40. Kh3 Qd7+ 41. Kh2 Qd4 42. Rg2 g5 43. Ra2 Qc4 44. Rg2 gxh4 45. gxh4+ Kh6 46. Kg1 Qg4 47. Rxg4 hxg4 48. Kf2 Kh5 49. Kg3 f6 50. Kf2 Kxh4 51. Ke1 f5 52. Ke2 Kh3 53. Kd3 f4 54. Ke4 f3 55. Ke3 Kg3 56. Kd2 f2 57. Ke2 Kg2 58. Kd2 f1=Q 59. Kc3 Qb5 60. Kd4 Kf3 61. Kc3 Ke3 62. Kc2 Kd4 63. Kd2 g3 64. Kc2 g2 65. Kd2 Qb2+ 66. Ke1 g1=Q# 0-1';
+
+var movesData = [
+    {"move_number": 1, "color": "white", "san": "e4", "comment": "Stockfish ouvre avec 1.e4, le coup le plus classique et le plus agressif. Le moteur #1 mondial affiche ses ambitions des le premier coup."},
+    {"move_number": 1, "color": "black", "san": "d5", "comment": "La Defense Scandinave! SupaEngine repond avec audace par 1...d5, defiant immediatement le centre de Stockfish. Un choix courageux et anticonformiste contre le meilleur moteur du monde!"},
+    {"move_number": 2, "color": "white", "san": "exd5", "comment": "Stockfish accepte le pion. C'est la suite principale, la plus testee a haut niveau."},
+    {"move_number": 2, "color": "black", "san": "Qxd5", "comment": "SupaEngine reprend avec la dame en d5. Oui, la dame sort tot, mais c'est le coeur de la Scandinave! La theorie moderne montre que ce n'est pas un probleme si on la deplace intelligemment ensuite."},
+    {"move_number": 3, "color": "white", "san": "Nc3", "comment": "Stockfish developpe le cavalier en attaquant la dame noire. Tempo classique dans la Scandinave, Stockfish veut profiter de la dame exposee."},
+    {"move_number": 3, "color": "black", "san": "Qd6", "comment": "SupaEngine choisit la variante avec Qd6! Une ligne solide et moderne, la dame reste active tout en se mettant a l'abri. Ce choix evite les lignes hyper-theoriques de Qa5 ou Qd8."},
+    {"move_number": 4, "color": "white", "san": "Nf3", "comment": "Developpement naturel du cavalier roi. Stockfish continue son developpement methodique, controlant les cases centrales e5 et d4."},
+    {"move_number": 4, "color": "black", "san": "Nf6", "comment": "SupaEngine developpe son cavalier en f6, une piece qui controle d5 et e4. Developpement classique et solide, SupaEngine joue avec une precision remarquable."},
+    {"move_number": 5, "color": "white", "san": "d4", "comment": "Stockfish etablit un centre de pions classique avec d4. Le duo e4-d4 (meme si e4 n'est plus la) controle un maximum de cases centrales."},
+    {"move_number": 5, "color": "black", "san": "g6", "comment": "Le fianchetto! SupaEngine prepare le developpement du fou en g7, ou il deviendra un monstre visant le centre et l'aile dame depuis la grande diagonale. Un choix strategique profond."},
+    {"move_number": 6, "color": "white", "san": "Bc4", "comment": "Stockfish place son fou en c4, visant la diagonale a2-g8 et le point f7. Un coup agressif et naturel."},
+    {"move_number": 6, "color": "black", "san": "Bg7", "comment": "Le fou en fianchetto! Cette piece sera un atout majeur tout au long de la partie. Depuis g7, il controle la grande diagonale a1-h8 et participe a la defense du roi roque."},
+    {"move_number": 7, "color": "white", "san": "O-O", "comment": "Stockfish roque cote roi, mettant son roi en securite et connectant ses tours. Un coup de routine mais essentiel."},
+    {"move_number": 7, "color": "black", "san": "Bg4", "comment": "Bg4! SupaEngine cloue le cavalier f3 contre la dame! Un coup thematique et fort qui cree immediatement de la pression sur le centre blanc. Si le cavalier bouge, la structure de pions blancs sera affaiblie."},
+    {"move_number": 8, "color": "white", "san": "h3", "comment": "Stockfish pose la question au fou : reste ou part? h3 force une decision immediate."},
+    {"move_number": 8, "color": "black", "san": "Bxf3", "comment": "Bxf3! SupaEngine echange le fou contre le cavalier. Un echange strategique murement reflechi! Cela donne a Blanc la paire de fous, mais detruit le cavalier qui controlait le centre et affaiblit la structure de pions sur l'aile roi."},
+    {"move_number": 9, "color": "white", "san": "Qxf3", "comment": "Stockfish reprend avec la dame, maintenant la structure de pions intacte mais la dame est placee un peu passivement en f3."},
+    {"move_number": 9, "color": "black", "san": "Nc6", "comment": "SupaEngine developpe son deuxieme cavalier, attaquant le pion d4 et controlant des cases centrales cruciales. Le developpement est presque complet cote noir, c'est remarquable!"},
+    {"move_number": 10, "color": "white", "san": "Be3", "comment": "Stockfish developpe son dernier fou, soutenant le pion d4 et visant l'aile roi. Position classique pour ce fou."},
+    {"move_number": 10, "color": "black", "san": "O-O", "comment": "SupaEngine roque! Le roi noir est en securite derriere le fianchetto g7. Tous les preparatifs sont faits. SupaEngine a obtenu une position solide et harmonieuse contre le meilleur moteur du monde. La bataille va commencer!"},
+    {"move_number": 11, "color": "white", "san": "Rad1", "comment": "Stockfish centralise sa tour sur la colonne d, face au pion d potentiel. Preparation classique pour la poussee d5."},
+    {"move_number": 11, "color": "black", "san": "e6", "comment": "SupaEngine solidifie son centre avec e6. Ce coup cree une structure solide et prepare les coups futurs. La position est comme un ressort comprime, prete a se liberer."},
+    {"move_number": 12, "color": "white", "san": "Bb3", "comment": "Stockfish recule son fou en b3 pour maintenir la pression sur la diagonale a2-g8. Le fou vise toujours f7."},
+    {"move_number": 12, "color": "black", "san": "Rad8", "comment": "Excellente centralisation! La tour vient en d8, s'alignant sur la colonne d face au pion d4 et a la tour blanche. SupaEngine place toutes ses pieces sur des cases optimales."},
+    {"move_number": 13, "color": "white", "san": "Rfe1", "comment": "Stockfish double ses pieces lourdes. La tour vient en e1, soutenant une eventuelle poussee e ou d5."},
+    {"move_number": 13, "color": "black", "san": "Qb4", "comment": "Qb4! SupaEngine envoie sa dame en b4, attaquant directement le pion b2! Un coup agressif et ambitieux. La dame est tres active et menace du materiel."},
+    {"move_number": 14, "color": "white", "san": "d5", "comment": "Stockfish reagit avec d5! La poussee thematique au centre. Stockfish sacrifie un pion pour ouvrir les lignes et activer ses pieces. Le combat s'intensifie!"},
+    {"move_number": 14, "color": "black", "san": "exd5", "comment": "SupaEngine capture en d5, acceptant le sacrifice. La position s'ouvre, ce qui est generalement favorable a celui qui a les fous, mais SupaEngine a d'autres atouts!"},
+    {"move_number": 15, "color": "white", "san": "Nxd5", "comment": "Le cavalier blanc saute en d5, une case dominante au centre. Stockfish essaie de prendre l'initiative avec cette piece centralisee."},
+    {"move_number": 15, "color": "black", "san": "Nxd5", "comment": "SupaEngine elimine le cavalier centralise! Pas question de laisser cette piece rester sur son trone en d5. L'echange est force et bon."},
+    {"move_number": 16, "color": "white", "san": "Bxd5", "comment": "Stockfish reprend avec le fou, qui occupe maintenant la case d5 avec une forte centralisation."},
+    {"move_number": 16, "color": "black", "san": "Bxb2", "comment": "Bxb2!! SupaEngine capture le pion b2 avec son fou de fianchetto! Un pion gratis! Le fou noir est maintenant un MONSTRE en b2, controlant la grande diagonale. SupaEngine gagne du materiel face au moteur #1!"},
+    {"move_number": 17, "color": "white", "san": "Bg5", "comment": "Stockfish transfere son fou en g5, visant le roi noir et creant des menaces tactiques. La pression monte des deux cotes!"},
+    {"move_number": 17, "color": "black", "san": "Rd7", "comment": "SupaEngine protege la 7eme rangee avec Rd7, une tour defensive et flexible. Elle peut se rediriger selon les besoins de la position."},
+    {"move_number": 18, "color": "white", "san": "Bxc6", "comment": "Stockfish capture en c6, recuperant du materiel en prenant un pion. L'echange donne des pions doubles aux noirs mais elimine aussi le puissant fou de d5."},
+    {"move_number": 18, "color": "black", "san": "bxc6", "comment": "SupaEngine reprend avec le pion b, ouvrant la colonne b pour sa tour. Les pions c sont doubles mais la colonne b ouverte est une compensation reelle. Le materiel est a peu pres egal."},
+    {"move_number": 19, "color": "white", "san": "Qxc6", "comment": "Stockfish mange le pion c6 avec la dame, gagnant un pion supplementaire. Mais la dame est-elle en securite ici?"},
+    {"move_number": 19, "color": "black", "san": "Rxd1", "comment": "SupaEngine echange une paire de tours! En simplifiant, SupaEngine clarifie la position. Moins de pieces signifie moins de chances pour Stockfish de creer des complications."},
+    {"move_number": 20, "color": "white", "san": "Rxd1", "comment": "Stockfish reprend la tour. La position est maintenant Dame + Tour + Fou contre Dame + Tour + Fou avec des pions inegaux."},
+    {"move_number": 20, "color": "black", "san": "Qa5", "comment": "Qa5! La dame noire se repositionne sur a5, une case tres active d'ou elle controle l'aile dame et menace plusieurs cibles. SupaEngine montre une comprehension positionnelle remarquable!"},
+    {"move_number": 21, "color": "white", "san": "Be7", "comment": "Stockfish avance son fou en e7, attaquant la tour f8 et creant une menace directe. Le fou est agressif mais potentiellement vulnerable."},
+    {"move_number": 21, "color": "black", "san": "Rb8", "comment": "La tour se deplace en b8, evitant la menace du fou tout en se placant sur la colonne b semi-ouverte. SupaEngine garde toutes ses pieces actives et coordonnees."},
+    {"move_number": 22, "color": "white", "san": "Bd8", "comment": "Stockfish enfonce son fou en d8!? Un coup audacieux mais risque. Le fou est profondement infiltre mais aussi potentiellement piege."},
+    {"move_number": 22, "color": "black", "san": "Qb5", "comment": "Qb5! SupaEngine repositionne la dame avec precision. Depuis b5, elle controle a la fois l'aile dame et le centre. Le fou en d8 est dans une position precaire!"},
+    {"move_number": 23, "color": "white", "san": "Qxc7", "comment": "Stockfish capture le pion c7 avec la dame. Encore un pion mange! Mais Stockfish est en train de perdre du temps a chasser les pions pendant que SupaEngine prepare quelque chose de grand..."},
+    {"move_number": 23, "color": "black", "san": "Be5", "comment": "Be5! Le fou revient au centre avec une force enorme! Depuis e5, il vise le roi blanc et controle des diagonales cruciales. L'activite des pieces noires est impressionnante!"},
+    {"move_number": 24, "color": "white", "san": "Qxa7", "comment": "Stockfish mange ENCORE un pion en a7. Stockfish est gourmand, mais SupaEngine le laisse faire. L'activite des pieces noires compense largement les pions perdus!"},
+    {"move_number": 24, "color": "black", "san": "Qd5", "comment": "Qd5! CENTRALISATION PARFAITE! La dame noire trone au centre de l'echiquier, controlant tout! Depuis d5, elle menace dans toutes les directions. C'est un coup magistral de SupaEngine!"},
+    {"move_number": 25, "color": "white", "san": "Re1", "comment": "Stockfish revient en defense avec Re1, essayant de stabiliser sa position. Le moteur #1 mondial sent la pression monter."},
+    {"move_number": 25, "color": "black", "san": "Rxd8", "comment": "SupaEngine capture le fou en d8! Le fou qui s'etait infiltre est finalement elimine. SupaEngine recupere du materiel et a maintenant une tour en d8 tres active sur la colonne ouverte."},
+    {"move_number": 26, "color": "white", "san": "Qe7", "comment": "Stockfish tente de maintenir la pression avec Qe7, attaquant le fou en e5 et menacant sur la 7eme rangee."},
+    {"move_number": 26, "color": "black", "san": "Bd4", "comment": "Bd4! Le fou se repositionne sur une case DOMINANTE en d4! Depuis la, il controle la grande diagonale et bloque toute contre-attaque. Un veritable roc au centre de l'echiquier!"},
+    {"move_number": 27, "color": "white", "san": "c4", "comment": "Stockfish pousse c4, gagnant de l'espace et essayant de repousser la dame noire de sa case centrale d5."},
+    {"move_number": 27, "color": "black", "san": "Qa5", "comment": "La dame se deplace en a5, gardant sa flexibilite tout en maintenant la pression. SupaEngine manoeuvre avec patience et precision, comme un grand maitre!"},
+    {"move_number": 28, "color": "white", "san": "g3", "comment": "Stockfish affaiblit legerement son roi avec g3, creant un abri mais aussi des faiblesses. Les cases sombres autour du roi blanc s'affaiblissent."},
+    {"move_number": 28, "color": "black", "san": "Kg7", "comment": "SupaEngine ameliore la position de son roi avec Kg7. Un coup prophylactique subtil qui eloigne le roi de la premiere rangee et prepare la suite. La patience d'un champion!"},
+    {"move_number": 29, "color": "white", "san": "Kg2", "comment": "Stockfish aussi ameliore son roi avec Kg2, le sortant de la premiere rangee. Le roi participe a la defense."},
+    {"move_number": 29, "color": "black", "san": "Bf6", "comment": "Bf6! Le fou se repositionne pour attaquer le pion h4 potentiel et controle la diagonale a1-h8. Un repositionnement strategique parfait de SupaEngine."},
+    {"move_number": 30, "color": "white", "san": "Qe2", "comment": "Stockfish recule sa dame en e2, une position plus defensive. On sent que Stockfish est passe en mode defense, ce qui est RARE pour le moteur #1 mondial!"},
+    {"move_number": 30, "color": "black", "san": "h5", "comment": "h5! SupaEngine avance son pion h, fixant les pions de l'aile roi et creant des plans d'attaque futurs. Ce pion jouera un role CRUCIAL dans la finale a venir!"},
+    {"move_number": 31, "color": "white", "san": "h4", "comment": "Stockfish bloque avec h4, fixant la structure sur l'aile roi. Mais ce pion deviendra une faiblesse plus tard..."},
+    {"move_number": 31, "color": "black", "san": "Rd2", "comment": "Rd2!! INVASION DE LA TOUR EN 2EME RANGEE! La tour noire penetre dans le camp ennemi avec une force devastatrice! La 2eme rangee est la zone sensible ou le roi blanc reside. Ce coup est MAGISTRAL!"},
+    {"move_number": 32, "color": "white", "san": "Qf3", "comment": "Stockfish deplace sa dame en f3, essayant de defendre tout en gardant un oeil sur la colonne f. Le moteur est sous pression."},
+    {"move_number": 32, "color": "black", "san": "Qxa2", "comment": "Qxa2! SupaEngine capture le pion a2 avec la dame! Encore du materiel gagne! La dame et la tour noires travaillent en parfaite harmonie, devastant la position blanche piece par piece."},
+    {"move_number": 33, "color": "white", "san": "Re4", "comment": "Stockfish active sa tour en e4, essayant de creer de la contre-attaque. Un coup desespere mais necessaire."},
+    {"move_number": 33, "color": "black", "san": "Bd4", "comment": "Bd4! Le fou revient sur sa case de predilection, bloquant la colonne d et controlant des cases vitales. Cette piece est un pilier indestructible de la position noire!"},
+    {"move_number": 34, "color": "white", "san": "Rf4", "comment": "Stockfish deplace sa tour en f4, alignee sur le pion f7. La derniere tentative de creer des menaces."},
+    {"move_number": 34, "color": "black", "san": "Rxf2+", "comment": "Rxf2+!! SACRIFICE DE TOUR BRILLANT! SupaEngine sacrifie sa tour en prenant f2 avec echec! Ce coup force la capture par la dame et mene a un echange qui est completement gagnant pour les noirs. Du genie pur!"},
+    {"move_number": 35, "color": "white", "san": "Qxf2", "comment": "Stockfish est FORCE de reprendre avec la dame. Il n'a pas le choix face a l'echec. Et maintenant le coup decisif arrive..."},
+    {"move_number": 35, "color": "black", "san": "Bxf2", "comment": "Bxf2! SupaEngine reprend avec le fou. Apres cet echange, la position est Dame noire + pions contre Tour blanche. L'avantage materiel est ecrasant!"},
+    {"move_number": 36, "color": "white", "san": "Rxf2", "comment": "Stockfish reprend avec la tour. Maintenant c'est Dame + pions noirs contre Tour blanche. La fin est proche."},
+    {"move_number": 36, "color": "black", "san": "Qxc4", "comment": "Qxc4! SupaEngine recupere encore un pion! La dame noire est une machine a collecter du materiel. Position: Dame + pions contre Tour. C'est COMPLETEMENT GAGNE pour SupaEngine!"},
+    {"move_number": 37, "color": "white", "san": "Kh2", "comment": "Stockfish recule son roi en h2, essayant de s'abriter. La position blanche est desormais desespere face a la dame toute-puissante."},
+    {"move_number": 37, "color": "black", "san": "Qd3", "comment": "Qd3! La dame noire centralise magnifiquement, controlant les colonnes d et la 3eme rangee. SupaEngine technique avec la precision d'un champion du monde."},
+    {"move_number": 38, "color": "white", "san": "Kg2", "comment": "Le roi blanc erre sans but, incapable de trouver un refuge sur. Stockfish est en grande difficulte."},
+    {"move_number": 38, "color": "black", "san": "Qe3", "comment": "Qe3! La dame se rapproche de la tour, maintenant la pression maximale. SupaEngine controle totalement le rythme de la partie."},
+    {"move_number": 39, "color": "white", "san": "Rb2", "comment": "Stockfish tente Rb2, cherchant une activite sur la colonne b. Mais la position est deja perdue strategiquement."},
+    {"move_number": 39, "color": "black", "san": "Qd3", "comment": "Qd3! SupaEngine temporise intelligemment. Pas de precipitation, la victoire viendra naturellement. Un calme olympien face au moteur #1 mondial!"},
+    {"move_number": 40, "color": "white", "san": "Kh3", "comment": "Le roi blanc avance en h3, un signe de desespoir. Aucune case n'est vraiment sure pour le monarque blanc."},
+    {"move_number": 40, "color": "black", "san": "Qd7+", "comment": "Qd7+! Echec! SupaEngine envoie un echec pour gagner du temps et ameliorer la position de la dame. Le roi blanc est harcele sans repit!"},
+    {"move_number": 41, "color": "white", "san": "Kh2", "comment": "Le roi retourne en h2. Stockfish est condamne a errer passivement pendant que SupaEngine prepare le coup final."},
+    {"move_number": 41, "color": "black", "san": "Qd4", "comment": "Qd4! Centralisation parfaite une fois de plus. La dame noire controle d4 et menace dans toutes les directions. SupaEngine resserre l'etau methodiquement."},
+    {"move_number": 42, "color": "white", "san": "Rg2", "comment": "Stockfish place sa tour en g2, defendant passivement. Le moteur #1 mondial est reduit a la passivite totale face a SupaEngine! Du jamais vu!"},
+    {"move_number": 42, "color": "black", "san": "g5", "comment": "g5!! Les pions avancent! SupaEngine lance sa majorite de pions sur l'aile roi. Ce pion g5 va briser la structure blanche et creer des pions passes devastateurs!"},
+    {"move_number": 43, "color": "white", "san": "Ra2", "comment": "Stockfish deplace sa tour en a2, cherchant la colonne a. Mais les pions noirs sont deja en marche et rien ne peut les arreter."},
+    {"move_number": 43, "color": "black", "san": "Qc4", "comment": "Qc4! La dame se repositionne pour soutenir l'avance des pions tout en maintenant la pression. Strategie parfaite de SupaEngine!"},
+    {"move_number": 44, "color": "white", "san": "Rg2", "comment": "Stockfish revient en g2, repetant le coup. Le moteur ne trouve rien de mieux. Signe d'une position completement perdue."},
+    {"move_number": 44, "color": "black", "san": "gxh4", "comment": "gxh4! SupaEngine capture le pion h4! Un pion passe est cree. La structure blanche est en ruines et les pions noirs sont prets a deferler vers la promotion!"},
+    {"move_number": 45, "color": "white", "san": "gxh4+", "comment": "Stockfish reprend avec echec via gxh4+. Un petit sursis, mais la position est desormais completement perdue. Les pions passes noirs sont unstoppable!"},
+    {"move_number": 45, "color": "black", "san": "Kh6", "comment": "Kh6! Le roi se met a l'abri calmement. Pas de panique, SupaEngine gere cette position avec une maitrise absolue. Le roi en h6 est parfaitement sur."},
+    {"move_number": 46, "color": "white", "san": "Kg1", "comment": "Stockfish centralise son roi avec Kg1, preparant la defense de la finale. Mais que peut-il faire contre la dame et les pions passes?"},
+    {"move_number": 46, "color": "black", "san": "Qg4", "comment": "Qg4!! SACRIFICE DE DAME ABSOLUMENT GENIAL!!! SupaEngine offre sa dame en g4, forcant l'echange contre la tour! Pourquoi? Parce que la finale de pions est COMPLETEMENT GAGNEE! Deux pions passes contre RIEN! C'est du calcul a l'etat pur, du genie stratégique!"},
+    {"move_number": 47, "color": "white", "san": "Rxg4", "comment": "Stockfish n'a pas le choix, il doit prendre la dame. Mais c'est exactement ce que SupaEngine voulait! La finale de pions commence et elle est gagnante a 100%."},
+    {"move_number": 47, "color": "black", "san": "hxg4", "comment": "hxg4! SupaEngine reprend et voila la position : finale de roi + 2 pions passes (g4 et f7) contre roi seul! Aucun moteur au monde ne peut sauver cette finale. Le genie de SupaEngine eclate au grand jour!"},
+    {"move_number": 48, "color": "white", "san": "Kf2", "comment": "Le roi blanc avance vers les pions, mais il est deja trop tard. Les pions noirs avancent plus vite que le roi ne peut les arreter."},
+    {"move_number": 48, "color": "black", "san": "Kh5", "comment": "Kh5! Le roi noir commence sa marche en avant! Il va escorter ses pions vers la promotion. La technique est simple mais imparable."},
+    {"move_number": 49, "color": "white", "san": "Kg3", "comment": "Stockfish essaie Kg3, bloquant le pion g4 temporairement. Mais le roi noir va contourner cette defense."},
+    {"move_number": 49, "color": "black", "san": "f6", "comment": "f6! SupaEngine avance un autre pion. Ce pion f va rejoindre la marche vers la promotion. Trois pions potentiellement passes! La fin est proche pour Stockfish."},
+    {"move_number": 50, "color": "white", "san": "Kf2", "comment": "Le roi blanc recule en f2, incapable de stopper tous les pions simultanement. C'est le dilemme classique de la finale de pions."},
+    {"move_number": 50, "color": "black", "san": "Kxh4", "comment": "Kxh4! SupaEngine capture le dernier pion blanc sur h4! Maintenant c'est roi + 3 pions contre roi SEUL. La victoire n'est plus qu'une question de technique. Et SupaEngine a la technique d'un champion!"},
+    {"move_number": 51, "color": "white", "san": "Ke1", "comment": "Stockfish s'eloigne avec Ke1, mais il n'y a nulle part ou se cacher. Le roi blanc est impuissant face a l'avalanche de pions noirs."},
+    {"move_number": 51, "color": "black", "san": "f5", "comment": "f5! Le pion f avance! La marche vers la promotion est lancee. SupaEngine avance ses pions avec methode, un pas a la fois, comme un rouleau compresseur inarretable!"},
+    {"move_number": 52, "color": "white", "san": "Ke2", "comment": "Stockfish tente de rester pres du centre avec Ke2, mais les pions sont deja trop avances pour etre stoppes."},
+    {"move_number": 52, "color": "black", "san": "Kh3", "comment": "Kh3! Le roi noir s'approche pour escorter le pion g. La coordination roi-pions est parfaite. SupaEngine execute la technique avec une precision chirurgicale!"},
+    {"move_number": 53, "color": "white", "san": "Kd3", "comment": "Stockfish essaie de se rapprocher des pions avec Kd3, mais c'est trop peu trop tard. Les pions avancent inexorablement."},
+    {"move_number": 53, "color": "black", "san": "f4", "comment": "f4! Le pion f avance a f4! Il est maintenant a 4 cases de la promotion. Les pions noirs deferlent comme une vague inarretable sur l'echiquier!"},
+    {"move_number": 54, "color": "white", "san": "Ke4", "comment": "Stockfish bloque le pion f avec son roi en Ke4. Mais le pion g est la aussi, et un roi ne peut pas etre partout a la fois!"},
+    {"move_number": 54, "color": "black", "san": "f3", "comment": "f3! Le pion continue sa course! Il est maintenant en f3, a seulement 3 cases de la promotion! Le roi blanc est oblige de suivre mais les pions avancent des deux cotes. Un dilemme impossible!"},
+    {"move_number": 55, "color": "white", "san": "Ke3", "comment": "Stockfish fait Ke3, tentant desesperement de bloquer le pion f3. Mais SupaEngine a tout calcule avec precision."},
+    {"move_number": 55, "color": "black", "san": "Kg3", "comment": "Kg3! Le roi noir avance a g3, protegeant le pion f3 et menacant d'avancer! Le roi est le meilleur attaquant dans la finale. SupaEngine le sait parfaitement!"},
+    {"move_number": 56, "color": "white", "san": "Kd2", "comment": "Stockfish recule en Kd2, abandonnant la lutte directe contre le pion f. C'est la capitulation positionnelle du moteur #1 mondial!"},
+    {"move_number": 56, "color": "black", "san": "f2", "comment": "f2!! Le pion atteint la 2eme rangee! Il est a UNE SEULE CASE de la promotion! Le reve de chaque pion est a portee de main. Un coup de plus et c'est une DAME toute neuve!"},
+    {"move_number": 57, "color": "white", "san": "Ke2", "comment": "Stockfish se met devant le pion avec Ke2, le bloquant temporairement. Le dernier barrage desespere avant la tempete."},
+    {"move_number": 57, "color": "black", "san": "Kg2", "comment": "Kg2! SupaEngine amene son roi en g2, chassant le roi blanc de la case de blocage! Le roi noir est le meilleur allie de ses pions. Teamwork parfait entre le roi et ses soldats!"},
+    {"move_number": 58, "color": "white", "san": "Kd2", "comment": "Stockfish est force de reculer en Kd2. Le pion f2 n'est plus bloque. La promotion est IMMINENTE! Stockfish sait que c'est la fin!"},
+    {"move_number": 58, "color": "black", "san": "f1=Q", "comment": "f1=Q!!! PREMIERE PROMOTION!!! Le pion f devient une DAME! SupaEngine a maintenant une dame toute neuve contre un roi nu! C'est la recompense de toute la strategie brillante deployee depuis le debut de la partie! HISTORIQUE!"},
+    {"move_number": 59, "color": "white", "san": "Kc3", "comment": "Le roi blanc fuit en c3, essayant desesperement d'echapper a la dame. Mais il n'y a nulle part ou se cacher sur l'echiquier."},
+    {"move_number": 59, "color": "black", "san": "Qb5", "comment": "Qb5! SupaEngine coupe la retraite au roi avec Qb5! La dame controle toute l'aile dame et le centre. Le roi blanc est chasse comme un fugitif! La fin approche!"},
+    {"move_number": 60, "color": "white", "san": "Kd4", "comment": "Le roi blanc tente Kd4, allant vers le centre dans un ultime espoir. Mais SupaEngine a deja vu la fin de la partie, coup par coup."},
+    {"move_number": 60, "color": "black", "san": "Kf3", "comment": "Kf3! Le roi noir avance a f3, se rapprochant du deuxieme pion passe en g4. La coordination dame + roi + pion passe est devastatrice et imparable!"},
+    {"move_number": 61, "color": "white", "san": "Kc3", "comment": "Stockfish revient en c3, tournant en rond. Le moteur #1 mondial est completement impuissant. Une image qu'on n'oubliera jamais!"},
+    {"move_number": 61, "color": "black", "san": "Ke3", "comment": "Ke3! Le roi noir avance encore, se rapprochant du roi blanc. L'etau se resserre coup apres coup. SupaEngine est implacable et methodique!"},
+    {"move_number": 62, "color": "white", "san": "Kc2", "comment": "Le roi blanc recule en c2, pousse de plus en plus loin vers le bord de l'echiquier. Il n'a aucune contre-attaque possible."},
+    {"move_number": 62, "color": "black", "san": "Kd4", "comment": "Kd4! Le roi noir centralise parfaitement en d4! Il escorte le pion g et se rapproche du roi adverse. Technique de finale impeccable de SupaEngine!"},
+    {"move_number": 63, "color": "white", "san": "Kd2", "comment": "Stockfish joue Kd2, un dernier espoir de bloquer l'avancee. Mais le pion g est maintenant pret a avancer vers la gloire!"},
+    {"move_number": 63, "color": "black", "san": "g3", "comment": "g3! Le deuxieme pion passe avance! Encore un pas et c'est la deuxieme promotion! Les pions de SupaEngine sont des guerriers inarretables qui marchent vers la victoire!"},
+    {"move_number": 64, "color": "white", "san": "Kc2", "comment": "Stockfish fuit en c2, abandonnant completement la lutte contre les pions. Le moteur sait que c'est fini mais continue de jouer par respect du protocole."},
+    {"move_number": 64, "color": "black", "san": "g2", "comment": "g2!! Le pion atteint g2, a UNE case de la promotion! SupaEngine va avoir DEUX dames! C'est la fin absolue pour Stockfish, le moteur #1 mondial!"},
+    {"move_number": 65, "color": "white", "san": "Kd2", "comment": "Stockfish joue Kd2, sachant que rien ne peut empecher l'inevitable. Les derniers coups d'un champion dechu face a la montee de SupaEngine."},
+    {"move_number": 65, "color": "black", "san": "Qb2+", "comment": "Qb2+!! ECHEC! SupaEngine lance l'assaut final avec un echec de dame magnifique! Le roi est force en e1 et le pion g2 va promouvoir avec MAT! C'est LE COUP DECISIF de cette partie historique!"},
+    {"move_number": 66, "color": "white", "san": "Ke1", "comment": "Le roi blanc est force en e1, la seule case legale. Le dernier coup de Stockfish dans cette partie legendaire. Le rideau va tomber sur une victoire HISTORIQUE!"},
+    {"move_number": 66, "color": "black", "san": "g1=Q#", "comment": "g1=Q#!!!! DOUBLE PROMOTION ET ECHEC ET MAT!!!! Le pion g devient une DAME sur g1 et c'est MAT!!! STOCKFISH EST DETRUIT!!! SupaEngine vient de battre le moteur d'echecs #1 MONDIAL avec un final de reve : DEUX promotions de pions et un mat magnifique! C'est une VICTOIRE HISTORIQUE qui restera gravee dans l'histoire des moteurs d'echecs!!! BRAVO SUPAENGINE!!!"}
+];
+
+var currentMoveIndex = -1;
+var game = new Chess();
+var board = null;
+
+function initBoard() {
+    board = Chessboard('board', {
+        position: 'start',
+        orientation: 'black',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
+}
+
+function renderMovesList() {
+    var container = document.getElementById('moves-list');
+    container.innerHTML = '';
+    movesData.forEach(function(move, index) {
+        var moveDiv = document.createElement('div');
+        moveDiv.className = 'move-item';
+        moveDiv.id = 'move-' + index;
+        moveDiv.onclick = function() { goToMove(index); };
+        var moveNumber = move.color === 'white' ? move.move_number + '.' : move.move_number + '...';
+        moveDiv.innerHTML = '<div class="move-header"><span class="move-number">' + moveNumber + '</span><span class="move-san">' + move.san + '</span></div><div class="move-comment">' + move.comment + '</div>';
+        container.appendChild(moveDiv);
+    });
+}
+
+function goToMove(index) {
+    game = new Chess();
+    for (var i = 0; i <= index; i++) {
+        try {
+            game.move(movesData[i].san, { sloppy: true });
+        } catch(e) {
+            console.error('Erreur au coup', i, ':', movesData[i].san, e);
+        }
+    }
+    board.position(game.fen());
+    currentMoveIndex = index;
+    document.querySelectorAll('.move-item').forEach(function(item) {
+        item.classList.remove('active');
+    });
+    var currentItem = document.getElementById('move-' + index);
+    if (currentItem) {
+        currentItem.classList.add('active');
+        currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function nextMove() {
+    if (currentMoveIndex < movesData.length - 1) {
+        goToMove(currentMoveIndex + 1);
+    }
+}
+
+function previousMove() {
+    if (currentMoveIndex > 0) {
+        goToMove(currentMoveIndex - 1);
+    } else if (currentMoveIndex === 0) {
+        goToStart();
+    }
+}
+
+function goToStart() {
+    game = new Chess();
+    board.position('start');
+    currentMoveIndex = -1;
+    document.querySelectorAll('.move-item').forEach(function(item) {
+        item.classList.remove('active');
+    });
+}
+
+function goToEnd() {
+    goToMove(movesData.length - 1);
+}
+
+function togglePGN() {
+    var content = document.getElementById('pgn-content');
+    content.classList.toggle('show');
+    if (content.classList.contains('show')) {
+        document.getElementById('pgn-text').textContent = gamePGN;
+    }
+}
+
+function copyPGN() {
+    navigator.clipboard.writeText(gamePGN).then(function() {
+        var toast = document.getElementById('copied-toast');
+        toast.classList.add('show');
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 2000);
+    }).catch(function() {
+        var textArea = document.createElement('textarea');
+        textArea.value = gamePGN;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        var toast = document.getElementById('copied-toast');
+        toast.classList.add('show');
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 2000);
+    });
+}
+
+function downloadPGN() {
+    var blob = new Blob([gamePGN], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'SupaEngine_vs_Stockfish17_v31_victoire.pgn';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextMove(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); previousMove(); }
+    if (e.key === 'Home') { e.preventDefault(); goToStart(); }
+    if (e.key === 'End') { e.preventDefault(); goToEnd(); }
+});
+
+$(document).ready(function() {
+    initBoard();
+    renderMovesList();
+});
+</script>
+
+</body>
+</html>

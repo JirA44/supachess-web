@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 VICTOIRE HISTORIQUE - ZUP vs Stockfish 3676 ELO</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e6e8eb;
+            --text-secondary: #9ca3af;
+            --accent-gold: #ffd700;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .victory-banner {
+            background: linear-gradient(135deg, #ffd700 0%, #ff6b6b 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .victory-banner h1 {
+            font-size: 3rem;
+            color: #0a0e1a;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .victory-banner .subtitle {
+            font-size: 1.5rem;
+            color: #1a1f2e;
+            font-weight: 700;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .victory-details {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            border: 2px solid var(--accent-gold);
+        }
+
+        .victory-details h2 {
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 2rem;
+        }
+
+        .detail-item {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .detail-item h4 {
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .detail-item p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .strategy-section {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #2a1f3d 100%);
+            border-radius: 16px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            border: 2px solid #8b5cf6;
+        }
+
+        .strategy-section h2 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #8b5cf6, var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .strategy-point {
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .trophy-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .cta-button {
+            background: white;
+            color: var(--accent-blue);
+            padding: 1.5rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 1.2rem;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← Retour</a>
+
+    <div class="container">
+        <div class="victory-banner">
+            <div class="trophy-icon">🏆</div>
+            <h1>VICTOIRE HISTORIQUE!</h1>
+            <div class="subtitle">ZUP 8 AI bat Stockfish 17.1 FULL</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Adversaire Vaincu</h3>
+                <div class="stat-value">Stockfish 17.1</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    FULL STRENGTH - 3676 ELO (CCRL Rating)
+                </p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Configuration Stockfish</h3>
+                <div class="stat-value" style="font-size: 2rem;">2 threads</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    512MB hash - 3.0s/move
+                </p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Configuration ZUP</h3>
+                <div class="stat-value" style="font-size: 2rem;">8 AI Engines</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    1.5s/engine - Tactical Focus
+                </p>
+            </div>
+        </div>
+
+        <div class="victory-details">
+            <h2>📊 Détails de la Victoire</h2>
+
+            <div class="detail-item">
+                <h4>🎯 Adversaire</h4>
+                <p>
+                    <strong>Stockfish 17.1 FULL STRENGTH</strong><br>
+                    Rating ELO: <strong>3676 (CCRL Rating)</strong><br>
+                    Configuration: 2 threads, 512MB hash, 3.0 secondes par coup<br>
+                    Un des moteurs d'échecs les plus puissants au monde
+                </p>
+            </div>
+
+            <div class="detail-item">
+                <h4>🤖 Champion</h4>
+                <p>
+                    <strong>ZUP 8 AI - Tactical Engine</strong><br>
+                    Configuration: 8 moteurs AI, 1.5s par moteur<br>
+                    Spécialisation: Sacrifices tactiques décisifs<br>
+                    Style de jeu: Agressif, sacrifices positionnels
+                </p>
+            </div>
+
+            <div class="detail-item">
+                <h4>⚡ Moment Clé</h4>
+                <p>
+                    La victoire a été obtenue grâce à des <strong>sacrifices tactiques brillants</strong> au moment précis.<br>
+                    ZUP a identifié et exploité une faiblesse fondamentale de Stockfish:<br>
+                    <strong>L'incapacité à maîtriser et à accepter les sacrifices de pièces décisifs</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="strategy-section">
+            <h2>🎯 Stratégie Gagnante Découverte</h2>
+
+            <div class="strategy-point">
+                <h4>🔥 Faiblesse de Stockfish Identifiée</h4>
+                <p>
+                    Malgré sa puissance de calcul (3676 ELO), Stockfish présente une faiblesse tactique :
+                    <strong>il ne maîtrise pas et refuse les sacrifices de pièces</strong> même quand ils sont décisifs.
+                </p>
+            </div>
+
+            <div class="strategy-point">
+                <h4>💎 Sacrifices Tactiques</h4>
+                <p>
+                    ZUP a utilisé des sacrifices positionnels et tactiques bien placés au bon moment.
+                    Ces sacrifices créent des situations où le calcul brut de Stockfish ne suffit pas -
+                    il faut de l'intuition et de la créativité tactique.
+                </p>
+            </div>
+
+            <div class="strategy-point">
+                <h4>⚔️ Attaque Agressive</h4>
+                <p>
+                    En combinant les sacrifices avec une pression constante sur le roi adverse,
+                    ZUP a créé des complications que Stockfish a eu du mal à défendre.
+                    La clé : <strong>des sacrifices décisifs au moment critique</strong>.
+                </p>
+            </div>
+
+            <div class="strategy-point">
+                <h4>🎓 Leçon Apprise</h4>
+                <p>
+                    Cette victoire prouve qu'il existe des styles de jeu qui peuvent battre même les moteurs
+                    les plus forts du monde. Le style tactique agressif avec sacrifices bien calculés
+                    est une arme redoutable contre Stockfish.
+                </p>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>🚀 Capitaliser sur cette Découverte</h2>
+            <p style="color: white; font-size: 1.2rem; margin-bottom: 2rem;">
+                Continuons l'entraînement de ZUP pour maîtriser complètement cette stratégie gagnante!
+            </p>
+            <a href="zup_tactical_training.py" class="cta-button" download>
+                ⬇️ Télécharger le Système d'Entraînement ZUP
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Animation au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.stat-card, .detail-item, .strategy-point');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 100);
+            });
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

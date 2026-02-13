@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test de la Logique de Jeu</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #board { width: 400px; margin: 20px auto; }
+        #log { background: #f0f0f0; padding: 10px; margin: 20px; border-radius: 5px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de la Logique de Jeu ChessNova Teacher</h1>
+    <div id="board"></div>
+    <div id="log">
+        <h3>📋 Journal des Tests</h3>
+        <div id="logContent"></div>
+    </div>
+
+    <script>
+        let game = new Chess();
+        let board = null;
+        let testLog = [];
+
+        function log(message, isSuccess = true) {
+            const className = isSuccess ? 'success' : 'error';
+            const icon = isSuccess ? '✅' : '❌';
+            testLog.push(`<div class="${className}">${icon} ${message}</div>`);
+            document.getElementById('logContent').innerHTML = testLog.join('');
+        }
+
+        function onDragStart(source, piece) {
+            if (game.game_over()) return false;
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        }
+
+        function onDrop(source, target) {
+            log(`Tentative de déplacement: ${source} → ${target}`);
+
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (move === null) {
+                log(`Coup illégal rejeté: ${source} → ${target}`, true);
+                return 'snapback';
+            }
+
+            log(`✓ Coup accepté: ${move.san} (${source} → ${target})`, true);
+            log(`  Position FEN: ${game.fen()}`);
+
+            // Vérifier que le coup est bien enregistré
+            const history = game.history();
+            log(`  Historique: ${history.length} coups joués`);
+            log(`  Dernier coup: ${history[history.length - 1]}`);
+
+            // Simuler l'analyse
+            try {
+                const clampedPower = Math.max(1, Math.min(10, 5));
+                log(`  Analyse: clampedPower = ${clampedPower}`, true);
+            } catch(e) {
+                log(`  ERREUR dans l'analyse: ${e.message}`, false);
+            }
+
+            return; // Ne pas retourner 'snapback' pour un coup valide
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+            log(`onSnapEnd() appelé - Position synchronisée`);
+        }
+
+        $(document).ready(function() {
+            log('🎮 Initialisation du plateau...');
+
+            const config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+
+            board = Chessboard('board', config);
+
+            log('✓ Plateau initialisé avec succès');
+            log('');
+            log('🧪 Effectuez les tests suivants:');
+            log('  1. Déplacez e2 → e4 (doit fonctionner)');
+            log('  2. Déplacez d7 → d5 (doit fonctionner)');
+            log('  3. Essayez un coup illégal (doit snapback)');
+            log('  4. Vérifiez que les pièces restent en place après coup valide');
+            log('');
+        });
+    </script>
+</body>
+</html>

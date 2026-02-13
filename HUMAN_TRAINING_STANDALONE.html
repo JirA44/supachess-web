@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 ChessNova - Entraînement Interactif</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #242938;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle { color: var(--text-secondary); font-size: 1.2em; }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 600px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .board-section {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        #board { width: 560px; margin: 0 auto 20px auto; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        button.secondary { background: linear-gradient(135deg, var(--accent-green), var(--accent-blue)); }
+        button.warning { background: linear-gradient(135deg, var(--accent-yellow), var(--accent-red)); }
+
+        .analysis-panel {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .difficulty-selector { margin-bottom: 20px; }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .difficulty-buttons button {
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        .difficulty-buttons button.active {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .eval-bar-container {
+            width: 100%;
+            height: 30px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .eval-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .move-analysis {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .move-analysis h3 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-green));
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 2.5em;
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .rating.excellent { background: linear-gradient(135deg, var(--accent-green), #059669); }
+        .rating.good { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); }
+        .rating.average { background: linear-gradient(135deg, var(--accent-yellow), var(--accent-red)); }
+
+        .section { margin-bottom: 15px; }
+
+        .section h4 {
+            color: var(--accent-purple);
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section p { color: var(--text-primary); line-height: 1.6; }
+
+        .alternatives { display: grid; gap: 10px; }
+
+        .alternative {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .alternative strong { color: var(--accent-purple); }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-card {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .info-card .label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .info-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        .status {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .brilliant-move { animation: brilliance 2s infinite; }
+
+        @keyframes brilliance {
+            0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8); }
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 ChessNova - Entraînement Interactif</h1>
+            <p class="subtitle">Système d'apprentissage accéléré avec analyse en temps réel</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="board-section">
+                <div id="board"></div>
+
+                <div class="controls">
+                    <button onclick="newGame()">🎮 Nouvelle Partie</button>
+                    <button onclick="undoMove()" class="secondary" id="undo-btn">↩️ Retour</button>
+                    <button onclick="getHint()" class="warning" id="hint-btn">💡 Indice</button>
+                    <button onclick="showGameReport()" class="secondary" id="report-btn" style="display: none;">📊 Rapport</button>
+                </div>
+                <div class="controls" id="navigation-controls" style="display: none; margin-top: 10px;">
+                    <button onclick="navigateMove(-1)" class="secondary">◀ Précédent</button>
+                    <button onclick="navigateMove(1)" class="secondary">Suivant ▶</button>
+                    <span id="move-nav-info" style="margin: 0 15px; color: var(--text-secondary);"></span>
+                </div>
+
+                <div class="game-info" style="margin-top: 20px;">
+                    <div class="info-card">
+                        <div class="label">Tour</div>
+                        <div class="value" id="move-number">1</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Joueur</div>
+                        <div class="value" id="current-player">Blancs</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">Évaluation</div>
+                        <div class="value" id="evaluation">0.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-panel">
+                <div class="difficulty-selector">
+                    <h3>🎯 Niveau de Difficulté</h3>
+                    <div class="difficulty-buttons">
+                        <button onclick="setDifficulty('easy')" class="active" id="btn-easy">Débutant<br><small style="font-size:0.8em;opacity:0.8">800-1000 ELO</small></button>
+                        <button onclick="setDifficulty('medium')" id="btn-medium">Intermédiaire<br><small style="font-size:0.8em;opacity:0.8">1200-1400 ELO</small></button>
+                        <button onclick="setDifficulty('hard')" id="btn-hard">Avancé<br><small style="font-size:0.8em;opacity:0.8">1600-1800 ELO</small></button>
+                        <button onclick="setDifficulty('expert')" id="btn-expert">Expert<br><small style="font-size:0.8em;opacity:0.8">2000-2200 ELO</small></button>
+                    </div>
+                </div>
+
+                <div class="eval-bar-container">
+                    <div class="eval-bar" id="eval-bar" style="width: 50%;">
+                        <span id="eval-text">0.0</span>
+                    </div>
+                </div>
+
+                <div class="status" id="status">
+                    🎯 Prêt à jouer! Faites votre coup.
+                </div>
+
+                <div id="analysis-content">
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        Jouez un coup pour voir l'analyse en temps réel
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let game = new Chess();
+        let board = null;
+        let difficulty = 'easy';
+        let moveHistory = [];
+        let gameAnalyses = [];
+        let currentMoveIndex = -1; // Pour navigation après la fin
+        let gameEnded = false;
+
+        const difficultyLevels = {
+            easy: { depth: 2, analysisDepth: 2, name: 'Débutant', elo: '800-1000' },
+            medium: { depth: 3, analysisDepth: 3, name: 'Intermédiaire', elo: '1200-1400' },
+            hard: { depth: 4, analysisDepth: 4, name: 'Avancé', elo: '1600-1800' },
+            expert: { depth: 5, analysisDepth: 5, name: 'Expert', elo: '2000-2200' }
+        };
+
+        // Valeurs des pièces pour l'évaluation
+        const pieceValue = {
+            'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000
+        };
+
+        function evaluateBoard(game) {
+            if (game.in_checkmate()) {
+                return game.turn() === 'w' ? -10000 : 10000;
+            }
+            if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+                return 0;
+            }
+
+            let totalEval = 0;
+            const board = game.board();
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = board[i][j];
+                    if (piece) {
+                        const value = pieceValue[piece.type];
+                        const posValue = getPositionValue(piece.type, i, j, piece.color);
+                        totalEval += (piece.color === 'w' ? 1 : -1) * (value + posValue);
+                    }
+                }
+            }
+
+            return totalEval / 100;
+        }
+
+        function getPositionValue(type, row, col, color) {
+            // Bonus de position pour pièces au centre
+            const centerBonus = [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 2, 2, 2, 2, 2, 2, 0],
+                [0, 2, 5, 5, 5, 5, 2, 0],
+                [0, 2, 5, 10, 10, 5, 2, 0],
+                [0, 2, 5, 10, 10, 5, 2, 0],
+                [0, 2, 5, 5, 5, 5, 2, 0],
+                [0, 2, 2, 2, 2, 2, 2, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0]
+            ];
+
+            if (type === 'p') {
+                // Pions avancés sont meilleurs
+                return color === 'w' ? (7 - row) * 5 : row * 5;
+            }
+
+            return centerBonus[row][col];
+        }
+
+        let transpositionTable = {};
+        let nodeCount = 0;
+        const MAX_NODES = 50000; // Limite de nœuds pour éviter les freezes
+
+        function minimax(game, depth, alpha, beta, isMaximizingPlayer) {
+            nodeCount++;
+            if (nodeCount > MAX_NODES) {
+                return evaluateBoard(game);
+            }
+
+            if (depth === 0 || game.game_over()) {
+                return evaluateBoard(game);
+            }
+
+            // Table de transposition
+            const fen = game.fen();
+            const tableKey = fen + '_' + depth;
+            if (transpositionTable[tableKey] !== undefined) {
+                return transpositionTable[tableKey];
+            }
+
+            const moves = game.moves({ verbose: true });
+
+            // Tri des coups : captures d'abord (améliore l'élagage)
+            moves.sort((a, b) => {
+                const scoreA = a.captured ? 100 : 0;
+                const scoreB = b.captured ? 100 : 0;
+                return scoreB - scoreA;
+            });
+
+            if (isMaximizingPlayer) {
+                let maxEval = -Infinity;
+                for (let move of moves) {
+                    game.move(move);
+                    const eval_ = minimax(game, depth - 1, alpha, beta, false);
+                    game.undo();
+                    maxEval = Math.max(maxEval, eval_);
+                    alpha = Math.max(alpha, eval_);
+                    if (beta <= alpha) break; // Beta cutoff
+                }
+                transpositionTable[tableKey] = maxEval;
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (let move of moves) {
+                    game.move(move);
+                    const eval_ = minimax(game, depth - 1, alpha, beta, true);
+                    game.undo();
+                    minEval = Math.min(minEval, eval_);
+                    beta = Math.min(beta, eval_);
+                    if (beta <= alpha) break; // Alpha cutoff
+                }
+                transpositionTable[tableKey] = minEval;
+                return minEval;
+            }
+        }
+
+        function getBestMove(game, depth) {
+            nodeCount = 0; // Reset counter
+            transpositionTable = {}; // Clear cache
+
+            const moves = game.moves({ verbose: true });
+
+            // Tri rapide : captures et checks en premier
+            moves.sort((a, b) => {
+                let scoreA = 0;
+                let scoreB = 0;
+
+                if (a.captured) scoreA += 50 + pieceValue[a.captured];
+                if (b.captured) scoreB += 50 + pieceValue[b.captured];
+
+                if (a.flags.includes('e')) scoreA += 10;
+                if (b.flags.includes('e')) scoreB += 10;
+
+                return scoreB - scoreA;
+            });
+
+            let bestMove = null;
+            let bestValue = -Infinity;
+
+            for (let move of moves) {
+                game.move(move);
+                const boardValue = -minimax(game, depth - 1, -Infinity, Infinity, false);
+                game.undo();
+
+                if (boardValue > bestValue) {
+                    bestValue = boardValue;
+                    bestMove = move;
+                }
+
+                // Arrêt si trop de nœuds calculés
+                if (nodeCount > MAX_NODES) break;
+            }
+
+            return bestMove;
+        }
+
+        function initBoard() {
+            const config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+            board = Chessboard('board', config);
+        }
+
+        function onDragStart(source, piece, position, orientation) {
+            if (game.game_over()) return false;
+            if (piece.search(/^b/) !== -1) return false;
+        }
+
+        function onDrop(source, target) {
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q'
+            });
+
+            if (move === null) return 'snapback';
+
+            analyzePlayerMove(move);
+            updateGameInfo();
+
+            window.setTimeout(makeComputerMove, 500);
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        function makeComputerMove() {
+            if (game.game_over()) {
+                handleGameOver();
+                return;
+            }
+
+            document.getElementById('status').innerHTML = '⏳ L\'IA réfléchit...';
+
+            // Petit délai pour afficher le message
+            setTimeout(() => {
+                const depth = difficultyLevels[difficulty].depth;
+                const startTime = performance.now();
+                const bestMove = getBestMove(game, depth);
+                const timeMs = (performance.now() - startTime).toFixed(0);
+
+                if (bestMove) {
+                    const aiMove = game.move(bestMove);
+                    moveHistory.push(aiMove); // Sauvegarder le coup de l'IA aussi
+                    board.position(game.fen());
+
+                    document.getElementById('status').innerHTML =
+                        '🤖 L\'IA a joué: <strong>' + bestMove.san + '</strong> (' + timeMs + 'ms, ' + nodeCount.toLocaleString() + ' positions)';
+
+                    updateGameInfo();
+                }
+            }, 50);
+        }
+
+        function analyzePlayerMove(move) {
+            moveHistory.push(move);
+
+            // Utiliser minimax pour une analyse précise
+            const playerMoveSan = move.san;
+
+            // Évaluer le coup joué
+            const evalAfterPlayerMove = evaluateBoard(game);
+
+            // Revenir avant le coup pour trouver le meilleur coup
+            game.undo();
+
+            // Utiliser la même profondeur d'analyse que le niveau de difficulté
+            const analysisDepth = difficultyLevels[difficulty].analysisDepth;
+            const bestMoveFound = getBestMove(game, analysisDepth);
+
+            let bestEval;
+            let bestMoveSan = 'N/A';
+
+            if (bestMoveFound) {
+                // Jouer le meilleur coup pour l'évaluer
+                game.move(bestMoveFound);
+                bestEval = evaluateBoard(game);
+                bestMoveSan = bestMoveFound.san;
+                game.undo();
+            } else {
+                bestEval = evalAfterPlayerMove;
+            }
+
+            // Rejouer le coup du joueur
+            game.move(move);
+
+            // DEBUG: Logger les valeurs
+            console.log('=== ANALYSE DU COUP ===');
+            console.log('Coup joué:', playerMoveSan);
+            console.log('Meilleur coup trouvé:', bestMoveSan);
+            console.log('Eval après coup joué:', evalAfterPlayerMove.toFixed(2));
+            console.log('Eval après meilleur coup:', bestEval.toFixed(2));
+
+            // Calculer la perte en centipawns (du point de vue des blancs)
+            let lossCentipawns = Math.max(0, (bestEval - evalAfterPlayerMove) * 100);
+
+            // HEURISTIQUE : Dans les positions très gagnantes, ajuster l'analyse
+            const positionAdvantage = Math.abs(evalAfterPlayerMove);
+            if (positionAdvantage >= 5.0) {
+                // Position ultra-dominante : être plus strict
+                // Pénaliser les coups non-capturants qui ne progressent pas vers le mat
+                if (!move.captured && !move.san.includes('+') && !move.san.includes('#')) {
+                    // Coup passif dans position gagnante : ajouter pénalité de 50-150 centipawns
+                    lossCentipawns += 80;
+                    console.log('⚠️ Position dominante (+' + positionAdvantage.toFixed(1) + ') - Coup passif pénalisé');
+                }
+
+                // Si le coup joué est une capture, mais pas la meilleure : pénalité légère
+                if (move.captured && bestMoveSan !== playerMoveSan) {
+                    lossCentipawns += 30;
+                    console.log('⚠️ Capture sous-optimale en position gagnante');
+                }
+            }
+
+            // Limiter les valeurs extrêmes (mat proche = évaluation énorme)
+            // Plafonner à 2000 centipawns pour garder des notes cohérentes
+            if (lossCentipawns > 2000) {
+                lossCentipawns = 2000;
+            }
+
+            console.log('Perte (centipawns):', lossCentipawns.toFixed(0));
+            console.log('======================');
+
+            let rating;
+            if (lossCentipawns < 5) rating = 10;
+            else if (lossCentipawns < 15) rating = 9;
+            else if (lossCentipawns < 40) rating = 8;
+            else if (lossCentipawns < 80) rating = 7;
+            else if (lossCentipawns < 150) rating = 6;
+            else if (lossCentipawns < 250) rating = 5;
+            else if (lossCentipawns < 400) rating = 4;
+            else if (lossCentipawns < 700) rating = 3;
+            else if (lossCentipawns < 1000) rating = 2;
+            else rating = 1;
+
+            // Coup brillant = capture importante avec note parfaite
+            const isBrilliant = rating === 10 && move.captured &&
+                               (move.captured === 'q' || move.captured === 'r' || move.captured === 'n' || move.captured === 'b');
+
+            const analysis = {
+                move: move.san,
+                rating: rating,
+                brilliant: isBrilliant,
+                evalAfter: evalAfterPlayerMove,
+                bestEval: bestEval,
+                lossCentipawns: lossCentipawns,
+                bestMove: bestMoveSan,
+                strengths: generateStrengths(move, rating, lossCentipawns),
+                weaknesses: generateWeaknesses(move, rating, lossCentipawns),
+                advantages: generateAdvantages(move, evalAfterPlayerMove, bestEval),
+                disadvantages: generateDisadvantages(move, lossCentipawns),
+                recommendation: generateRecommendation(rating, lossCentipawns),
+                alternatives: generateAlternatives(game, move),
+                themes: generateThemes(move)
+            };
+
+            displayAnalysis(analysis);
+
+            gameAnalyses.push({
+                moveNumber: Math.ceil(moveHistory.length / 2),
+                moveHistoryIndex: moveHistory.length - 1, // Index exact dans moveHistory
+                player: 'Vous',
+                ...analysis
+            });
+        }
+
+        function generateStrengths(move, rating, loss) {
+            const displayLoss = loss >= 2000 ? "2000+" : loss.toFixed(0);
+
+            if (rating === 10) {
+                return "Coup parfait! " + (move.captured ? "Gagne du matériel. " : "") + "C'est le meilleur coup possible (<5 centipawns de perte).";
+            }
+            if (rating === 9) {
+                return "Coup excellent! " + (move.captured ? "Capture avantageuse. " : "") + "Très proche du meilleur (" + displayLoss + " centipawns perdus).";
+            }
+            if (rating >= 8) {
+                return "Très bon coup. " + (move.captured ? "Bonne capture. " : "") + "Développement solide (" + displayLoss + " centipawns perdus).";
+            }
+            if (rating >= 7) {
+                return "Bon coup. " + (move.captured ? "Capture raisonnable. " : "") + "Maintient l'équilibre (" + displayLoss + " centipawns perdus).";
+            }
+            if (rating >= 5) {
+                return "Coup jouable. " + (move.captured ? "Capture la pièce. " : "") + "Maintient une position acceptable (" + displayLoss + " centipawns perdus).";
+            }
+            if (rating >= 3) {
+                return "Coup faible. " + (move.captured ? "Capture défavorable. " : "") + "Perd " + displayLoss + " centipawns.";
+            }
+            return "Erreur grave! " + (loss >= 2000 ? "Position critique ou mat proche." : "Perte de " + displayLoss + " centipawns.");
+        }
+
+        function generateWeaknesses(move, rating, loss) {
+            const displayLoss = loss >= 2000 ? "2000+" : loss.toFixed(0);
+
+            if (rating === 10) return "Aucune faiblesse détectée.";
+            if (rating === 9) return "Imprécision minime (" + displayLoss + " centipawns).";
+            if (rating >= 8) return "Légère imprécision (" + displayLoss + " centipawns).";
+            if (rating >= 7) return "Coup imprécis (" + displayLoss + " centipawns). Un meilleur coup existait.";
+            if (rating >= 5) return "Erreur modérée (" + displayLoss + " centipawns). Plusieurs meilleurs coups disponibles.";
+            if (rating >= 3) return "Erreur significative (" + displayLoss + " centipawns). Position affaiblie.";
+            return "Erreur grave! " + (loss >= 2000 ? "Mat imminent ou position perdue." : displayLoss + " centipawns perdus.");
+        }
+
+        function generateAdvantages(move, evalAfterMove, bestEval) {
+            // Calculer la perte en pawns (pas centipawns)
+            const lossPawns = Math.abs(bestEval - evalAfterMove);
+            if (lossPawns < 0.1) return "Position optimale! Vous avez trouvé le meilleur coup.";
+            if (lossPawns < 0.25) return "Très proche du meilleur coup. Excellente vision tactique!";
+            if (lossPawns < 0.5) return "Coup solide qui maintient une bonne position.";
+            if (lossPawns < 1.0) return "Coup acceptable, mais un meilleur coup existait.";
+            if (lossPawns < 2.0) return "Vous perdez un avantage modéré avec ce coup.";
+            return "Vous perdez un avantage significatif avec ce coup.";
+        }
+
+        function generateDisadvantages(move, loss) {
+            if (loss < 15) return "Risque minimal.";
+            if (loss < 80) return "Léger désavantage positionnel.";
+            if (loss < 250) return "Perte d'avantage modérée.";
+            return "Perte d'avantage significative.";
+        }
+
+        function generateRecommendation(rating, loss) {
+            if (rating === 10) return "Parfait! Vous jouez au niveau du moteur.";
+            if (rating === 9) return "Excellent! Continuez à jouer avec cette précision.";
+            if (rating >= 8) return "Très bien! Maintenez ce niveau de jeu.";
+            if (rating >= 7) return "Bon coup! Restez concentré sur les menaces adverses.";
+            if (rating >= 5) return "Coup acceptable, mais analysez plus profondément avant de jouer.";
+            if (rating >= 3) return "Cherchez de meilleures alternatives. Prenez votre temps pour calculer!";
+            return "Erreur grave! Revoyez les principes de base (développement, sécurité du roi, contrôle du centre).";
+        }
+
+        function generateAlternatives(game, playedMove) {
+            game.undo();
+            const moves = game.moves({ verbose: true }).slice(0, 3);
+            const alts = [];
+
+            for (let m of moves) {
+                game.move(m);
+                const eval_ = evaluateBoard(game);
+                game.undo();
+                alts.push({
+                    move: m.san,
+                    eval: (eval_ >= 0 ? '+' : '') + eval_.toFixed(1),
+                    comment: m.san === playedMove.san ? "Coup joué" :
+                             Math.abs(eval_) > 0.5 ? "Alternative intéressante" : "Équivalent"
+                });
+            }
+
+            game.move(playedMove);
+            return alts;
+        }
+
+        function generateThemes(move) {
+            const themes = [];
+            if (move.captured) themes.push("Gain matériel");
+            if (move.flags.includes('k') || move.flags.includes('q')) themes.push("Roque");
+            if (move.promotion) themes.push("Promotion");
+            if (themes.length === 0) themes.push("Développement");
+            return themes.join(', ');
+        }
+
+        function displayAnalysis(analysis) {
+            const ratingClass = analysis.rating >= 9 ? 'excellent' : analysis.rating >= 7 ? 'good' : 'average';
+            const ratingEmoji = analysis.rating >= 9 ? '🌟' : analysis.rating >= 7 ? '👍' : '📈';
+
+            const content = '<div class="move-analysis ' + (analysis.brilliant ? 'brilliant-move' : '') + '">' +
+                '<h3>' + (analysis.brilliant ? '⭐ ' : '') + 'Analyse du coup: <strong>' + analysis.move + '</strong></h3>' +
+                '<div style="text-align: center; margin: 20px 0;">' +
+                    '<span class="rating ' + ratingClass + '">' + ratingEmoji + ' ' + analysis.rating + '/10</span>' +
+                '</div>' +
+                '<div class="section"><h4>💪 Forces</h4><p>' + analysis.strengths + '</p></div>' +
+                '<div class="section"><h4>⚠️ Faiblesses</h4><p>' + analysis.weaknesses + '</p></div>' +
+                '<div class="section"><h4>✅ Avantages</h4><p>' + analysis.advantages + '</p></div>' +
+                '<div class="section"><h4>❌ Inconvénients</h4><p>' + analysis.disadvantages + '</p></div>' +
+                '<div class="section"><h4>💡 Recommandation</h4><p>' + analysis.recommendation + '</p></div>' +
+                '<div class="section"><h4>🎯 Thèmes Tactiques</h4><p>' + analysis.themes + '</p></div>' +
+                '<div class="section"><h4>🔄 Alternatives</h4><div class="alternatives">' +
+                    analysis.alternatives.map(function(alt) {
+                        return '<div class="alternative"><strong>' + alt.move + '</strong> (' + alt.eval + ') - ' + alt.comment + '</div>';
+                    }).join('') +
+                '</div></div></div>';
+
+            document.getElementById('analysis-content').innerHTML = content;
+        }
+
+        function updateGameInfo() {
+            const history = game.history();
+            document.getElementById('move-number').textContent = Math.ceil(history.length / 2);
+            document.getElementById('current-player').textContent = game.turn() === 'w' ? 'Blancs' : 'Noirs';
+
+            const eval_ = evaluateBoard(game);
+            document.getElementById('evaluation').textContent = (eval_ >= 0 ? '+' : '') + eval_.toFixed(1);
+            updateEvalBar(eval_);
+        }
+
+        function updateEvalBar(evaluation) {
+            const clampedEval = Math.max(-5, Math.min(5, evaluation));
+            const percentage = 50 + (clampedEval * 10);
+            const bar = document.getElementById('eval-bar');
+            const text = document.getElementById('eval-text');
+
+            bar.style.width = percentage + '%';
+            text.textContent = (evaluation >= 0 ? '+' : '') + evaluation.toFixed(1);
+
+            if (evaluation > 1) {
+                bar.style.background = 'linear-gradient(90deg, var(--accent-green), var(--accent-blue))';
+            } else if (evaluation < -1) {
+                bar.style.background = 'linear-gradient(90deg, var(--accent-red), var(--accent-yellow))';
+            } else {
+                bar.style.background = 'linear-gradient(90deg, var(--accent-blue), var(--accent-purple))';
+            }
+        }
+
+        function setDifficulty(level) {
+            difficulty = level;
+            ['easy', 'medium', 'hard', 'expert'].forEach(function(lvl) {
+                document.getElementById('btn-' + lvl).classList.remove('active');
+            });
+            document.getElementById('btn-' + level).classList.add('active');
+            document.getElementById('status').innerHTML =
+                '🎯 Difficulté changée: <strong>' + difficultyLevels[level].name + '</strong>';
+        }
+
+        function newGame() {
+            game = new Chess();
+            board.start();
+            moveHistory = [];
+            gameAnalyses = [];
+            currentMoveIndex = -1;
+            gameEnded = false;
+            document.getElementById('analysis-content').innerHTML =
+                '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">Jouez un coup pour voir l\'analyse en temps réel</div>';
+            document.getElementById('status').innerHTML = '🎯 Nouvelle partie! Faites votre coup.';
+            document.getElementById('report-btn').style.display = 'none';
+            document.getElementById('navigation-controls').style.display = 'none';
+            document.getElementById('undo-btn').style.display = 'inline-block';
+            document.getElementById('hint-btn').style.display = 'inline-block';
+            updateGameInfo();
+        }
+
+        function undoMove() {
+            if (moveHistory.length === 0) return;
+            game.undo();
+            game.undo();
+            board.position(game.fen());
+            moveHistory.pop();
+            gameAnalyses.pop();
+            document.getElementById('status').innerHTML = '↩️ Coup annulé!';
+            updateGameInfo();
+        }
+
+        function getHint() {
+            document.getElementById('status').innerHTML = '⏳ Analyse en cours...';
+
+            setTimeout(() => {
+                const analysisDepth = difficultyLevels[difficulty].analysisDepth;
+                const hint = getBestMove(game, analysisDepth);
+                if (hint) {
+                    document.getElementById('status').innerHTML =
+                        '💡 Indice: Essayez <strong>' + hint.san + '</strong> (' + hint.from + ' → ' + hint.to + ')';
+                }
+            }, 50);
+        }
+
+        function handleGameOver() {
+            let message = '';
+            if (game.in_checkmate()) {
+                // Si c'est mat, celui qui est mat a perdu
+                // game.turn() donne celui qui DOIT jouer (et qui ne peut pas = mat)
+                // Donc si game.turn() === 'w', les blancs (le joueur) sont mats = défaite
+                message = game.turn() === 'w' ?
+                    '😔 Défaite! Vous êtes mat!' :
+                    '🎉 Victoire! Vous avez maté l\'IA!';
+            } else if (game.in_draw()) {
+                message = '🤝 Match nul!';
+            } else if (game.in_stalemate()) {
+                message = '🔄 Pat!';
+            } else if (game.in_threefold_repetition()) {
+                message = '🔄 Nulle par répétition!';
+            } else if (game.insufficient_material()) {
+                message = '🤝 Nulle - Matériel insuffisant!';
+            }
+
+            message += '<br><br>📊 Cliquez sur "Rapport" pour voir l\'analyse complète!';
+            message += '<br>👇 Utilisez les boutons ci-dessous pour revoir les coups';
+            document.getElementById('status').innerHTML = message;
+            document.getElementById('report-btn').style.display = 'inline-block';
+
+            // Activer la navigation
+            gameEnded = true;
+            currentMoveIndex = gameAnalyses.length - 1; // Dernier coup
+            document.getElementById('navigation-controls').style.display = 'block';
+            document.getElementById('undo-btn').style.display = 'none';
+            document.getElementById('hint-btn').style.display = 'none';
+            updateNavigationInfo();
+
+            // Afficher l'analyse du dernier coup
+            if (gameAnalyses.length > 0) {
+                displayAnalysis(gameAnalyses[currentMoveIndex]);
+            }
+        }
+
+        function navigateMove(direction) {
+            if (!gameEnded || gameAnalyses.length === 0) return;
+
+            currentMoveIndex += direction;
+
+            // Limiter l'index
+            if (currentMoveIndex < 0) currentMoveIndex = 0;
+            if (currentMoveIndex >= gameAnalyses.length) currentMoveIndex = gameAnalyses.length - 1;
+
+            // Utiliser l'index exact dans moveHistory
+            const moveIndexInHistory = gameAnalyses[currentMoveIndex].moveHistoryIndex;
+
+            // Reconstruire la position jusqu'au coup courant
+            const tempGame = new Chess();
+            for (let i = 0; i <= moveIndexInHistory; i++) {
+                tempGame.move(moveHistory[i]);
+            }
+
+            // Mettre à jour le board
+            board.position(tempGame.fen());
+
+            // Afficher l'analyse du coup courant
+            displayAnalysis(gameAnalyses[currentMoveIndex]);
+
+            updateNavigationInfo();
+        }
+
+        function updateNavigationInfo() {
+            const info = 'Coup ' + (currentMoveIndex + 1) + ' / ' + gameAnalyses.length;
+            document.getElementById('move-nav-info').textContent = info;
+        }
+
+        function showGameReport() {
+            const reportWin = window.open('', 'Rapport', 'width=1200,height=800');
+
+            const avgRating = gameAnalyses.reduce(function(sum, a) { return sum + a.rating; }, 0) / gameAnalyses.length;
+            const brilliantMoves = gameAnalyses.filter(function(a) { return a.brilliant; }).length;
+            const excellentMoves = gameAnalyses.filter(function(a) { return a.rating >= 9; }).length;
+            const goodMoves = gameAnalyses.filter(function(a) { return a.rating >= 7; }).length;
+
+            // Générer le PGN de la partie
+            const pgn = game.pgn();
+
+            let html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">';
+            html += '<title>Rapport de Partie</title><style>';
+            html += 'body{font-family:Arial;background:#0f1419;color:#e5e7eb;padding:40px}';
+            html += '.container{max-width:1200px;margin:0 auto;background:#242938;border-radius:20px;padding:40px}';
+            html += 'h1{text-align:center;color:#8b5cf6;font-size:2.5em}';
+            html += '.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:30px 0}';
+            html += '.stat{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:15px;padding:20px;text-align:center}';
+            html += '.stat .value{font-size:2.5em;font-weight:bold;color:#3b82f6;margin:10px 0}';
+            html += '.stat .label{color:#9ca3af}';
+            html += '.move{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:15px;padding:25px;margin:20px 0}';
+            html += '.move-header{display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid rgba(139,92,246,0.3)}';
+            html += '.move-title{font-size:1.5em;font-weight:bold;color:#8b5cf6}';
+            html += '.move-rating{padding:10px 25px;border-radius:20px;font-size:1.8em;font-weight:bold}';
+            html += '.excellent{background:linear-gradient(135deg,#10b981,#059669)}';
+            html += '.good{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}';
+            html += '.average{background:linear-gradient(135deg,#f59e0b,#ef4444)}';
+            html += '.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}';
+            html += '.section{background:rgba(59,130,246,0.05);padding:15px;border-radius:10px}';
+            html += '.section h4{color:#8b5cf6;margin-bottom:10px;font-size:0.9em}';
+            html += 'button{background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:white;border:none;padding:15px 30px;border-radius:10px;font-size:1.1em;cursor:pointer;margin:30px auto;display:block}';
+            html += '</style></head><body><div class="container">';
+            html += '<h1>📊 Rapport de Partie - ChessNova</h1>';
+            html += '<div class="summary">';
+            html += '<div class="stat"><div class="label">Note Moyenne</div><div class="value">' + avgRating.toFixed(1) + '/10</div></div>';
+            html += '<div class="stat"><div class="label">Coups Brillants</div><div class="value">⭐ ' + brilliantMoves + '</div></div>';
+            html += '<div class="stat"><div class="label">Excellents</div><div class="value">🌟 ' + excellentMoves + '</div></div>';
+            html += '<div class="stat"><div class="label">Bons</div><div class="value">👍 ' + goodMoves + '</div></div>';
+            html += '</div>';
+
+            // Ajouter le PGN
+            html += '<div style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:15px;padding:20px;margin:20px 0">';
+            html += '<h2 style="color:#8b5cf6;margin-bottom:15px">♟️ PGN de la Partie</h2>';
+            html += '<textarea readonly style="width:100%;min-height:120px;background:#1a1f2e;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:15px;font-family:monospace;font-size:0.9em;resize:vertical">';
+            html += pgn;
+            html += '</textarea>';
+            html += '<button onclick="navigator.clipboard.writeText(this.previousElementSibling.value).then(function(){alert(\'PGN copié !\')});" style="margin-top:10px">📋 Copier le PGN</button>';
+            html += '</div>';
+
+            html += '<div style="text-align:center;margin:20px 0">';
+            html += '<button onclick="copyDetailedAnalysis()" style="font-size:1.1em;padding:15px 30px">📋 Copier l\'Analyse Détaillée</button>';
+            html += '</div>';
+
+            html += '<h2 style="color:#8b5cf6">📝 Analyse Détaillée</h2>';
+
+            gameAnalyses.forEach(function(a) {
+                const ratingClass = a.rating >= 9 ? 'excellent' : a.rating >= 7 ? 'good' : 'average';
+                const ratingEmoji = a.rating >= 9 ? '🌟' : a.rating >= 7 ? '👍' : '📈';
+
+                html += '<div class="move">';
+                html += '<div class="move-header">';
+                html += '<div class="move-title">Coup ' + a.moveNumber + ': ' + a.move + (a.brilliant ? ' ⭐ BRILLANT!' : '') + '</div>';
+                html += '<div class="move-rating ' + ratingClass + '">' + ratingEmoji + ' ' + a.rating + '/10</div>';
+                html += '</div>';
+                html += '<div class="grid">';
+                html += '<div class="section"><h4>💪 Forces</h4><p>' + a.strengths + '</p></div>';
+                html += '<div class="section"><h4>⚠️ Faiblesses</h4><p>' + a.weaknesses + '</p></div>';
+                html += '<div class="section"><h4>✅ Avantages</h4><p>' + a.advantages + '</p></div>';
+                html += '<div class="section"><h4>❌ Inconvénients</h4><p>' + a.disadvantages + '</p></div>';
+                html += '</div>';
+                html += '<div class="section" style="margin-top:15px"><h4>💡 Recommandation</h4><p>' + a.recommendation + '</p></div>';
+                html += '<div class="section" style="margin-top:15px"><h4>🎯 Thèmes</h4><p>' + a.themes + '</p></div>';
+                html += '</div>';
+            });
+
+            html += '<div style="text-align:center;margin:30px 0">';
+            html += '<button onclick="copyDetailedAnalysis()" style="font-size:1.1em;padding:15px 30px;margin:10px">📋 Copier l\'Analyse Détaillée</button>';
+            html += '<button onclick="window.print()" style="margin:10px">🖨️ Imprimer</button>';
+            html += '</div>';
+            html += '</div>';
+
+            // Passer les données en JSON pour éviter les problèmes d'échappement
+            html += '<script>';
+            html += 'var reportData = ' + JSON.stringify({
+                avgRating: avgRating.toFixed(1),
+                brilliantMoves: brilliantMoves,
+                excellentMoves: excellentMoves,
+                goodMoves: goodMoves,
+                pgn: pgn,
+                analyses: gameAnalyses
+            }) + ';';
+
+            html += 'function copyDetailedAnalysis() {';
+            html += '  var text = "RAPPORT DE PARTIE - ChessNova\\n";';
+            html += '  text += "=".repeat(60) + "\\n\\n";';
+            html += '  text += "STATISTIQUES GLOBALES\\n";';
+            html += '  text += "-".repeat(60) + "\\n";';
+            html += '  text += "Note Moyenne: " + reportData.avgRating + "/10\\n";';
+            html += '  text += "Coups Brillants: ⭐ " + reportData.brilliantMoves + "\\n";';
+            html += '  text += "Coups Excellents: 🌟 " + reportData.excellentMoves + "\\n";';
+            html += '  text += "Bons Coups: 👍 " + reportData.goodMoves + "\\n\\n";';
+            html += '  text += "PGN DE LA PARTIE\\n";';
+            html += '  text += "-".repeat(60) + "\\n";';
+            html += '  text += reportData.pgn + "\\n\\n";';
+            html += '  text += "ANALYSE DÉTAILLÉE\\n";';
+            html += '  text += "=".repeat(60) + "\\n\\n";';
+            html += '  reportData.analyses.forEach(function(a) {';
+            html += '    var emoji = a.rating >= 9 ? "🌟" : a.rating >= 7 ? "👍" : "📈";';
+            html += '    text += "Coup " + a.moveNumber + ": " + a.move + (a.brilliant ? " ⭐ BRILLANT!" : "") + "\\n";';
+            html += '    text += "Note: " + emoji + " " + a.rating + "/10\\n\\n";';
+            html += '    text += "💪 Forces\\n" + a.strengths + "\\n\\n";';
+            html += '    text += "⚠️ Faiblesses\\n" + a.weaknesses + "\\n\\n";';
+            html += '    text += "✅ Avantages\\n" + a.advantages + "\\n\\n";';
+            html += '    text += "❌ Inconvénients\\n" + a.disadvantages + "\\n\\n";';
+            html += '    text += "💡 Recommandation\\n" + a.recommendation + "\\n\\n";';
+            html += '    text += "🎯 Thèmes: " + a.themes + "\\n";';
+            html += '    text += "-".repeat(60) + "\\n\\n";';
+            html += '  });';
+            html += '  navigator.clipboard.writeText(text).then(function() {';
+            html += '    alert("✅ Analyse complète copiée!");';
+            html += '  }).catch(function(err) {';
+            html += '    alert("❌ Erreur: " + err);';
+            html += '  });';
+            html += '}';
+            html += '<\/script>';
+
+            html += '
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body></html>';
+
+            reportWin.document.write(html);
+            reportWin.document.close();
+        }
+
+        window.onload = function() {
+            initBoard();
+            updateGameInfo();
+        };
+    </script>
+</body>
+</html>

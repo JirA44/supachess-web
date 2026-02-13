@@ -1,0 +1,998 @@
+// AIMIX Multiplayer & Tournament Server - Cloudflare Workers + Durable Objects
+// Supporte: Joueur vs Joueur, IA vs IA, Joueur vs IA (serveur)
+// Version avec chess.js intégré pour coups légaux
+
+// === CHESS.JS MINIMAL EMBEDDED ===
+// Embedded minimal chess logic for move generation
+class ChessGame {
+  constructor(fen) {
+    this.SQUARES = {
+      a8: 0, b8: 1, c8: 2, d8: 3, e8: 4, f8: 5, g8: 6, h8: 7,
+      a7: 16, b7: 17, c7: 18, d7: 19, e7: 20, f7: 21, g7: 22, h7: 23,
+      a6: 32, b6: 33, c6: 34, d6: 35, e6: 36, f6: 37, g6: 38, h6: 39,
+      a5: 48, b5: 49, c5: 50, d5: 51, e5: 52, f5: 53, g5: 54, h5: 55,
+      a4: 64, b4: 65, c4: 66, d4: 67, e4: 68, f4: 69, g4: 70, h4: 71,
+      a3: 80, b3: 81, c3: 82, d3: 83, e3: 84, f3: 85, g3: 86, h3: 87,
+      a2: 96, b2: 97, c2: 98, d2: 99, e2: 100, f2: 101, g2: 102, h2: 103,
+      a1: 112, b1: 113, c1: 114, d1: 115, e1: 116, f1: 117, g1: 118, h1: 119
+    };
+    this.board = new Array(128);
+    this.turn = 'w';
+    this.castling = { w: 0, b: 0 };
+    this.ep_square = -1;
+    this.half_moves = 0;
+    this.move_number = 1;
+    this.history = [];
+    this.load(fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  }
+
+  load(fen) {
+    const tokens = fen.split(/\s+/);
+    const position = tokens[0];
+    let square = 0;
+
+    this.board = new Array(128);
+
+    for (let i = 0; i < position.length; i++) {
+      const piece = position.charAt(i);
+      if (piece === '/') {
+        square += 8;
+      } else if ('12345678'.indexOf(piece) !== -1) {
+        square += parseInt(piece, 10);
+      } else {
+        const color = piece < 'a' ? 'w' : 'b';
+        this.board[square] = { type: piece.toLowerCase(), color };
+        square++;
+      }
+    }
+
+    this.turn = tokens[1];
+
+    this.castling = { w: 0, b: 0 };
+    if (tokens[2].indexOf('K') > -1) this.castling.w |= 1;
+    if (tokens[2].indexOf('Q') > -1) this.castling.w |= 2;
+    if (tokens[2].indexOf('k') > -1) this.castling.b |= 1;
+    if (tokens[2].indexOf('q') > -1) this.castling.b |= 2;
+
+    this.ep_square = tokens[3] === '-' ? -1 : this.SQUARES[tokens[3]];
+    this.half_moves = parseInt(tokens[4], 10);
+    this.move_number = parseInt(tokens[5], 10);
+  }
+
+  fen() {
+    let empty = 0;
+    let fen = '';
+
+    for (let i = 0; i < 128; i++) {
+      if (i & 0x88) {
+        if (empty > 0) {
+          fen += empty;
+          empty = 0;
+        }
+        if (i < 119) fen += '/';
+        i += 7;
+        continue;
+      }
+
+      const piece = this.board[i];
+      if (piece) {
+        if (empty > 0) {
+          fen += empty;
+          empty = 0;
+        }
+        fen += piece.color === 'w' ? piece.type.toUpperCase() : piece.type;
+      } else {
+        empty++;
+      }
+    }
+
+    if (empty > 0) fen += empty;
+
+    let castling = '';
+    if (this.castling.w & 1) castling += 'K';
+    if (this.castling.w & 2) castling += 'Q';
+    if (this.castling.b & 1) castling += 'k';
+    if (this.castling.b & 2) castling += 'q';
+
+    const ep = this.ep_square === -1 ? '-' : this.algebraic(this.ep_square);
+
+    return [fen, this.turn, castling || '-', ep, this.half_moves, this.move_number].join(' ');
+  }
+
+  algebraic(i) {
+    const f = i & 15;
+    const r = i >> 4;
+    return 'abcdefgh'.charAt(f) + '87654321'.charAt(r);
+  }
+
+  rank(i) { return i >> 4; }
+  file(i) { return i & 15; }
+
+  moves(options = {}) {
+    const moves = [];
+    const us = this.turn;
+    const them = us === 'w' ? 'b' : 'w';
+
+    const PAWN_OFFSETS = {
+      b: [16, 32, 17, 15],
+      w: [-16, -32, -17, -15]
+    };
+
+    const PIECE_OFFSETS = {
+      n: [-18, -33, -31, -14, 18, 33, 31, 14],
+      b: [-17, -15, 17, 15],
+      r: [-16, 1, 16, -1],
+      q: [-17, -16, -15, 1, 17, 16, 15, -1],
+      k: [-17, -16, -15, 1, 17, 16, 15, -1]
+    };
+
+    for (let i = 0; i < 128; i++) {
+      if (i & 0x88) continue;
+
+      const piece = this.board[i];
+      if (!piece || piece.color !== us) continue;
+
+      if (piece.type === 'p') {
+        // Pawn moves
+        const square = i + PAWN_OFFSETS[us][0];
+        if (!this.board[square]) {
+          moves.push(this.buildMove(i, square, piece));
+          const square2 = i + PAWN_OFFSETS[us][1];
+          if ((us === 'w' && this.rank(i) === 6) || (us === 'b' && this.rank(i) === 1)) {
+            if (!this.board[square2]) {
+              moves.push(this.buildMove(i, square2, piece, { flags: 'b' }));
+            }
+          }
+        }
+        // Captures
+        for (let j = 2; j < 4; j++) {
+          const sq = i + PAWN_OFFSETS[us][j];
+          if (sq & 0x88) continue;
+          if (this.board[sq] && this.board[sq].color === them) {
+            moves.push(this.buildMove(i, sq, piece, { captured: this.board[sq] }));
+          } else if (sq === this.ep_square) {
+            moves.push(this.buildMove(i, sq, piece, { flags: 'e' }));
+          }
+        }
+      } else {
+        const offsets = PIECE_OFFSETS[piece.type];
+        for (let j = 0; j < offsets.length; j++) {
+          let square = i;
+          while (true) {
+            square += offsets[j];
+            if (square & 0x88) break;
+
+            if (!this.board[square]) {
+              moves.push(this.buildMove(i, square, piece));
+            } else {
+              if (this.board[square].color === them) {
+                moves.push(this.buildMove(i, square, piece, { captured: this.board[square] }));
+              }
+              break;
+            }
+
+            if (piece.type === 'n' || piece.type === 'k') break;
+          }
+        }
+      }
+    }
+
+    // Castling
+    if (us === 'w') {
+      if ((this.castling.w & 1) && !this.board[117] && !this.board[118]) {
+        moves.push(this.buildMove(116, 118, { type: 'k', color: 'w' }, { flags: 'k' }));
+      }
+      if ((this.castling.w & 2) && !this.board[113] && !this.board[114] && !this.board[115]) {
+        moves.push(this.buildMove(116, 114, { type: 'k', color: 'w' }, { flags: 'q' }));
+      }
+    } else {
+      if ((this.castling.b & 1) && !this.board[5] && !this.board[6]) {
+        moves.push(this.buildMove(4, 6, { type: 'k', color: 'b' }, { flags: 'k' }));
+      }
+      if ((this.castling.b & 2) && !this.board[1] && !this.board[2] && !this.board[3]) {
+        moves.push(this.buildMove(4, 2, { type: 'k', color: 'b' }, { flags: 'q' }));
+      }
+    }
+
+    // Filter legal moves (simple king safety check)
+    const legalMoves = moves.filter(move => {
+      const backup = this.makeMove(move);
+      const legal = !this.inCheck(us);
+      this.undoMove(backup);
+      return legal;
+    });
+
+    return legalMoves;
+  }
+
+  buildMove(from, to, piece, extras = {}) {
+    return {
+      from: this.algebraic(from),
+      to: this.algebraic(to),
+      piece: piece.type,
+      color: piece.color,
+      san: this.makeSAN(from, to, piece, extras),
+      ...extras,
+      _from: from,
+      _to: to
+    };
+  }
+
+  makeSAN(from, to, piece, extras) {
+    if (extras.flags === 'k') return 'O-O';
+    if (extras.flags === 'q') return 'O-O-O';
+
+    let san = '';
+    if (piece.type !== 'p') {
+      san += piece.type.toUpperCase();
+    }
+    if (extras.captured || piece.type === 'p') {
+      if (piece.type === 'p' && extras.captured) {
+        san += 'abcdefgh'.charAt(from & 15);
+      }
+      if (extras.captured) san += 'x';
+    }
+    san += this.algebraic(to);
+
+    // Promotion
+    if (piece.type === 'p' && (this.rank(to) === 0 || this.rank(to) === 7)) {
+      san += '=Q';
+    }
+
+    return san;
+  }
+
+  makeMove(move) {
+    const backup = {
+      board: [...this.board],
+      turn: this.turn,
+      castling: { ...this.castling },
+      ep_square: this.ep_square,
+      half_moves: this.half_moves,
+      move_number: this.move_number
+    };
+
+    const from = move._from;
+    const to = move._to;
+    const piece = this.board[from];
+
+    this.board[to] = piece;
+    this.board[from] = null;
+
+    // Castling
+    if (move.flags === 'k') {
+      this.board[to - 1] = this.board[to + 1];
+      this.board[to + 1] = null;
+    } else if (move.flags === 'q') {
+      this.board[to + 1] = this.board[to - 2];
+      this.board[to - 2] = null;
+    }
+
+    // En passant
+    if (move.flags === 'e') {
+      const captured_sq = this.turn === 'w' ? to + 16 : to - 16;
+      this.board[captured_sq] = null;
+    }
+
+    // Promotion
+    if (piece.type === 'p' && (this.rank(to) === 0 || this.rank(to) === 7)) {
+      this.board[to] = { type: 'q', color: piece.color };
+    }
+
+    // Update castling rights
+    if (piece.type === 'k') {
+      this.castling[piece.color] = 0;
+    }
+    if (from === 112 || to === 112) this.castling.w &= ~2;
+    if (from === 119 || to === 119) this.castling.w &= ~1;
+    if (from === 0 || to === 0) this.castling.b &= ~2;
+    if (from === 7 || to === 7) this.castling.b &= ~1;
+
+    // Update en passant
+    if (piece.type === 'p' && Math.abs(from - to) === 32) {
+      this.ep_square = (from + to) / 2;
+    } else {
+      this.ep_square = -1;
+    }
+
+    this.turn = this.turn === 'w' ? 'b' : 'w';
+    if (this.turn === 'w') this.move_number++;
+
+    if (piece.type === 'p' || move.captured) {
+      this.half_moves = 0;
+    } else {
+      this.half_moves++;
+    }
+
+    return backup;
+  }
+
+  undoMove(backup) {
+    this.board = backup.board;
+    this.turn = backup.turn;
+    this.castling = backup.castling;
+    this.ep_square = backup.ep_square;
+    this.half_moves = backup.half_moves;
+    this.move_number = backup.move_number;
+  }
+
+  move(moveObj) {
+    const legalMoves = this.moves();
+    const move = legalMoves.find(m => m.from === moveObj.from && m.to === moveObj.to);
+    if (!move) return null;
+
+    this.makeMove(move);
+    this.history.push(move);
+    return move;
+  }
+
+  findKing(color) {
+    for (let i = 0; i < 128; i++) {
+      if (i & 0x88) continue;
+      const piece = this.board[i];
+      if (piece && piece.type === 'k' && piece.color === color) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  inCheck(color) {
+    const kingSquare = this.findKing(color);
+    if (kingSquare === -1) return false;
+    return this.isAttacked(kingSquare, color === 'w' ? 'b' : 'w');
+  }
+
+  isAttacked(square, byColor) {
+    // Simplified attack detection
+    for (let i = 0; i < 128; i++) {
+      if (i & 0x88) continue;
+      const piece = this.board[i];
+      if (!piece || piece.color !== byColor) continue;
+
+      // Check if this piece can attack the square
+      const dx = (square & 15) - (i & 15);
+      const dy = (square >> 4) - (i >> 4);
+
+      if (piece.type === 'p') {
+        const dir = byColor === 'w' ? -1 : 1;
+        if (dy === dir && Math.abs(dx) === 1) return true;
+      } else if (piece.type === 'n') {
+        if ((Math.abs(dx) === 2 && Math.abs(dy) === 1) || (Math.abs(dx) === 1 && Math.abs(dy) === 2)) {
+          return true;
+        }
+      } else if (piece.type === 'k') {
+        if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) return true;
+      } else if (piece.type === 'b' || piece.type === 'q') {
+        if (Math.abs(dx) === Math.abs(dy)) {
+          if (this.pathClear(i, square)) return true;
+        }
+      }
+      if (piece.type === 'r' || piece.type === 'q') {
+        if (dx === 0 || dy === 0) {
+          if (this.pathClear(i, square)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  pathClear(from, to) {
+    const dx = Math.sign((to & 15) - (from & 15));
+    const dy = Math.sign((to >> 4) - (from >> 4));
+    const step = dy * 16 + dx;
+    let current = from + step;
+    while (current !== to) {
+      if (this.board[current]) return false;
+      current += step;
+    }
+    return true;
+  }
+
+  isCheckmate() {
+    return this.inCheck(this.turn) && this.moves().length === 0;
+  }
+
+  isStalemate() {
+    return !this.inCheck(this.turn) && this.moves().length === 0;
+  }
+
+  isDraw() {
+    // 50-move rule (100 half-moves)
+    if (this.half_moves >= 100) return true;
+    // Stalemate
+    if (this.isStalemate()) return true;
+    // Insufficient material
+    if (this.isInsufficientMaterial()) return true;
+    return false;
+  }
+
+  isInsufficientMaterial() {
+    let whitePieces = [], blackPieces = [];
+    for (let i = 0; i < 128; i++) {
+      if (i & 0x88) continue;
+      const piece = this.board[i];
+      if (piece) {
+        if (piece.color === 'w') whitePieces.push(piece.type);
+        else blackPieces.push(piece.type);
+      }
+    }
+    // King vs King
+    if (whitePieces.length === 1 && blackPieces.length === 1) return true;
+    // King + Bishop/Knight vs King
+    if (whitePieces.length === 1 && blackPieces.length === 2) {
+      if (blackPieces.includes('b') || blackPieces.includes('n')) return true;
+    }
+    if (blackPieces.length === 1 && whitePieces.length === 2) {
+      if (whitePieces.includes('b') || whitePieces.includes('n')) return true;
+    }
+    return false;
+  }
+
+  isGameOver() {
+    return this.isCheckmate() || this.isDraw();
+  }
+
+  // Memory cleanup
+  cleanup() {
+    this.board = null;
+    this.history = [];
+  }
+}
+
+// === WORKER CODE ===
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // === API ROUTES ===
+
+    if (url.pathname === '/api/create-room') {
+      const roomId = generateRoomId();
+      return jsonResponse({ roomId, success: true }, corsHeaders);
+    }
+
+    if (url.pathname === '/api/rooms') {
+      const id = env.GAME_ROOM.idFromName('lobby');
+      const stub = env.GAME_ROOM.get(id);
+      const response = await stub.fetch(new Request('http://internal/list-rooms'));
+      const rooms = await response.json();
+      return jsonResponse(rooms, corsHeaders);
+    }
+
+    if (url.pathname === '/api/ai-match' && request.method === 'POST') {
+      const body = await request.json();
+      const { white, black, roomId } = body;
+
+      const room = roomId || generateRoomId();
+      const id = env.GAME_ROOM.idFromName(room);
+      const stub = env.GAME_ROOM.get(id);
+
+      const response = await stub.fetch(new Request('http://internal/start-ai-match', {
+        method: 'POST',
+        body: JSON.stringify({
+          white: white || { type: 'stockfish', level: 10, name: 'Stockfish Lv10' },
+          black: black || { type: 'stockfish', level: 5, name: 'Stockfish Lv5' }
+        })
+      }));
+
+      const result = await response.json();
+      return jsonResponse({ roomId: room, ...result }, corsHeaders);
+    }
+
+    if (url.pathname === '/api/tournament' && request.method === 'POST') {
+      const body = await request.json();
+      const { participants, rounds } = body;
+
+      const tournamentId = 'T-' + generateRoomId();
+      const id = env.GAME_ROOM.idFromName(tournamentId);
+      const stub = env.GAME_ROOM.get(id);
+
+      const response = await stub.fetch(new Request('http://internal/start-tournament', {
+        method: 'POST',
+        body: JSON.stringify({ participants, rounds: rounds || 1 })
+      }));
+
+      const result = await response.json();
+      return jsonResponse({ tournamentId, ...result }, corsHeaders);
+    }
+
+    if (url.pathname.startsWith('/api/game/')) {
+      const roomId = url.pathname.split('/api/game/')[1];
+      const id = env.GAME_ROOM.idFromName(roomId);
+      const stub = env.GAME_ROOM.get(id);
+      const response = await stub.fetch(new Request('http://internal/status'));
+      const status = await response.json();
+      return jsonResponse(status, corsHeaders);
+    }
+
+    if (url.pathname.startsWith('/ws/')) {
+      const roomId = url.pathname.split('/ws/')[1];
+      if (!roomId) {
+        return new Response('Room ID required', { status: 400 });
+      }
+
+      const id = env.GAME_ROOM.idFromName(roomId);
+      const stub = env.GAME_ROOM.get(id);
+      return stub.fetch(request);
+    }
+
+    return new Response(`
+AIMIX Multiplayer & Tournament Server v2.0
+==========================================
+
+API Endpoints:
+- POST /api/create-room          → Créer une room
+- GET  /api/rooms                → Lister les rooms
+- POST /api/ai-match             → Lancer IA vs IA
+- POST /api/tournament           → Lancer un tournoi
+- GET  /api/game/{roomId}        → Statut d'une partie
+- WS   /ws/{roomId}              → WebSocket (observer/jouer)
+
+Exemple IA vs IA:
+POST /api/ai-match
+{
+  "white": { "type": "minimax", "level": 15, "name": "Minimax Pro" },
+  "black": { "type": "random", "level": 5, "name": "Random Bot" }
+}
+
+Types d'IA disponibles: minimax, random, defensive, aggressive, positional
+    `, { headers: corsHeaders });
+  }
+};
+
+function generateRoomId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function jsonResponse(data, corsHeaders) {
+  return new Response(JSON.stringify(data), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+
+// =============================================
+// DURABLE OBJECT: GameRoom
+// =============================================
+export class GameRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.sessions = new Map();
+    this.gameState = null;
+    this.aiPlayers = { white: null, black: null };
+    this.chess = null;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    if (!this.gameState) {
+      this.gameState = await this.state.storage.get('gameState') || this.createInitialState();
+    }
+
+    if (url.pathname === '/status') {
+      return new Response(JSON.stringify(this.gameState));
+    }
+
+    if (url.pathname === '/list-rooms') {
+      return new Response(JSON.stringify({
+        roomId: this.state.id.toString(),
+        players: this.gameState.players,
+        status: this.gameState.status,
+        moveCount: this.gameState.moves?.length || 0,
+        spectators: this.sessions.size
+      }));
+    }
+
+    if (url.pathname === '/start-ai-match' && request.method === 'POST') {
+      const body = await request.json();
+      return new Response(JSON.stringify(await this.startAIMatch(body.white, body.black)));
+    }
+
+    if (url.pathname === '/start-tournament' && request.method === 'POST') {
+      const body = await request.json();
+      return new Response(JSON.stringify(await this.startTournament(body.participants, body.rounds)));
+    }
+
+    if (request.headers.get('Upgrade') === 'websocket') {
+      const pair = new WebSocketPair();
+      const [client, server] = Object.values(pair);
+      await this.handleSession(server);
+      return new Response(null, { status: 101, webSocket: client });
+    }
+
+    return new Response('Expected WebSocket', { status: 400 });
+  }
+
+  createInitialState() {
+    return {
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      moves: [],
+      players: { white: null, black: null },
+      status: 'waiting',
+      result: null,
+      createdAt: Date.now(),
+      lastActivity: Date.now()
+    };
+  }
+
+  async startAIMatch(whiteConfig, blackConfig) {
+    this.gameState = this.createInitialState();
+    this.gameState.status = 'playing';
+    this.gameState.players = {
+      white: { name: whiteConfig.name, type: 'ai', config: whiteConfig },
+      black: { name: blackConfig.name, type: 'ai', config: blackConfig }
+    };
+
+    this.aiPlayers = { white: whiteConfig, black: blackConfig };
+    this.chess = new ChessGame();
+
+    this.broadcast({
+      type: 'game_started',
+      data: { gameState: this.gameState }
+    });
+
+    // Run AI game
+    await this.runAIGame();
+
+    return { success: true, message: 'AI match completed', gameState: this.gameState };
+  }
+
+  async runAIGame() {
+    const MAX_MOVES = 100; // Reduced for memory management
+    let moveCount = 0;
+    let positionHistory = new Map(); // Track positions for threefold repetition
+
+    while (this.gameState.status === 'playing' && moveCount < MAX_MOVES) {
+      const isWhiteTurn = moveCount % 2 === 0;
+      const currentAI = isWhiteTurn ? this.aiPlayers.white : this.aiPlayers.black;
+      const color = isWhiteTurn ? 'white' : 'black';
+
+      try {
+        // Get legal moves
+        const legalMoves = this.chess.moves();
+
+        if (legalMoves.length === 0) {
+          // Game over
+          if (this.chess.isCheckmate()) {
+            this.gameState.status = 'finished';
+            this.gameState.result = isWhiteTurn ? '0-1' : '1-0';
+          } else {
+            this.gameState.status = 'finished';
+            this.gameState.result = '1/2-1/2';
+          }
+          break;
+        }
+
+        // AI selects move based on type and level
+        const selectedMove = this.selectAIMove(currentAI, legalMoves);
+
+        // Execute move
+        this.chess.move(selectedMove);
+        const newFen = this.chess.fen();
+        const posKey = newFen.split(' ').slice(0, 4).join(' '); // Position key without move counters
+
+        // Check threefold repetition
+        const posCount = (positionHistory.get(posKey) || 0) + 1;
+        positionHistory.set(posKey, posCount);
+        if (posCount >= 3) {
+          this.gameState.status = 'finished';
+          this.gameState.result = '1/2-1/2';
+          break;
+        }
+
+        // Record move (minimal data to save RAM)
+        this.gameState.moves.push({
+          san: selectedMove.san,
+          moveNumber: Math.floor(moveCount / 2) + 1
+        });
+        this.gameState.fen = newFen;
+        this.gameState.lastActivity = Date.now();
+
+        // Broadcast move (only if there are spectators)
+        if (this.sessions.size > 0) {
+          this.broadcast({
+            type: 'move',
+            data: {
+              san: selectedMove.san,
+              fen: newFen,
+              moveNumber: Math.floor(moveCount / 2) + 1
+            }
+          });
+        }
+
+        // Check game over
+        if (this.chess.isGameOver()) {
+          this.gameState.status = 'finished';
+          if (this.chess.isCheckmate()) {
+            this.gameState.result = isWhiteTurn ? '1-0' : '0-1';
+          } else {
+            this.gameState.result = '1/2-1/2';
+          }
+          break;
+        }
+
+        moveCount++;
+
+        // Yield to event loop every 10 moves for better responsiveness
+        if (moveCount % 10 === 0) {
+          await this.delay(10);
+        }
+
+      } catch (error) {
+        console.error('AI move error:', error);
+        this.gameState.status = 'error';
+        this.gameState.error = error.message;
+        break;
+      }
+    }
+
+    if (moveCount >= MAX_MOVES) {
+      this.gameState.status = 'finished';
+      this.gameState.result = '1/2-1/2';
+    }
+
+    // Memory cleanup
+    positionHistory.clear();
+    positionHistory = null;
+
+    // Save only essential data
+    const summary = {
+      status: this.gameState.status,
+      result: this.gameState.result,
+      moveCount: this.gameState.moves.length,
+      fen: this.gameState.fen,
+      players: this.gameState.players,
+      createdAt: this.gameState.createdAt
+    };
+    await this.state.storage.put('gameState', summary);
+
+    this.broadcast({
+      type: 'game_over',
+      data: {
+        result: this.gameState.result,
+        moves: this.gameState.moves.length
+      }
+    });
+
+    // Cleanup chess instance
+    if (this.chess) {
+      this.chess.cleanup();
+      this.chess = null;
+    }
+
+    return this.gameState;
+  }
+
+  // Check if a move gives check
+  movesGivesCheck(move) {
+    const backup = this.chess.makeMove(move);
+    const givesCheck = this.chess.inCheck(this.chess.turn);
+    this.chess.undoMove(backup);
+    return givesCheck;
+  }
+
+  selectAIMove(aiConfig, legalMoves) {
+    const type = aiConfig.type || 'random';
+    const level = aiConfig.level || 5;
+    const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+
+    // Pre-calculate which moves give check
+    const movesWithCheck = legalMoves.map(m => ({
+      ...m,
+      givesCheck: this.movesGivesCheck(m)
+    }));
+
+    switch (type) {
+      case 'random':
+        // Even random prefers checks sometimes
+        const checksR = movesWithCheck.filter(m => m.givesCheck);
+        if (checksR.length > 0 && Math.random() < 0.3) {
+          return checksR[Math.floor(Math.random() * checksR.length)];
+        }
+        return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+
+      case 'aggressive':
+        // Strongly prefer checks and captures
+        const checksA = movesWithCheck.filter(m => m.givesCheck);
+        if (checksA.length > 0 && Math.random() < 0.85) {
+          return checksA[Math.floor(Math.random() * checksA.length)];
+        }
+        const capturesA = movesWithCheck.filter(m => m.captured);
+        // Sort captures by value
+        capturesA.sort((a, b) => (pieceValues[b.captured?.type] || 0) - (pieceValues[a.captured?.type] || 0));
+        if (capturesA.length > 0 && Math.random() < 0.8) {
+          return capturesA[0]; // Best capture
+        }
+        return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+
+      case 'defensive':
+        // Prefer safe moves, but still take free pieces and give checks
+        const checksD = movesWithCheck.filter(m => m.givesCheck);
+        if (checksD.length > 0 && Math.random() < 0.5) {
+          return checksD[Math.floor(Math.random() * checksD.length)];
+        }
+        const safe = movesWithCheck.filter(m => !m.captured);
+        if (safe.length > 0 && Math.random() < 0.6) {
+          return safe[Math.floor(Math.random() * safe.length)];
+        }
+        return legalMoves[Math.floor(Math.random() * legalMoves.length)];
+
+      case 'positional':
+        // Center control + activity
+        const scored_pos = movesWithCheck.map(move => {
+          let score = 0;
+          if (move.givesCheck) score += 15;
+          if (move.captured) score += pieceValues[move.captured.type] * 5;
+          if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) score += 8;
+          if (['c4', 'c5', 'f4', 'f5', 'd3', 'd6', 'e3', 'e6'].includes(move.to)) score += 4;
+          if (move.piece === 'n' || move.piece === 'b') score += 3;
+          if (move.piece === 'q' && move.captured) score += 5;
+          score += Math.random() * 3;
+          return { move, score };
+        });
+        scored_pos.sort((a, b) => b.score - a.score);
+        return scored_pos[0].move;
+
+      case 'minimax':
+      default:
+        // Enhanced evaluation
+        const scored = movesWithCheck.map(move => {
+          let score = 0;
+
+          // Checks are very valuable
+          if (move.givesCheck) {
+            score += 20 + level; // Higher levels value checks more
+          }
+
+          // Captures - weighted by piece value
+          if (move.captured) {
+            score += pieceValues[move.captured.type] * 10;
+            // Bonus for capturing with lower value piece
+            const attackerValue = pieceValues[move.piece] || 1;
+            const capturedValue = pieceValues[move.captured.type] || 1;
+            if (attackerValue < capturedValue) {
+              score += (capturedValue - attackerValue) * 5;
+            }
+          }
+
+          // Center control
+          if (['d4', 'd5', 'e4', 'e5'].includes(move.to)) {
+            score += 5;
+          } else if (['c3', 'c4', 'c5', 'c6', 'f3', 'f4', 'f5', 'f6', 'd3', 'd6', 'e3', 'e6'].includes(move.to)) {
+            score += 2;
+          }
+
+          // Development bonus
+          if (move.piece === 'n' || move.piece === 'b') {
+            score += 3;
+          }
+
+          // Queen activity (after some development)
+          if (move.piece === 'q') {
+            score += 1;
+          }
+
+          // King safety - penalize early king moves
+          if (move.piece === 'k' && !move.flags?.includes('k') && !move.flags?.includes('q')) {
+            score -= 5;
+          }
+
+          // Castling is good
+          if (move.flags === 'k' || move.flags === 'q') {
+            score += 8;
+          }
+
+          // Add controlled randomness based on level (less random = stronger)
+          const randomFactor = Math.max(1, 15 - level);
+          score += Math.random() * randomFactor;
+
+          return { move, score };
+        });
+
+        scored.sort((a, b) => b.score - a.score);
+
+        // Higher level = pick closer to best move
+        const topN = Math.max(1, Math.ceil(scored.length * (1 - level / 30)));
+        const idx = Math.min(Math.floor(Math.random() * topN), scored.length - 1);
+        return scored[idx].move;
+    }
+  }
+
+  async startTournament(participants, rounds) {
+    const matches = [];
+    for (let r = 0; r < rounds; r++) {
+      for (let i = 0; i < participants.length; i++) {
+        for (let j = i + 1; j < participants.length; j++) {
+          matches.push({ round: r + 1, white: participants[i], black: participants[j], status: 'pending' });
+          matches.push({ round: r + 1, white: participants[j], black: participants[i], status: 'pending' });
+        }
+      }
+    }
+
+    this.gameState = {
+      type: 'tournament',
+      participants,
+      rounds,
+      matches,
+      results: {},
+      status: 'in_progress',
+      createdAt: Date.now()
+    };
+
+    participants.forEach(p => {
+      this.gameState.results[p.name] = { wins: 0, losses: 0, draws: 0, points: 0 };
+    });
+
+    await this.state.storage.put('gameState', this.gameState);
+
+    return { success: true, totalMatches: matches.length, tournament: this.gameState };
+  }
+
+  async handleSession(webSocket) {
+    webSocket.accept();
+    const sessionId = crypto.randomUUID();
+    const session = { id: sessionId, ws: webSocket, role: 'spectator' };
+    this.sessions.set(sessionId, session);
+
+    this.send(webSocket, { type: 'game_state', data: this.gameState });
+
+    webSocket.addEventListener('message', async (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        await this.handleMessage(session, message);
+      } catch (e) {
+        console.error('Message error:', e);
+      }
+    });
+
+    webSocket.addEventListener('close', () => {
+      this.sessions.delete(sessionId);
+      this.broadcast({ type: 'spectator_left', data: { count: this.sessions.size } });
+    });
+  }
+
+  async handleMessage(session, message) {
+    switch (message.type) {
+      case 'join':
+        session.name = message.data.name;
+        this.broadcast({ type: 'spectator_joined', data: { name: session.name, count: this.sessions.size } });
+        break;
+      case 'chat':
+        this.broadcast({ type: 'chat', data: { from: session.name || 'Spectator', message: message.data.message } });
+        break;
+    }
+  }
+
+  send(ws, message) {
+    try { ws.send(JSON.stringify(message)); } catch (e) {}
+  }
+
+  broadcast(message) {
+    const json = JSON.stringify(message);
+    for (const session of this.sessions.values()) {
+      try { session.ws.send(json); } catch (e) {}
+    }
+  }
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}

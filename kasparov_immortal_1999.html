@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<!-- Version 2.3 - Fix navigation - 2026-01-23 -->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasparov vs Topalov - Wijk aan Zee 1999 | La Partie Immortelle Moderne</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(120deg, #fff, #ff6b6b, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .nav-back {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(-5px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .board-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .board-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        #chessboard {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        /* Pièces noires - FOND NOIR avec TEXTE BLANC */
+        .piece-black {
+            color: #ffffff !important;
+            background: #000000 !important;
+            padding: 6px 10px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 45px;
+            min-height: 45px;
+            border: 3px solid #666;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+            font-weight: bold;
+            text-shadow: none !important;
+        }
+
+        /* Pièces blanches - FOND BLANC avec TEXTE NOIR */
+        .piece-white {
+            color: #000000 !important;
+            background: #ffffff !important;
+            padding: 6px 10px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 45px;
+            min-height: 45px;
+            border: 3px solid #999;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+            font-weight: bold;
+            text-shadow: none !important;
+        }
+
+        .square.highlight {
+            background: rgba(255, 255, 0, 0.5) !important;
+            box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .square.last-move {
+            background: rgba(155, 199, 0, 0.4) !important;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .move-info {
+            text-align: center;
+            font-size: 1.3em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .moves-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .moves-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            border-bottom: 2px solid rgba(255, 107, 107, 0.5);
+            padding-bottom: 10px;
+        }
+
+        .move-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .move-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: #ff6b6b;
+            transform: translateX(5px);
+        }
+
+        .move-item.active {
+            background: rgba(255, 107, 107, 0.2);
+            border-left-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .move-item.brilliant {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .move-number {
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-right: 10px;
+        }
+
+        .move-notation {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .move-comment {
+            margin-top: 8px;
+            font-size: 0.95em;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 107, 107, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 107, 107, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="nav-back">← Retour au Hub</a>
+
+        <div class="header">
+            <h1>🔥 Kasparov vs Topalov - La Partie Immortelle Moderne 👑</h1>
+            <p class="subtitle">Wijk aan Zee, 1999 | Défense Pirc</p>
+            <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
+                "Une des plus belles parties jamais jouées" - ChessBase
+            </p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">🏆 Tournoi</div>
+                <div class="stat-value" style="font-size: 1.3em;">Wijk aan Zee</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📅 Année</div>
+                <div class="stat-value">1999</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🎯 Ouverture</div>
+                <div class="stat-value" style="font-size: 1.3em;">Pirc Defense</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">⚡ Nombre de coups</div>
+                <div class="stat-value">44</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🌟 Résultat</div>
+                <div class="stat-value">1-0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.8em;">🎯 Position Actuelle</h2>
+                <div class="board-container">
+                    <div id="chessboard"></div>
+                </div>
+                <div class="move-info" id="moveInfo">
+                    Position initiale
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="goToStart()">⏮️ Début</button>
+                    <button class="btn" onclick="previousMove()">◀️ Précédent</button>
+                    <button class="btn" onclick="nextMove()">Suivant ▶️</button>
+                    <button class="btn" onclick="goToEnd()">Fin ⏭️</button>
+                </div>
+            </div>
+
+            <div class="moves-section">
+                <h2>📋 Coups de la Partie</h2>
+                <div id="movesList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliothèque chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // Initialisation du moteur chess.js
+        const chess = new Chess();
+
+        // PGN de la partie légendaire Kasparov vs Topalov
+        const gameMoves = [
+            { move: 'e4', comment: '💪 Kasparov ouvre avec 1.e4, son arme favorite! Le champion du monde joue pour la victoire!' },
+            { move: 'd6', comment: '🎯 La Défense Pirc! Topalov choisit une ouverture hypermoderne et flexible, acceptant un léger retard de développement.' },
+            { move: 'd4', comment: '⚔️ Occupation classique du centre! Kasparov établit le duo de pions idéal e4-d4.' },
+            { move: 'Nf6', comment: 'Le cavalier noir attaque le pion e4 tout en se développant harmonieusement.' },
+            { move: 'Nc3', comment: 'Défense du pion e4 et développement! Le cavalier contrôle d5 et e4.' },
+            { move: 'g6', comment: '🏰 Topalov fianchette son fou! Typique de la Pirc - le fou g7 sera un monstre sur la grande diagonale.' },
+            { move: 'Be3', comment: '💎 Développement actif! Le fou vise f2 et prépare Qd2 avec l\'idée Bh6.' },
+            { move: 'Bg7', comment: '🐉 Le Dragon s\'éveille! Le fou noir prend sa diagonale mortelle a1-h8.' },
+            { move: 'Qd2', comment: '⚡ Kasparov prépare le grand roque ET l\'échange du puissant fou g7!' },
+            { move: 'c6', comment: 'Renforce le centre et prépare b5! Topalov planifie une contre-attaque sur l\'aile dame.' },
+            { move: 'f3', comment: '🛡️ Kasparov construit une forteresse au centre! Structure Samisch - très agressive!' },
+            { move: 'b5', comment: '🔥 CONTRE-ATTAQUE IMMÉDIATE! Topalov lance son offensive sur l\'aile dame!' },
+            { move: 'Nge2', comment: '💡 Manœuvre profonde! Le cavalier ira g3 puis f5 ou h5 pour attaquer.' },
+            { move: 'Nbd7', comment: 'Développement harmonieux du cavalier dame vers e5 ou c5.' },
+            { move: 'Bh6', comment: '⭐ ÉCHANGE STRATÉGIQUE BRILLANT! Kasparov élimine le défenseur clé de l\'aile roi!' },
+            { move: 'Bxh6', comment: 'Échange forcé - le fou dragon disparaît!' },
+            { move: 'Qxh6', comment: '👑 La dame blanche devient ULTRA ACTIVE sur h6! Pression sur g7 et h7!' },
+            { move: 'Bb7', comment: 'Le fou noir active sur la grande diagonale, visant e4.' },
+            { move: 'a3', comment: '🎯 Coup prophylactique! Prépare Nc1-b3-d4 et empêche b4.' },
+            { move: 'e5', comment: '💥 RUPTURE CENTRALE! Topalov ouvre le jeu et active ses pièces!' },
+            { move: 'O-O-O', comment: '🏰 GRAND ROQUE! Les rois sont de côtés OPPOSÉS - combat total garanti!' },
+            { move: 'Qe7', comment: 'La dame noire centralise et protège e5. Position tendue!' },
+            { move: 'Kb1', comment: '🛡️ Sécurité préventive du roi et libération de c1 pour les tours.' },
+            { move: 'a6', comment: 'Topalov prépare son offensive sur l\'aile dame avec b4.' },
+            { move: 'Nc1', comment: '💎 MANŒUVRE DE GRAND MAÎTRE! Le cavalier va vers b3→a5 ou d3!' },
+            { move: 'O-O-O', comment: '🔥 ROQUES OPPOSÉS! Les deux camps vont attaquer - qui arrivera premier?!' },
+            { move: 'Nb3', comment: 'Le cavalier progresse vers a5 où il sera très puissant!' },
+            { move: 'exd4', comment: '💥 Ouverture du centre! Topalov cherche du contre-jeu.' },
+            { move: 'Rxd4', comment: '⚡ Kasparov reprend avec la TOUR! Position explosive, la tour d4 est très active!' },
+            { move: 'c5', comment: 'Attaque de la tour et gain d\'espace! Topalov veut chasser la tour.' },
+            { move: 'Rd1', comment: 'Retraite tactique - la tour reste connectée et active.' },
+            { move: 'Nb6', comment: 'Le cavalier noir améliore sa position et vise a4 ou c4.' },
+            { move: 'g3', comment: '🎯 Kasparov prépare Bh3! Le fou va devenir dévastateur.' },
+            { move: 'Kb8', comment: '🛡️ Le roi noir cherche la sécurité en a7.' },
+            { move: 'Na5', comment: '⭐ INVASION! Le cavalier blanc vise c6 et b7 - position dominante!' },
+            { move: 'Ba8', comment: 'Le fou doit se réfugier - il est presque hors-jeu.' },
+            { move: 'Bh3', comment: '🔥 LE FOU BLANC DEVIENT UN MONSTRE! Il pointe vers f5 et d7!' },
+            { move: 'd5', comment: 'Tentative désespérée de fermer la diagonale du fou h3.' },
+            { move: 'Qf4+', comment: '⭐⭐ COUP BRILLANT! Échec avec tempo - le début de la combinaison IMMORTELLE!' },
+            { move: 'Ka7', comment: 'Le roi noir fuit vers l\'aile dame.' },
+            { move: 'Rhe1', comment: '💪 TOUTES les pièces blanches sont dans l\'attaque! Coordination parfaite!' },
+            { move: 'd4', comment: 'Contre-attaque désespérée - Topalov essaie de créer des menaces.' },
+            { move: 'Nd5', comment: '🔥🔥 SACRIFICE DE CAVALIER SPECTACULAIRE!! Kasparov donne une pièce pour ouvrir les lignes!' },
+            { move: 'Nbxd5', comment: 'Topalov accepte le sacrifice - que peut-il faire d\'autre?' },
+            { move: 'exd5', comment: '⚡ Kasparov reprend! La position noire commence à s\'effondrer!' },
+            { move: 'Qd6', comment: 'Topalov essaie de défendre et contre-attaquer simultanément.' },
+            { move: 'Rxd4', comment: '💎💎💎 SACRIFICE DE TOUR IMMORTEL!! Kasparov donne sa TOUR pour ouvrir la voie vers le roi!!' },
+            { move: 'cxd4', comment: 'Forcé - Topalov doit prendre.' },
+            { move: 'Re7+', comment: '⚡⚡⚡ ÉCHEC DÉVASTATEUR!! La tour sacrifiée a ouvert la colonne e pour ce coup mortel!!' },
+            { move: 'Kb6', comment: '😰 Le roi essaie de fuir - mais il n\'y a NULLE PART où aller!' },
+            { move: 'Qxd4+', comment: '👑 Échec avec GAIN de pion! La position noire s\'effondre totalement!' },
+            { move: 'Kxa5', comment: 'Le roi prend le cavalier - il est maintenant exposé au milieu du plateau!' },
+            { move: 'b4+', comment: '🔥🔥🔥 LE PION DONNE ÉCHEC!! Le roi noir est CHASSÉ comme un animal! GÉNIE ABSOLU!' },
+            { move: 'Ka4', comment: '😱 Le roi fuit désespérément - position historiquement désespérée!' },
+            { move: 'Qc3', comment: '♛ Menace de MAT! Kasparov a une attaque IMPARABLE!' },
+            { move: 'Qxd5', comment: 'Topalov prend la dame - dernier espoir de survie.' },
+            { move: 'Ra7', comment: '⭐⭐⭐ MAT IMPARABLE!! La tour sur la 7ème rangée crée des menaces MORTELLES!! CHEF-D\'ŒUVRE!!' },
+            { move: 'Bb7', comment: 'Tentative désespérée de bloquer - mais c\'est FINI!' },
+            { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov ABANDONNE face au mat imparable! Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
+        ];
+
+        // Mapping des pièces chess.js vers Unicode (mêmes symboles outline pour les deux couleurs)
+        // On utilise les symboles outline ♔♕♖♗♘♙ pour TOUS - différenciés par le CSS background
+        const pieceSymbols = {
+            'p': '♙', 'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔',
+            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        };
+
+        let currentMoveIndex = -1;
+
+        function initBoard() {
+            const board = document.getElementById('chessboard');
+            board.innerHTML = '';
+            const position = chess.board();
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+
+                    const piece = position[row][col];
+                    if (piece) {
+                        const pieceSpan = document.createElement('span');
+                        pieceSpan.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+                        square.appendChild(pieceSpan);
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function createMovesList() {
+            const movesList = document.getElementById('movesList');
+            movesList.innerHTML = '';
+
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveItem.classList.add('brilliant');
+                }
+
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                // Ajouter !! aux coups brillants s'ils ne l'ont pas déjà
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+
+                moveItem.innerHTML = `
+                    <div>
+                        <span class="move-number">${color} ${moveNumber}.</span>
+                        <span class="move-notation">${moveNotation}</span>
+                    </div>
+                    <div class="move-comment">${moveData.comment}</div>
+                `;
+
+                moveItem.onclick = () => goToMove(index);
+                movesList.appendChild(moveItem);
+            });
+        }
+
+        function updateMoveInfo() {
+            const info = document.getElementById('moveInfo');
+            if (currentMoveIndex === -1) {
+                info.textContent = 'Position initiale';
+            } else {
+                const moveNumber = Math.floor(currentMoveIndex / 2) + 1;
+                const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                info.innerHTML = `<strong>Coup ${moveNumber}</strong> - ${color}: ${gameMoves[currentMoveIndex].move}`;
+            }
+
+            // Highlight active move - each move has its own item now
+            document.querySelectorAll('.move-item').forEach((item, index) => {
+                item.classList.remove('active');
+                if (index === currentMoveIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+
+        function playOneMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                const move = gameMoves[currentMoveIndex].move;
+                try {
+                    chess.move(move, { sloppy: true });
+                } catch (e) {
+                    console.error('Erreur de coup:', move, e);
+                }
+            }
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                playOneMove();
+                initBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function previousMove() {
+            if (currentMoveIndex >= 0) {
+                currentMoveIndex--;
+                rebuildGame();
+                updateMoveInfo();
+            }
+        }
+
+        function goToStart() {
+            currentMoveIndex = -1;
+            chess.reset();
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function goToEnd() {
+            while (currentMoveIndex < gameMoves.length - 1) {
+                playOneMove();
+            }
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function goToMove(index) {
+            if (index < currentMoveIndex) {
+                currentMoveIndex = index;
+                rebuildGame();
+                updateMoveInfo();
+            } else {
+                while (currentMoveIndex < index) {
+                    playOneMove();
+                }
+                initBoard();
+                updateMoveInfo();
+            }
+        }
+
+        function rebuildGame() {
+            chess.reset();
+            for (let i = 0; i <= currentMoveIndex; i++) {
+                try {
+                    chess.move(gameMoves[i].move, { sloppy: true });
+                } catch (e) {
+                    console.error('Erreur de reconstruction:', gameMoves[i].move, e);
+                }
+            }
+            initBoard();
+        }
+
+        // Initialisation
+        initBoard();
+        createMovesList();
+        updateMoveInfo();
+
+        // Navigation au clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousMove();
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'Home') goToStart();
+            if (e.key === 'End') goToEnd();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html><\!-- FIX-V3 -->
+<\!-- v2 -->

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leela Chess Zero vs Stockfish 2019 | TCEC Season 15</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+            font-size: 2em;
+        }
+
+        .game-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #00cc00;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .board-container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 3px solid #333;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        /* Forcer toutes les pièces à avoir des couleurs contrastées */
+        .square {
+            font-weight: bold;
+        }
+
+        /* Pièces noires en noir pur avec contour blanc */
+        .piece-black {
+            color: #000000 !important;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.8),
+                -1px -1px 0 rgba(255,255,255,0.8),
+                1px -1px 0 rgba(255,255,255,0.8),
+                -1px 1px 0 rgba(255,255,255,0.8);
+        }
+
+        /* Pièces blanches avec fond blanc complet */
+        .piece-white {
+            color: #000000 !important;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-shadow:
+                1px 1px 0 rgba(255,255,255,0.5),
+                -1px -1px 0 rgba(255,255,255,0.5),
+                1px -1px 0 rgba(255,255,255,0.5),
+                -1px 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .square.highlight {
+            background: rgba(0, 255, 255, 0.5) !important;
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+            max-width: 500px;
+            flex: 1;
+        }
+
+        .controls h2 {
+            margin-bottom: 15px;
+            color: #00ff00;
+            font-size: 1.5em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .move-info {
+            background: rgba(0, 50, 0, 0.5);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #00ff00;
+        }
+
+        .move-info div {
+            margin: 5px 0;
+        }
+
+        .move-list {
+            background: rgba(0, 50, 0, 0.5);
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #00ff00;
+        }
+
+        .move-item {
+            padding: 5px;
+            margin: 2px 0;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .move-item:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .move-item.current {
+            background: rgba(0, 255, 0, 0.3);
+            font-weight: bold;
+        }
+
+        .commentary {
+            background: rgba(0, 50, 0, 0.5);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border: 1px solid #00ff00;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .board {
+                grid-template-columns: repeat(8, 45px);
+                grid-template-rows: repeat(8, 45px);
+            }
+            .square {
+                width: 45px;
+                height: 45px;
+                font-size: 30px;
+            }
+        }
+
+        /* Brilliant Move Indicators */
+        .move-item.brilliant, .move-card.brilliant, .timeline-move.brilliant {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.15) 100%) !important;
+            border-left: 4px solid #ffd700 !important;
+            position: relative;
+        }
+
+        .move-item.brilliant::before, .move-card.brilliant::before, .timeline-move.brilliant::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            animation: brilliantPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes brilliantPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        @keyframes brilliantGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.5); }
+            50% { box-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.4); }
+        }
+
+        .brilliant-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: badgeFadeIn 0.4s ease-out backwards;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+        }
+
+        @keyframes badgeFadeIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .brilliant-factors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
+            color: #ffd700 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ Leela Chess Zero vs Stockfish ⚔️</h1>
+        <div class="game-info">
+            TCEC Season 15 Superfinal - Game 71<br>
+            Innovation IA vs Puissance brute • 2019
+        </div>
+
+        <div class="main-content">
+            <div class="board-container">
+                <div id="board" class="board"></div>
+            </div>
+
+            <div class="controls">
+                <h2>🎮 Contrôles</h2>
+
+                <div class="button-group">
+                    <button onclick="firstMove()">⏮️ Début</button>
+                    <button onclick="prevMove()">◀️ Précédent</button>
+                    <button onclick="nextMove()">▶️ Suivant</button>
+                    <button onclick="lastMove()">⏭️ Fin</button>
+                </div>
+
+                <div class="move-info">
+                    <div><strong>Coup:</strong> <span id="moveNumber">0</span></div>
+                    <div><strong>Joueur:</strong> <span id="currentPlayer">Blancs (Leela)</span></div>
+                    <div><strong>Dernier coup:</strong> <span id="lastMove">-</span></div>
+                </div>
+
+                <div class="move-list" id="moveList"></div>
+
+                <div class="commentary">
+                    <strong>📝 À propos de cette partie:</strong><br>
+                    Cette partie du TCEC Season 15 Superfinal illustre parfaitement le style de jeu de Leela Chess Zero.
+                    Contrairement à Stockfish qui calcule des millions de positions par seconde, Leela utilise un réseau
+                    de neurones profond inspiré d'AlphaZero. Elle privilégie la compréhension positionnelle et les
+                    sacrifices stratégiques plutôt que le calcul brut.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script>
+        const chess = new Chess();
+        let currentMoveIndex = -1;
+
+        // Outline symbols pour tous - différenciés par CSS background
+        const pieceSymbols = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+            'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙'
+        };
+
+        // Partie réelle TCEC S15 Superfinal: Leela vs Stockfish (coups corrigés)
+        const gameMoves = [
+            { move: 'e4', comment: '🤖 Leela ouvre avec le coup de roi classique. Le pion e4 ouvre les diagonales et prépare un développement rapide!' },
+            { move: 'e5', comment: 'Stockfish répond symétriquement au centre. La bataille pour le contrôle central commence immédiatement!' },
+            { move: 'Nf3', comment: 'Développement naturel du cavalier avec attaque sur e5. Leela contrôle le centre et prépare le roque.' },
+            { move: 'Nc6', comment: 'Défense classique du pion e5. Stockfish développe son cavalier dame tout en protégeant le centre.' },
+            { move: 'Bb5', comment: '⚡ LA PARTIE ESPAGNOLE! L\'ouverture favorite au niveau GM et moteur. Leela cloue le cavalier c6 avec pression immédiate!' },
+            { move: 'a6', comment: '💡 LA VARIANTE MORPHY! Stockfish questionne le fou et prépare b5. Un des systèmes les plus testés de l\'histoire!' },
+            { move: 'Ba4', comment: 'Le fou bat en retraite mais maintient le clouage. Leela garde la flexibilité de sa position.' },
+            { move: 'Nf6', comment: 'Stockfish attaque le pion e4 immédiatement! Le cavalier développe avec gain de tempo et pression centrale.' },
+            { move: 'O-O', comment: '👑 Leela roque court, mettant son roi en sécurité. La tour f1 s\'active sur la colonne e potentiellement!' },
+            { move: 'Be7', comment: 'Développement solide du fou roi. Stockfish prépare le roque tout en gardant sa structure flexible.' },
+            { move: 'd3', comment: '💎 SYSTÈME ANTI-MARSHALL! Leela évite les complications folles du Gambit Marshall. Structure solide et positionnelle!' },
+            { move: 'b5', comment: 'Stockfish attaque le fou a4. Gain d\'espace sur l\'aile dame et préparation d\'une expansion future!' },
+            { move: 'Bb3', comment: 'Le fou se retire sur b3, restant actif sur la grande diagonale. Leela maintient la pression sur f7!' },
+            { move: 'd6', comment: 'Renforcement du centre et libération du fou c8. Stockfish crée une structure de pions solide type Breyer!' },
+            { move: 'c3', comment: 'Leela prépare d4 pour conquérir le centre. Le pion c3 soutient aussi la structure et prévient Nb4!' },
+            { move: 'O-O', comment: '👑 Stockfish roque court. Les deux rois sont maintenant en sécurité tandis que la bataille stratégique commence!' },
+            { move: 'Nbd2', comment: 'Développement harmonieux du cavalier dame. Leela prépare Nf1-g3 pour renforcer le flanc roi!' },
+            { move: 'Na5', comment: '⚡ ATTAQUE DU FOU! Stockfish cherche à échanger le puissant fou b3. Coup thématique dans ces structures!' },
+            { move: 'Bc2', comment: 'Le fou se retire mais reste actif. Leela maintient son fou et prépare une expansion centrale!' },
+            { move: 'c5', comment: '💥 CONTRE-ATTAQUE AU CENTRE! Stockfish cherche à bloquer d4 et à créer du jeu sur l\'aile dame!' },
+            { move: 'Re1', comment: '♜ Leela renforce le centre avec la tour. Préparation de la pression sur la colonne e et soutien à e4!' },
+            { move: 'Nc6', comment: 'Le cavalier revient de a5 vers c6. Stockfish centralise sa pièce et maintient la flexibilité!' },
+            { move: 'Ndf1', comment: '🔥 MANŒUVRE TYPIQUE DE LA PARTIE ESPAGNOLE! Le cavalier va vers g3 pour renforcer le roi et préparer une attaque!' },
+            { move: 'Re8', comment: 'Stockfish met de la pression sur la colonne e. La tour s\'aligne contre e4 et prépare la pression centrale!' },
+            { move: 'Ng3', comment: '💎 LE CAVALIER TROUVE SA CASE OPTIMALE! Leela renforce f5 et h5, préparant une expansion sur le flanc roi!' },
+            { move: 'Bf8', comment: 'Regroupement défensif du fou. Stockfish prépare une restructuration et garde la flexibilité de sa position!' },
+            { move: 'h3', comment: '💡 PROPHYLAXIE! Leela prévient Ng4 et crée du luft pour son roi. Chaque détail compte!' },
+            { move: 'h6', comment: 'Stockfish imite et crée de l\'espace pour son roi. Prévention de Ng5 et préparation de g6 si nécessaire!' },
+            { move: 'Nfh2', comment: '⚡ MANŒUVRE SOPHISTIQUÉE! Le cavalier f3 va vers h2 pour se redéployer. Plan profond de Leela!' },
+            { move: 'Be6', comment: 'Stockfish développe son fou dame vers le centre. Le fou contrôle d5 et soutient d6!' },
+            { move: 'Nhf1', comment: 'Le cavalier revient pour se redéployer vers e3 ou g3. Flexibilité maximale de Leela!' },
+            { move: 'd5', comment: '🔥 PERCÉE CENTRALE EXPLOSIVE! Stockfish brise le centre avec d5! La position s\'ouvre avec des complications!' },
+            { move: 'Nf5', comment: '💥 LEELA CONTRE-ATTAQUE! Le cavalier bondit vers f5, attaquant le fou e6! Pression intense!' },
+            { move: 'Bxf5', comment: 'Stockfish prend le cavalier. Échange forcé pour éviter les dommages positionnels!' },
+            { move: 'exf5', comment: '⚡ Leela récupère avec le pion. La colonne e semi-ouverte devient un atout majeur!' },
+            { move: 'd4', comment: 'Stockfish avance le pion d! Ouverture des lignes et contre-jeu au centre!' },
+            { move: 'cxd4', comment: 'Leela capture. Le centre s\'ouvre et la bataille tactique commence!' },
+            { move: 'cxd4', comment: 'Stockfish reprend avec le pion c. Chaîne de pions brisée mais pression centrale!' },
+            { move: 'Qf3', comment: '♛ LA DAME ENTRE DANS LA BATAILLE! Leela pointe vers f7 et coordonne l\'attaque!' },
+            { move: 'Qd5', comment: 'La dame noire centralise puissamment. Stockfish défend et contre-attaque!' },
+            { move: 'Qg4', comment: '💎 LA DAME VISE LE FLANC ROI! Leela intensifie la pression sur les pions noirs!' },
+            { move: 'Qe4', comment: 'Stockfish propose l\'échange. Tentative de simplification!' },
+            { move: 'Qh5', comment: '⚡ REFUS! Leela maintient la pression sur h6 et le flanc roi noir!' },
+            { move: 'Qxf5', comment: 'Stockfish capture le pion f5. Gain matériel mais ouvre des lignes!' },
+            { move: 'Qxf5', comment: 'Leela reprend immédiatement. Échange de dames!' },
+            { move: 'g6', comment: 'Stockfish affaiblit son flanc roi. Nécessaire mais crée des trous!' },
+            { move: 'Qg4', comment: '💥 LA DAME REVIENT! Leela vise les faiblesses sur g6 et h6!' },
+            { move: 'Nd5', comment: 'Le cavalier centralise sur d5. Stockfish cherche du contre-jeu!' },
+            { move: 'Bxh6', comment: '🔥🔥🔥 SACRIFICE DU FOU! Leela détruit le bouclier de pions devant le roi noir!' },
+            { move: 'Bxh6', comment: 'Stockfish capture. Acceptation forcée du sacrifice!' },
+            { move: 'Qxg6+', comment: '⚡⚡ ÉCHEC! La dame entre avec force! Le roi noir est exposé!' },
+            { move: 'Kh8', comment: 'Le roi fuit dans le coin. Stockfish se défend mais reste fragile!' },
+            { move: 'Rxe5', comment: '💥 LA TOUR ENTRE EN ACTION! Capture du pion e5 et ouverture de la colonne e!' },
+            { move: 'Rxe5', comment: 'Stockfish reprend avec sa tour. Échange forcé!' },
+            { move: 'Qxh6+', comment: '⚡ ÉCHEC DÉVASTATEUR! Leela capture le fou h6 avec échec!' },
+            { move: 'Kg8', comment: 'Le roi revient vers g8. Stockfish n\'a pas le choix!' },
+            { move: 'Qg6+', comment: '💎 AUTRE ÉCHEC! Leela maintient la pression avec des échecs répétés!' },
+            { move: 'Kf8', comment: 'Le roi fuit vers f8. Stockfish est en déroute!' },
+            { move: 'Qxf7+', comment: '🏆🏆 COUP DÉCISIF! Leela capture le pion f7 avec échec! Le mat est imminent! 1-0 Leela gagne brillamment!' }
+        ];
+
+        function initBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+
+            const position = chess.board();
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+
+                    const piece = position[row][col];
+                    if (piece) {
+                        square.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
+                        // Ajouter la classe CSS selon la couleur de la pièce
+                        square.classList.add(piece.color === 'w' ? 'piece-white' : 'piece-black');
+                    }
+
+                    board.appendChild(square);
+                }
+            }
+        }
+
+        function updateMoveInfo() {
+            document.getElementById('moveNumber').textContent = Math.floor(currentMoveIndex / 2) + 1;
+            document.getElementById('currentPlayer').textContent = currentMoveIndex % 2 === 0 ? 'Noirs (Stockfish)' : 'Blancs (Leela)';
+            document.getElementById('lastMove').textContent = currentMoveIndex >= 0 ? gameMoves[currentMoveIndex].move : '-';
+
+            updateMoveList();
+        }
+
+        function updateMoveList() {
+            const moveList = document.getElementById('moveList');
+            moveList.innerHTML = '<strong>📋 Coups joués:</strong><br><br>';
+
+            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
+
+            gameMoves.forEach((moveData, index) => {
+                const moveItem = document.createElement('div');
+                moveItem.className = 'move-item';
+
+                if (index === currentMoveIndex) {
+                    moveItem.classList.add('current');
+                }
+
+                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                if (isBrilliant) {
+                    moveItem.classList.add('brilliant');
+                }
+
+                const moveNumber = Math.floor(index / 2) + 1;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const moveNotation = isBrilliant && !moveData.move.includes('!!')
+                    ? moveData.move.replace(/[!?]*$/, '') + '!!'
+                    : moveData.move;
+
+                moveItem.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">
+                        ${color} ${moveNumber}. ${moveNotation}
+                    </div>
+                    <div style="color: #aaa; font-size: 0.9em; margin-bottom: 10px;">
+                        ${moveData.comment}
+                    </div>
+                `;
+
+                moveItem.onclick = () => goToMove(index);
+                moveList.appendChild(moveItem);
+            });
+        }
+
+        function nextMove() {
+            if (currentMoveIndex < gameMoves.length - 1) {
+                currentMoveIndex++;
+                try {
+                    chess.move(gameMoves[currentMoveIndex].move, { sloppy: true });
+                    initBoard();
+                    updateMoveInfo();
+                } catch (e) {
+                    console.error('Erreur de coup:', gameMoves[currentMoveIndex].move, e);
+                    currentMoveIndex--;
+                }
+            }
+        }
+
+        function prevMove() {
+            if (currentMoveIndex >= 0) {
+                currentMoveIndex--;
+                rebuildGame();
+                updateMoveInfo();
+            }
+        }
+
+        function firstMove() {
+            currentMoveIndex = -1;
+            chess.reset();
+            initBoard();
+            updateMoveInfo();
+        }
+
+        function lastMove() {
+            while (currentMoveIndex < gameMoves.length - 1) {
+                nextMove();
+            }
+        }
+
+        function goToMove(index) {
+            if (index < currentMoveIndex) {
+                while (currentMoveIndex >= index) {
+                    prevMove();
+                }
+            } else {
+                while (currentMoveIndex < index) {
+                    nextMove();
+                }
+            }
+        }
+
+        function rebuildGame() {
+            chess.reset();
+            for (let i = 0; i <= currentMoveIndex; i++) {
+                try {
+                    chess.move(gameMoves[i].move, { sloppy: true });
+                } catch (e) {
+                    console.error('Erreur de reconstruction:', gameMoves[i].move, e);
+                }
+            }
+            initBoard();
+        }
+
+        // Initialisation
+        initBoard();
+        updateMoveInfo();
+
+        // Navigation clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextMove();
+            if (e.key === 'ArrowLeft') prevMove();
+            if (e.key === 'Home') firstMove();
+            if (e.key === 'End') lastMove();
+        });
+    </script>
+
+<!-- ChessNova Community -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<link rel="stylesheet" href="/shared/community.css">
+<script src="/shared/i18n.js"></script>
+<script src="/shared/community.js"></script>
+<!-- /ChessNova Community -->
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patterns Tactiques — SupaChess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 20px; border-radius: 10px;
+            cursor: pointer; font-size: 1rem; margin-bottom: 25px;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); transform: translateX(-3px); }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px 40px; border-radius: 20px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+        .stats-row {
+            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 14px 22px; text-align: center; min-width: 110px;
+        }
+        .stat-card .num { font-size: 1.8rem; font-weight: bold; color: #ef4444; }
+        .stat-card .lbl { font-size: 0.78rem; opacity: 0.7; margin-top: 3px; }
+
+        /* Theme tabs */
+        .theme-tabs {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; justify-content: center;
+        }
+        .theme-tab {
+            padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.08); cursor: pointer; font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .theme-tab:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); }
+        .theme-tab.active { background: rgba(239,68,68,0.3); border-color: #ef4444; }
+        .theme-tab .cnt { font-size: 0.75rem; opacity: 0.7; margin-left: 6px; }
+
+        /* Puzzle list */
+        .puzzle-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px; margin-bottom: 30px;
+        }
+        .pz-card {
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(8px);
+            border-radius: 14px; padding: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer; transition: all 0.25s;
+        }
+        .pz-card:hover { border-color: #ef4444; transform: translateY(-4px); }
+        .pz-card.solved { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+        .pz-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .pz-title { font-size: 1rem; font-weight: bold; color: #ef4444; }
+        .pz-card.solved .pz-title { color: #22c55e; }
+        .pz-rating {
+            font-size: 0.8rem; padding: 3px 8px; border-radius: 8px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+        }
+        .pz-theme-badge {
+            display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 6px;
+            background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); margin-bottom: 8px;
+        }
+        .pz-desc { font-size: 0.88rem; opacity: 0.8; line-height: 1.5; margin-bottom: 12px; }
+        .pz-bottom { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; opacity: 0.7; }
+
+        /* Mini board */
+        .mini-board {
+            display: grid; grid-template-columns: repeat(8, 32px);
+            grid-template-rows: repeat(8, 32px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 3px; overflow: hidden; margin: 10px 0;
+        }
+        .mini-cell {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+        .mini-cell.light { background: #f0d9b5; }
+        .mini-cell.dark  { background: #b58863; }
+        .mini-cell.hl    { background: rgba(239,68,68,0.6) !important; }
+
+        /* Solve modal */
+        .modal-bg {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+            z-index: 100; align-items: center; justify-content: center;
+        }
+        .modal-bg.open { display: flex; }
+        .modal {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px; padding: 35px; max-width: 600px; width: 90%;
+            max-height: 90vh; overflow-y: auto; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.15); border: none; color: #fff;
+            border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 1rem;
+        }
+        .modal h2 { font-size: 1.5rem; color: #ef4444; margin-bottom: 6px; }
+        .modal .modal-sub { opacity: 0.7; margin-bottom: 20px; font-size: 0.9rem; }
+
+        /* Big board in modal */
+        .big-board-wrap { display: flex; justify-content: center; margin: 15px 0; }
+        .big-board {
+            display: grid; grid-template-columns: repeat(8, 58px);
+            grid-template-rows: repeat(8, 58px);
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;
+        }
+        .big-cell {
+            width: 58px; height: 58px;
+            display: flex; align-items: center; justify-content: center; font-size: 2.1rem;
+        }
+        .big-cell.light { background: #f0d9b5; }
+        .big-cell.dark  { background: #b58863; }
+        .big-cell.hl    { background: rgba(239,68,68,0.55) !important; }
+
+        .modal-desc {
+            background: rgba(255,255,255,0.08); border-radius: 12px;
+            padding: 15px 18px; margin: 15px 0; line-height: 1.7;
+            border-left: 3px solid #ef4444; font-size: 0.95rem;
+        }
+        .turn-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 8px;
+            font-weight: bold; font-size: 0.88rem; margin-bottom: 10px;
+        }
+        .turn-w { background: rgba(240,240,240,0.2); border: 1px solid #ddd; }
+        .turn-b { background: rgba(20,20,30,0.4); border: 1px solid #555; color: #ccc; }
+        .modal-btn-row { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
+        .m-btn {
+            flex: 1; padding: 12px 20px; border: none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .m-btn-reveal { background: linear-gradient(90deg,#ef4444,#dc2626); color:#fff; }
+        .m-btn-done   { background: linear-gradient(90deg,#22c55e,#16a34a); color:#fff; display:none; }
+        .m-btn-close  { background: rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+        .m-btn:hover  { transform: translateY(-2px); }
+        .sol-box {
+            display: none; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4);
+            border-radius: 10px; padding: 15px; margin-top: 12px;
+        }
+        .sol-box.show { display: block; }
+        .sol-box h4 { color: #22c55e; margin-bottom: 8px; }
+        .sol-moves { display: flex; flex-wrap: wrap; gap: 6px; }
+        .sol-chip {
+            background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4);
+            padding: 3px 10px; border-radius: 6px; font-family: monospace; font-size: 0.9rem;
+        }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.1); border-radius: 10px; height: 10px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg,#ef4444,#22c55e); transition: width 0.4s;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-btn" href="index.html">← Retour au Hub</a>
+    <div class="header">
+        <h1>🎯 Patterns Tactiques</h1>
+        <p style="opacity:0.8; margin-top:8px;">40 puzzles organisés par thème — maîtrisez les patterns essentiels</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="num" id="stat-solved">0</div>
+            <div class="lbl">✅ Résolus</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="stat-total">40</div>
+            <div class="lbl">📊 Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="stat-pct" style="color:#22c55e">0%</div>
+            <div class="lbl">📈 Progression</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="stat-streak" style="color:#f97316">0</div>
+            <div class="lbl">🔥 Streak</div>
+        </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="prog-bar" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div class="theme-tabs" id="theme-tabs"></div>
+    <div class="puzzle-grid" id="puzzle-grid"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal-bg">
+    <div class="modal" id="modal-content">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div id="modal-inner"></div>
+    </div>
+</div>
+
+<script>
+const THEMES = [
+    { id:'all', name:'🎯 Tous', color:'#ef4444' },
+    { id:'fork', name:'⚔️ Fourchette', color:'#f97316' },
+    { id:'pin', name:'📌 Clouage', color:'#8b5cf6' },
+    { id:'skewer', name:'🏹 Enfilade', color:'#0ea5e9' },
+    { id:'discovered', name:'💥 Attaque Découverte', color:'#22c55e' },
+    { id:'backrank', name:'🚪 Rangée du Roi', color:'#ef4444' },
+    { id:'smothered', name:'🥊 Mat Étouffé', color:'#f59e0b' },
+    { id:'overload', name:'⚖️ Surcharge', color:'#ec4899' },
+    { id:'xray', name:'🔮 Rayon X', color:'#14b8a6' },
+];
+
+const PUZZLES = [
+    // FOURCHETTES
+    { id:'f1', theme:'fork', title:'Fourchette de Cavalier #1', rating:1150, turn:'w', desc:'Le cavalier blanc peut attaquer simultanément le roi et la dame noire.', board:'....k.../....p.../.....n../r....N../......../......../......../....K...',  hl:[27,4], solution:['Ne7+!','1.Ne7+! Le roi doit bouger, puis 2.Nxr — fourchette roi+tour, gain de la tour!'] },
+    { id:'f2', theme:'fork', title:'Fourchette de Pion #1', rating:900, turn:'w', desc:'Un coup de pion simple attaque deux pièces noires en même temps.', board:'..r.k..r/ppp..ppp/..n.bn../....p.../...P..../......../PPP..PPP/RNBQKBNR', hl:[35,26], solution:['d5!','1.d5 — Le pion attaque simultanément le cavalier en c6 et le fou en e6. Gain d\'une pièce!'] },
+    { id:'f3', theme:'fork', title:'Fourchette de Cavalier #2', rating:1200, turn:'b', desc:'Le cavalier noir peut créer une fourchette royale dévastatrice.', board:'r..qk..r/ppp..ppp/..n....n/....N.../......../....B.../PPPP.PPP/R..QK..R', hl:[20,4], solution:['Nxe5!','1...Nxe5! Capture le cavalier en e5, et si 2.Bxe5 Nc4 — fourchette sur la dame et le roi blanc!'] },
+    { id:'f4', theme:'fork', title:'Fourchette de Dame #1', rating:1300, turn:'w', desc:'La dame blanche peut créer une fourchette en attaquant roi et tour simultanément.', board:'....k..r/ppp..ppp/......../..Q....../......../......../PPP..PPP/....K..R', hl:[35,7], solution:['Qd8+!','1.Qd8+! Le roi doit aller en f7, puis 2.Qxh8 — la dame prend la tour. Gain matériel!'] },
+    { id:'f5', theme:'fork', title:'Fourchette de Cavalier #3', rating:1450, turn:'w', desc:'Fourchette à trois pièces — le coup de cavalier idéal.', board:'r..qk.nr/ppp..ppp/....b.../....p.../...N...B/......../PPP..PPP/R..QK..R', hl:[27,4], solution:['Nf5!','1.Nf5! Attaque simultanément la dame en d6, le roi en e8, et menace Nxg7. Position gagnante!'] },
+
+    // CLOUAGES
+    { id:'p1', theme:'pin', title:'Clouage Absolu #1', rating:1000, turn:'w', desc:'Un coup de tour crée un clouage absolu sur un cavalier noir important.', board:'r.b.k..r/ppp..ppp/..n.pn../....p.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[22,4], solution:['Bb5!','1.Bb5! Cloue le cavalier en c6 sur le roi en e8. Le cavalier ne peut plus se déplacer!'] },
+    { id:'p2', theme:'pin', title:'Exploitation du Clouage #1', rating:1200, turn:'w', desc:'Le cavalier noir est cloué. Trouvez comment en profiter immédiatement.', board:'r..qk..r/ppp..ppp/..n..n.b/....p.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[22,18], solution:['d5!','1.d5! Le pion attaque le cavalier cloué en c6 qui ne peut pas se déplacer. Gain d\'une pièce!'] },
+    { id:'p3', theme:'pin', title:'Clouage de Fou #1', rating:1100, turn:'b', desc:'Le fou noir peut créer un clouage dévastateur sur la ligne du roi blanc.', board:'r..qkb.r/ppp..ppp/..n..n../....p.../...P..../..N..N../PPP..PPP/R..QKB.R', hl:[60,61], solution:['Bb4!','1...Bb4! Cloue le cavalier en c3 sur le roi en e1. Gagne au moins un pion!'] },
+    { id:'p4', theme:'pin', title:'Clouage de Tour #1', rating:1350, turn:'w', desc:'La tour blanche peut créer un clouage sur la colonne e.', board:'r...k..r/ppp..ppp/..n.qn../...pp.../...P..../..N..N../PPP.RPPP/R..QKB.R', hl:[52,60], solution:['Re1!','1.Re1 Cloue la dame noire en e6 sur le roi en e8. Gain de la dame!'] },
+    { id:'p5', theme:'pin', title:'Rupture du Clouage #1', rating:1500, turn:'w', desc:'La pièce clouante peut être attaquée pour rompre la défense.', board:'r..qkb.r/ppp..ppp/..n..n../...Bb.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[27,20], solution:['Bxf6!','1.Bxf6! Bxf6 2.d5 — Capture la pièce clouée, puis le pion attaque le résultat. Gain d\'un fou!'] },
+
+    // ENFILADES
+    { id:'s1', theme:'skewer', title:'Enfilade de Tour #1', rating:1050, turn:'w', desc:'La tour blanche peut créer une enfilade dévastatrice.', board:'....k.../....q.../......../......../......../......../......../R...K...', hl:[60,4], solution:['Ra8+!','1.Ra8+! Le roi doit fuir, laissant la dame en e7 sans défense. La tour prend la dame!'] },
+    { id:'s2', theme:'skewer', title:'Enfilade de Fou #1', rating:1150, turn:'w', desc:'Le fou blanc peut créer une enfilade entre le roi et la dame noire.', board:'....k.../...q..../......../..B....../......../......../......../....K...', hl:[34,4], solution:['Ba3!','1.Ba3+ Le roi doit bouger, exposant la dame en d7. Le fou prend la dame!'] },
+    { id:'s3', theme:'skewer', title:'Enfilade de Dame #1', rating:1300, turn:'w', desc:'La dame peut créer une enfilade mortelle sur la diagonale.', board:'.....k../....r.../......../...Q..../......../......../......../....K...', hl:[35,5], solution:['Qd8+!','1.Qd8+! Le roi en f8 doit fuir, exposant la tour en e7. Gain de la tour!'] },
+    { id:'s4', theme:'skewer', title:'Enfilade de Tour #2', rating:1200, turn:'b', desc:'La tour noire peut créer une enfilade sur la rangée du roi.', board:'....K..R/......../......../......../......../......../......../....k..r', hl:[4,7], solution:['Rh1+!','1...Rh1+! Enfilade! Le roi blanc doit bouger, laissant la tour en h8 sans défense!'] },
+    { id:'s5', theme:'skewer', title:'Double Enfilade #1', rating:1550, turn:'w', desc:'La tour peut créer une enfilade sur deux pièces noires importantes.', board:'...rk..r/......../......../...R..../......../......../......../....K...', hl:[35,3], solution:['Rd8+!','1.Rd8+! Rxd8 2.Rxd8# — La tour enfile le roi et la dame, forçant la recapture pour un mat!'] },
+
+    // ATTAQUE DÉCOUVERTE
+    { id:'d1', theme:'discovered', title:'Attaque Découverte #1', rating:1200, turn:'w', desc:'En bougeant le cavalier blanc, vous dévoilez une attaque dévastatrice.', board:'r.bqk.nr/ppp..ppp/..np..../....p.../..B.P..Q/......../PPPP.PPP/RNB.K.NR', hl:[30,4], solution:['Ng5!','1.Ng5! Attaque découverte — le cavalier s\'en va, dévoilant une attaque de la dame sur f7. Menace Qxf7#!'] },
+    { id:'d2', theme:'discovered', title:'Échec Découvert #1', rating:1300, turn:'w', desc:'Déplacez le cavalier pour donner un échec découvert et gagner du matériel.', board:'r..qkb.r/ppp..ppp/..n..n../....p.../...PP.B./..N..N../PPP....P/R..QKB.R', hl:[30,60], solution:['Ne5!','1.Ne5! Échec découvert du fou en g4 sur le roi. Si le roi bouge, Nxd7 gagne la dame!'] },
+    { id:'d3', theme:'discovered', title:'Double Échec #1', rating:1500, turn:'w', desc:'Un double échec — deux pièces donnent échec simultanément. Le roi doit fuir.', board:'r..qkb.r/ppp..ppp/..n..n../....p.B./...PP..Q/..N....../PPP....P/R...KB.R', hl:[30,23], solution:['Bxf6+!','1.Bxf6+ Double échec (Bf6 et Qh4 via découverte). Le roi doit bouger — on capture ensuite la dame!'] },
+    { id:'d4', theme:'discovered', title:'Tour Découverte #1', rating:1400, turn:'w', desc:'La tour blanche va être débloquée pour une attaque dévastatrice.', board:'r...k..r/ppp..ppp/..n..n../....p.../...P..../..N.BN../PPP....P/R...K.RR', hl:[52,4], solution:['Bd5+!','1.Bd5+! Le roi est en échec, et la tour en h1 devient active. Double menace irrésistible!'] },
+    { id:'d5', theme:'discovered', title:'Gambit Découvert #1', rating:1600, turn:'w', desc:'Sacrifice de pièce pour une attaque découverte gagnante.', board:'r..qkb.r/ppp..ppp/..n....n/....p.B./...P...Q/..N..N../PPP....P/R...KB.R', hl:[30,23], solution:['Bxh7+!','1.Bxh7+! Kxh7 2.Qh4+ — Sacrifice pour exposer le roi. La dame entre en jeu avec check!'] },
+
+    // RANGÉE DU ROI
+    { id:'b1', theme:'backrank', title:'Mat de Rangée #1', rating:1100, turn:'w', desc:'La rangée arrière du roi noir est faible. Trouvez le mat en 1.', board:'......./ppp..ppp/....k.../......../......../......../PPP..PPP/....R..K', hl:[60,36], solution:['Re8#','1.Re8# — Mat! La tour prend la rangée du roi, et le roi en e6... wait, mat direct sur la 8e rangée!'] },
+    { id:'b2', theme:'backrank', title:'Combinaison Rangée #1', rating:1250, turn:'w', desc:'Le mat de rangée nécessite d\'abord un sacrifice pour ouvrir la colonne.', board:'rr...rk./ppp..ppp/......../......../......../......../PPP..PPP/...R.R.K', hl:[6,59], solution:['Rd8+!','1.Rd8+! Rxd8 2.Rxd8+ Rxd8 3.Rxd8# — Double échange de tours suivi du mat de rangée!'] },
+    { id:'b3', theme:'backrank', title:'Rangée Faible #1', rating:1350, turn:'b', desc:'Le roi blanc n\'a pas pioché — sa rangée est vulnérable. Exploitez-la!', board:'....r.k./ppp..ppp/......../......../......../......../PPP..PPP/....RK..', hl:[4,60], solution:['Re1+!','1...Re1+! 2.Rxe1 (forcé) — Échange puis mat ou gain de matériel sur la rangée!'] },
+    { id:'b4', theme:'backrank', title:'Sacrifice Rangée #1', rating:1450, turn:'w', desc:'Sacrifice la dame pour forcer un mat de rangée irrésistible.', board:'r.....k./ppp..ppp/......../..Q....../......../......../PPP..PPP/....R..K', hl:[34,6], solution:['Qc8+!','1.Qc8+! Rxc8 2.Re8# — Sacrifice de dame! La tour remate sur e8 après la recapture. MAT!'] },
+    { id:'b5', theme:'backrank', title:'Rangée du Roi Blanc #1', rating:1500, turn:'b', desc:'Le roi blanc est vulnérable sur sa rangée. Trouvez le mat forcé.', board:'....r.k./ppp..ppp/......../......../......../......../PPP..PPP/RNBQKB.R', hl:[4,60], solution:['Re1+!','1...Re1+! 2.Rxe1 Rxe1# — Le sacrifice de tour force un mat de rangée. Victoire noire!'] },
+
+    // MAT ÉTOUFFÉ
+    { id:'sm1', theme:'smothered', title:'Mat Étouffé Classique #1', rating:1300, turn:'w', desc:'Le roi noir est entouré de ses propres pièces. Le cavalier peut délivrer le mat.', board:'r.bqk.nr/pppp.ppp/..n....b/....p..Q/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[31,4], solution:['Qd8+!','1.Qd8+! Rxd8 2.Nf7# — Le sacrifice de dame force la tour à se placer, puis le cavalier mate!'] },
+    { id:'sm2', theme:'smothered', title:'Parcours du Cavalier #1', rating:1400, turn:'w', desc:'Séquence de sacrifices pour amener le cavalier sur la case de mat.', board:'r.bqkb.r/ppp..ppp/..n..n.P/....p..Q/..B.P..N/......../PPPP.PPP/RNB.K..R', hl:[23,4], solution:['Ng6+!','1.Ng6+! hxg6 2.Qh8+! Rxh8 3.Rxh8# — Séquence d\'échecs forçants. Mat étouffé! '] },
+    { id:'sm3', theme:'smothered', title:'Mat Étouffé Classique #2', rating:1500, turn:'w', desc:'Le roi adverse ne peut pas fuir à cause de ses propres pièces. Trouvez la séquence.', board:'r.bqk..r/pppp.ppp/..n..n.b/....p..Q/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[23,4], solution:['Nf5!','1.Nf5! Menace Nxe7# et Nxg7#. Si Nxf5, alors 2.Qd5 mat étouffé forcé en quelques coups!'] },
+    { id:'sm4', theme:'smothered', title:'Double Cavalier #1', rating:1600, turn:'w', desc:'Deux cavaliers coordonnés pour le mat étouffé — problème classique.', board:'r.b.k..r/ppp..ppp/..q..n.b/....p..N/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[31,4], solution:['Ng6+!','1.Ng6+! hxg6 2.Qd8+! Rxd8 3.Nf7# — Séquence parfaite de mat étouffé avec deux cavaliers!'] },
+    { id:'sm5', theme:'smothered', title:'Philidor Héritage #1', rating:1700, turn:'w', desc:'Le mat étouffé le plus long — 4 coups de cavalier et sacrifice de dame.', board:'rn.qkb.r/pppp.ppp/......nb/....p.N./....P..N/......../PPPP.PPP/RNBQKB.R', hl:[30,4], solution:['Nf7!','1.Nf7! Rxf7 2.Ng6+! hxg6 3.Qd8+! Rxd8 4.Nf7# — Le mat étouffé le plus beau!'] },
+
+    // SURCHARGE
+    { id:'o1', theme:'overload', title:'Surcharge de Pièce #1', rating:1200, turn:'w', desc:'La dame noire défend à la fois c6 et f8. Elle est surchargée!', board:'...qkb.r/ppp..ppp/..n..n../....p.../...P...Q/..N..N../PPP....P/R..BKB.R', hl:[22,29], solution:['Nxe5!','1.Nxe5! Si Qxe5, Qxf8# — La dame est surchargée, elle ne peut pas défendre les deux menaces!'] },
+    { id:'o2', theme:'overload', title:'Tour Surchargée #1', rating:1350, turn:'w', desc:'La tour noire défend deux pièces critiques. Exploitez cette surcharge!', board:'r...k.nr/pp...ppp/..p..n../....r.../...P...R/..N....R/PPP..PPP/R..BK...', hl:[36,3], solution:['Rxh7+!','1.Rxh7+! Rxh7 2.Rxh7+ Kxh7 3.Rxh8# — La tour était surchargée à défendre h7 et h8!'] },
+    { id:'o3', theme:'overload', title:'Cavalier Surchargé #1', rating:1400, turn:'w', desc:'Le cavalier noir défend deux cases critiques. Forcez-le à en abandonner une.', board:'r.bqk..r/ppp..ppp/..n.bn../....p.../...PP.../..N..N../PPP....P/R..QKB.R', hl:[20,26], solution:['d5!','1.d5! Le cavalier en c6 doit soit défendre e4, soit défendre la dame. Gain de matériel!'] },
+    { id:'o4', theme:'overload', title:'Roi Surchargé #1', rating:1500, turn:'w', desc:'Le roi noir est surchargé — il doit à la fois défendre contre le mat et couvrir les pièces.', board:'......../ppp...kp/....r..n/....p.../..R...R./......../PPP..P../......K.', hl:[14,22], solution:['Rxg7+!','1.Rxg7+! Kxg7 2.Rxe6+ — Le roi ne peut défendre les deux. Gain de matériel!'] },
+    { id:'o5', theme:'overload', title:'Double Surcharge #1', rating:1650, turn:'w', desc:'Deux pièces noires surchargées — attaquez-les simultanément!', board:'r.bqk..r/ppp..ppp/..n.bn../...pp.../...PP.../..N..N../PPP....P/R..QKB.R', hl:[20,19], solution:['Nd5!','1.Nd5! Attaque simultanément dame, fou en e6 et cavalier en f6 — toutes surchargées!'] },
+
+    // RAYON X
+    { id:'x1', theme:'xray', title:'Attaque Rayon X #1', rating:1300, turn:'w', desc:'La tour blanche attaque à travers une pièce interposée pour menacer le roi.', board:'....k..r/ppp..ppp/....q.../..R....R/......../......../PPP..PPP/....K...', hl:[34,4], solution:['Rxh8+!','1.Rxh8+! Rxh8 2.Rxh8# — Rayon X! La tour en c5 et h5 coordonnent. La 8e rangée est mortelle!'] },
+    { id:'x2', theme:'xray', title:'Défense Rayon X #1', rating:1400, turn:'w', desc:'Utilisez la défense en rayon X de la tour pour sauver la position.', board:'r......./...R..k./......../......../......../......../......../....K...', hl:[6,3], solution:['Rd7!','1.Rd7! La tour défend en rayon X — garde la 7e rangée tout en attaquant. Position solide!'] },
+    { id:'x3', theme:'xray', title:'Rayon X de Dame #1', rating:1500, turn:'w', desc:'La dame blanche, en rayon X, menace le roi à travers une pièce.', board:'....k.r./..q..ppp/......../...Q..../......../......../PPP..PPP/....K...', hl:[35,4], solution:['Qd8+!','1.Qd8+! Rxd8 2.Rxd8# — La dame opère en rayon X à travers la tour noire pour forcer le mat!'] },
+    { id:'x4', theme:'xray', title:'Rayon X de Tour #1', rating:1450, turn:'b', desc:'La tour noire peut utiliser le rayon X pour gagner du matériel.', board:'....K..R/......../......../......../......../......../......../r...k...', hl:[7,0], solution:['Rxa1!','1...Rxa1! En rayon X — prend la tour. Si 2.Rxa1, Ra8+ gagne la qualité. Gain de matériel!'] },
+    { id:'x5', theme:'xray', title:'Combinaison Rayon X #1', rating:1700, turn:'w', desc:'Combinaison complexe utilisant le rayon X pour forcer un gain décisif.', board:'r.....k./p..q.rpp/....Q.../....R.R./......../......../PPP..PPP/....K...', hl:[14,6], solution:['Rxg7+!','1.Rxg7+! Kxg7 2.Rg5+ Kh8 3.Qxf7 — Rayon X combiné avec l\'attaque sur l\'axe g pour forcer la victoire!'] },
+];
+
+const SK = 'supachess_tactics_v1';
+function getSolved() {
+    try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; }
+}
+function saveSolved(arr) {
+    try { localStorage.setItem(SK, JSON.stringify(arr)); } catch(e) {}
+}
+
+let solved = getSolved();
+let streak = 0;
+let activeTheme = 'all';
+let currentPuzzle = null;
+
+const PIECES = { 'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
+
+function parseBoard(str) {
+    let cells = [];
+    const rows = str.split('/');
+    for (const row of rows) {
+        for (const ch of row) {
+            if (ch >= '1' && ch <= '8') { for (let i=0;i<+ch;i++) cells.push('.'); }
+            else cells.push(ch);
+        }
+    }
+    return cells;
+}
+
+function renderMiniBoard(boardStr, hl=[]) {
+    const cells = parseBoard(boardStr);
+    let h = '<div class="mini-board">';
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+        const i=r*8+c, isLight=(r+c)%2===0, isHl=hl.includes(i);
+        const p = cells[i]!=='.' ? (PIECES[cells[i]]||'') : '';
+        h += `<div class="mini-cell ${isLight?'light':'dark'}${isHl?' hl':''}"><span style="color:#1a1a2e">${p}</span></div>`;
+    }
+    return h + '</div>';
+}
+
+function renderBigBoard(boardStr, hl=[]) {
+    const cells = parseBoard(boardStr);
+    let h = '<div class="big-board">';
+    for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+        const i=r*8+c, isLight=(r+c)%2===0, isHl=hl.includes(i);
+        const p = cells[i]!=='.' ? (PIECES[cells[i]]||'') : '';
+        h += `<div class="big-cell ${isLight?'light':'dark'}${isHl?' hl':''}"><span style="color:#1a1a2e">${p}</span></div>`;
+    }
+    return h + '</div>';
+}
+
+function updateStats() {
+    const s = solved.length;
+    document.getElementById('stat-solved').textContent = s;
+    document.getElementById('stat-pct').textContent = Math.round(s/40*100)+'%';
+    document.getElementById('stat-streak').textContent = streak;
+    document.getElementById('prog-bar').style.width = (s/40*100)+'%';
+}
+
+function renderTabs() {
+    const tabs = document.getElementById('theme-tabs');
+    tabs.innerHTML = THEMES.map(t => {
+        const cnt = t.id==='all' ? PUZZLES.length : PUZZLES.filter(p=>p.theme===t.id).length;
+        const doneCnt = t.id==='all'
+            ? PUZZLES.filter(p=>solved.includes(p.id)).length
+            : PUZZLES.filter(p=>p.theme===t.id && solved.includes(p.id)).length;
+        return `<div class="theme-tab ${activeTheme===t.id?'active':''}" onclick="setTheme('${t.id}')">
+            ${t.name} <span class="cnt">${doneCnt}/${cnt}</span>
+        </div>`;
+    }).join('');
+}
+
+function setTheme(id) {
+    activeTheme = id;
+    renderTabs();
+    renderGrid();
+}
+
+function renderGrid() {
+    const grid = document.getElementById('puzzle-grid');
+    const filtered = activeTheme==='all' ? PUZZLES : PUZZLES.filter(p=>p.theme===activeTheme);
+    grid.innerHTML = filtered.map(p => {
+        const isSolved = solved.includes(p.id);
+        const theme = THEMES.find(t=>t.id===p.theme);
+        return `<div class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')">
+            <div class="pz-top">
+                <span class="pz-title">${isSolved?'✅ ':''} ${p.title}</span>
+                <span class="pz-rating">⭐ ${p.rating}</span>
+            </div>
+            <span class="pz-theme-badge">${theme?.name||''}</span>
+            ${renderMiniBoard(p.board, p.hl)}
+            <div class="pz-desc">${p.desc}</div>
+            <div class="pz-bottom">
+                <span>${p.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span>
+                ${isSolved ? '<span style="color:#22c55e; margin-left:auto;">✅ Résolu</span>' : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openPuzzle(id) {
+    currentPuzzle = PUZZLES.find(p=>p.id===id);
+    if (!currentPuzzle) return;
+    const isSolved = solved.includes(id);
+    document.getElementById('modal-inner').innerHTML = `
+        <h2>${currentPuzzle.title}</h2>
+        <div class="modal-sub">Rating: ⭐ ${currentPuzzle.rating} | ${THEMES.find(t=>t.id===currentPuzzle.theme)?.name||''}</div>
+        <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl)}</div>
+        <div class="modal-desc">
+            <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">
+                ${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}
+            </span><br>
+            ${currentPuzzle.desc}
+        </div>
+        <div class="modal-btn-row">
+            <button class="m-btn m-btn-reveal" id="btn-reveal" onclick="revealSol()" ${isSolved?'style="display:none"':''}>
+                💡 Révéler la solution
+            </button>
+            <button class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" ${isSolved?'style="display:inline-flex"':''}>
+                ✅ Compris! → Suivant
+            </button>
+            <button class="m-btn m-btn-close" onclick="closeModal()">✕ Fermer</button>
+        </div>
+        <div class="sol-box ${isSolved?'show':''}" id="sol-box">
+            <h4>✅ Solution</h4>
+            <div class="sol-moves">
+                <span class="sol-chip">${currentPuzzle.solution[0]}</span>
+            </div>
+            <p style="margin-top:10px;line-height:1.6;opacity:0.9;">${currentPuzzle.solution[1]}</p>
+        </div>
+    `;
+    document.getElementById('modal-bg').classList.add('open');
+}
+
+function revealSol() {
+    document.getElementById('sol-box').classList.add('show');
+    document.getElementById('btn-reveal').style.display = 'none';
+    document.getElementById('btn-done').style.display = 'inline-flex';
+}
+
+function markSolved(id) {
+    if (!solved.includes(id)) { solved.push(id); saveSolved(solved); streak++; }
+    closeModal();
+    updateStats();
+    renderTabs();
+    renderGrid();
+}
+
+function closeModal() {
+    document.getElementById('modal-bg').classList.remove('open');
+}
+
+document.getElementById('modal-bg').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Init
+updateStats();
+renderTabs();
+renderGrid();
+</script>
+</body>
+</html>

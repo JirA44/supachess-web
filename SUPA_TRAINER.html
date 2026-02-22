@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ SUPA Chess Trainer — Coups colorés</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --bg2: #141929;
+            --card: #1e2538;
+            --border: rgba(139,92,246,0.3);
+            --purple: #8b5cf6;
+            --text: #e6e8eb;
+            --muted: #9ca3af;
+            --c-bril:    #d0d0d8;
+            --c-best:    #8b5cf6;
+            --c-excel:   #3b82f6;
+            --c-good:    #22c55e;
+            --c-ok:      #eab308;
+            --c-inaccu:  #f97316;
+            --c-blunder: #ef4444;
+            --c-book:    #c8974a;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 { font-size: 2em; text-align: center; margin-bottom: 6px; }
+        .subtitle { text-align: center; color: var(--muted); margin-bottom: 24px; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 40px 360px;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        /* ── Board ─────────────────────────────────── */
+        .board-col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+        #board-wrap {
+            position: relative;
+            width: 540px;
+            height: 540px;
+            flex-shrink: 0;
+        }
+        #board { width: 540px !important; }
+
+        /* Overlay for highlights — not affected by board re-renders */
+        #hl-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        /* Highlight elements inside overlay */
+        .sq-hl {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sq-hl .dot {
+            width: 34%;
+            height: 34%;
+            border-radius: 50%;
+            opacity: 0.85;
+        }
+        .sq-hl .ring {
+            width: 88%;
+            height: 88%;
+            border-radius: 50%;
+            border: 5px solid transparent;
+            opacity: 0.85;
+        }
+
+        /* Colors by quality */
+        .sq-hl.bril    .dot  { background: var(--c-bril);    box-shadow: 0 0 18px var(--c-bril); }
+        .sq-hl.bril    .ring { border-color: var(--c-bril);  box-shadow: 0 0 14px var(--c-bril); border-width: 6px; }
+        .sq-hl.best    .dot  { background: var(--c-best);    box-shadow: 0 0 14px var(--c-best); }
+        .sq-hl.best    .ring { border-color: var(--c-best);  box-shadow: 0 0 10px var(--c-best); }
+        .sq-hl.excel   .dot  { background: var(--c-excel);   box-shadow: 0 0 12px var(--c-excel); }
+        .sq-hl.excel   .ring { border-color: var(--c-excel); }
+        .sq-hl.good    .dot  { background: var(--c-good);    box-shadow: 0 0 10px var(--c-good); }
+        .sq-hl.good    .ring { border-color: var(--c-good); }
+        .sq-hl.ok      .dot  { background: var(--c-ok); }
+        .sq-hl.ok      .ring { border-color: var(--c-ok); }
+        .sq-hl.inaccu  .dot  { background: var(--c-inaccu); }
+        .sq-hl.inaccu  .ring { border-color: var(--c-inaccu); }
+        .sq-hl.blunder .dot  { background: var(--c-blunder); box-shadow: 0 0 12px var(--c-blunder); }
+        .sq-hl.blunder .ring { border-color: var(--c-blunder); box-shadow: 0 0 8px var(--c-blunder); }
+        .sq-hl.legal   .dot  { background: rgba(200,200,200,0.5); }
+        .sq-hl.legal   .ring { border-color: rgba(200,200,200,0.5); }
+
+        /* Wood ring for theoretical (book) moves */
+        .sq-hl.has-book::before {
+            content: '';
+            position: absolute;
+            inset: 18%;
+            border-radius: 50%;
+            border: 2px solid var(--c-book);
+            box-shadow: 0 0 6px var(--c-book);
+        }
+
+        /* Check indicator badge */
+        .check-ind {
+            position: absolute;
+            top: 3px;
+            right: 4px;
+            font-size: 11px;
+            line-height: 1;
+            background: rgba(255,210,0,0.9);
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        /* Controls */
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .btn {
+            padding: 9px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .btn-primary { background: var(--purple); color: white; }
+        .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        /* Legend */
+        .legend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .leg-item { display: flex; align-items: center; gap: 5px; font-size: 0.78em; color: var(--muted); }
+        .leg-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+        .leg-dot.bril    { background: var(--c-bril); }
+        .leg-dot.best    { background: var(--c-best); }
+        .leg-dot.excel   { background: var(--c-excel); }
+        .leg-dot.good    { background: var(--c-good); }
+        .leg-dot.ok      { background: var(--c-ok); }
+        .leg-dot.inaccu  { background: var(--c-inaccu); }
+        .leg-dot.blunder { background: var(--c-blunder); }
+        .leg-dot.book    { background: var(--c-book); border-radius: 3px; }
+
+        /* Skill */
+        .skill-row { display: flex; align-items: center; gap: 10px; font-size: 0.85em; color: var(--muted); }
+        .skill-row input[type=range] { width: 110px; accent-color: var(--purple); }
+
+        #status { font-size: 0.85em; color: var(--muted); text-align: center; min-height: 1.4em; }
+
+        /* ── Eval bar ──────────────────────────────── */
+        .eval-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding-top: 4px;
+        }
+        .eval-bar-wrap {
+            width: 36px;
+            height: 540px;
+            background: #1a1a2e;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            position: relative;
+        }
+        #eval-black {
+            position: absolute; top:0; left:0; right:0;
+            background: #111;
+            transition: height 0.5s ease;
+        }
+        #eval-white {
+            position: absolute; bottom:0; left:0; right:0;
+            background: #f0ede8;
+            transition: height 0.5s ease;
+        }
+        .eval-score { font-size: 1em; font-weight: 700; color: var(--text); text-align: center; }
+
+        /* ── Right panel ───────────────────────────── */
+        .right-col { display: flex; flex-direction: column; gap: 16px; }
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+        }
+        .panel h3 { font-size: 0.92em; margin-bottom: 12px; color: var(--purple); letter-spacing: 0.03em; }
+
+        #coach-msg { font-size: 0.9em; line-height: 1.65; min-height: 70px; }
+
+        /* All moves ranking */
+        #top-moves {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        #top-moves::-webkit-scrollbar { width: 4px; }
+        #top-moves::-webkit-scrollbar-track { background: transparent; }
+        #top-moves::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .mv {
+            display: grid;
+            grid-template-columns: 22px 54px 1fr 52px 38px;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.82em;
+            cursor: default;
+        }
+        .mv.bril    { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.6); }
+        .mv.best    { background: rgba(139,92,246,0.12);  border: 1px solid rgba(139,92,246,0.5); }
+        .mv.excel   { background: rgba(59,130,246,0.11);  border: 1px solid rgba(59,130,246,0.4); }
+        .mv.good    { background: rgba(34,197,94,0.10);   border: 1px solid rgba(34,197,94,0.4); }
+        .mv.ok      { background: rgba(234,179,8,0.09);   border: 1px solid rgba(234,179,8,0.35); }
+        .mv.inaccu  { background: rgba(249,115,22,0.09);  border: 1px solid rgba(249,115,22,0.35); }
+        .mv.blunder { background: rgba(239,68,68,0.09);   border: 1px solid rgba(239,68,68,0.3); }
+
+        .mv-rank  { color: var(--muted); font-size: 0.78em; text-align: right; }
+        .mv-san   { font-weight: 700; letter-spacing: 0.02em; }
+        .mv-bar-wrap { height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+        .mv-bar   { height: 100%; border-radius: 3px; }
+        .mv-score { color: var(--muted); font-size: 0.85em; text-align: right; }
+        .mv-note  { font-weight: 700; font-size: 0.88em; text-align: right; }
+        .mv-note.bril    { color: var(--c-bril); }
+        .mv-note.best    { color: var(--c-best); }
+        .mv-note.excel   { color: var(--c-excel); }
+        .mv-note.good    { color: var(--c-good); }
+        .mv-note.ok      { color: var(--c-ok); }
+        .mv-note.inaccu  { color: var(--c-inaccu); }
+        .mv-note.blunder { color: var(--c-blunder); }
+
+        /* Move history */
+        #move-history {
+            font-family: monospace;
+            font-size: 0.84em;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 2.4;
+            color: var(--muted);
+        }
+        .hist-num  { color: #555; margin-right: 2px; }
+        .hist-mv   { margin-right: 6px; white-space: nowrap; }
+        .hist-mv.w { color: var(--text); }
+        .hist-mv.b { color: var(--muted); }
+        .hist-ico  { font-size: 0.72em; vertical-align: middle; margin-left: 1px; }
+        .hist-qdot { font-size: 0.82em; vertical-align: middle; margin-left: 1px; }
+
+        /* Spinner */
+        .spin {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid #333;
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<h1>⚡ SUPA Chess Trainer</h1>
+<p class="subtitle">Coups colorés par qualité · 📖 Théorie Lichess · ⚡ Donne échec · Apprends à jouer parfait!</p>
+
+<div class="layout">
+
+    <!-- Column 1: board + controls -->
+    <div class="board-col">
+        <div id="board-wrap">
+            <div id="board"></div>
+            <div id="hl-overlay"></div>
+        </div>
+
+        <div class="legend">
+            <div class="leg-item"><div class="leg-dot bril"></div>Brillant</div>
+            <div class="leg-item"><div class="leg-dot best"></div>Meilleur</div>
+            <div class="leg-item"><div class="leg-dot excel"></div>Excellent</div>
+            <div class="leg-item"><div class="leg-dot good"></div>Très bon</div>
+            <div class="leg-item"><div class="leg-dot ok"></div>OK</div>
+            <div class="leg-item"><div class="leg-dot inaccu"></div>Imprécision</div>
+            <div class="leg-item"><div class="leg-dot blunder"></div>Gaffe</div>
+            <div class="leg-item"><div class="leg-dot book"></div>Théorie 📖</div>
+            <div class="leg-item" style="color:var(--text)">⚡ = Donne échec</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="newGame()">Nouvelle partie</button>
+            <button class="btn btn-secondary" onclick="flipBoard()">Retourner</button>
+            <button class="btn btn-secondary" onclick="undoMove()">Annuler coup</button>
+            <button class="btn btn-secondary" onclick="toggleHints()">Aide: <span id="hint-lbl">ON</span></button>
+        </div>
+
+        <div class="skill-row">
+            Niveau SF adversaire:
+            <input type="range" id="skill-sl" min="1" max="20" value="15" oninput="updateSkill(this.value)">
+            <strong id="skill-val">15</strong>/20
+        </div>
+
+        <div id="status">Chargement Stockfish…</div>
+    </div>
+
+    <!-- Column 2: eval bar -->
+    <div class="eval-col">
+        <div class="eval-bar-wrap">
+            <div id="eval-black" style="height:50%"></div>
+            <div id="eval-white" style="height:50%"></div>
+        </div>
+        <div class="eval-score" id="eval-score">0.00</div>
+    </div>
+
+    <!-- Column 3: coach + info -->
+    <div class="right-col">
+        <div class="panel">
+            <h3>🧠 COACH SUPA</h3>
+            <div id="coach-msg" style="color:var(--muted)">Sélectionne une pièce pour voir les coups colorés.</div>
+        </div>
+
+        <div class="panel">
+            <h3>🎯 CLASSEMENT TOUS LES COUPS <span id="mv-count" style="color:var(--muted);font-weight:400"></span></h3>
+            <div id="top-moves"><div style="color:var(--muted);font-size:0.85em">Analyse en cours…</div></div>
+        </div>
+
+        <div class="panel">
+            <h3>📋 HISTORIQUE</h3>
+            <div id="move-history">–</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const game       = new Chess();
+let board        = null;
+let sf           = null;
+let sfReady      = false;
+let sfCB         = null;
+let sfBuf        = [];
+
+let hintsOn      = true;
+let selSquare    = null;
+let analysis     = {};
+let hlEls        = [];
+let oppSkill     = 15;
+let opponentTurn = false;
+let bookMoves    = new Set();
+let moveLog      = [];   // { san, quality, isBook, givesCheck }
+
+const SQ = 67.5;  // 540px board / 8 squares
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STOCKFISH
+// ─────────────────────────────────────────────────────────────────────────────
+function initSF() {
+    sf = new Worker('stockfish.js');
+    sf.onmessage = ({ data: line }) => {
+        if (line === 'uciok') {
+            sf.postMessage('setoption name Threads value 2');
+            sf.postMessage('setoption name Hash value 64');
+            sf.postMessage('isready');
+        } else if (line === 'readyok') {
+            sfReady = true;
+            setStatus('Stockfish prêt ✓ — joue un coup!');
+            doAnalyze();
+        } else if (line.startsWith('info') && line.includes('multipv')) {
+            sfBuf.push(line);
+        } else if (line.startsWith('bestmove')) {
+            sfBuf.push(line);
+            if (sfCB) { sfCB(sfBuf.slice()); sfCB = null; sfBuf = []; }
+        }
+    };
+    sf.postMessage('uci');
+}
+
+function sfStop() {
+    sfCB = null;
+    sfBuf = [];
+    sf.postMessage('stop');
+}
+
+function sfCall(fen, mpv, depth, skillOverride) {
+    return new Promise(resolve => {
+        if (!sfReady) { resolve([]); return; }
+        sfStop();
+        sfCB = resolve;
+        sfBuf = [];
+        if (skillOverride !== undefined) sf.postMessage(`setoption name Skill Level value ${skillOverride}`);
+        sf.postMessage(`setoption name MultiPV value ${mpv}`);
+        sf.postMessage(`position fen ${fen}`);
+        sf.postMessage(`go depth ${depth}`);
+    });
+}
+
+function sfCallTime(fen, skill, movetime) {
+    return new Promise(resolve => {
+        if (!sfReady) { resolve([]); return; }
+        sfStop();
+        sfCB = resolve;
+        sfBuf = [];
+        sf.postMessage(`setoption name Skill Level value ${skill}`);
+        sf.postMessage(`setoption name MultiPV value 1`);
+        sf.postMessage(`position fen ${fen}`);
+        sf.postMessage(`go movetime ${movetime}`);
+    });
+}
+
+function parseLines(lines) {
+    const byRank = {};
+    const isBlack = (game.turn() === 'b');
+    for (const l of lines) {
+        if (!l.startsWith('info') || !l.includes('multipv')) continue;
+        const rv = l.match(/multipv (\d+)/);
+        const cm = l.match(/score cp (-?\d+)/);
+        const mm = l.match(/score mate (-?\d+)/);
+        const pm = l.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+        if (!pm) continue;
+        let score = 0;
+        if (cm) score = parseInt(cm[1]);
+        else if (mm) score = parseInt(mm[1]) > 0 ? 30000 : -30000;
+        if (isBlack) score = -score;
+        byRank[rv ? parseInt(rv[1]) : 99] = { rank: rv ? parseInt(rv[1]) : 99, move: pm[1], score };
+    }
+    return Object.values(byRank).sort((a,b) => a.rank - b.rank);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POSITION ANALYSIS
+// ─────────────────────────────────────────────────────────────────────────────
+async function doAnalyze() {
+    if (!sfReady || game.game_over() || opponentTurn) return;
+    const legalMoves = game.moves({ verbose: true });
+    if (!legalMoves.length) return;
+    const mpv = Math.min(legalMoves.length, 30);
+    setStatus(`<span class="spin"></span> Analyse de ${mpv} coups…`);
+
+    const lines  = await sfCall(game.fen(), mpv, 12, 20);
+    const ranked = parseLines(lines);
+    if (!ranked.length) { setStatus('Prêt.'); return; }
+
+    const bestScore   = ranked[0].score;
+    const brillantGap = ranked.length >= 2 ? bestScore - ranked[1].score : 0;
+    const isBrillant  = brillantGap >= 100;
+
+    analysis = {};
+    for (const r of ranked) {
+        const diff = bestScore - r.score;
+        let quality;
+        if (r.rank === 1 && isBrillant) quality = 'bril';
+        else if (diff <= 0)             quality = 'best';
+        else if (diff <= 10)            quality = 'excel';
+        else if (diff <= 30)            quality = 'good';
+        else if (diff <= 60)            quality = 'ok';
+        else if (diff <= 120)           quality = 'inaccu';
+        else                            quality = 'blunder';
+        analysis[r.move] = { score: r.score, diff, quality, rank: r.rank };
+    }
+    // Moves SF didn't return → blunder
+    for (const m of legalMoves) {
+        const key = m.from + m.to + (m.promotion || '');
+        if (!analysis[key]) analysis[key] = { score: bestScore - 400, diff: 400, quality: 'blunder', rank: 99 };
+    }
+
+    updateEvalBar(bestScore);
+    updateTopMoves(ranked, legalMoves);
+    if (selSquare) showMovesForSquare(selSquare);
+    setStatus('Ton tour — sélectionne une pièce!');
+    // Théorie Lichess en parallèle → re-affiche avec anneaux bois
+    fetchBookMoves(game.fen()).then(() => { updateTopMoves(ranked, legalMoves); if (selSquare) showMovesForSquare(selSquare); });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOARD SETUP
+// ─────────────────────────────────────────────────────────────────────────────
+function initBoard() {
+    board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        onDragStart,
+        onDrop,
+        onSnapEnd,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+    });
+
+    // Click on a square to select piece and show colored move dots
+    document.getElementById('board').addEventListener('click', function(e) {
+        if (game.game_over() || opponentTurn) return;
+        const sqEl = e.target.closest('[data-square]');
+        if (!sqEl) return;
+        const sq = sqEl.getAttribute('data-square');
+        onSquareClick(sq);
+    });
+}
+
+function onDragStart(src, piece) {
+    if (game.game_over() || opponentTurn) return false;
+    if (game.turn() === 'w' && piece.startsWith('b')) return false;
+    if (game.turn() === 'b' && piece.startsWith('w')) return false;
+    selSquare = src;
+    showMovesForSquare(src);
+    return true;
+}
+
+function onSquareClick(sq) {
+    if (game.game_over() || opponentTurn) return;
+    const piece = game.get(sq);
+    if (piece && piece.color === game.turn()) {
+        selSquare = sq;
+        showMovesForSquare(sq);
+    }
+}
+
+function onDrop(src, tgt) {
+    if (tgt === 'offboard') return 'snapback';
+    let promo;
+    const pc = game.get(src);
+    if (pc && pc.type === 'p') {
+        if ((pc.color === 'w' && tgt[1] === '8') || (pc.color === 'b' && tgt[1] === '1')) promo = 'q';
+    }
+    const tmp = new Chess(game.fen());
+    if (!tmp.move({ from: src, to: tgt, promotion: promo })) return 'snapback';
+    playMove(src, tgt, promo);
+}
+
+function onSnapEnd() {
+    board.position(game.fen());
+    selSquare = null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HIGHLIGHTS — Overlay approach: independent of chessboard.js DOM
+// ─────────────────────────────────────────────────────────────────────────────
+function squareToPos(sq) {
+    const col = sq.charCodeAt(0) - 97;    // a=0 … h=7
+    const row = parseInt(sq[1]) - 1;       // 1=0 … 8=7
+    const flipped = board && board.orientation() === 'black';
+    const x = flipped ? (7 - col) * SQ : col * SQ;
+    const y = flipped ? row * SQ : (7 - row) * SQ;
+    return { x, y };
+}
+
+function addHL(sq, quality, isCapture, info, isBook, givesCheck) {
+    const { x, y } = squareToPos(sq);
+    const overlay = document.getElementById('hl-overlay');
+    if (!overlay) return;
+
+    const div = document.createElement('div');
+    div.className = `sq-hl ${quality}${isBook ? ' has-book' : ''}`;
+    div.style.cssText = `left:${x}px;top:${y}px;width:${SQ}px;height:${SQ}px;`;
+
+    const inner = document.createElement('div');
+    inner.className = isCapture ? 'ring' : 'dot';
+    div.appendChild(inner);
+
+    if (givesCheck) {
+        const ci = document.createElement('span');
+        ci.className = 'check-ind';
+        ci.textContent = '⚡';
+        div.appendChild(ci);
+    }
+
+    overlay.appendChild(div);
+    hlEls.push(div);
+}
+
+function clearHL() {
+    hlEls.forEach(el => el.remove());
+    hlEls = [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LICHESS OPENING THEORY
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchBookMoves(fen) {
+    bookMoves = new Set();
+    try {
+        const url = `https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}&moves=30&topGames=0`;
+        const resp = await fetch(url, { signal: AbortSignal.timeout(3000) });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        for (const m of (data.moves || [])) { if (m.uci) bookMoves.add(m.uci); }
+    } catch (_) {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHOW MOVES FOR SELECTED PIECE
+// ─────────────────────────────────────────────────────────────────────────────
+const QORDER = ['bril','best','excel','good','ok','inaccu','blunder','legal'];
+
+function getCheckMoves() {
+    const checkSet = new Set();
+    for (const m of game.moves({ verbose: true })) {
+        const tmp = new Chess(game.fen());
+        const res = tmp.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
+        if (res && tmp.in_check()) checkSet.add(m.from + m.to + (m.promotion || ''));
+    }
+    return checkSet;
+}
+
+function showMovesForSquare(sq) {
+    clearHL();
+    if (!hintsOn || !sq) return;
+
+    const allMoves   = game.moves({ verbose: true }).filter(m => m.from === sq);
+    if (!allMoves.length) return;
+
+    const checkMoves = getCheckMoves();
+
+    for (const m of allMoves) {
+        const key        = m.from + m.to + (m.promotion || '');
+        const info       = analysis[key];
+        const q          = info ? info.quality : 'legal';
+        const isCapture  = !!(m.flags && (m.flags.includes('c') || m.flags.includes('e')));
+        const isBook     = bookMoves.has(key);
+        const givesCheck = checkMoves.has(key);
+        addHL(m.to, q, isCapture, info, isBook, givesCheck);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOVE EXECUTION
+// ─────────────────────────────────────────────────────────────────────────────
+function playMove(src, tgt, promo) {
+    const key    = src + tgt + (promo || '');
+    const wasBook = bookMoves.has(key);
+    const info   = analysis[key];
+
+    const mv = game.move({ from: src, to: tgt, promotion: promo });
+    if (!mv) return;
+
+    moveLog.push({
+        san:        mv.san,
+        quality:    info ? info.quality : null,
+        isBook:     wasBook,
+        givesCheck: mv.san.includes('+'),
+        byPlayer:   true,
+    });
+
+    board.position(game.fen());
+    selSquare = null;
+    analysis  = {};
+    clearHL();
+    updateHistory();
+    setCoach(mv, info);
+
+    if (game.game_over()) { handleEnd(); return; }
+    setTimeout(() => opponentPlay(), 500);
+}
+
+async function opponentPlay() {
+    opponentTurn = true;
+    setStatus(`<span class="spin"></span> SF Skill ${oppSkill} réfléchit…`);
+    clearHL();
+
+    const lines = await sfCallTime(game.fen(), oppSkill, 600);
+    let bm = null;
+    for (const l of lines) {
+        const m = l.match(/^bestmove ([a-h][1-8][a-h][1-8][qrbn]?)/);
+        if (m) { bm = m[1]; break; }
+    }
+
+    if (bm) {
+        const from = bm.slice(0,2), to = bm.slice(2,4), promo = bm[4] || undefined;
+        const mv = game.move({ from, to, promotion: promo });
+        if (mv) {
+            moveLog.push({
+                san:        mv.san,
+                quality:    null,
+                isBook:     false,
+                givesCheck: mv.san.includes('+'),
+                byPlayer:   false,
+            });
+        }
+        board.position(game.fen());
+        updateHistory();
+    }
+
+    opponentTurn = false;
+    if (game.game_over()) { handleEnd(); return; }
+    await doAnalyze();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COACH MESSAGES
+// ─────────────────────────────────────────────────────────────────────────────
+function setCoach(mv, info) {
+    const el = document.getElementById('coach-msg');
+    if (!info) {
+        el.style.cssText = '';
+        el.innerHTML = `Tu as joué <strong>${mv.san}</strong>.`;
+        return;
+    }
+    const sc = (info.score >= 0 ? '+' : '') + (info.score/100).toFixed(2);
+    const colors = { bril:'#d0d0d8', best:'#8b5cf6', excel:'#3b82f6', good:'#22c55e', ok:'#eab308', inaccu:'#f97316', blunder:'#ef4444' };
+    const labels = {
+        bril:    `🌟 BRILLANT! <strong>${mv.san}</strong> — coup génial, bien au-dessus des alternatives! (${sc})`,
+        best:    `🟣 Meilleur coup! <strong>${mv.san}</strong> est le #1 selon Stockfish. (${sc})`,
+        excel:   `🔵 Excellent! <strong>${mv.san}</strong> quasi-parfait. (${sc}) −${info.diff}cp du meilleur.`,
+        good:    `🟢 Très bon! <strong>${mv.san}</strong> est solide. (${sc}) −${info.diff}cp du meilleur.`,
+        ok:      `🟡 OK. <strong>${mv.san}</strong> jouable. (${sc}) — il y a mieux (−${info.diff}cp).`,
+        inaccu:  `🟠 Imprécision. <strong>${mv.san}</strong> perd ${info.diff}cp. (${sc}) — Tu peux faire mieux!`,
+        blunder: `🔴 Gaffe! <strong>${mv.san}</strong> perd ~${(info.diff/100).toFixed(1)} pions. (${sc}) — SF va en profiter!`,
+    };
+    el.style.cssText = `border-left:4px solid ${colors[info.quality]};padding-left:10px;`;
+    el.innerHTML = labels[info.quality] || `Tu as joué <strong>${mv.san}</strong>.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function updateEvalBar(cpFromCurrent) {
+    let wp = game.turn() === 'w' ? cpFromCurrent : -cpFromCurrent;
+    wp = Math.max(-600, Math.min(600, wp));
+    const whitePct = 50 + (wp / 600) * 50;
+    document.getElementById('eval-black').style.height = (100 - whitePct) + '%';
+    document.getElementById('eval-white').style.height = whitePct + '%';
+    document.getElementById('eval-score').textContent = (wp >= 0 ? '+' : '') + (Math.abs(wp)/100).toFixed(2);
+}
+
+function updateTopMoves(ranked, legalMoves) {
+    const el = document.getElementById('top-moves');
+    if (!ranked.length) { el.innerHTML = '<div style="color:var(--muted)">–</div>'; return; }
+
+    const allMoves = legalMoves.map(m => {
+        const key  = m.from + m.to + (m.promotion || '');
+        const info = analysis[key] || { score: -9999, diff: 9999, quality: 'blunder', rank: 99 };
+        return { san: m.san, key, ...info };
+    }).sort((a, b) => b.score - a.score);
+
+    const bestScore  = allMoves[0]?.score ?? 0;
+    const worstScore = allMoves[allMoves.length - 1]?.score ?? bestScore - 100;
+    const scoreRange = Math.max(1, bestScore - worstScore);
+
+    function calcNote(q) {
+        return { bril:10, best:10, excel:9, good:8, ok:6, inaccu:4, blunder:2 }[q] ?? 1;
+    }
+
+    const barColors = { bril:'#d0d0d8', best:'#8b5cf6', excel:'#3b82f6', good:'#22c55e', ok:'#eab308', inaccu:'#f97316', blunder:'#ef4444' };
+    const qlabels   = { bril:'🌟 Brillant', best:'🟣 Meilleur', excel:'🔵 Excellent', good:'🟢 Très bon', ok:'🟡 OK', inaccu:'🟠 Imprécision', blunder:'🔴 Gaffe' };
+
+    document.getElementById('mv-count').textContent = `(${allMoves.length} coups)`;
+
+    el.innerHTML = allMoves.map((m, i) => {
+        const sc      = (m.score >= 0 ? '+' : '') + (m.score / 100).toFixed(2);
+        const note    = calcNote(m.quality);
+        const barPct  = Math.max(4, Math.round((m.score - worstScore) / scoreRange * 100));
+        const isBook  = bookMoves.has(m.key);
+        const bookTag = isBook ? '<span style="font-size:0.8em">📖</span>' : '';
+        return `<div class="mv ${m.quality}" title="${qlabels[m.quality]||''} — ${m.san}: ${sc}">
+            <span class="mv-rank">#${i+1}</span>
+            <span class="mv-san">${m.san}${bookTag}</span>
+            <div class="mv-bar-wrap"><div class="mv-bar" style="width:${barPct}%;background:${barColors[m.quality]||'#555'}"></div></div>
+            <span class="mv-score">${sc}</span>
+            <span class="mv-note ${m.quality}">${note}/10</span>
+        </div>`;
+    }).join('');
+}
+
+function updateHistory() {
+    const el = document.getElementById('move-history');
+    if (!moveLog.length) { el.innerHTML = '–'; return; }
+
+    const qColors = { bril:'#d0d0d8', best:'#8b5cf6', excel:'#3b82f6', good:'#22c55e', ok:'#eab308', inaccu:'#f97316', blunder:'#ef4444' };
+    const qTitles = { bril:'Brillant', best:'Meilleur', excel:'Excellent', good:'Très bon', ok:'OK', inaccu:'Imprécision', blunder:'Gaffe' };
+
+    let html = '';
+    for (let i = 0; i < moveLog.length; i++) {
+        const m       = moveLog[i];
+        const isWhite = (i % 2 === 0);
+        if (isWhite) html += `<span class="hist-num">${Math.floor(i/2)+1}.</span>`;
+
+        // Icons after the SAN
+        let icons = '';
+        if (m.quality) {
+            icons += `<span class="hist-qdot" style="color:${qColors[m.quality]}" title="${qTitles[m.quality]||m.quality}">●</span>`;
+        }
+        if (m.isBook) {
+            icons += `<span class="hist-ico" title="Coup théorique (Lichess masters)">📖</span>`;
+        }
+        if (m.givesCheck && !m.san.includes('#')) {
+            icons += `<span class="hist-ico" title="Donne échec">⚡</span>`;
+        }
+
+        html += `<span class="hist-mv ${isWhite?'w':'b'}">${m.san}${icons}</span>`;
+    }
+    el.innerHTML = html;
+    el.scrollTop = el.scrollHeight;
+}
+
+function setStatus(msg) { document.getElementById('status').innerHTML = msg; }
+
+function handleEnd() {
+    let msg = 'Partie terminée.';
+    if (game.in_checkmate()) msg = game.turn() === 'w' ? '⚫ Noir gagne — échec et mat!' : '⚪ Blanc gagne — échec et mat!';
+    else if (game.in_stalemate()) msg = '½ Pat — Nulle!';
+    else if (game.in_draw()) msg = '½ Nulle!';
+    setStatus(msg);
+    document.getElementById('coach-msg').innerHTML = `<strong>${msg}</strong>`;
+    document.getElementById('top-moves').innerHTML = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
+function newGame() {
+    game.reset();
+    board.start(false);
+    analysis = {};
+    moveLog  = [];
+    bookMoves = new Set();
+    clearHL();
+    selSquare    = null;
+    opponentTurn = false;
+    updateHistory();
+    updateEvalBar(0);
+    document.getElementById('coach-msg').style.cssText = '';
+    document.getElementById('coach-msg').innerHTML = '<span style="color:var(--muted)">Nouvelle partie! Sélectionne une pièce.</span>';
+    document.getElementById('top-moves').innerHTML = '<div style="color:var(--muted);font-size:0.85em">Analyse en cours…</div>';
+    if (sfReady) doAnalyze();
+}
+
+function flipBoard() {
+    board.flip();
+    clearHL();
+    if (selSquare) showMovesForSquare(selSquare);  // recompute positions for new orientation
+}
+
+function undoMove() {
+    if (opponentTurn) return;
+    game.undo();  // undo opponent
+    game.undo();  // undo player
+    if (moveLog.length >= 2) moveLog.splice(-2);
+    else moveLog = [];
+    board.position(game.fen());
+    analysis = {};
+    clearHL();
+    selSquare = null;
+    updateHistory();
+    if (sfReady) doAnalyze();
+}
+
+function toggleHints() {
+    hintsOn = !hintsOn;
+    document.getElementById('hint-lbl').textContent = hintsOn ? 'ON' : 'OFF';
+    if (hintsOn && selSquare) showMovesForSquare(selSquare); else clearHL();
+}
+
+function updateSkill(v) {
+    oppSkill = parseInt(v);
+    document.getElementById('skill-val').textContent = oppSkill;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+window.onload = () => {
+    initBoard();
+    initSF();
+};
+</script>
+<script src="supa-dots-widget.js"></script>
+</body>
+</html>

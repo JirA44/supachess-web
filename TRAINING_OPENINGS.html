@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrainement Ouvertures — SupaChess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 20px; border-radius: 10px;
+            cursor: pointer; font-size: 1rem; margin-bottom: 25px;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); transform: translateX(-3px); }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px 40px; border-radius: 20px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* Opening grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .card {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border-radius: 15px; padding: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer; transition: all 0.3s;
+        }
+        .card:hover { transform: translateY(-5px); border-color: #4facfe; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card.done { border-color: #22c55e; }
+        .card h3 { font-size: 1.2rem; margin-bottom: 8px; color: #4facfe; }
+        .card .sub { font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px; }
+        .card .moves { font-family: monospace; font-size: 0.9rem; opacity: 0.85; margin-bottom: 12px; line-height: 1.6; }
+        .badge-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .badge {
+            padding: 3px 10px; border-radius: 8px; font-size: 0.78rem;
+            background: rgba(79,172,254,0.2); border: 1px solid rgba(79,172,254,0.4);
+        }
+        .badge.done-badge { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.4); }
+        .progress-pill {
+            font-size: 0.78rem; margin-left: auto; opacity: 0.7;
+        }
+
+        /* Detail panel */
+        .detail-panel {
+            display: none; background: rgba(0,0,0,0.45); backdrop-filter: blur(12px);
+            border-radius: 20px; padding: 35px; border: 1px solid rgba(79,172,254,0.3);
+            margin-bottom: 30px;
+        }
+        .detail-panel.visible { display: block; }
+        .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .detail-header h2 { font-size: 1.8rem; color: #4facfe; }
+        .close-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        @media(max-width:700px) { .two-col { grid-template-columns: 1fr; } }
+
+        /* Board */
+        .board-wrap { display: flex; justify-content: center; flex-direction: column; align-items: center; }
+        .board {
+            display: grid; grid-template-columns: repeat(8, 55px);
+            grid-template-rows: repeat(8, 55px);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 4px; overflow: hidden;
+        }
+        .cell {
+            width: 55px; height: 55px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; user-select: none;
+        }
+        .cell.light { background: #f0d9b5; }
+        .cell.dark  { background: #b58863; }
+        .cell.last  { background: rgba(249,115,22,0.55) !important; }
+        .coord-row { display: flex; margin-top: 4px; }
+        .coord-lbl { width: 55px; text-align: center; font-size: 0.72rem; opacity: 0.6; }
+
+        /* Moves list */
+        .moves-wrap { display: flex; flex-direction: column; gap: 8px; }
+        .move-item {
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 14px;
+            border: 1px solid transparent; cursor: pointer; transition: all 0.2s;
+        }
+        .move-item.active { border-color: #4facfe; background: rgba(79,172,254,0.15); }
+        .move-item.played { border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.1); }
+        .move-num { font-size: 0.8rem; opacity: 0.5; min-width: 25px; }
+        .move-san { font-family: monospace; font-size: 1rem; font-weight: bold; }
+        .move-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
+        .move-color.w { background: #f0f0f0; }
+        .move-color.b { background: #1a1a2e; }
+        .move-desc { font-size: 0.82rem; opacity: 0.8; }
+
+        .nav-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+        .nav-btn {
+            padding: 10px 22px; border-radius: 10px; border: none;
+            font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn.prev { background: rgba(255,255,255,0.15); color: #fff; }
+        .nav-btn.next { background: linear-gradient(90deg,#4facfe,#0072ff); color: #fff; }
+        .nav-btn.done-btn { background: linear-gradient(90deg,#22c55e,#16a34a); color: #fff; }
+        .nav-btn:hover { transform: translateY(-2px); }
+
+        .theory-box {
+            background: rgba(255,255,255,0.08); border-radius: 12px;
+            padding: 18px; margin-top: 18px; line-height: 1.7;
+            border-left: 3px solid #4facfe; font-size: 0.95rem;
+        }
+        .theory-box h4 { color: #4facfe; margin-bottom: 10px; }
+
+        .overall-progress {
+            background: rgba(0,0,0,0.35); border-radius: 15px; padding: 20px 25px;
+            margin-bottom: 25px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+        }
+        .progress-bar-bg {
+            flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px;
+            height: 12px; overflow: hidden; min-width: 100px;
+        }
+        .progress-bar-fill {
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg,#4facfe,#22c55e);
+            transition: width 0.5s;
+        }
+        .prog-lbl { font-size: 1rem; font-weight: bold; white-space: nowrap; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-btn" href="index.html">← Retour au Hub</a>
+
+    <div class="header">
+        <h1>📖 Entrainement Ouvertures</h1>
+        <p style="opacity:0.8; margin-top:8px;">Apprenez 8 ouvertures essentielles coup par coup</p>
+    </div>
+
+    <div class="overall-progress">
+        <span class="prog-lbl" id="prog-lbl">0/8 ouvertures maîtrisées</span>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="prog-bar" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detail-panel"></div>
+
+    <div class="grid" id="opening-grid"></div>
+</div>
+
+<script>
+const OPENINGS = [
+    {
+        id: 'sicilian',
+        name: 'Défense Sicilienne',
+        sub: 'Najdorf — la plus jouée au monde',
+        icon: '🔥',
+        tags: ['Agressif','Complexe','Top GM'],
+        theory: `La Sicilienne est l'ouverture la plus populaire aux échecs. Après 1.e4 c5, les Noirs refusent de donner le centre symétrique et créent immédiatement un déséquilibre. La variante Najdorf (5...a6) est la préférée de Fischer et Kasparov. Les Noirs préparent ...e5 ou ...e6 selon la variante blanche.`,
+        moves: [
+            { san:'e4', color:'w', desc:'Contrôle du centre — coup le plus direct' },
+            { san:'c5', color:'b', desc:'Défense Sicilienne! Attaque le centre sans le donner' },
+            { san:'Nf3', color:'w', desc:'Développement du cavalier, prépare d4' },
+            { san:'d6', color:'b', desc:'Prépare le développement du fou f8' },
+            { san:'d4', color:'w', desc:'Ouvre le centre — échange de pions central' },
+            { san:'cxd4', color:'b', desc:'Les Noirs récupèrent le pion central' },
+            { san:'Nxd4', color:'w', desc:'Le cavalier reprend, dominant le centre' },
+            { san:'Nf6', color:'b', desc:'Développement actif, attaque e4' },
+            { san:'Nc3', color:'w', desc:'Défend e4, développe le cavalier' },
+            { san:'a6', color:'b', desc:'Najdorf! Empêche Bb5+, prépare ...b5' },
+        ]
+    },
+    {
+        id: 'ruy',
+        name: 'Ruy Lopez (Espagnole)',
+        sub: 'Ouverture classique 1.e4 e5',
+        icon: '🏰',
+        tags: ['Positionnel','Classique','Universel'],
+        theory: `Le Ruy Lopez est l'une des ouvertures les plus anciennement analysées aux échecs. Le fou en b5 presse le cavalier qui défend e5, cherchant à gagner l'avantage du bishop pair ou à dominer le centre. L'Espagnole mène souvent à des positions riches en stratégie.`,
+        moves: [
+            { san:'e4', color:'w', desc:'Coup roi — contrôle du centre' },
+            { san:'e5', color:'b', desc:'Réponse symétrique classique' },
+            { san:'Nf3', color:'w', desc:'Attaque le pion e5, développement optimal' },
+            { san:'Nc6', color:'b', desc:'Défend e5 naturellement' },
+            { san:'Bb5', color:'w', desc:'Ruy Lopez! Presse le défenseur de e5' },
+            { san:'a6', color:'b', desc:'Variante Morphy — chasse le fou' },
+            { san:'Ba4', color:'w', desc:'Retire le fou, maintient la pression' },
+            { san:'Nf6', color:'b', desc:'Attaque e4, développement rapide' },
+            { san:'O-O', color:'w', desc:'Roque — sécurise le roi blanc' },
+            { san:'Be7', color:'b', desc:'Prépare le roque noir' },
+        ]
+    },
+    {
+        id: 'gambit-dame',
+        name: 'Gambit Dame',
+        sub: 'Ouverture de pions dame 1.d4',
+        icon: '♟',
+        tags: ['Positionnel','Solide','Classique'],
+        theory: `Le Gambit Dame (1.d4 d5 2.c4) est l'une des ouvertures les plus jouées à haut niveau. Les Blancs offrent un pion pour obtenir un centre puissant. Si les Noirs acceptent (2...dxc4), les Blancs récupèrent le pion facilement. La variante refusée (2...e6) est très solide.`,
+        moves: [
+            { san:'d4', color:'w', desc:'Ouverture de pion dame — contrôle du centre' },
+            { san:'d5', color:'b', desc:'Répond au centre, lutte pour l\'espace' },
+            { san:'c4', color:'w', desc:'Gambit Dame — offre un pion pour le centre' },
+            { san:'e6', color:'b', desc:'Gambit Dame Refusé (GDR) — solide et défensif' },
+            { san:'Nc3', color:'w', desc:'Développement naturel, soutient d4' },
+            { san:'Nf6', color:'b', desc:'Développe le cavalier, attaque e4' },
+            { san:'Bg5', color:'w', desc:'Variante classique — cloud le cavalier f6' },
+            { san:'Be7', color:'b', desc:'Développe le fou, prépare le roque' },
+            { san:'e3', color:'w', desc:'Ouvre la diagonale pour le fou f1' },
+            { san:'O-O', color:'b', desc:'Roque — mise en sécurité du roi' },
+        ]
+    },
+    {
+        id: 'king-indian',
+        name: 'Défense Est-Indienne',
+        sub: 'Système hypermoderne 1.d4 Nf6 2.c4 g6',
+        icon: '⚡',
+        tags: ['Dynamique','Contre-Jeu','Kasparov'],
+        theory: `La Défense Est-Indienne est l'arme préférée de Kasparov et Fischer dans les positions 1.d4. Les Noirs laissent les Blancs construire un grand centre pour l'attaquer ensuite. Le fianchetto du fou (g7) crée un puissant évêque pouvant dominer la longue diagonale.`,
+        moves: [
+            { san:'d4', color:'w', desc:'Ouverture de pion dame' },
+            { san:'Nf6', color:'b', desc:'Développement hypermoderne — contrôle e4 de loin' },
+            { san:'c4', color:'w', desc:'Construit le grand centre' },
+            { san:'g6', color:'b', desc:'Prépare le fianchetto — plan de l\'Est-Indienne' },
+            { san:'Nc3', color:'w', desc:'Développement normal' },
+            { san:'Bg7', color:'b', desc:'Fianchetto! L\'évêque domine la grande diagonale' },
+            { san:'e4', color:'w', desc:'Les Blancs occupent le centre avec des pions' },
+            { san:'d6', color:'b', desc:'Soutient e5 futur, prépare le contre-jeu' },
+            { san:'Nf3', color:'w', desc:'Développement et soutien du centre' },
+            { san:'O-O', color:'b', desc:'Roque roi — le roi est en sécurité derrière le fianchetto' },
+        ]
+    },
+    {
+        id: 'french',
+        name: 'Défense Française',
+        sub: 'Solide et contre-attaquant 1.e4 e6',
+        icon: '🛡',
+        tags: ['Solide','Contre-Jeu','Endgame'],
+        theory: `La Défense Française est réputée pour sa solidité. Les Noirs construisent une forteresse pionnière en e6-d5, puis cherchent à contrer avec ...c5. La structure typique donne aux Noirs un bon endgame mais une case passive pour le fou en c8 (le "mauvais fou").`,
+        moves: [
+            { san:'e4', color:'w', desc:'Coup roi ouverture' },
+            { san:'e6', color:'b', desc:'Défense Française — prépare d5' },
+            { san:'d4', color:'w', desc:'Occupe le centre avec deux pions' },
+            { san:'d5', color:'b', desc:'Contre le centre blanc — tension centrale' },
+            { san:'Nc3', color:'w', desc:'Variante Classique — soutient e4' },
+            { san:'Nf6', color:'b', desc:'Développe, attaque e4' },
+            { san:'Bg5', color:'w', desc:'Variante Classique — cloud le cavalier' },
+            { san:'Be7', color:'b', desc:'Débloque le cloud, se prépare à roquer' },
+            { san:'e5', color:'w', desc:'Espace! Pousse le cavalier f6' },
+            { san:'Nfd7', color:'b', desc:'Recule le cavalier, prépare ...c5' },
+        ]
+    },
+    {
+        id: 'caro-kann',
+        name: 'Défense Caro-Kann',
+        sub: 'Solide et classique 1.e4 c6',
+        icon: '🔒',
+        tags: ['Solide','Stratégique','Carlsen'],
+        theory: `La Caro-Kann est appréciée pour sa solidité structurelle. Contrairement à la Française, le fou dame noir n'est pas enfermé. Après 1.e4 c6 2.d4 d5, les Noirs ont une structure saine et cherchent l'endgame. Petrossian et Karpov étaient des maîtres de cette ouverture.`,
+        moves: [
+            { san:'e4', color:'w', desc:'Coup roi ouverture' },
+            { san:'c6', color:'b', desc:'Caro-Kann — prépare d5 sans bloquer le fou dame' },
+            { san:'d4', color:'w', desc:'Centre pions — plan classique' },
+            { san:'d5', color:'b', desc:'Attaque le centre blanc' },
+            { san:'Nc3', color:'w', desc:'Défend e4, variante Classique' },
+            { san:'dxe4', color:'b', desc:'Échange — variante échange de la Caro' },
+            { san:'Nxe4', color:'w', desc:'Reprend le pion, cavalier actif au centre' },
+            { san:'Nd7', color:'b', desc:'Développement solide — prépare Ngf6' },
+            { san:'Nf3', color:'w', desc:'Développement optimal' },
+            { san:'Ngf6', color:'b', desc:'Développe le second cavalier, attaque e4' },
+        ]
+    },
+    {
+        id: 'english',
+        name: 'Partie Anglaise',
+        sub: 'Hypermoderne 1.c4',
+        icon: '🌐',
+        tags: ['Flexible','Hypermoderne','Complexe'],
+        theory: `La Partie Anglaise (1.c4) est une ouverture hypermoderne où les Blancs contrôlent le centre de loin. Elle conduit souvent à des transpositions avec les ouvertures de pion dame. Kasparov et Botvinnik étaient des experts de cette ouverture. Flexible et riche en plans.`,
+        moves: [
+            { san:'c4', color:'w', desc:'Partie Anglaise — contrôle d5 de loin' },
+            { san:'e5', color:'b', desc:'Réponse symétrique — prend de l\'espace' },
+            { san:'Nc3', color:'w', desc:'Développement, soutient d5 et e4' },
+            { san:'Nf6', color:'b', desc:'Développement actif' },
+            { san:'g3', color:'w', desc:'Prépare le fianchetto du fou' },
+            { san:'d5', color:'b', desc:'Occupe le centre — variante symétrique' },
+            { san:'cxd5', color:'w', desc:'Échange central' },
+            { san:'Nxd5', color:'b', desc:'Reprend avec le cavalier' },
+            { san:'Bg2', color:'w', desc:'Fianchetto — l\'évêque domine de loin' },
+            { san:'Nb6', color:'b', desc:'Recule le cavalier vers une case active' },
+        ]
+    },
+    {
+        id: 'italian',
+        name: 'Partie Italienne',
+        sub: 'Giuoco Piano 1.e4 e5 2.Nf3 Nc6 3.Bc4',
+        icon: '🇮🇹',
+        tags: ['Classique','Stratégique','Top niveau'],
+        theory: `La Partie Italienne est revenue en force au plus haut niveau grâce à des joueurs comme Carlsen. Le fou en c4 vise le point faible f7 et contrôle le centre. La variante Giuoco Piano mène à des positions riches et modernes. Plus complexe que son apparence classique!`,
+        moves: [
+            { san:'e4', color:'w', desc:'Coup roi — ouverture directe' },
+            { san:'e5', color:'b', desc:'Réponse symétrique classique' },
+            { san:'Nf3', color:'w', desc:'Attaque e5, développement optimal' },
+            { san:'Nc6', color:'b', desc:'Défend e5' },
+            { san:'Bc4', color:'w', desc:'Partie Italienne — vise f7, contrôle le centre' },
+            { san:'Bc5', color:'b', desc:'Giuoco Piano — répond symétriquement' },
+            { san:'c3', color:'w', desc:'Prépare d4 — plan central ambitieux' },
+            { san:'Nf6', color:'b', desc:'Développe, attaque e4' },
+            { san:'d4', color:'w', desc:'Expansion centrale — les Blancs prennent l\'initiative' },
+            { san:'exd4', color:'b', desc:'Ouvre le centre — partie dynamique commence' },
+        ]
+    },
+];
+
+const DONE_KEY = 'supachess_openings_v1';
+function getDone() {
+    try { return JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveDone(arr) {
+    try { localStorage.setItem(DONE_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+let done = getDone();
+let currentOpening = null;
+let currentMoveIdx = -1;
+
+// Minimal FEN → board position (just for initial position, we'll animate moves conceptually)
+const START_BOARD = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+const PIECES = {
+    'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
+    'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
+};
+
+function parseFen(fen) {
+    let cells = [];
+    const rows = fen.split(' ')[0].split('/');
+    for (const row of rows) {
+        for (const ch of row) {
+            if (ch >= '1' && ch <= '8') { for (let i=0;i<+ch;i++) cells.push('.'); }
+            else cells.push(ch);
+        }
+    }
+    return cells;
+}
+
+function renderBoard(cells, lastMoves=[]) {
+    let html = '<div class="board">';
+    for (let r=0;r<8;r++) {
+        for (let c=0;c<8;c++) {
+            const idx = r*8+c;
+            const isLight = (r+c)%2===0;
+            const isLast = lastMoves.includes(idx);
+            const piece = cells[idx] !== '.' ? (PIECES[cells[idx]] || '') : '';
+            const col = piece && cells[idx]===cells[idx].toUpperCase() ? '#1a1a2e' : '#1a1a2e';
+            html += `<div class="cell ${isLight?'light':'dark'}${isLast?' last':''}"><span style="color:${col}">${piece}</span></div>`;
+        }
+    }
+    html += '</div>';
+    html += '<div class="coord-row">';
+    for (const f of ['a','b','c','d','e','f','g','h']) html += `<div class="coord-lbl">${f}</div>`;
+    html += '</div>';
+    return html;
+}
+
+function updateProgress() {
+    const n = done.length;
+    document.getElementById('prog-lbl').textContent = `${n}/8 ouvertures maîtrisées`;
+    document.getElementById('prog-bar').style.width = `${(n/8)*100}%`;
+}
+
+function renderGrid() {
+    const grid = document.getElementById('opening-grid');
+    grid.innerHTML = OPENINGS.map((o,i) => {
+        const isDone = done.includes(o.id);
+        return `<div class="card ${isDone?'done':''}" onclick="openDetail(${i})">
+            <h3>${o.icon} ${o.name}</h3>
+            <div class="sub">${o.sub}</div>
+            <div class="moves">${o.moves.slice(0,6).map((m,j)=>{
+                const n = Math.floor(j/2)+1;
+                return (j%2===0 ? `${n}. ` : '') + m.san;
+            }).join(' ')} ...</div>
+            <div class="badge-row">
+                ${o.tags.map(t=>`<span class="badge${isDone?' done-badge':''}">${t}</span>`).join('')}
+                ${isDone ? '<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ Maîtrisée</span>' : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openDetail(idx) {
+    currentOpening = OPENINGS[idx];
+    currentMoveIdx = -1;
+    document.getElementById('detail-panel').classList.add('visible');
+    document.getElementById('detail-panel').scrollIntoView({behavior:'smooth'});
+    renderDetail();
+}
+
+function renderDetail() {
+    const o = currentOpening;
+    const isDone = done.includes(o.id);
+    const cells = parseFen(START_BOARD);
+
+    const panel = document.getElementById('detail-panel');
+    panel.innerHTML = `
+        <div class="detail-header">
+            <h2>${o.icon} ${o.name}</h2>
+            <button class="close-btn" onclick="closeDetail()">✕ Fermer</button>
+        </div>
+        <div class="two-col">
+            <div>
+                <div class="board-wrap" id="board-wrap">
+                    ${renderBoard(cells)}
+                </div>
+                <div class="nav-row">
+                    <button class="nav-btn prev" onclick="prevMove()">← Précédent</button>
+                    <button class="nav-btn next" onclick="nextMove()">Suivant →</button>
+                    ${isDone ? '' : `<button class="nav-btn done-btn" onclick="markDone('${o.id}')">✅ Maîtrisée!</button>`}
+                </div>
+                <div style="text-align:center; margin-top:10px; font-size:0.85rem; opacity:0.6;" id="move-counter">
+                    Coup 0 / ${o.moves.length}
+                </div>
+            </div>
+            <div>
+                <div class="moves-wrap" id="moves-wrap">
+                    ${o.moves.map((m,i) => {
+                        const num = Math.floor(i/2)+1;
+                        return `<div class="move-item" id="mi-${i}" onclick="goToMove(${i})">
+                            <span class="move-num">${i%2===0 ? num+'.' : ''}</span>
+                            <div class="move-color ${m.color}"></div>
+                            <span class="move-san">${m.san}</span>
+                            <span class="move-desc">${m.desc}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+                <div class="theory-box">
+                    <h4>📚 Théorie</h4>
+                    ${o.theory}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function goToMove(idx) {
+    currentMoveIdx = idx;
+    highlightMove();
+}
+
+function nextMove() {
+    if (currentMoveIdx < currentOpening.moves.length - 1) {
+        currentMoveIdx++;
+        highlightMove();
+    }
+}
+
+function prevMove() {
+    if (currentMoveIdx >= 0) {
+        currentMoveIdx--;
+        highlightMove();
+    }
+}
+
+function highlightMove() {
+    const items = document.querySelectorAll('.move-item');
+    items.forEach((el, i) => {
+        el.classList.remove('active','played');
+        if (i === currentMoveIdx) el.classList.add('active');
+        else if (i < currentMoveIdx) el.classList.add('played');
+    });
+    document.getElementById('move-counter').textContent =
+        `Coup ${currentMoveIdx+1} / ${currentOpening.moves.length}`;
+}
+
+function markDone(id) {
+    if (!done.includes(id)) { done.push(id); saveDone(done); }
+    closeDetail();
+    renderGrid();
+    updateProgress();
+}
+
+function closeDetail() {
+    document.getElementById('detail-panel').classList.remove('visible');
+    currentOpening = null;
+}
+
+// Init
+updateProgress();
+renderGrid();
+</script>
+</body>
+</html>

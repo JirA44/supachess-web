@@ -239,6 +239,27 @@
         .action-btn.danger {
             background: linear-gradient(90deg, #f44336, #da190b);
         }
+
+        .search-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 0 0 30px;
+        }
+        .search-wrap input {
+            width: 100%;
+            max-width: 520px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-wrap input::placeholder { color: rgba(255,255,255,0.4); }
+        .search-wrap input:focus { border-color: rgba(255,255,255,0.45); }
+        .menu-card.hidden { display: none; }
     </style>
 </head>
 <body>
@@ -318,7 +339,14 @@
             </p>
         </div>
 
+        <div class="search-wrap">
+            <input type="text" id="search-input" placeholder="🔍 Rechercher une page…" oninput="filterCards(this.value)">
+        </div>
+
         <div class="quick-actions">
+            <button class="action-btn" onclick="window.location.href='SUPA_TRAINER.html'">
+                ⚡ SUPA Trainer
+            </button>
             <button class="action-btn" onclick="window.location.href='TRAINING_DASHBOARD.html'">
                 🔴 LIVE Training
             </button>
@@ -700,6 +728,15 @@
                 </div>
             </a>
 
+            <a href="SUPA_TRAINER.html">
+                <div class="menu-card" style="border: 2px solid #8b5cf6; background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08));">
+                    <span class="icon">⚡</span>
+                    <h3>SUPA Trainer — Coups colorés</h3>
+                    <p>Sélectionne une pièce → vois instantanément tous ses coups colorés par qualité (Brillant / Meilleur / Excellent / Gaffe…). Théorie Lichess + barre d'évaluation.</p>
+                    <span class="badge new" style="background:rgba(139,92,246,0.3);border-color:rgba(139,92,246,0.6);">⚡ SUPA COACH</span>
+                </div>
+            </a>
+
             <a href="AI_COACH_ADVANCED.html">
                 <div class="menu-card" style="border: 2px solid #9b59b6;">
                     <span class="icon">🧙</span>
@@ -878,5 +915,111 @@
 <script src="/shared/i18n.js"></script>
 <script src="/shared/community.js"></script>
 <!-- /ChessNova Community -->
+<script>
+function filterCards(query) {
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('a[href]').forEach(a => {
+        const card = a.querySelector('.menu-card');
+        if (!card) return;
+        const text = card.textContent.toLowerCase();
+        const hide = q.length > 0 && !text.includes(q);
+        card.classList.toggle('hidden', hide);
+        a.style.display = hide ? 'none' : '';
+    });
+}
+</script>
+
+<script>
+/* ── SUPA Hub — Tri personnalisé par clics (localStorage) ─────────────────── */
+(function () {
+    const KEY = 'supachess_hub_clicks_v1';
+
+    function getClicks() {
+        try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e) { return {}; }
+    }
+    function saveClicks(c) {
+        try { localStorage.setItem(KEY, JSON.stringify(c)); } catch(e) {}
+    }
+    function bump(href) {
+        if (!href) return;
+        const c = getClicks(); c[href] = (c[href] || 0) + 1; saveClicks(c);
+    }
+    function cnt(href, c) { return c[href] || 0; }
+
+    /* Sort each .menu-grid by click count — stable, unclicked keep original order */
+    function sortGrids(clicks) {
+        document.querySelectorAll('.menu-grid').forEach(grid => {
+            const links = Array.from(grid.querySelectorAll(':scope > a'));
+            links.sort((a, b) => cnt(b.getAttribute('href'), clicks) - cnt(a.getAttribute('href'), clicks));
+            links.forEach(a => grid.appendChild(a));
+        });
+    }
+
+    /* Build "⭐ Tes Favoris" section with top 6 most-clicked cards */
+    function buildFavoris(clicks) {
+        const all = Array.from(document.querySelectorAll('.menu-grid > a'));
+        const top = all
+            .map(a => ({ a, n: cnt(a.getAttribute('href'), clicks) }))
+            .filter(x => x.n > 0)
+            .sort((x, y) => y.n - x.n)
+            .slice(0, 6);
+
+        if (!top.length) return;
+
+        const section = document.createElement('div');
+        section.id = 'supa-favoris';
+
+        const h2 = document.createElement('h2');
+        h2.style.cssText = 'text-align:center;margin:30px 0 16px;font-size:1.7rem;color:#8b5cf6;';
+        h2.textContent = '⭐ Tes Favoris';
+        section.appendChild(h2);
+
+        const grid = document.createElement('div');
+        grid.className = 'menu-grid';
+
+        for (const { a, n } of top) {
+            const clone = a.cloneNode(true);
+            const card  = clone.querySelector('.menu-card');
+            if (card) {
+                card.style.position = 'relative';
+                const badge = document.createElement('span');
+                badge.style.cssText = 'position:absolute;top:10px;right:10px;font-size:0.7em;padding:2px 8px;border-radius:8px;background:rgba(139,92,246,0.25);color:#c4b5fd;font-weight:700;';
+                badge.textContent = `⭐ ${n}×`;
+                card.appendChild(badge);
+            }
+            clone.addEventListener('click', () => bump(clone.getAttribute('href')));
+            grid.appendChild(clone);
+        }
+
+        section.appendChild(grid);
+
+        /* Insert right after quick-actions */
+        const qa = document.querySelector('.quick-actions');
+        if (qa) qa.parentNode.insertBefore(section, qa.nextSibling);
+    }
+
+    /* Track every card + button click */
+    function attachTracking() {
+        document.querySelectorAll('.menu-grid > a').forEach(a => {
+            a.addEventListener('click', function () { bump(this.getAttribute('href')); });
+        });
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            const m = (btn.getAttribute('onclick') || '').match(/href='([^']+)'/);
+            if (m) btn.addEventListener('click', () => bump(m[1]));
+        });
+    }
+
+    function init() {
+        const clicks = getClicks();
+        sortGrids(clicks);
+        buildFavoris(clicks);
+        attachTracking();
+    }
+
+    document.readyState === 'loading'
+        ? document.addEventListener('DOMContentLoaded', init)
+        : init();
+})();
+</script>
 </body>
 </html>

@@ -48,7 +48,7 @@
             return overlay;
         }
 
-        function addError(type, msg, source, line) {
+        function addError(type, msg, source, line, autoShow) {
             errors.push({ type: type, msg: msg, source: source, line: line, time: new Date().toLocaleTimeString() });
             if (document.body) {
                 createOverlay();
@@ -57,29 +57,36 @@
                 entry.style.cssText = 'margin-bottom:8px;padding:6px;background:rgba(255,68,68,0.2);border-radius:4px;word-break:break-all;';
                 entry.innerHTML = '<div style="color:#ff8888;">[' + errors.length + '] ' + type + ' @ ' + errors[errors.length-1].time + '</div><div style="color:#fff;">' + msg + '</div>' + (source ? '<div style="color:#888;font-size:10px;">' + source + ':' + line + '</div>' : '');
                 content.appendChild(entry);
-                overlay.style.display = 'block';
+                // Only auto-show for real JS errors, not console.error noise
+                if (autoShow) overlay.style.display = 'block';
             }
         }
 
         window.onerror = function(msg, source, line, col, error) {
-            addError('ERROR', msg, source, line);
+            addError('ERROR', msg, source, line, true);
             return false;
         };
 
         window.onunhandledrejection = function(e) {
-            addError('PROMISE', e.reason ? (e.reason.message || e.reason) : 'Unhandled rejection', '', '');
+            var reason = e.reason ? (e.reason.message || String(e.reason)) : 'Unhandled rejection';
+            // Ignore benign Firebase/network promise rejections
+            if (reason.indexOf('permission-denied') !== -1 || reason.indexOf('unavailable') !== -1 || reason.indexOf('Failed to fetch') !== -1) {
+                return;
+            }
+            addError('PROMISE', reason, '', '', true);
         };
 
         var origConsoleError = console.error;
         console.error = function() {
             var args = Array.prototype.slice.call(arguments);
             var msg = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' ');
-            // Filter out browser extension noise (MetaMask, wallets, etc.)
-            if (msg.indexOf('MetaMask') !== -1 || msg.indexOf('metamask') !== -1 || msg.indexOf('ethereum') !== -1 || msg.indexOf('web3') !== -1 || msg.indexOf('inpage.js') !== -1 || msg.indexOf('contentscript') !== -1) {
+            // Filter out extension noise and known Firebase/community benign errors
+            if (msg.indexOf('MetaMask') !== -1 || msg.indexOf('metamask') !== -1 || msg.indexOf('ethereum') !== -1 || msg.indexOf('web3') !== -1 || msg.indexOf('inpage.js') !== -1 || msg.indexOf('contentscript') !== -1 || msg.indexOf('[Community]') !== -1) {
                 origConsoleError.apply(console, arguments);
                 return;
             }
-            addError('CONSOLE', msg, '', '');
+            // Log to buffer but never auto-show (user can click the toggle to see)
+            addError('CONSOLE', msg, '', '', false);
             origConsoleError.apply(console, arguments);
         };
 
@@ -130,10 +137,33 @@
                     entry.innerHTML = '<span style="color:#888;">' + logs[logs.length-1].time + '</span> ' + msg;
                     content.appendChild(entry);
                     content.scrollTop = content.scrollHeight;
+                    // Log overlay stays hidden until user toggles it
                 }
             }
             origConsoleLog.apply(console, arguments);
         };
+
+        // Add a small debug toggle button (bottom-center) to manually show/hide overlays
+        window.addEventListener('DOMContentLoaded', function() {
+            var toggleBtn = document.createElement('button');
+            toggleBtn.id = 'debug-toggle-btn';
+            toggleBtn.textContent = '🐛';
+            toggleBtn.title = 'Toggle debug overlays';
+            toggleBtn.style.cssText = 'position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);border:1px solid #555;color:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:14px;z-index:100000;opacity:0.4;transition:opacity 0.2s;';
+            toggleBtn.onmouseenter = function() { toggleBtn.style.opacity = '1'; };
+            toggleBtn.onmouseleave = function() { toggleBtn.style.opacity = '0.4'; };
+            toggleBtn.onclick = function() {
+                var errOv = document.getElementById('debug-error-overlay');
+                var logOv = document.getElementById('debug-log-overlay');
+                var show = (errOv && errOv.style.display === 'none') || !errOv;
+                if (errOv) errOv.style.display = show ? 'block' : 'none';
+                if (logOv) logOv.style.display = show ? 'block' : 'none';
+                // If no overlay exists yet, create them empty
+                if (!errOv && show) createOverlay();
+                if (!logOv && show) createLogOverlay();
+            };
+            document.body.appendChild(toggleBtn);
+        });
     })();
     </script>
 
@@ -4016,5 +4046,6 @@ Exemple:
 <script src="/shared/i18n.js"></script>
 <script src="/shared/community.js"></script>
 <!-- /ChessNova Community -->
+<script src="supa-dots-widget.js"></script>
 </body>
 </html>

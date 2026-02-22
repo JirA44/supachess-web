@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Défi du Jour — SupaChess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 20px; border-radius: 10px;
+            cursor: pointer; font-size: 1rem; margin-bottom: 25px;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); transform: translateX(-3px); }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px 40px; border-radius: 20px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .streak-bar {
+            display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .streak-card {
+            background: rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 15px 25px; text-align: center; min-width: 120px;
+        }
+        .streak-card .num { font-size: 2rem; font-weight: bold; color: #f97316; }
+        .streak-card .lbl { font-size: 0.8rem; opacity: 0.7; margin-top: 4px; }
+        .puzzle-wrap {
+            background: rgba(0,0,0,0.35); backdrop-filter: blur(10px);
+            border-radius: 20px; padding: 35px; border: 1px solid rgba(249,115,22,0.3);
+            margin-bottom: 25px;
+        }
+        .puzzle-meta {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+        }
+        .puzzle-meta h2 { font-size: 1.5rem; color: #f97316; }
+        .difficulty {
+            padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;
+        }
+        .diff-easy { background: rgba(76,175,80,0.3); border: 1px solid #4CAF50; }
+        .diff-med  { background: rgba(249,115,22,0.3); border: 1px solid #f97316; }
+        .diff-hard { background: rgba(239,68,68,0.3); border: 1px solid #ef4444; }
+
+        /* Chess board */
+        .board-wrap { display: flex; justify-content: center; margin: 20px 0; }
+        .board {
+            display: grid; grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 4px; overflow: hidden;
+        }
+        .cell {
+            width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; cursor: default; user-select: none;
+            transition: background 0.2s;
+        }
+        .cell.light { background: #f0d9b5; }
+        .cell.dark  { background: #b58863; }
+        .cell.highlight { background: rgba(249,115,22,0.6) !important; }
+        .coord-row {
+            display: flex; justify-content: center; gap: 0; margin-top: 5px;
+        }
+        .coord-lbl {
+            width: 60px; text-align: center; font-size: 0.75rem; opacity: 0.6;
+        }
+
+        .puzzle-desc {
+            background: rgba(255,255,255,0.08); border-radius: 12px;
+            padding: 18px 22px; margin: 20px 0; line-height: 1.7;
+            border-left: 3px solid #f97316;
+        }
+        .turn-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 8px;
+            font-weight: bold; font-size: 0.9rem; margin-bottom: 12px;
+        }
+        .turn-white { background: rgba(240,240,240,0.2); border: 1px solid #ddd; color: #fff; }
+        .turn-black { background: rgba(30,30,30,0.4); border: 1px solid #555; color: #ccc; }
+
+        .btn-row { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        .btn {
+            padding: 13px 28px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-reveal {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: #fff; flex: 1;
+        }
+        .btn-reveal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(249,115,22,0.4); }
+        .btn-next {
+            background: rgba(255,255,255,0.15); color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-next:hover { background: rgba(255,255,255,0.25); }
+        .btn-done {
+            background: linear-gradient(90deg, #22c55e, #16a34a); color: #fff; flex: 1;
+        }
+        .btn-done:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
+
+        .solution-box {
+            display: none; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4);
+            border-radius: 12px; padding: 18px 22px; margin-top: 18px;
+        }
+        .solution-box.visible { display: block; }
+        .solution-box h4 { color: #22c55e; margin-bottom: 10px; font-size: 1.1rem; }
+        .moves-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .move-chip {
+            background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4);
+            padding: 4px 12px; border-radius: 8px; font-family: monospace; font-size: 0.95rem;
+        }
+
+        .completed-msg {
+            display: none; text-align: center; padding: 30px;
+            background: rgba(34,197,94,0.15); border-radius: 15px;
+            border: 1px solid rgba(34,197,94,0.4);
+        }
+        .completed-msg.visible { display: block; }
+        .completed-msg .big { font-size: 3rem; margin-bottom: 10px; }
+        .completed-msg h3 { font-size: 1.5rem; color: #22c55e; margin-bottom: 10px; }
+
+        .progress-wrap { margin-top: 15px; }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.1); border-radius: 10px;
+            height: 10px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg, #f97316, #22c55e);
+            transition: width 0.5s;
+        }
+        .progress-lbl { font-size: 0.85rem; opacity: 0.7; margin-top: 6px; text-align: right; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-btn" href="index.html">← Retour au Hub</a>
+
+    <div class="header">
+        <h1>🔥 Défi du Jour</h1>
+        <p style="opacity:0.8; margin-top:8px;">Un nouveau puzzle chaque jour — maintenez votre streak!</p>
+        <p id="today-label" style="margin-top:10px; color:#f97316; font-weight:bold;"></p>
+    </div>
+
+    <div class="streak-bar">
+        <div class="streak-card">
+            <div class="num" id="streak-num">0</div>
+            <div class="lbl">🔥 Streak actuel</div>
+        </div>
+        <div class="streak-card">
+            <div class="num" id="best-num">0</div>
+            <div class="lbl">🏆 Meilleur streak</div>
+        </div>
+        <div class="streak-card">
+            <div class="num" id="solved-num">0</div>
+            <div class="lbl">✅ Total résolus</div>
+        </div>
+        <div class="streak-card">
+            <div class="num" id="puzzle-num" style="color:#4CAF50;">1/3</div>
+            <div class="lbl">📊 Puzzles du jour</div>
+        </div>
+    </div>
+
+    <div id="puzzle-container"></div>
+
+    <div class="completed-msg" id="completed-msg">
+        <div class="big">🎉</div>
+        <h3>Défi du Jour Complété!</h3>
+        <p style="opacity:0.8; margin-bottom:15px;">Revenez demain pour de nouveaux puzzles!</p>
+        <p id="streak-msg" style="color:#f97316; font-weight:bold; font-size:1.1rem;"></p>
+        <div class="progress-wrap" style="margin-top:20px;">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:100%"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── Puzzle database (30 puzzles cycling by day-of-month) ───────────────────
+const PUZZLES = [
+    // Each entry: { title, fen_desc, turn, desc, solution, difficulty, board, highlights }
+    // board = 64 chars: uppercase = white, lowercase = black, '.' = empty
+    // pieces: K Q R B N P / k q r b n p
+    {
+        title: "Mat en 1 — Fourchette de Cavalier",
+        turn: "white",
+        difficulty: "easy",
+        desc: "Les Blancs jouent et font mat en 1 coup. Le cavalier blanc est en mesure d'aller porter l'estocade fatale au roi noir.",
+        board: "....k..r/....pppp/......../.......N/......../......../PPPP.PPP/....K..R",
+        highlights: [39, 23],
+        solution: ["Nf7#", "Mat en 1 — Le cavalier en h5 saute en f7, faisant échec et mat au roi en e8. Le roi ne peut pas fuir car les pions f7/g7/h7 bloquent l'échappée."]
+    },
+    {
+        title: "Mat en 1 — Colonne ouverte",
+        turn: "white",
+        difficulty: "easy",
+        desc: "Tour blanche sur la colonne e, roi noir exposé. Mat en 1 coup.",
+        board: "....k.../....p.../......../.......P/......../......../PPPP.PPP/....R..K",
+        highlights: [4, 60],
+        solution: ["Re8#", "Mat en 1 — La tour blanche prend la colonne e et donne mat. Le roi en e8 ne peut aller nulle part."]
+    },
+    {
+        title: "Mat en 2 — Sacrifice de Dame",
+        turn: "white",
+        difficulty: "medium",
+        desc: "Position classique de mat en 2. Les Blancs sacrifient leur dame pour forcer un mat irrésistible.",
+        board: "r....rk./ppp..ppp/..np..n./....p.../..B.P..../...P..N./PPP..PPP/R..QR.K.",
+        highlights: [6, 14],
+        solution: ["Qxh7+!", "1.Qxh7+! Rxh7  2.Rg1# — Sacrifice de dame classique sur h7, suivi du mat de la tour en g1. Mat en 2 forcé!"]
+    },
+    {
+        title: "Fourchette de Pion",
+        turn: "white",
+        difficulty: "easy",
+        desc: "Un simple coup de pion attaque simultanément deux pièces noires importantes. Lequel?",
+        board: "r...k..r/ppp..ppp/..n..n../....p.../...pP..b/......../PPP..PPP/RNBQKBNR",
+        highlights: [36, 43],
+        solution: ["e5!", "1.e5 — Le pion en e4 avance en e5, attaquant simultanément le cavalier en f6 et le cavalier en c6. Fourchette gagnant du matériel!"]
+    },
+    {
+        title: "Clouage absolu",
+        turn: "black",
+        difficulty: "medium",
+        desc: "Les Noirs peuvent exploiter le clouage du cavalier blanc contre le roi. Trouvez le coup gagnant.",
+        board: "r....rk./ppp..ppp/..n..n../...Nb.../...pP..q/......../PPP..PPP/R.BQKB.R",
+        highlights: [27, 60],
+        solution: ["Bxd4!", "1...Bxd4! — Le fou noir capture le cavalier cloué en d4, car celui-ci ne peut pas se déplacer (clouage sur la dame blanche en d1). Gain d'une pièce!"]
+    },
+    {
+        title: "Enfilade de Tour",
+        turn: "white",
+        difficulty: "easy",
+        desc: "La tour blanche peut créer une enfilade dévastatrice. Roi noir, dame noire: dans quel ordre?",
+        board: "....k.../...q..../......../......../......../......../......../R...K...",
+        highlights: [60, 4],
+        solution: ["Ra8+!", "1.Ra8+! Kd7  2.Rd8+ Kxd8  3.Rxd8 — L'enfilade en a8 force le roi à bouger, exposant la dame noire en d4 qui sera capturée. Gain de la dame!"]
+    },
+    {
+        title: "Mat du Berger",
+        turn: "white",
+        difficulty: "easy",
+        desc: "Position du Mat du Berger (Scholar's Mate). Les Blancs ont f7 dans leur viseur. Trouvez le coup final.",
+        board: "r.bqkb.r/pppp.ppp/..n..n../....p.../..B.P..Q/......../PPPP.PPP/RNB.K.NR",
+        highlights: [54, 12],
+        solution: ["Qxf7#", "1.Qxf7# — Mat du Berger! La dame en h4 capture le pion en f7 clouée par le fou en c4. Le roi en e8 ne peut pas capturer (gardé par le fou) et ne peut fuir. MAT!"]
+    },
+    {
+        title: "Surcharge Défensive",
+        turn: "white",
+        difficulty: "hard",
+        desc: "La dame noire surcharge — elle défend à la fois c6 et g6. Comment exploiter cette surcharge?",
+        board: "r...k..r/pp...ppp/..n..npq/...p...b/...P...B/..N..N../PPP..PPP/R..Q.RK.",
+        highlights: [22, 30],
+        solution: ["Bxf6!", "1.Bxf6! Qxf6  2.Nxd5 — Le fou capture le cavalier en f6, forçant la dame à recapturer. Mais alors la dame quitte c6, permettant Nxd5 avec gain de pion et position dominante!"]
+    },
+];
+
+// ─── State ──────────────────────────────────────────────────────────────────
+const SK = 'supachess_daily_v1';
+function getState() {
+    try { return JSON.parse(localStorage.getItem(SK) || '{}'); } catch(e) { return {}; }
+}
+function saveState(s) {
+    try { localStorage.setItem(SK, JSON.stringify(s)); } catch(e) {}
+}
+
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+const dayOfMonth = today.getDate();
+// Pick 3 puzzles for today based on day-of-month
+const p0 = (dayOfMonth * 3 - 3) % PUZZLES.length;
+const p1 = (p0 + 1) % PUZZLES.length;
+const p2 = (p0 + 2) % PUZZLES.length;
+const todayPuzzles = [PUZZLES[p0], PUZZLES[p1], PUZZLES[p2]];
+
+let state = getState();
+if (!state.today || state.today !== todayKey) {
+    // New day
+    if (state.today) {
+        // Check if solved yesterday
+        const yest = new Date(today); yest.setDate(yest.getDate()-1);
+        const yestKey = `${yest.getFullYear()}-${yest.getMonth()+1}-${yest.getDate()}`;
+        if (state.today !== yestKey || !state.allDone) {
+            state.streak = 0;
+        }
+    }
+    state.today = todayKey;
+    state.done = 0;
+    state.allDone = false;
+    state.revealedPuzzles = {};
+    saveState(state);
+}
+
+let currentIdx = Math.min(state.done, 2);
+
+// ─── Board rendering ─────────────────────────────────────────────────────────
+const PIECES = {
+    'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
+    'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'
+};
+const FILES = ['a','b','c','d','e','f','g','h'];
+
+function renderBoard(boardStr, highlights=[]) {
+    const rows = boardStr.split('/');
+    let cells = [];
+    for (const row of rows) {
+        for (const ch of row) {
+            if (ch >= '1' && ch <= '8') {
+                for (let i=0; i<parseInt(ch); i++) cells.push('.');
+            } else cells.push(ch);
+        }
+    }
+    let html = '<div class="board-wrap"><div class="board">';
+    for (let r=0; r<8; r++) {
+        for (let c=0; c<8; c++) {
+            const idx = r*8+c;
+            const isLight = (r+c)%2===0;
+            const isHl = highlights.includes(idx);
+            const piece = cells[idx] !== '.' ? (PIECES[cells[idx]] || '') : '';
+            const color = (cells[idx] === cells[idx]?.toUpperCase() && cells[idx] !== '.') ? 'style="color:#1a1a2e;text-shadow:0 1px 2px rgba(255,255,255,0.3)"' : 'style="color:#1a1a2e"';
+            html += `<div class="cell ${isLight?'light':'dark'}${isHl?' highlight':''}"><span ${color}>${piece}</span></div>`;
+        }
+    }
+    html += '</div></div>';
+    html += '<div class="coord-row">';
+    for (const f of FILES) html += `<div class="coord-lbl">${f}</div>`;
+    html += '</div>';
+    return html;
+}
+
+// ─── Render puzzle ───────────────────────────────────────────────────────────
+function renderPuzzle(idx) {
+    if (state.allDone) {
+        document.getElementById('puzzle-container').innerHTML = '';
+        document.getElementById('completed-msg').classList.add('visible');
+        document.getElementById('streak-msg').textContent = `🔥 Streak: ${state.streak || 0} jours`;
+        return;
+    }
+    const p = todayPuzzles[idx];
+    const revealed = !!state.revealedPuzzles[idx];
+    const diffClass = p.difficulty === 'easy' ? 'diff-easy' : p.difficulty === 'medium' ? 'diff-med' : 'diff-hard';
+    const diffLabel = p.difficulty === 'easy' ? '⭐ Facile' : p.difficulty === 'medium' ? '⭐⭐ Moyen' : '⭐⭐⭐ Difficile';
+
+    document.getElementById('puzzle-container').innerHTML = `
+        <div class="puzzle-wrap">
+            <div class="puzzle-meta">
+                <h2>${p.title}</h2>
+                <span class="difficulty ${diffClass}">${diffLabel}</span>
+            </div>
+            ${renderBoard(p.board, p.highlights)}
+            <div class="puzzle-desc">
+                <span class="turn-badge ${p.turn==='white'?'turn-white':'turn-black'}">
+                    ${p.turn === 'white' ? '⬜ Blancs jouent' : '⬛ Noirs jouent'}
+                </span><br>
+                ${p.desc}
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-reveal" onclick="reveal(${idx})" ${revealed?'style="display:none"':''}>
+                    💡 Révéler la solution
+                </button>
+                <button class="btn btn-done" onclick="markDone(${idx})" ${revealed?'':'style="display:none"'} id="btn-done-${idx}">
+                    ✅ Compris! Suivant →
+                </button>
+            </div>
+            <div class="solution-box ${revealed?'visible':''}" id="sol-${idx}">
+                <h4>✅ Solution</h4>
+                <div class="moves-list">
+                    <span class="move-chip">${p.solution[0]}</span>
+                </div>
+                <p style="margin-top:12px; line-height:1.6; opacity:0.9;">${p.solution[1]}</p>
+            </div>
+        </div>
+        <div class="progress-wrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width:${(idx/3)*100}%"></div>
+            </div>
+            <div class="progress-lbl">Puzzle ${idx+1} sur 3</div>
+        </div>
+    `;
+    document.getElementById('puzzle-num').textContent = `${idx+1}/3`;
+}
+
+function reveal(idx) {
+    state.revealedPuzzles[idx] = true;
+    saveState(state);
+    document.getElementById(`sol-${idx}`).classList.add('visible');
+    document.querySelector('.btn-reveal').style.display = 'none';
+    document.getElementById(`btn-done-${idx}`).style.display = 'inline-flex';
+}
+
+function markDone(idx) {
+    state.done = idx + 1;
+    if (state.done >= 3) {
+        state.allDone = true;
+        state.streak = (state.streak || 0) + 1;
+        if ((state.streak || 0) > (state.best || 0)) state.best = state.streak;
+        state.solved = (state.solved || 0) + 3;
+    } else {
+        state.solved = (state.solved || 0) + 1;
+    }
+    saveState(state);
+    currentIdx = state.done;
+    renderPuzzle(currentIdx);
+    updateStats();
+}
+
+function updateStats() {
+    document.getElementById('streak-num').textContent = state.streak || 0;
+    document.getElementById('best-num').textContent = state.best || 0;
+    document.getElementById('solved-num').textContent = state.solved || 0;
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+document.getElementById('today-label').textContent =
+    `📅 ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()} — 3 puzzles du jour`;
+
+updateStats();
+renderPuzzle(currentIdx);
+</script>
+</body>
+</html>

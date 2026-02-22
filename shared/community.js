@@ -76,6 +76,9 @@
                     }
                 });
 
+                // Force persistence locale (survit aux redémarrages navigateur)
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});
+
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
                     updateChatAuth();
@@ -246,7 +249,9 @@
         btn.disabled = true;
         errorEl.textContent = '';
 
-        auth.signInWithEmailAndPassword(email, password).then(function () {
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function () {
+            return auth.signInWithEmailAndPassword(email, password);
+        }).then(function () {
             showToast(t('auth_success_login'), false);
             closeAuthModal();
             btn.disabled = false;
@@ -310,7 +315,9 @@
     function handleGoogleLogin() {
         if (!auth) return;
         var provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).then(function (result) {
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function () {
+            return auth.signInWithPopup(provider);
+        }).then(function (result) {
             // Check if new user
             if (result.additionalUserInfo && result.additionalUserInfo.isNewUser && db) {
                 db.collection('site_stats').doc('counters').set({

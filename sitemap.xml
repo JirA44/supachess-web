@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Hub -->
+  <url><loc>https://supachess.pages.dev/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+
+  <!-- Training -->
+  <url><loc>https://supachess.pages.dev/CHESS_COACH.html</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/CHESSNOVA.html</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TRAINING_DASHBOARD.html</loc><priority>0.8</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TRAINING_OPENINGS.html</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TRAINING_TACTICS.html</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TRAINING_ENDGAMES.html</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/DAILY_CHALLENGE.html</loc><priority>0.8</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TACTICAL_PUZZLES_GENERATOR.html</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+
+  <!-- Legendary Games -->
+  <url><loc>https://supachess.pages.dev/fischer_game_of_century_interactive_v2.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/kasparov_immortal_1999.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/tal_masterpiece_1958.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/karpov_positional_1978.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/carlsen_brilliancy_2013.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/deep_blue_kasparov_1997.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/alphazero_vs_stockfish.html</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/alphazero_vs_stockfish_game2.html</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/alphazero_sacrificial_masterpiece.html</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/leela_vs_stockfish_2019.html</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/stockfish_vs_komodo_2018.html</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+
+  <!-- Dashboards & Analytics -->
+  <url><loc>https://supachess.pages.dev/ELO_PROGRESS_DASHBOARD.html</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/TOURNAMENT_DASHBOARD.html</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/EVOLUTION_ELO.html</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/PLAYER_ANALYSIS.html</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/STATS_SESSION.html</loc><priority>0.5</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://supachess.pages.dev/SUIVI_PARTIES_LIVE.html</loc><priority>0.5</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://supachess.pages.dev/AI_COACH_ADVANCED.html</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+</urlset>

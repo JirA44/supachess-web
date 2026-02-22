@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://supachess.pages.dev/sitemap.xml

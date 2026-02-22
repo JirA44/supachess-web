@@ -54,7 +54,7 @@
         const sq = document.querySelector('[data-square]');
         if (sq) {
             let el = sq.parentElement;
-            while (el && el.querySelectorAll('[data-square]').length < 8) el = el.parentElement;
+            while (el && el.querySelectorAll('[data-square]').length < 64) el = el.parentElement;
             if (el) return el;
         }
         for (const id of ['board', 'myBoard', 'chessboard', 'chess-board']) {
@@ -226,13 +226,16 @@
 
     async function fetchBookMoves(fen) {
         bookMoves = new Set();
+        const ctrl = new AbortController();
+        const tid  = setTimeout(() => ctrl.abort(), 3000);
         try {
             const url  = `https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}&moves=30&topGames=0`;
-            const resp = await fetch(url, { signal: AbortSignal.timeout(3000) });
+            const resp = await fetch(url, { signal: ctrl.signal });
+            clearTimeout(tid);
             if (!resp.ok) return;
             const data = await resp.json();
             for (const m of (data.moves || [])) { if (m.uci) bookMoves.add(m.uci); }
-        } catch(_) {}
+        } catch(_) { clearTimeout(tid); }
     }
 
     // ── Tactics panel ────────────────────────────────────────────────────────

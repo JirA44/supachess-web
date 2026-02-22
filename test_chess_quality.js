@@ -86,7 +86,7 @@ test("Évaluation après Ruy Lopez", typeof eval2 === 'number');
 console.log("\n--- TEST 5: Minimax ---");
 
 function minimax(g, depth, isMax) {
-    if (depth === 0 || g.isGameOver()) {
+    if (depth === 0 || g.game_over()) {
         return evaluateBoard(g);
     }
     const moves = g.moves();
@@ -120,8 +120,8 @@ test(`Minimax profondeur 2 rapide (${duration}ms < 5000ms)`, duration < 5000);
 // ====================
 console.log("\n--- TEST 6: Fin de partie ---");
 const gameCheckmate = new Chess('rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3');
-test("Mat du berger détecté", gameCheckmate.isCheckmate());
-test("Partie terminée", gameCheckmate.isGameOver());
+test("Mat du berger détecté", gameCheckmate.in_checkmate());
+test("Partie terminée", gameCheckmate.game_over());
 
 const gameDraw = new Chess('8/8/8/8/8/5k2/8/4K3 w - - 0 1');
 test("Position de pat possible", gameDraw !== null);

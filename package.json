@@ -1,5 +1,5 @@
 {
-  "version": "1.03",
+  "version": "1.11",
   "dependencies": {
     "chess.js": "^0.10.3"
   }

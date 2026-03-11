@@ -28,6 +28,14 @@
     var chatUnsubscribe = null;
     var panelOpen = false;
 
+    // Presence + Players panel state
+    var playersOpen = false;
+    var presenceInterval = null;
+    var challengesUnsubscribe = null;
+    var myStatus = 'dispo'; // dispo | occupe | invisible
+    var pendingChallenges = [];
+    var currentChallengePopup = null;
+
     // --- Auto-response keywords ---
     var AUTO_RESPONSES = [
         {
@@ -85,8 +93,12 @@
                     updateAuthBar();
                     if (user) {
                         console.log('[Community] Auth OK:', user.email || user.displayName);
+                        startPresence(user);
+                        listenForChallenges(user.uid);
                     } else {
                         console.log('[Community] Pas connecte');
+                        stopPresence();
+                        stopChallengesListener();
                     }
                 });
                 return true;
@@ -125,18 +137,38 @@
                 initials += name.split(' ')[1].charAt(0).toUpperCase();
             }
 
+            var badgeHtml = pendingChallenges.length > 0
+                ? '<div class="cn-challenge-badge">' + pendingChallenges.length + '</div>'
+                : '';
+
+            bar.className = 'cn-auth-bar cn-auth-bar--clickable';
             bar.innerHTML =
                 '<div class="cn-auth-bar-avatar">' + escapeHTML(initials) + '</div>' +
                 '<span class="cn-auth-bar-name">' + escapeHTML(name) + '</span>' +
+                badgeHtml +
                 '<button class="cn-auth-bar-btn cn-auth-bar-btn--logout" id="cn-auth-bar-logout" data-i18n="auth_logout">' + t('auth_logout') + '</button>';
 
             var logoutBtn = document.getElementById('cn-auth-bar-logout');
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', function () {
-                    auth.signOut();
+                logoutBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    setPresenceStatus('offline').then(function () {
+                        auth.signOut();
+                    }).catch(function () {
+                        auth.signOut();
+                    });
                 });
             }
+
+            // Bar click → open players panel
+            bar.onclick = function (e) {
+                if (e.target.id === 'cn-auth-bar-logout') return;
+                togglePlayersPanel();
+            };
+
         } else {
+            bar.className = 'cn-auth-bar';
+            bar.onclick = null;
             bar.innerHTML =
                 '<button class="cn-auth-bar-btn" id="cn-auth-bar-login" data-i18n="auth_login">' + t('auth_login') + '</button>';
 
@@ -926,6 +958,358 @@
         return date.toLocaleDateString();
     }
 
+    // ============================================================
+    // --- Presence ---
+    // ============================================================
+
+    function startPresence(user) {
+        if (!db) return;
+        myStatus = 'dispo';
+        writePresence(user, myStatus);
+
+        // Heartbeat every 60s
+        if (presenceInterval) clearInterval(presenceInterval);
+        presenceInterval = setInterval(function () {
+            if (currentUser && myStatus !== 'invisible') {
+                db.collection('presence').doc(currentUser.uid).set({
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).catch(function () {});
+            }
+        }, 60000);
+
+        // Set offline on page unload
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function handleBeforeUnload() {
+        if (currentUser && db) {
+            // Use synchronous-compatible approach (navigator.sendBeacon not available for Firestore)
+            // Best effort — may not always fire
+            setPresenceStatus('offline');
+        }
+    }
+
+    function stopPresence() {
+        if (presenceInterval) { clearInterval(presenceInterval); presenceInterval = null; }
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function writePresence(user, status) {
+        if (!db || !user) return Promise.resolve();
+        var data = {
+            uid: user.uid,
+            displayName: user.displayName || user.email || 'User',
+            status: status,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+            page: window.location.pathname
+        };
+        return db.collection('presence').doc(user.uid).set(data, { merge: true }).catch(function () {});
+    }
+
+    function setPresenceStatus(status) {
+        if (!db || !currentUser) return Promise.resolve();
+        myStatus = status;
+        return db.collection('presence').doc(currentUser.uid).set({
+            status: status,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(function () {});
+    }
+
+    // ============================================================
+    // --- Online Players Panel ---
+    // ============================================================
+
+    function injectPlayersPanel() {
+        var panel = document.createElement('div');
+        panel.className = 'cn-players-panel';
+        panel.id = 'cn-players-panel';
+        panel.innerHTML =
+            '<div class="cn-players-panel-header">' +
+                '<span style="color:#eee;font-size:13px;font-weight:600;">Joueurs en ligne</span>' +
+                '<span id="cn-players-count">0</span>' +
+            '</div>' +
+            '<div class="cn-status-btns" id="cn-status-btns">' +
+                '<button class="cn-status-btn cn-status-btn--active" data-status="dispo">&#x1F7E2; Dispo</button>' +
+                '<button class="cn-status-btn" data-status="occupe">&#x1F7E1; Occup&eacute;</button>' +
+                '<button class="cn-status-btn" data-status="invisible">&#x26AB; Invisible</button>' +
+            '</div>' +
+            '<div class="cn-players-list" id="cn-players-list">' +
+                '<div class="cn-players-empty">Chargement...</div>' +
+            '</div>';
+
+        document.body.appendChild(panel);
+
+        // Status button clicks
+        var btns = panel.querySelectorAll('.cn-status-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener('click', handleStatusBtnClick);
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!playersOpen) return;
+            var panel = document.getElementById('cn-players-panel');
+            var bar = document.getElementById('cn-auth-bar');
+            if (panel && !panel.contains(e.target) && bar && !bar.contains(e.target)) {
+                closePlayersPanel();
+            }
+        });
+    }
+
+    function handleStatusBtnClick(e) {
+        var status = e.target.getAttribute('data-status');
+        if (!status) return;
+
+        // Update active button
+        var btns = document.querySelectorAll('#cn-status-btns .cn-status-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.toggle('cn-status-btn--active', btns[i].getAttribute('data-status') === status);
+        }
+
+        setPresenceStatus(status).then(function () {
+            if (status !== 'invisible') {
+                loadOnlinePlayers(); // Refresh list
+            } else {
+                var list = document.getElementById('cn-players-list');
+                if (list) list.innerHTML = '<div class="cn-players-empty">Mode invisible actif</div>';
+            }
+        });
+    }
+
+    function togglePlayersPanel() {
+        playersOpen = !playersOpen;
+        var panel = document.getElementById('cn-players-panel');
+        if (panel) panel.classList.toggle('cn-players-panel--open', playersOpen);
+        if (playersOpen) loadOnlinePlayers();
+    }
+
+    function closePlayersPanel() {
+        playersOpen = false;
+        var panel = document.getElementById('cn-players-panel');
+        if (panel) panel.classList.remove('cn-players-panel--open');
+    }
+
+    function loadOnlinePlayers() {
+        if (!db) return;
+        var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+        db.collection('presence')
+            .where('lastSeen', '>', fiveMinAgo)
+            .get()
+            .then(function (snapshot) {
+                var list = document.getElementById('cn-players-list');
+                var countEl = document.getElementById('cn-players-count');
+                if (!list) return;
+
+                var players = [];
+                snapshot.forEach(function (doc) {
+                    var d = doc.data();
+                    if (d.status !== 'invisible') {
+                        players.push(d);
+                    }
+                });
+
+                if (countEl) countEl.textContent = players.length;
+
+                if (players.length === 0) {
+                    list.innerHTML = '<div class="cn-players-empty">Aucun joueur en ligne</div>';
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < players.length; i++) {
+                    var p = players[i];
+                    var dotClass = p.status === 'occupe' ? 'cn-status-dot--occupe' : 'cn-status-dot--dispo';
+                    var isSelf = currentUser && p.uid === currentUser.uid;
+                    html +=
+                        '<div class="cn-player-row" data-uid="' + escapeHTML(p.uid || '') + '" data-name="' + escapeHTML(p.displayName || '') + '">' +
+                            '<div class="cn-status-dot ' + dotClass + '"></div>' +
+                            '<span class="cn-player-row-name">' + escapeHTML(p.displayName || 'Joueur') + (isSelf ? ' (moi)' : '') + '</span>' +
+                        '</div>';
+                }
+                list.innerHTML = html;
+
+                // Right-click context menus on player rows
+                var rows = list.querySelectorAll('.cn-player-row');
+                for (var j = 0; j < rows.length; j++) {
+                    (function (row) {
+                        var uid = row.getAttribute('data-uid');
+                        var name = row.getAttribute('data-name');
+                        // Don't allow challenging yourself
+                        if (currentUser && uid === currentUser.uid) return;
+                        row.addEventListener('contextmenu', function (e) {
+                            e.preventDefault();
+                            showContextMenu(e.clientX, e.clientY, uid, name);
+                        });
+                    })(rows[j]);
+                }
+            }).catch(function (err) {
+                console.warn('[Community] loadOnlinePlayers error:', err);
+                var list = document.getElementById('cn-players-list');
+                if (list) list.innerHTML = '<div class="cn-players-empty">Erreur de chargement</div>';
+            });
+    }
+
+    // ============================================================
+    // --- Context Menu ---
+    // ============================================================
+
+    function showContextMenu(x, y, targetUid, targetName) {
+        removeContextMenu();
+
+        var menu = document.createElement('div');
+        menu.className = 'cn-context-menu';
+        menu.id = 'cn-context-menu';
+
+        var options = [
+            { label: '&#x1F3AF; D\u00e9fier en Bullet (1+0)', tc: '1+0' },
+            { label: '&#x26A1; D\u00e9fier en Blitz (3+2)',   tc: '3+2' },
+            { label: '&#x1F550; 5 min',                        tc: '5+0' },
+            { label: '&#x1F551; 10 min',                       tc: '10+0' }
+        ];
+
+        var html = '';
+        for (var i = 0; i < options.length; i++) {
+            html += '<button class="cn-context-menu-item" data-tc="' + options[i].tc + '">' + options[i].label + '</button>';
+        }
+        menu.innerHTML = html;
+
+        // Position near cursor, keep on screen
+        menu.style.left = Math.min(x, window.innerWidth - 210) + 'px';
+        menu.style.top  = Math.min(y, window.innerHeight - 180) + 'px';
+
+        document.body.appendChild(menu);
+
+        var items = menu.querySelectorAll('.cn-context-menu-item');
+        for (var j = 0; j < items.length; j++) {
+            (function (item) {
+                item.addEventListener('click', function () {
+                    var tc = item.getAttribute('data-tc');
+                    sendChallenge(targetUid, targetName, tc);
+                    removeContextMenu();
+                });
+            })(items[j]);
+        }
+
+        // Close on next click/escape
+        setTimeout(function () {
+            document.addEventListener('click', removeContextMenu, { once: true });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') removeContextMenu();
+            }, { once: true });
+        }, 50);
+    }
+
+    function removeContextMenu() {
+        var m = document.getElementById('cn-context-menu');
+        if (m) m.remove();
+    }
+
+    // ============================================================
+    // --- Challenges ---
+    // ============================================================
+
+    function sendChallenge(targetUid, targetName, timeControl) {
+        if (!db || !currentUser) return;
+        db.collection('challenges').add({
+            from: currentUser.uid,
+            fromName: currentUser.displayName || currentUser.email || 'User',
+            to: targetUid,
+            toName: targetName,
+            timeControl: timeControl,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function () {
+            showToast('D\u00e9fi envoy\u00e9 \u00e0 ' + targetName + '!', false);
+        }).catch(function (err) {
+            console.error('[Community] sendChallenge error:', err);
+            showToast('Erreur lors de l\'envoi du d\u00e9fi', true);
+        });
+    }
+
+    function listenForChallenges(uid) {
+        if (!db) return;
+        stopChallengesListener();
+        challengesUnsubscribe = db.collection('challenges')
+            .where('to', '==', uid)
+            .where('status', '==', 'pending')
+            .onSnapshot(function (snapshot) {
+                pendingChallenges = [];
+                snapshot.forEach(function (doc) {
+                    pendingChallenges.push({ id: doc.id, data: doc.data() });
+                });
+                updateAuthBar();
+                if (pendingChallenges.length > 0 && !currentChallengePopup) {
+                    showChallengePopup(pendingChallenges[0]);
+                }
+            }, function (err) {
+                console.warn('[Community] challenges listener error:', err);
+            });
+    }
+
+    function stopChallengesListener() {
+        if (challengesUnsubscribe) { challengesUnsubscribe(); challengesUnsubscribe = null; }
+        pendingChallenges = [];
+    }
+
+    function showChallengePopup(challenge) {
+        removeChallengePopup();
+
+        var d = challenge.data;
+        var popup = document.createElement('div');
+        popup.className = 'cn-challenge-popup';
+        popup.id = 'cn-challenge-popup';
+        popup.innerHTML =
+            '<div class="cn-challenge-popup-title">&#x1F3AF; D\u00e9fi re\u00e7u !</div>' +
+            '<div class="cn-challenge-popup-body">' +
+                '<strong>' + escapeHTML(d.fromName || 'Quelqu\'un') + '</strong> vous d\u00e9fie en <strong>' + escapeHTML(d.timeControl || '?') + '</strong>' +
+            '</div>' +
+            '<div class="cn-challenge-popup-btns">' +
+                '<button class="cn-challenge-accept" id="cn-challenge-accept">Accepter</button>' +
+                '<button class="cn-challenge-decline" id="cn-challenge-decline">D\u00e9cliner</button>' +
+            '</div>';
+
+        document.body.appendChild(popup);
+        currentChallengePopup = challenge.id;
+
+        requestAnimationFrame(function () {
+            popup.classList.add('cn-challenge-popup--open');
+        });
+
+        document.getElementById('cn-challenge-accept').addEventListener('click', function () {
+            respondChallenge(challenge.id, 'accepted');
+        });
+        document.getElementById('cn-challenge-decline').addEventListener('click', function () {
+            respondChallenge(challenge.id, 'declined');
+        });
+    }
+
+    function removeChallengePopup() {
+        var p = document.getElementById('cn-challenge-popup');
+        if (p) p.remove();
+        currentChallengePopup = null;
+    }
+
+    function respondChallenge(challengeId, response) {
+        if (!db) return;
+        db.collection('challenges').doc(challengeId).set({
+            status: response
+        }, { merge: true }).catch(function () {});
+
+        removeChallengePopup();
+
+        if (response === 'accepted') {
+            showToast('D\u00e9fi accept\u00e9 !', false);
+        } else {
+            showToast('D\u00e9fi d\u00e9clin\u00e9.', false);
+        }
+
+        // Show next challenge if any
+        var remaining = pendingChallenges.filter(function (c) { return c.id !== challengeId; });
+        if (remaining.length > 0) {
+            setTimeout(function () { showChallengePopup(remaining[0]); }, 400);
+        }
+    }
+
     // --- Init ---
     function init() {
         var firebaseReady = initFirebase();
@@ -934,6 +1318,7 @@
         }
         injectAuthBar();
         injectAuthModal();
+        injectPlayersPanel();
         injectStatsSection();
         initSectionTracking();
         injectFooter();

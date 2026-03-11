@@ -682,7 +682,8 @@
             <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
                 <!-- Compteurs de joueurs -->
                 <div style="display: flex; gap: 12px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 10px;">
-                    <div style="text-align: center;" title="Joueurs réels connectés">
+                    <span id="online-players" style="display:none;">0</span>
+                <div style="text-align: center;" title="Joueurs réels connectés">
                         <div style="font-size: 1.2em; font-weight: bold; color: #22c55e;" id="real-players">0</div>
                         <div style="font-size: 0.65em; color: #888;">👤 Réels</div>
                     </div>
@@ -702,7 +703,7 @@
                     <button style="padding: 10px 15px; font-size: 0.9em; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">🏠 Hub</button>
                 </a>
                 <button onclick="openRankingModal()" style="padding: 10px 15px; font-size: 0.9em; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🏆 Classement</button>
-                <button onclick="openAuthModal()" id="login-btn" style="padding: 10px 15px; font-size: 0.9em;">🔐 Connexion</button>
+                <span id="userArea"><button onclick="openAuthModal()" id="login-btn" style="padding: 10px 15px; font-size: 0.9em;">🔐 Connexion</button></span>
             </div>
         </div>
 
@@ -955,6 +956,9 @@
                             <p style="margin-top: 5px; font-size: 0.9em;">Faites votre premier coup</p>
                         </div>
                     </div>
+                    <!-- SUPA AI Coach -->
+                    <div id="supa-analysis" style="display:none; background: rgba(168,85,247,0.1); border-radius: 10px; padding: 15px; border: 1px solid rgba(168,85,247,0.4); margin-top: 10px;">
+                    </div>
                     <!-- Coups joués -->
                     <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 15px; border: 1px solid rgba(0,217,255,0.2);">
                         <h4 style="color: var(--accent-primary); margin-bottom: 10px; font-size: 0.9em;">📜 Coups Joués <span id="total-moves-display" style="color: #888;">(0)</span></h4>
@@ -1157,7 +1161,7 @@
                 </div>
 
                 <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <button onclick="showGameReport()" style="background: linear-gradient(135deg, #00d9ff, #0099cc);">📊 Rapport</button>
+                    <button onclick="showCurrentGameReport()" style="background: linear-gradient(135deg, #00d9ff, #0099cc);">📊 Rapport</button>
                     <button onclick="exportStats()">💾 Exporter</button>
                     <button onclick="resetStats()">🔄 Reset</button>
                 </div>
@@ -1802,33 +1806,38 @@
             setTimeout(() => notification.remove(), 3000);
         }
 
+        function setEl(id, value, prop = 'textContent') {
+            const el = document.getElementById(id);
+            if (el) el[prop] = value;
+        }
+
         function updateProgressUI() {
             // Niveau et XP
-            document.getElementById('player-level').textContent = playerProgress.level;
-            document.getElementById('player-xp').textContent = playerProgress.xp;
+            setEl('player-level', playerProgress.level);
+            setEl('player-xp', playerProgress.xp);
 
             // Rang (infinite leveling)
             const rankName = ChessNovaProgress.getRankName(playerProgress.level);
-            document.getElementById('player-rank').textContent = rankName;
+            setEl('player-rank', rankName);
 
             // XP pour prochain niveau (infinite)
-            const currentRankXP = ChessNovaProgress.getPrestigeXP(playerProgress.level);
             const nextXP = ChessNovaProgress.getPrestigeXP(playerProgress.level + 1);
-            document.getElementById('xp-next').textContent = nextXP;
+            setEl('xp-next', nextXP);
 
             // Barre XP (works for all levels including prestige)
             const pct = ChessNovaProgress.getXPProgress(playerProgress.xp);
-            document.getElementById('xp-bar').style.width = pct + '%';
-
-            // Prestige gradient for levels > 10
-            if (playerProgress.level > 10) {
-                document.getElementById('xp-bar').style.background = 'linear-gradient(90deg, #f59e0b 0%, #a855f7 50%, #ec4899 100%)';
+            const xpBar = document.getElementById('xp-bar');
+            if (xpBar) {
+                xpBar.style.width = pct + '%';
+                if (playerProgress.level > 10) {
+                    xpBar.style.background = 'linear-gradient(90deg, #f59e0b 0%, #a855f7 50%, #ec4899 100%)';
+                }
             }
 
             // Winstreak
-            document.getElementById('current-streak').textContent = playerProgress.currentStreak;
-            document.getElementById('best-streak').textContent = playerProgress.bestStreak;
-            document.getElementById('total-wins').textContent = playerProgress.totalWins;
+            setEl('current-streak', playerProgress.currentStreak);
+            setEl('best-streak', playerProgress.bestStreak);
+            setEl('total-wins', playerProgress.totalWins);
 
             // Badges (all 38)
             playerProgress.badges.forEach(badgeKey => {
@@ -1841,7 +1850,7 @@
 
             // Recompenses recentes
             const rewardsEl = document.getElementById('recent-rewards');
-            if (playerProgress.recentRewards.length > 0) {
+            if (rewardsEl && playerProgress.recentRewards.length > 0) {
                 rewardsEl.innerHTML = playerProgress.recentRewards.slice(0, 5).map(r =>
                     `<div style="color: #22c55e; font-size: 0.85em; padding: 3px 0;">✨ ${r.text}</div>`
                 ).join('');
@@ -3891,6 +3900,27 @@
             updateStatsDisplay();
             updateEloEstimate(rating);
             saveToLocalStorage();
+
+            // SUPA AI Coach — conseil sur erreur/gaffe
+            if (rating <= 4 && SUPAIntegration.enabled) {
+                const fenNow = game.fen();
+                const saDiv = document.getElementById('supa-analysis');
+                if (saDiv) {
+                    saDiv.style.display = 'block';
+                    saDiv.innerHTML = '<div style="color:#a855f7;font-size:0.85em;">🤖 SUPA analyse...</div>';
+                }
+                SUPAIntegration.explainMove(fenNow, move.san).then(result => {
+                    if (result && saDiv) {
+                        const text = result.explanation || result.response || result.analysis || JSON.stringify(result).substring(0, 300);
+                        saDiv.innerHTML = `<div style="color:#a855f7;font-weight:bold;margin-bottom:6px;font-size:0.9em;">🤖 SUPA Coach</div><div style="color:#e2e8f0;font-size:0.85em;line-height:1.5;">${String(text).substring(0, 400)}</div>`;
+                    } else if (saDiv) {
+                        saDiv.style.display = 'none';
+                    }
+                }).catch(() => { if (saDiv) saDiv.style.display = 'none'; });
+            } else {
+                const saDiv = document.getElementById('supa-analysis');
+                if (saDiv) saDiv.style.display = 'none';
+            }
 
             // Débloquer achievements
             if (sessionStats.perfectMoves >= 10) {
@@ -8304,7 +8334,7 @@
         }
 
         // Affiche le rapport complet de la partie
-        function showGameReport() {
+        function showCurrentGameReport() {
             const hasCurrentGame = window.gameHistory && window.gameHistory.length > 0;
             const hasPastGames = window.allGamesHistory && window.allGamesHistory.length > 0;
             const hasChessHistory = game && game.history().length > 0;
@@ -8590,7 +8620,7 @@
                 }
 
                 // Forcer la sync immédiate du board
-                board.position(game.fen(), false);
+                if (board) board.position(game.fen(), false);
 
                 // Analyse et mise à jour (avec protection)
                 try {
@@ -8613,7 +8643,7 @@
             } catch (e) {
                 console.error('Erreur onDrop:', e);
                 // En cas d'erreur, resync le board
-                board.position(game.fen(), false);
+                if (board) board.position(game.fen(), false);
                 return 'snapback';
             }
         }
@@ -8621,7 +8651,7 @@
         function onSnapEnd() {
             // Synchroniser la position du board avec l'état du jeu
             try {
-                board.position(game.fen(), false);
+                if (board) board.position(game.fen(), false);
             } catch (e) {
                 console.error('Erreur onSnapEnd:', e);
             }
@@ -8635,6 +8665,14 @@
 
         // ========================================
         // CONTRÔLES ET INTERFACE
+        // Alias: startGame = newGame (called by the ▶️ Jouer button)
+        function startGame() { newGame(); }
+
+        // showUserProfile: reloads the profile panel inside the profile modal
+        function showUserProfile() {
+            openProfileModal();
+        }
+
         // ========================================
         function newGame() {
             if (game.history().length > 0) {
@@ -8688,12 +8726,14 @@
             updateGameInfo();
 
             const analysisDiv = document.getElementById('move-analysis');
-            analysisDiv.className = '';
-            analysisDiv.innerHTML = `
-                <strong style="color: var(--accent-primary);">🎯 Prêt à jouer!</strong>
-                <p style="margin-top: 5px;">Faites votre premier coup pour commencer</p>
-                <p style="margin-top: 5px; color: #888;">Adversaire: ${window.currentOpponent}</p>
-            `;
+            if (analysisDiv) {
+                analysisDiv.className = '';
+                analysisDiv.innerHTML = `
+                    <strong style="color: var(--accent-primary);">🎯 Prêt à jouer!</strong>
+                    <p style="margin-top: 5px;">Faites votre premier coup pour commencer</p>
+                    <p style="margin-top: 5px; color: #888;">Adversaire: ${window.currentOpponent}</p>
+                `;
+            }
 
             sessionStats.gamesPlayed++;
             document.getElementById('games-played').textContent = sessionStats.gamesPlayed;
@@ -8779,7 +8819,7 @@
 
             game.undo();
             game.undo();
-            board.position(game.fen());
+            if (board) board.position(game.fen());
             lastEval = evaluateBoard();
             updateGameInfo();
             showToast('↩️ Coups annulés', 'info', 2000);
@@ -8824,7 +8864,7 @@
                 const evalIndicator = document.getElementById('eval-indicator');
 
                 const evalDisplay = (evaluation / 100).toFixed(2);
-                evalEl.textContent = evalDisplay;
+                if (evalEl) evalEl.textContent = evalDisplay;
                 if (evalValue) {
                     const sideSymbol = evaluation > 50 ? '⬜' : evaluation < -50 ? '⬛' : '';
                     evalValue.textContent = sideSymbol + (evaluation > 0 ? '+' : '') + evalDisplay;
@@ -9016,7 +9056,7 @@
                             <button onclick="downloadCurrentPGN()" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; color: white; font-size: 1em; font-weight: bold;">
                                 📥 Télécharger PGN
                             </button>
-                            <button onclick="showGameReport()" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%); border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; color: white; font-size: 1em; font-weight: bold;">
+                            <button onclick="showCurrentGameReport()" style="flex: 1; min-width: 120px; background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%); border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; color: white; font-size: 1em; font-weight: bold;">
                                 📊 Voir Rapport
                             </button>
                         </div>
@@ -9168,7 +9208,9 @@
         // ========================================
         function initEloChart() {
             return safeExecute(() => {
-                const ctx = document.getElementById('elo-chart').getContext('2d');
+                const chartEl = document.getElementById('elo-chart');
+                if (!chartEl) return;
+                const ctx = chartEl.getContext('2d');
                 eloChart = new Chart(ctx, {
                     type: 'line',
                     data: {

@@ -16,156 +16,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
-    <!-- DEBUG ERROR OVERLAY -->
-    <script>
-    (function() {
-        var errors = [];
-        var overlay = null;
-
-        function createOverlay() {
-            if (overlay) return overlay;
-            overlay = document.createElement('div');
-            overlay.id = 'debug-error-overlay';
-            overlay.style.cssText = 'position:fixed;bottom:10px;right:10px;max-width:400px;max-height:300px;overflow-y:auto;background:rgba(0,0,0,0.9);border:2px solid #ff4444;border-radius:8px;padding:10px;font-family:monospace;font-size:12px;color:#fff;z-index:99999;';
-
-            var header = document.createElement('div');
-            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #ff4444;';
-            header.innerHTML = '<span style="color:#ff4444;font-weight:bold;">🐛 DEBUG ERRORS</span>';
-
-            var closeBtn = document.createElement('button');
-            closeBtn.textContent = '✕';
-            closeBtn.style.cssText = 'background:#ff4444;border:none;color:#fff;padding:2px 8px;border-radius:4px;cursor:pointer;';
-            closeBtn.onclick = function() { overlay.style.display = 'none'; };
-            header.appendChild(closeBtn);
-
-            overlay.appendChild(header);
-
-            var content = document.createElement('div');
-            content.id = 'debug-error-content';
-            overlay.appendChild(content);
-
-            document.body.appendChild(overlay);
-            return overlay;
-        }
-
-        function addError(type, msg, source, line, autoShow) {
-            errors.push({ type: type, msg: msg, source: source, line: line, time: new Date().toLocaleTimeString() });
-            if (document.body) {
-                createOverlay();
-                var content = document.getElementById('debug-error-content');
-                var entry = document.createElement('div');
-                entry.style.cssText = 'margin-bottom:8px;padding:6px;background:rgba(255,68,68,0.2);border-radius:4px;word-break:break-all;';
-                entry.innerHTML = '<div style="color:#ff8888;">[' + errors.length + '] ' + type + ' @ ' + errors[errors.length-1].time + '</div><div style="color:#fff;">' + msg + '</div>' + (source ? '<div style="color:#888;font-size:10px;">' + source + ':' + line + '</div>' : '');
-                content.appendChild(entry);
-                // Only auto-show for real JS errors, not console.error noise
-                if (autoShow) overlay.style.display = 'block';
-            }
-        }
-
-        window.onerror = function(msg, source, line, col, error) {
-            addError('ERROR', msg, source, line, true);
-            return false;
-        };
-
-        window.onunhandledrejection = function(e) {
-            var reason = e.reason ? (e.reason.message || String(e.reason)) : 'Unhandled rejection';
-            // Ignore benign Firebase/network promise rejections
-            if (reason.indexOf('permission-denied') !== -1 || reason.indexOf('unavailable') !== -1 || reason.indexOf('Failed to fetch') !== -1) {
-                return;
-            }
-            addError('PROMISE', reason, '', '', true);
-        };
-
-        var origConsoleError = console.error;
-        console.error = function() {
-            var args = Array.prototype.slice.call(arguments);
-            var msg = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' ');
-            // Filter out extension noise and known Firebase/community benign errors
-            if (msg.indexOf('MetaMask') !== -1 || msg.indexOf('metamask') !== -1 || msg.indexOf('ethereum') !== -1 || msg.indexOf('web3') !== -1 || msg.indexOf('inpage.js') !== -1 || msg.indexOf('contentscript') !== -1 || msg.indexOf('[Community]') !== -1) {
-                origConsoleError.apply(console, arguments);
-                return;
-            }
-            // Log to buffer but never auto-show (user can click the toggle to see)
-            addError('CONSOLE', msg, '', '', false);
-            origConsoleError.apply(console, arguments);
-        };
-
-        // Also capture console.log for [Analysis], [SF], [Coach] messages
-        var origConsoleLog = console.log;
-        var logOverlay = null;
-        var logs = [];
-
-        function createLogOverlay() {
-            if (logOverlay) return logOverlay;
-            logOverlay = document.createElement('div');
-            logOverlay.id = 'debug-log-overlay';
-            logOverlay.style.cssText = 'position:fixed;bottom:10px;left:10px;max-width:500px;max-height:250px;overflow-y:auto;background:rgba(0,0,0,0.85);border:2px solid #00d9ff;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;color:#fff;z-index:99998;';
-
-            var header = document.createElement('div');
-            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #00d9ff;';
-            header.innerHTML = '<span style="color:#00d9ff;font-weight:bold;">📋 DEBUG LOGS</span>';
-
-            var closeBtn = document.createElement('button');
-            closeBtn.textContent = '✕';
-            closeBtn.style.cssText = 'background:#00d9ff;border:none;color:#000;padding:2px 8px;border-radius:4px;cursor:pointer;';
-            closeBtn.onclick = function() { logOverlay.style.display = 'none'; };
-            header.appendChild(closeBtn);
-
-            logOverlay.appendChild(header);
-
-            var content = document.createElement('div');
-            content.id = 'debug-log-content';
-            logOverlay.appendChild(content);
-
-            document.body.appendChild(logOverlay);
-            return logOverlay;
-        }
-
-        console.log = function() {
-            var args = Array.prototype.slice.call(arguments);
-            var msg = args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' ');
-
-            // Only capture relevant debug messages
-            if (msg.indexOf('[Analysis]') !== -1 || msg.indexOf('[SF]') !== -1 || msg.indexOf('[Coach]') !== -1) {
-                logs.push({ msg: msg, time: new Date().toLocaleTimeString() });
-                if (document.body) {
-                    createLogOverlay();
-                    var content = document.getElementById('debug-log-content');
-                    var entry = document.createElement('div');
-                    var color = msg.indexOf('[SF]') !== -1 ? '#10b981' : msg.indexOf('[Analysis]') !== -1 ? '#f59e0b' : '#00d9ff';
-                    entry.style.cssText = 'margin-bottom:4px;padding:4px;background:rgba(255,255,255,0.05);border-radius:3px;border-left:3px solid ' + color + ';';
-                    entry.innerHTML = '<span style="color:#888;">' + logs[logs.length-1].time + '</span> ' + msg;
-                    content.appendChild(entry);
-                    content.scrollTop = content.scrollHeight;
-                    // Log overlay stays hidden until user toggles it
-                }
-            }
-            origConsoleLog.apply(console, arguments);
-        };
-
-        // Add a small debug toggle button (bottom-center) to manually show/hide overlays
-        window.addEventListener('DOMContentLoaded', function() {
-            var toggleBtn = document.createElement('button');
-            toggleBtn.id = 'debug-toggle-btn';
-            toggleBtn.textContent = '🐛';
-            toggleBtn.title = 'Toggle debug overlays';
-            toggleBtn.style.cssText = 'position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);border:1px solid #555;color:#fff;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:14px;z-index:100000;opacity:0.4;transition:opacity 0.2s;';
-            toggleBtn.onmouseenter = function() { toggleBtn.style.opacity = '1'; };
-            toggleBtn.onmouseleave = function() { toggleBtn.style.opacity = '0.4'; };
-            toggleBtn.onclick = function() {
-                var errOv = document.getElementById('debug-error-overlay');
-                var logOv = document.getElementById('debug-log-overlay');
-                var show = (errOv && errOv.style.display === 'none') || !errOv;
-                if (errOv) errOv.style.display = show ? 'block' : 'none';
-                if (logOv) logOv.style.display = show ? 'block' : 'none';
-                // If no overlay exists yet, create them empty
-                if (!errOv && show) createOverlay();
-                if (!logOv && show) createLogOverlay();
-            };
-            document.body.appendChild(toggleBtn);
-        });
-    })();
-    </script>
 
     <style>
         :root {
@@ -713,16 +563,32 @@ Exemple:
 
                     <div class="card">
                         <h3 class="card-title">📈 Évaluation</h3>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div id="eval-display" style="font-size: 2em; font-weight: bold; min-width: 80px;">0.0</div>
-                            <div style="flex: 1;">
-                                <div id="eval-bar" style="height: 24px; background: linear-gradient(90deg, #333 50%, #f5f5f5 50%); border-radius: 5px; position: relative; border: 1px solid #444;">
-                                    <div id="eval-indicator" style="position: absolute; left: 50%; top: -2px; width: 4px; height: 28px; background: #00d9ff; border-radius: 2px; transform: translateX(-50%); transition: left 0.3s;"></div>
+
+                        <!-- Engine info -->
+                        <div id="engine-info" style="font-size:0.78em; color: var(--text-secondary); margin-bottom: 10px;">
+                            ⏳ Chargement moteur... — <span id="analysis-status">en attente</span>
+                        </div>
+
+                        <!-- Eval bar vertical + score -->
+                        <div style="display: flex; align-items: stretch; gap: 12px; margin-bottom: 12px;">
+
+                            <!-- Barre verticale ⬛/⬜ -->
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:4px; min-width:44px;">
+                                <span id="eval-pct-black" style="font-size:0.8em; color:#aaa; font-weight:600;">50%</span>
+                                <div style="flex:1; width:22px; border-radius:5px; overflow:hidden; border:1px solid #444; display:flex; flex-direction:column; min-height:80px;">
+                                    <div id="eval-bar-black" style="background:#1a1a1a; height:50%; transition:height 0.4s ease;"></div>
+                                    <div id="eval-bar-white" style="background:#f0f0f0; height:50%; transition:height 0.4s ease;"></div>
+                                </div>
+                                <span id="eval-pct-white" style="font-size:0.8em; color:#eee; font-weight:600;">50%</span>
+                            </div>
+
+                            <!-- Score + chart -->
+                            <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                                <div id="eval-display" style="font-size:1.8em; font-weight:bold;">0.0</div>
+                                <div class="chart-container" style="flex:1;">
+                                    <canvas id="eval-chart"></canvas>
                                 </div>
                             </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="eval-chart"></canvas>
                         </div>
                     </div>
 
@@ -934,6 +800,7 @@ Exemple:
         let analysisGame = new Chess();
         let stockfish = null;
         let stockfishReady = false;
+        let loadedEngineLabel = 'SF 18 lite';
         let currentMoveIndex = -1;
         let analyzedMoves = [];
         let evalChart = null;
@@ -1012,11 +879,12 @@ Exemple:
             try {
                 console.log('[SF] Creating Stockfish worker...');
 
-                // CDN sources - fetched as Blob to avoid cross-origin Worker restrictions
+                // Sources — local first (no WASM, always available), then CDN fallbacks
                 const sources = [
-                    'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js',
-                    'https://unpkg.com/stockfish.js@10.0.2/stockfish.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js'
+                    { url: '/stockfish.js', wasmBase: null, label: 'SF 10 (local)' },
+                    { url: 'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js', wasmBase: null, label: 'SF 10' },
+                    { url: 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js', wasmBase: null, label: 'SF 10' },
+                    { url: 'https://unpkg.com/stockfish@17.1.0/src/stockfish-17.1-lite-single-03e3232.js', wasmBase: 'https://unpkg.com/stockfish@17.1.0/src/', label: 'SF 17.1 lite' },
                 ];
 
                 let sourceIndex = 0;
@@ -1037,20 +905,25 @@ Exemple:
                     }
 
                     const src = sources[sourceIndex];
-                    console.log('[SF] Trying source:', src);
+                    console.log('[SF] Trying source:', src.url);
 
                     try {
                         // Fetch the script and create a Blob URL to avoid cross-origin Worker restrictions
-                        console.log('[SF] Fetching script from', src);
-                        const response = await fetch(src);
+                        console.log('[SF] Fetching script from', src.url);
+                        const response = await fetch(src.url);
                         if (!response.ok) throw new Error('HTTP ' + response.status);
                         const scriptText = await response.text();
-                        console.log('[SF] Fetched', scriptText.length, 'bytes from', src);
-                        const blob = new Blob([scriptText], { type: 'application/javascript' });
+                        console.log('[SF] Fetched', scriptText.length, 'bytes from', src.url);
+                        // Prepend locateFile override so WASM is fetched from the right CDN path
+                        const preamble = src.wasmBase
+                            ? `self.Module = { locateFile: function(f) { return '${src.wasmBase}' + f; } };\n`
+                            : '';
+                        const blob = new Blob([preamble + scriptText], { type: 'application/javascript' });
                         const blobUrl = URL.createObjectURL(blob);
 
                         currentWorker = new Worker(blobUrl);
                         stockfish = currentWorker;
+                        loadedEngineLabel = src.label;
 
                         let gotResponse = false;
 
@@ -1071,12 +944,12 @@ Exemple:
                         };
 
                         currentWorker.postMessage('uci');
-                        console.log('[SF] Sent uci command to', src);
+                        console.log('[SF] Sent uci command to', src.url);
 
                         // If no response in 5s, try next source
                         setTimeout(() => {
                             if (!gotResponse && !stockfishReady) {
-                                console.warn('[SF] Timeout for', src, '- trying next');
+                                console.warn('[SF] Timeout for', src.url, '- trying next');
                                 URL.revokeObjectURL(blobUrl);
                                 sourceIndex++;
                                 tryNextSource();
@@ -1084,7 +957,7 @@ Exemple:
                         }, 5000);
 
                     } catch (e) {
-                        console.error('[SF] Failed to load from', src, ':', e.message);
+                        console.error('[SF] Failed to load from', src.url, ':', e.message);
                         sourceIndex++;
                         tryNextSource();
                     }
@@ -1113,7 +986,9 @@ Exemple:
             } else if (line === 'readyok') {
                 stockfishReady = true;
                 console.log('[SF] Stockfish ready!');
-                showToast('Stockfish chargé', 'success');
+                showToast(loadedEngineLabel + ' chargé', 'success');
+                const ei = document.getElementById('engine-info');
+                if (ei) ei.innerHTML = `🔍 ${loadedEngineLabel} — profondeur 15 — <span id="analysis-status">en attente</span>`;
                 processAnalysisQueue();
             } else if (line.startsWith('info depth')) {
                 lastAnalysisTime = Date.now();
@@ -1241,7 +1116,8 @@ Exemple:
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
             document.getElementById('panel-' + panelId).classList.add('active');
-            document.querySelector(`.nav-tab[onclick="showPanel('${panelId}')"]`).classList.add('active');
+            const navTab = document.querySelector(`.nav-tab[onclick="showPanel('${panelId}')"]`);
+            if (navTab) navTab.classList.add('active');
 
             // Resize boards when panels change
             setTimeout(() => {
@@ -1304,15 +1180,24 @@ Exemple:
         }
 
         function cleanPGN(pgn) {
-            return pgn
-                .replace(/\r\n/g, '\n')              // Normalize line endings
-                .replace(/\r/g, '\n')
-                .replace(/\u00A0/g, ' ')             // Non-breaking spaces
-                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width chars
-                .replace(/…/g, '...')                // Ellipsis
-                .replace(/[""]/g, '"')               // Smart quotes
-                .replace(/['']/g, "'")
-                .trim();
+            // Normalize line endings
+            pgn = pgn.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            // Fix smart quotes and special chars
+            pgn = pgn.replace(/\u00A0/g, ' ')
+                     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+                     .replace(/…/g, '...')
+                     .replace(/[""]/g, '"')
+                     .replace(/['']/g, "'");
+            // Remove Lichess/Chessbase annotations: { ... } comments, $NAG
+            pgn = pgn.replace(/\{[^}]*\}/g, '');
+            pgn = pgn.replace(/\$\d+/g, '');
+            // Remove inline variations ( ... ) — non-nested only
+            pgn = pgn.replace(/\([^()]*\)/g, '');
+            // Clean up extra spaces on each line (but PRESERVE blank lines between headers and moves)
+            pgn = pgn.split('\n').map(line => line.replace(/  +/g, ' ').trim()).join('\n');
+            // Ensure there is a blank line between the last header and the moves
+            pgn = pgn.replace(/(\])\s*\n([^\[])/, '$1\n\n$2');
+            return pgn.trim();
         }
 
         // ========================================
@@ -2070,7 +1955,7 @@ Exemple:
             }
 
             game = new Chess();
-            const success = game.load_pgn(g.pgn);
+            const success = game.load_pgn(cleanPGN(g.pgn));
 
             if (!success || game.history().length === 0) {
                 showToast('Erreur de chargement du PGN', 'error');
@@ -2438,7 +2323,12 @@ Exemple:
             }
 
             game = new Chess();
-            game.load_pgn(g.pgn);
+            const cleaned = cleanPGN(g.pgn);
+            const ok = game.load_pgn(cleaned);
+            if (!ok || game.history().length === 0) {
+                showToast('PGN Lichess invalide ou non supporté', 'error');
+                return;
+            }
             startAnalysis();
         }
 
@@ -2605,6 +2495,8 @@ Exemple:
             analyzedMoves = [];
             const history = game.history({ verbose: true });
             console.log('[Analysis] Starting analysis of', history.length, 'moves');
+            const statusEl = document.getElementById('analysis-status');
+            if (statusEl) statusEl.textContent = 'analyse en cours…';
 
             // Show initial loading with 0%
             showLoading('');
@@ -2788,6 +2680,8 @@ Exemple:
             updateProgressFromAnalysis(whiteAcc, blackAcc, errors);
 
             hideLoading();
+            const statusElDone = document.getElementById('analysis-status');
+            if (statusElDone) statusElDone.textContent = `✅ terminée — ${history.length} coups`;
             showToast('Analyse terminée et synchronisée!', 'success');
 
             // Go to first move
@@ -2906,16 +2800,16 @@ Exemple:
         function detectErrorCategory(move, loss, fen) {
             const tempGame = new Chess(fen);
 
-            // Check for hanging piece
+            // Check for hanging piece — only if the MOVED piece itself can be captured for material gain
             if (loss > 0.5) {
-                // Simulate opponent taking
                 tempGame.move(move);
                 const opponentMoves = tempGame.moves({ verbose: true });
                 for (const m of opponentMoves) {
-                    if (m.captured) {
+                    // Must capture at the destination square (the moved piece), and must be a material GAIN (strict >)
+                    if (m.captured && m.to === move.to) {
                         const capturedValue = getPieceValue(m.captured);
                         const attackerValue = getPieceValue(m.piece);
-                        if (capturedValue >= attackerValue) {
+                        if (capturedValue > attackerValue) {
                             return 'hanging';
                         }
                     }
@@ -3171,7 +3065,7 @@ Exemple:
             }
 
             // Update board
-            board.position(analysisGame.fen());
+            if (board) board.position(analysisGame.fen());
 
             // Update move list highlighting
             document.querySelectorAll('.move-item').forEach(el => el.classList.remove('current'));
@@ -3190,11 +3084,11 @@ Exemple:
             }
         }
 
-        function goToStart() { goToMove(-1); analysisGame = new Chess(); board.position('start'); }
-        function goBack() { goToMove(currentMoveIndex - 1); }
-        function goForward() { goToMove(currentMoveIndex + 1); }
-        function goToEnd() { goToMove(analyzedMoves.length - 1); }
-        function flipBoard() { board.flip(); }
+        function goToStart() { goToMove(-1); }
+        function goBack() { if (analyzedMoves.length > 0) goToMove(currentMoveIndex - 1); }
+        function goForward() { if (analyzedMoves.length > 0) goToMove(currentMoveIndex + 1); }
+        function goToEnd() { if (analyzedMoves.length > 0) goToMove(analyzedMoves.length - 1); }
+        function flipBoard() { if (board) board.flip(); }
 
         // ========================================
         // ANALYSIS PANEL
@@ -3389,8 +3283,13 @@ Exemple:
                     break;
 
                 case 'tactics':
-                    explanations.push(`Ce coup ignore une combinaison tactique disponible.`);
-                    explanations.push(`Une séquence de coups forcés permettait de gagner du matériel ou un avantage.`);
+                    if (m.loss > 2) {
+                        explanations.push(`⚠️ Ce coup peut être un sacrifice intentionnel — l'analyse automatique (profondeur limitée) ne voit pas toujours la suite tactique complète.`);
+                        explanations.push(`Si vous jouez une combinaison calculée, vérifiez que la suite est correcte.`);
+                    } else {
+                        explanations.push(`Ce coup ignore une combinaison tactique disponible.`);
+                        explanations.push(`Une séquence de coups forcés permettait de gagner du matériel ou un avantage.`);
+                    }
                     if (m.move.captured) {
                         explanations.push(`La capture ${from}x${to} n'est pas la meilleure option dans cette position.`);
                     }
@@ -3497,10 +3396,7 @@ Exemple:
                 explanations.push(`Ce coup maintient ou améliore votre position.`);
             }
 
-            if (m.evalBefore !== m.evalAfter) {
-                const evalAfterBest = m.evalBefore; // Le meilleur coup maintient l'éval
-                explanations.push(`Maintient l'évaluation à ${evalAfterBest >= 0 ? '+' : ''}${evalAfterBest.toFixed(1)} au lieu de la perdre.`);
-            }
+            // Note: we do NOT claim the best move "maintains" the eval — that's unverified
 
             return explanations;
         }
@@ -3537,18 +3433,28 @@ Exemple:
         // EVAL BAR & CHART
         // ========================================
 
+        function evalToWinPct(score) {
+            // Win probability via sigmoid (like chess.com)
+            return Math.round(50 + 50 * Math.tanh(score / 3));
+        }
+
         function updateEvalBar(score) {
             const display = document.getElementById('eval-display');
-            const indicator = document.getElementById('eval-indicator');
+            const barBlack = document.getElementById('eval-bar-black');
+            const barWhite = document.getElementById('eval-bar-white');
+            const pctBlack = document.getElementById('eval-pct-black');
+            const pctWhite = document.getElementById('eval-pct-white');
 
-            // Clamp score for display
-            const clampedScore = Math.max(-10, Math.min(10, score));
-            display.textContent = (score >= 0 ? '+' : '') + score.toFixed(1);
+            display.textContent = (score >= 0 ? '+' : '') + score.toFixed(2);
             display.style.color = score >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
 
-            // Move indicator (50% is center, 0% is full black, 100% is full white)
-            const position = 50 + (clampedScore / 10) * 50;
-            indicator.style.left = position + '%';
+            const whitePct = evalToWinPct(score);
+            const blackPct = 100 - whitePct;
+
+            if (barBlack) barBlack.style.height = blackPct + '%';
+            if (barWhite) barWhite.style.height = whitePct + '%';
+            if (pctBlack) pctBlack.textContent = blackPct + '%';
+            if (pctWhite) pctWhite.textContent = whitePct + '%';
         }
 
         function initCharts() {
@@ -3564,19 +3470,51 @@ Exemple:
                         borderColor: '#00d9ff',
                         backgroundColor: 'rgba(0,217,255,0.1)',
                         fill: true,
-                        tension: 0.3
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#00d9ff',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const v = ctx.parsed.y;
+                                    const sign = v > 0 ? '+' : '';
+                                    const moveNum = Math.floor(ctx.dataIndex / 2) + 1;
+                                    const color = ctx.dataIndex % 2 === 0 ? 'Blancs' : 'Noirs';
+                                    return [`Éval: ${sign}${v.toFixed(1)}`, `Coup ${moveNum} (${color})`];
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            showPanel('analysis');
+                            goToMove(index);
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        if (event.native) event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                    },
                     scales: {
                         y: {
-                            min: -5,
-                            max: 5,
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#888' }
+                            min: -10,
+                            max: 10,
+                            grid: { color: 'rgba(255,255,255,0.08)' },
+                            ticks: {
+                                color: '#888',
+                                stepSize: 1,
+                                callback: v => Number.isInteger(v) ? (v >= 0 ? '+' : '') + v : ''
+                            }
                         },
                         x: {
                             grid: { display: false },
@@ -3622,6 +3560,7 @@ Exemple:
         }
 
         function updateEvalChart(evalHistory) {
+            if (!evalChart) return;
             evalChart.data.labels = evalHistory.map((_, i) => i);
             evalChart.data.datasets[0].data = evalHistory;
             evalChart.update();
@@ -3688,9 +3627,10 @@ Exemple:
         }
 
         function loadPuzzle(index) {
+            if (!puzzles[index]) return;
             currentPuzzle = puzzles[index];
             puzzleGame = new Chess(currentPuzzle.fen);
-            puzzleBoard.position(currentPuzzle.fen);
+            if (puzzleBoard) puzzleBoard.position(currentPuzzle.fen);
 
             // Update puzzle info
             document.getElementById('puzzle-theme').textContent = getCategoryLabel(currentPuzzle.theme);
@@ -3763,7 +3703,7 @@ Exemple:
                 // Reset position
                 setTimeout(() => {
                     puzzleGame = new Chess(currentPuzzle.fen);
-                    puzzleBoard.position(currentPuzzle.fen);
+                    if (puzzleBoard) puzzleBoard.position(currentPuzzle.fen);
                 }, 1500);
             }
 
@@ -3783,7 +3723,7 @@ Exemple:
 
             // Play the move
             puzzleGame.move(currentPuzzle.solutionSan);
-            puzzleBoard.position(puzzleGame.fen());
+            if (puzzleBoard) puzzleBoard.position(puzzleGame.fen());
         }
 
         function nextPuzzle() {
@@ -3914,13 +3854,15 @@ Exemple:
 
         function saveRecentGame() {
             const headers = game.header();
+            const pgn = game.pgn();
             const recent = {
                 white: headers.White || 'Blancs',
                 black: headers.Black || 'Noirs',
                 result: headers.Result || '?',
                 date: new Date().toISOString(),
                 moves: analyzedMoves.length,
-                pgn: game.pgn()
+                pgn: pgn,
+                gameHash: getGameHash(pgn)
             };
 
             progress.recentGames = progress.recentGames || [];
@@ -3939,20 +3881,25 @@ Exemple:
                 return;
             }
 
-            container.innerHTML = games.map((g, i) => `
+            container.innerHTML = games.map((g, i) => {
+                const isCached = g.gameHash && analysisCache[g.gameHash];
+                return `
                 <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
                      onclick="loadRecentGame(${i})"
                      onmouseover="this.style.background='rgba(0,217,255,0.1)'"
                      onmouseout="this.style.background='rgba(0,0,0,0.2)'">
-                    <div style="display: flex; justify-content: space-between;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span><b>${g.white}</b> vs <b>${g.black}</b></span>
-                        <span style="color: var(--accent-yellow);">${g.result}</span>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            ${isCached ? '<span title="Analyse en cache — chargement instantané" style="color:#00d9ff;font-size:0.85em;">⚡ Cache</span>' : ''}
+                            <span style="color: var(--accent-yellow);">${g.result}</span>
+                        </div>
                     </div>
                     <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
                         ${g.moves} coups • ${new Date(g.date).toLocaleDateString()}
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function loadRecentGame(index) {
@@ -3960,7 +3907,20 @@ Exemple:
             if (!g || !g.pgn) return;
 
             game = new Chess();
-            game.load_pgn(g.pgn);
+            const loadOk = game.load_pgn(g.pgn);
+            if (!loadOk || game.history().length === 0) {
+                showToast('Erreur de chargement de la partie', 'error');
+                return;
+            }
+
+            // Direct cache load if hash is known — skip Stockfish entirely
+            if (g.gameHash && analysisCache[g.gameHash]) {
+                showPanel('analysis');
+                loadAnalysisFromCache(g.gameHash);
+                showToast('⚡ Analyse chargée instantanément depuis le cache!', 'success');
+                return;
+            }
+
             startAnalysis();
         }
 

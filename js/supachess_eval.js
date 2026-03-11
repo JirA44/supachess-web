@@ -77,6 +77,9 @@ function evaluatePosition(game) {
 
 function findBestZupMoveEnhanced() {
     if (!game) return null;
+    const zupQTable = (typeof window !== 'undefined' && window.zupQTable) || {};
+    const getOpeningMove = (typeof window !== 'undefined' && window.getOpeningMove) || null;
+    const openingBook = (typeof window !== 'undefined' && window.openingBook) || null;
     const fen = game.fen();
     const moves = game.moves({ verbose: true });
 

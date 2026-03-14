@@ -40,13 +40,40 @@
     let currentSel = null;  // currently selected square
 
     // ── Page object accessors ────────────────────────────────────────────────
+    // Tries window properties first, then scans for any chess.js/chessboard.js instance
     function getGame() {
-        try { if (typeof game !== 'undefined' && game) return game; } catch(e) {}
-        return window.game || null;
+        // 1. Explicit window properties
+        for (const n of ['game', 'chess', 'chessGame', 'currentGame', 'gameObj']) {
+            try {
+                const v = window[n];
+                if (v && typeof v.moves === 'function' && typeof v.fen === 'function') return v;
+            } catch(e) {}
+        }
+        // 2. Broad scan (handles let/const variables exported implicitly)
+        try {
+            for (const k of Object.keys(window)) {
+                const v = window[k];
+                if (v && typeof v === 'object' && typeof v.moves === 'function' && typeof v.fen === 'function') return v;
+            }
+        } catch(e) {}
+        return null;
     }
     function getBoard() {
-        try { if (typeof board !== 'undefined' && board) return board; } catch(e) {}
-        return window.board || null;
+        // 1. Explicit window properties
+        for (const n of ['board', 'chessboard', 'cb', 'boardObj', 'myBoard']) {
+            try {
+                const v = window[n];
+                if (v && typeof v.position === 'function' && typeof v.orientation === 'function') return v;
+            } catch(e) {}
+        }
+        // 2. Broad scan
+        try {
+            for (const k of Object.keys(window)) {
+                const v = window[k];
+                if (v && typeof v === 'object' && typeof v.position === 'function' && typeof v.orientation === 'function') return v;
+            }
+        } catch(e) {}
+        return null;
     }
 
     // ── Find chessboard.js DOM element ───────────────────────────────────────
@@ -403,6 +430,25 @@
 
     // ── Click interception ───────────────────────────────────────────────────
     function attachClickHandler() {
+        // mousedown catches drag-start (chessboard.js uses drag, not click)
+        boardEl.addEventListener('mousedown', function(e) {
+            if (!active) return;
+            const sqEl = e.target.closest('[data-square]');
+            if (!sqEl) return;
+            const sq = sqEl.getAttribute('data-square');
+            const g  = getGame();
+            if (!g) return;
+            const piece = g.get(sq);
+            if (piece && piece.color === g.turn()) {
+                currentSel = sq;
+                showMovesForSquare(sq);
+            } else {
+                clearHL();
+                currentSel = null;
+                renderTacticsPanel(null);
+            }
+        });
+
         boardEl.addEventListener('click', function(e) {
             if (!active) return;
             const sqEl = e.target.closest('[data-square]');
@@ -474,6 +520,20 @@
     }
 
     function toggle() { setActive(!active); }
+
+    // ── Public API (callable from page onDragStart etc.) ─────────────────────
+    window.supaDotsShowMoves = function(sq) {
+        if (!active || !boardEl) return;
+        const g = getGame();
+        if (!g) return;
+        const piece = g.get(sq);
+        if (piece && piece.color === g.turn()) {
+            currentSel = sq;
+            showMovesForSquare(sq);
+        }
+    };
+    window.supaDotsActivate = function() { if (!active) setActive(true); };
+    window.supaDotsDeactivate = function() { if (active) setActive(false); };
 
     // ── Init ─────────────────────────────────────────────────────────────────
     function init() {

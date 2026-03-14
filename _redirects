@@ -3,7 +3,12 @@
 # Redirect racine vers hub
 /  /index.html  200
 
+# ChessMentor — URL canonique
+/chessmentor  /chessmentor.html  200
+
 # Anciennes URLs (compatibilite)
-/AIMIX_TEACHER_ENHANCED.html  /CHESSNOVA.html  301
-/AIMIX_TEACHER.html  /CHESSNOVA.html  301
-/aimix  /CHESSNOVA.html  301
+/CHESSNOVA  /chessmentor.html  301
+/CHESSNOVA.html  /chessmentor.html  301
+/AIMIX_TEACHER_ENHANCED.html  /chessmentor.html  301
+/AIMIX_TEACHER.html  /chessmentor.html  301
+/aimix  /chessmentor.html  301

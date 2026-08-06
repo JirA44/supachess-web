@@ -1,4 +1,4 @@
-# 🎓 AIMix Pro - Plateforme d'Entraînement Échecs Avancée
+# SupaChess - Hub Central
 
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange)](https://pages.cloudflare.com/)
 [![Version](https://img.shields.io/badge/version-2.0-blue)]()
@@ -103,7 +103,7 @@ git push -u origin main
 
 ## 🎮 Utilisation
 
-1. **Ouvrez** `AIMIX_TEACHER_ENHANCED.html` dans votre navigateur
+1. **Ouvrez** le site : <https://jira44.github.io/supachess-web/> (Hub Central)
 2. **Choisissez** votre niveau de difficulté
 3. **Jouez** en déplaçant les pièces blanches
 4. **Analysez** vos coups en temps réel

@@ -936,9 +936,9 @@
                     </div>
                     <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
                         <button onclick="filterMoves('all')" class="move-filter-btn active" data-filter="all" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #444; background: #333; color: #fff; cursor: pointer; font-size: 0.75em;">Tous</button>
-                        <button onclick="filterMoves('excellent')" class="move-filter-btn" data-filter="excellent" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #4ade80; background: transparent; color: #4ade80; cursor: pointer; font-size: 0.75em;">🌟 Top 3</button>
-                        <button onclick="filterMoves('good')" class="move-filter-btn" data-filter="good" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #22d3ee; background: transparent; color: #22d3ee; cursor: pointer; font-size: 0.75em;">✅ Bons</button>
-                        <button onclick="filterMoves('bad')" class="move-filter-btn" data-filter="bad" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #ef4444; background: transparent; color: #ef4444; cursor: pointer; font-size: 0.75em;">❌ À éviter</button>
+                        <button onclick="filterMoves('brilliant')" class="move-filter-btn" data-filter="brilliant" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #facc15; background: transparent; color: #facc15; cursor: pointer; font-size: 0.75em;">🌟 Brillants</button>
+                        <button onclick="filterMoves('ok')" class="move-filter-btn" data-filter="ok" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #22d3ee; background: transparent; color: #22d3ee; cursor: pointer; font-size: 0.75em;">✅ OK</button>
+                        <button onclick="filterMoves('blunder')" class="move-filter-btn" data-filter="blunder" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #ef4444; background: transparent; color: #ef4444; cursor: pointer; font-size: 0.75em;">💥 Gaffes</button>
                     </div>
                     <div id="suggested-moves-list" style="max-height: 280px; overflow-y: auto;">
                         <p style="color: #888; font-style: italic;">Les coups apparaîtront ici...</p>
@@ -4068,16 +4068,14 @@
         async function updateSuggestedMovesWithStockfish() {
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
-            if (!container || game.game_over()) return;
-
-            // Ne pas analyser les coups pendant le tour de l'IA
-            if (game.turn() !== 'w') {
-                container.innerHTML = '<p style="color: #888; font-style: italic;">L\'IA réfléchit...</p>';
+            if (!container) return;
+            const analysisId = ++suggestionAnalysisId;
+            if (game.game_over()) {
+                allEvaluatedMoves = [];
+                container.innerHTML = '<p style="color: #888;">Partie terminée : aucun coup jouable.</p>';
+                if (statsContainer) statsContainer.textContent = '0 coup jouable';
                 return;
             }
-
-            // Reset le flag d'annulation pour permettre l'analyse
-            analysisAborted = false;
 
             if (!stockfish || !stockfishReady) {
                 container.innerHTML = '<p style="color: #fbbf24;">⏳ Stockfish en chargement...</p>';
@@ -4108,6 +4106,11 @@
             renderFilteredMoves();
             container.querySelector('p')?.remove(); // Enlever "analyse en cours"
 
+            // L'IA utilise aussi Stockfish : garder son tour sur l'évaluation rapide.
+            if (game.turn() !== 'w') return;
+            analysisAborted = false;
+            const analyzedFen = game.fen();
+
             // ÉTAPE 2: Lancer analyse Stockfish en arrière-plan (top 10 seulement)
             const topMoves = quickEvaluated.slice(0, 10);
             console.log(`[SF] Analyzing top ${topMoves.length} moves in background...`);
@@ -4116,7 +4119,7 @@
             (async () => {
                 const sfResults = [];
                 for (const item of topMoves) {
-                    if (analysisAborted) break;
+                    if (analysisAborted || analysisId !== suggestionAnalysisId || game.fen() !== analyzedFen) break;
                     const moveResult = game.move(item.move);
                     if (!moveResult) continue; // Skip stale/invalid moves
                     const fenAfter = game.fen();
@@ -4134,7 +4137,7 @@
                 }
 
                 // Mettre à jour avec scores Stockfish (FUSIONNER, pas remplacer)
-                if (sfResults.length > 0) {
+                if (sfResults.length > 0 && !analysisAborted && analysisId === suggestionAnalysisId && game.fen() === analyzedFen) {
                     sfResults.sort((a, b) => b.sfScore - a.sfScore);
                     const bestScore = sfResults[0].sfScore;
 
@@ -4148,13 +4151,13 @@
                     allEvaluatedMoves = allEvaluatedMoves.map(item => {
                         const sfScore = sfScoreMap.get(item.move.san);
                         if (sfScore !== undefined) {
-                            const evalDiff = bestScore - sfScore;
+                            const evalDiff = sfScore - bestScore;
                             let category;
-                            if (evalDiff <= 10) category = 'excellent';
-                            else if (evalDiff <= 30) category = 'good';
-                            else if (evalDiff <= 80) category = 'ok';
-                            else if (evalDiff <= 150) category = 'dubious';
-                            else if (evalDiff <= 300) category = 'bad';
+                            if (evalDiff >= -10) category = 'excellent';
+                            else if (evalDiff >= -30) category = 'good';
+                            else if (evalDiff >= -80) category = 'ok';
+                            else if (evalDiff >= -150) category = 'dubious';
+                            else if (evalDiff >= -300) category = 'bad';
                             else category = 'blunder';
 
                             return {
@@ -4195,11 +4198,6 @@
                     console.log('[SF] Analysis complete!');
                 }
             })();
-
-            // Mettre à jour les panneaux
-            if (statsContainer) {
-                statsContainer.innerHTML = `<strong>${moves.length} coups (Stockfish en arrière-plan)</strong>`;
-            }
 
             // Afficher meilleur coup minimax en attendant Stockfish
             const sfBestEl = document.getElementById('sf-best-move');
@@ -4246,8 +4244,33 @@
         // ========================================
         let currentMoveFilter = 'all';
         let allEvaluatedMoves = [];
+        let suggestionAnalysisId = 0;
         // Exposer pour debug
         window.getSuggestions = () => allEvaluatedMoves;
+
+        // Trois verdicts exclusifs : chaque coup légal apparaît dans un seul compteur.
+        function getMoveVerdict(item) {
+            const loss = Math.max(0, -item.evalDiff);
+            const move = item.move;
+            if (move.san.includes('#')) return 'brilliant';
+            let tactical = false;
+
+            if (!tactical && loss <= 50 && move.piece !== 'p') {
+                // Un sacrifice plausible doit rester parmi les bons coups après évaluation.
+                const played = game.move(move);
+                if (played) {
+                    tactical = game.moves({ verbose: true }).some(reply =>
+                        reply.to === move.to && reply.captured === move.piece &&
+                        (pieceValues[reply.piece] || 0) < (pieceValues[move.piece] || 0)
+                    );
+                    game.undo();
+                }
+            }
+
+            if (loss <= 50 && tactical) return 'brilliant';
+            if (loss > 150) return 'blunder';
+            return 'ok';
+        }
 
         function updateSuggestedMoves() {
             // Utiliser Stockfish si disponible
@@ -4257,12 +4280,14 @@
             }
 
             // Fallback NON-BLOQUANT si Stockfish non dispo
+            suggestionAnalysisId++;
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
-            if (!container || game.game_over() || game.turn() !== 'w') {
-                if (container && game.turn() !== 'w') {
-                    container.innerHTML = '<p style="color: #888; font-style: italic;">L\'IA réfléchit...</p>';
-                }
+            if (!container) return;
+            if (game.game_over()) {
+                allEvaluatedMoves = [];
+                container.innerHTML = '<p style="color: #888;">Partie terminée : aucun coup jouable.</p>';
+                if (statsContainer) statsContainer.textContent = '0 coup jouable';
                 return;
             }
 
@@ -4289,10 +4314,6 @@
 
             allEvaluatedMoves = quickMoves;
             renderFilteredMoves();
-
-            if (statsContainer) {
-                statsContainer.innerHTML = `<strong>${moves.length} coups</strong> <span style="color: #fbbf24;">(éval rapide)</span>`;
-            }
         }
 
         function categorizeMoveByEval(evalDiff, move) {
@@ -4326,18 +4347,25 @@
             const container = document.getElementById('suggested-moves-list');
             if (!container) return;
 
+            const counts = { brilliant: 0, ok: 0, blunder: 0 };
+            allEvaluatedMoves.forEach(item => {
+                item.verdict = getMoveVerdict(item);
+                counts[item.verdict]++;
+            });
+            const statsContainer = document.getElementById('moves-stats');
+            if (statsContainer) {
+                statsContainer.innerHTML = `<strong>${allEvaluatedMoves.length} coups jouables</strong> · ` +
+                    `<span style="color:#facc15">${counts.brilliant} brillants</span> · ` +
+                    `<span style="color:#22d3ee">${counts.ok} OK</span> · ` +
+                    `<span style="color:#ef4444">${counts.blunder} gaffes</span>` +
+                    (allEvaluatedMoves.some(item => !item.isStockfish) ?
+                        ' <span style="color:#888">(estimation rapide pour les coups sans analyse Stockfish)</span>' : '');
+            }
+
             let movesToShow = allEvaluatedMoves;
 
             if (currentMoveFilter !== 'all') {
-                if (currentMoveFilter === 'excellent') {
-                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'excellent');
-                } else if (currentMoveFilter === 'good') {
-                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'good' || m.category === 'ok');
-                } else if (currentMoveFilter === 'dubious') {
-                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'dubious');
-                } else if (currentMoveFilter === 'bad') {
-                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'bad' || m.category === 'blunder');
-                }
+                movesToShow = allEvaluatedMoves.filter(item => item.verdict === currentMoveFilter);
             }
 
             let html = '';
@@ -4352,21 +4380,12 @@
                 const sideIndicator = isPositive ? '⬜' : '⬛'; // Blanc ou Noir gagne
                 const rankNum = allEvaluatedMoves.indexOf(item) + 1;
 
-                // Label basé sur le rang, pas sur l'éval absolue
-                let label, color, bg;
-                if (rankNum === 1) {
-                    label = '🥇 Meilleur'; color = '#4ade80'; bg = 'rgba(74,222,128,0.15)';
-                } else if (rankNum <= 3) {
-                    label = '🥈 Très bon'; color = '#22d3ee'; bg = 'rgba(34,211,238,0.1)';
-                } else if (rankNum <= 6) {
-                    label = '👍 Correct'; color = '#60a5fa'; bg = 'rgba(96,165,250,0.08)';
-                } else if (item.evalDiff <= -100) {
-                    label = '⚠️ Risqué'; color = '#fbbf24'; bg = 'rgba(251,191,36,0.1)';
-                } else if (item.evalDiff <= -200) {
-                    label = '❌ Mauvais'; color = '#ef4444'; bg = 'rgba(239,68,68,0.1)';
-                } else {
-                    label = '➡️ Jouable'; color = '#94a3b8'; bg = 'rgba(148,163,184,0.08)';
-                }
+                const verdictStyle = {
+                    brilliant: { label: '🌟 Brillant', color: '#facc15', bg: 'rgba(250,204,21,0.12)' },
+                    ok: { label: '✅ OK', color: '#22d3ee', bg: 'rgba(34,211,238,0.1)' },
+                    blunder: { label: '💥 Gaffe', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' }
+                }[item.verdict];
+                const { label, color, bg } = verdictStyle;
 
                 const medal = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : `#${rankNum}`;
 
@@ -4376,14 +4395,14 @@
                     : '';
 
                 html += `
-                    <div onclick="playSuggestedMove('${m.from}', '${m.to}')"
+                    <div onclick="playSuggestedMove('${m.from}', '${m.to}', '${m.promotion || 'q'}')"
                          style="padding: 10px; margin-bottom: 6px; background: ${bg}; border-radius: 8px; cursor: pointer; border-left: 3px solid ${color};"
                          onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="min-width: 28px; color: #666;">${medal}</span>
                                 <span style="font-weight: bold; color: #fff;">${m.san}</span>
-                                <span style="color: ${color}; font-size: 0.75em;">${label}</span>
+                                <span style="color: ${color}; font-size: 0.75em;">${label}${item.isStockfish ? '' : ' (estimé)'}</span>
                             </div>
                             <div>
                                 <span style="color: ${isPositive ? '#4ade80' : '#ef4444'}; font-family: monospace; font-size: 0.9em;">🐟 ${sideIndicator}${isPositive ? '+' : '-'}${evalDisplay}</span>
@@ -4535,10 +4554,10 @@
             return comments.length > 0 ? comments.join(' • ') : "Coup jouable";
         }
 
-        function playSuggestedMove(from, to) {
+        function playSuggestedMove(from, to, promotion = 'q') {
             if (game.turn() !== 'w' || isAIThinking) return;
 
-            const move = game.move({ from, to, promotion: 'q' });
+            const move = game.move({ from, to, promotion });
             if (move) {
                 board.position(game.fen());
                 analyzePlayerMove(move);

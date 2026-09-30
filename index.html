@@ -241,6 +241,30 @@
         .action-btn.danger {
             background: linear-gradient(90deg, #f44336, #da190b);
         }
+
+        .theme-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 0 auto 35px;
+        }
+
+        .theme-nav a {
+            color: #dcecff;
+            text-decoration: none;
+            border: 1px solid rgba(0, 217, 255, 0.4);
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-weight: 600;
+            background: rgba(0, 217, 255, 0.08);
+        }
+
+        .theme-nav a:hover { background: rgba(0, 217, 255, 0.2); }
+
+        .theme-group { margin: 42px 0; }
+        .theme-group h2 { text-align: center; margin-bottom: 10px; font-size: 1.65rem; }
+        .theme-group > p { text-align: center; opacity: .85; margin: 0 auto 22px; max-width: 720px; }
     </style>
 </head>
 <body>
@@ -302,9 +326,16 @@
             </button>
         </div>
 
-        <h2 style="text-align: center; margin: 40px 0 30px; font-size: 2rem;" data-i18n="section_hub">Hub de Visualisation</h2>
+        <h2 style="text-align: center; margin: 40px 0 16px; font-size: 2rem;" data-i18n="section_hub">Hub de Visualisation</h2>
+        <nav class="theme-nav" aria-label="Explorer SupaChess par thème">
+            <a href="#theme-play">Jouer & Coach</a>
+            <a href="#training">Entraînement</a>
+            <a href="#theme-analysis">Analyses</a>
+            <a href="#theme-tracking">Suivi & stats</a>
+            <a href="#games">Parties</a>
+        </nav>
 
-        <h2 style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;" data-i18n="section_legendary">
+        <h2 id="games" style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;" data-i18n="section_legendary">
             Bibliotheque des Parties Legendaires
         </h2>
         <p style="text-align: center; margin-bottom: 30px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;" data-i18n="section_legendary_desc">
@@ -437,7 +468,7 @@
             </div>
         </div>
 
-        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">Programmes d'Entrainement</h2>
+        <h2 id="training" style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">Programmes d'Entrainement</h2>
 
         <div class="menu-grid">
             <a href="https://jira44.github.io/supachess/" target="_blank" rel="noopener">
@@ -485,9 +516,9 @@
             </a>
         </div>
 
-        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_dashboards">Dashboards & Analytics</h2>
+        <h2 id="analysis" style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">Outils, analyses et suivi</h2>
 
-        <div class="menu-grid">
+        <div class="menu-grid" id="thematic-tools-grid">
             <a href="CHESS_COACH.html">
                 <div class="menu-card" data-section="chess-coach" style="border: 2px solid #00d9ff; box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);">
                     <span class="icon">&#x1F393;</span>
@@ -743,6 +774,55 @@
     </div>
 
     <script>
+        (function organizeThematicHub() {
+            const sourceGrid = document.getElementById('thematic-tools-grid');
+            if (!sourceGrid) return;
+
+            const themes = [
+                {
+                    id: 'play', title: '♟️ Jouer & coach',
+                    description: 'Jouez contre l’IA et obtenez des conseils pendant votre partie.',
+                    sections: ['chess-coach', 'chessnova-teacher', 'ai-coach', 'standalone-training']
+                },
+                {
+                    id: 'analysis', title: '🔎 Analyses & progression',
+                    description: 'Analysez votre style, vos parties et les leçons à retenir.',
+                    sections: ['puzzles', 'style-chessnova', 'radar', 'lessons-v2', 'lessons-v1', 'learning-report', 'architecture', 'archives']
+                },
+                {
+                    id: 'tracking', title: '📈 Suivi & statistiques',
+                    description: 'Suivez votre entraînement, votre ELO, les tournois et les résultats.',
+                    sections: ['training-dashboard', 'live-tracking', 'stats-session', 'victories-tracker', 'elo-evolution', 'live-counters', 'tournament-dashboard', 'elo-progress']
+                },
+                {
+                    id: 'games', title: '🎬 Parties à explorer',
+                    description: 'Retrouvez les replays, analyses détaillées et parties créatives.',
+                    sections: ['creative-games', 'victory-sf20', 'partie-1', 'partie-2', 'partie-3', 'zup-celebration']
+                }
+            ];
+            const cards = Array.from(sourceGrid.children);
+            const groups = new Map(themes.map(theme => [theme.id, []]));
+
+            cards.forEach(card => {
+                const section = card.querySelector('[data-section]')?.dataset.section;
+                const theme = themes.find(item => item.sections.includes(section));
+                groups.get(theme?.id || 'analysis').push(card);
+            });
+
+            const hub = document.createDocumentFragment();
+            themes.forEach(theme => {
+                const group = document.createElement('section');
+                group.id = `theme-${theme.id}`;
+                group.className = 'theme-group';
+                group.innerHTML = `<h2>${theme.title}</h2><p>${theme.description}</p>`;
+                const grid = document.createElement('div');
+                grid.className = 'menu-grid';
+                groups.get(theme.id).forEach(card => grid.appendChild(card));
+                group.appendChild(grid);
+                hub.appendChild(group);
+            });
+            sourceGrid.replaceWith(hub);
+        })();
         document.getElementById('lastUpdate').textContent = new Date().toLocaleString('fr-FR');
     </script>
 

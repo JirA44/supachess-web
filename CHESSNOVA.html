@@ -1861,7 +1861,11 @@
         }
 
         function saveProgress() {
-            localStorage.setItem('chessnova_progress', JSON.stringify(playerProgress));
+            if (window.ChessNovaProgress) {
+                ChessNovaProgress.save(playerProgress);
+            } else {
+                localStorage.setItem('chessnova_progress', JSON.stringify(playerProgress));
+            }
         }
 
         let eloHistory = [1200];
@@ -9730,9 +9734,11 @@
                 }
             } catch (err) {
                 // If popup blocked/failed, fallback to redirect
-                if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+                if (err.code === 'auth/popup-blocked') {
                     console.warn('Popup blocked, falling back to redirect');
                     await auth.signInWithRedirect(provider);
+                } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+                    return;
                 } else {
                     console.error('Google login error:', err);
                     showAuthError(err.message);
@@ -9834,22 +9840,12 @@
         
         async function syncLocalToCloud() {
             if (!db || !currentUser?.uid) return;
-            const localProgress = JSON.parse(localStorage.getItem('chessnova_progress') || '{}');
-            if (localProgress.totalGames > 0) {
-                await db.collection('users').doc(currentUser.uid).update({
-                    xp: firebase.firestore.FieldValue.increment(localProgress.xp || 0),
-                    totalGames: firebase.firestore.FieldValue.increment(localProgress.totalGames || 0),
-                    totalWins: firebase.firestore.FieldValue.increment(localProgress.totalWins || 0),
-                    bestStreak: Math.max(currentUser.bestStreak || 0, localProgress.bestStreak || 0)
-                });
-                // Reload user data after sync to reflect merged stats
+            if (window.ChessNovaProgress?.syncWithCloud && auth?.currentUser) {
+                playerProgress = await ChessNovaProgress.syncWithCloud(auth.currentUser);
+                updateProgressUI();
                 const updated = await loadUserFromFirestore(currentUser.uid);
-                if (updated) {
-                    currentUser = updated;
-                    updateUserUI();
-                }
-                localStorage.removeItem('chessnova_progress');
-                showToast('Progression synchronisée!', 'success');
+                if (updated) currentUser = updated;
+                updateUserUI();
             }
         }
         

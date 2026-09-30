@@ -89,6 +89,10 @@
 
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
+                    window.dispatchEvent(new CustomEvent('chessnova:auth-state', { detail: { user: user } }));
+                    if (user && window.ChessNovaProgress && window.ChessNovaProgress.syncWithCloud) {
+                        window.ChessNovaProgress.syncWithCloud(user);
+                    }
                     updateChatAuth();
                     updateAuthBar();
                     if (user) {

@@ -117,11 +117,11 @@
     }
 
     // Load/save progress from localStorage
-    function load() {
-        try {
-            var data = JSON.parse(localStorage.getItem('chessnova_progress'));
-            if (data) return data;
-        } catch(e) {}
+    var cloudUser = null;
+    var cloudDb = null;
+    var cloudSaveTimer = null;
+
+    function defaultProgress() {
         return {
             xp: 0, level: 1, currentStreak: 0, bestStreak: 0,
             totalWins: 0, totalGames: 0, badges: [], recentRewards: [],
@@ -129,8 +129,89 @@
         };
     }
 
+    function normalize(progress) {
+        var result = Object.assign(defaultProgress(), progress || {});
+        result.xp = Math.max(0, Number(result.xp) || 0);
+        result.level = getLevelForXP(result.xp);
+        result.currentStreak = Math.max(0, Number(result.currentStreak) || 0);
+        result.bestStreak = Math.max(result.currentStreak, Number(result.bestStreak) || 0);
+        result.totalWins = Math.max(0, Number(result.totalWins) || 0);
+        result.totalGames = Math.max(result.totalWins, Number(result.totalGames) || 0);
+        result.puzzlesSolved = Math.max(0, Number(result.puzzlesSolved) || 0);
+        result.puzzlePerfectStreak = Math.max(0, Number(result.puzzlePerfectStreak) || 0);
+        result.badges = Array.isArray(result.badges) ? Array.from(new Set(result.badges)) : [];
+        result.recentRewards = Array.isArray(result.recentRewards) ? result.recentRewards.slice(0, 10) : [];
+        return result;
+    }
+
+    function mergeProgress(local, cloud) {
+        var a = normalize(local);
+        var b = normalize(cloud);
+        return normalize({
+            xp: Math.max(a.xp, b.xp),
+            currentStreak: Math.max(a.currentStreak, b.currentStreak),
+            bestStreak: Math.max(a.bestStreak, b.bestStreak),
+            totalWins: Math.max(a.totalWins, b.totalWins),
+            totalGames: Math.max(a.totalGames, b.totalGames),
+            puzzlesSolved: Math.max(a.puzzlesSolved, b.puzzlesSolved),
+            puzzlePerfectStreak: Math.max(a.puzzlePerfectStreak, b.puzzlePerfectStreak),
+            badges: a.badges.concat(b.badges),
+            recentRewards: a.recentRewards.concat(b.recentRewards)
+                .sort(function(x, y) { return (y.time || 0) - (x.time || 0); })
+                .slice(0, 10)
+        });
+    }
+
+    function queueCloudSave() {
+        if (!cloudUser || !cloudDb || cloudSaveTimer) return;
+        cloudSaveTimer = setTimeout(function() {
+            cloudSaveTimer = null;
+            var progress = load();
+            cloudDb.collection('users').doc(cloudUser.uid).set({
+                progress: progress,
+                xp: progress.xp,
+                level: progress.level,
+                currentStreak: progress.currentStreak,
+                bestStreak: progress.bestStreak,
+                totalWins: progress.totalWins,
+                totalGames: progress.totalGames,
+                progressUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(function(err) {
+                console.warn('[Progress] Cloud save failed:', err.code || err.message);
+            });
+        }, 500);
+    }
+
+    async function syncWithCloud(user) {
+        if (!user || typeof firebase === 'undefined') return load();
+        cloudUser = user;
+        cloudDb = firebase.firestore();
+        try {
+            var doc = await cloudDb.collection('users').doc(user.uid).get();
+            var data = doc.exists ? doc.data() : {};
+            var cloudProgress = data.progress || data;
+            var merged = mergeProgress(load(), cloudProgress);
+            localStorage.setItem('chessnova_progress', JSON.stringify(merged));
+            queueCloudSave();
+            window.dispatchEvent(new CustomEvent('chessnova:progress-synced', { detail: merged }));
+            return merged;
+        } catch (err) {
+            console.warn('[Progress] Cloud sync failed:', err.code || err.message);
+            return load();
+        }
+    }
+
+    function load() {
+        try {
+            var data = JSON.parse(localStorage.getItem('chessnova_progress'));
+            if (data) return normalize(data);
+        } catch(e) {}
+        return defaultProgress();
+    }
+
     function save(progress) {
-        localStorage.setItem('chessnova_progress', JSON.stringify(progress));
+        localStorage.setItem('chessnova_progress', JSON.stringify(normalize(progress)));
+        queueCloudSave();
     }
 
     // Toast notification
@@ -285,6 +366,7 @@
         getXPProgress: getXPProgress,
         showRewardToast: showRewardToast,
         renderProgressBar: renderProgressBar,
-        checkTrainingBadges: checkTrainingBadges
+        checkTrainingBadges: checkTrainingBadges,
+        syncWithCloud: syncWithCloud
     };
 })();

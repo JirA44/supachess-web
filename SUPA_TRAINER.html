@@ -810,6 +810,10 @@ function updateHistory() {
 function setStatus(msg) { document.getElementById('status').innerHTML = msg; }
 
 function handleEnd() {
+    if (!window.__supaTrainerGameRecorded && window.ChessNovaProgress) {
+        window.__supaTrainerGameRecorded = true;
+        ChessNovaProgress.recordPractice('parties-coachees', 0, 'Partie coachée terminée');
+    }
     let msg = 'Partie terminée.';
     if (game.in_checkmate()) msg = game.turn() === 'w' ? '⚫ Noir gagne — échec et mat!' : '⚪ Blanc gagne — échec et mat!';
     else if (game.in_stalemate()) msg = '½ Pat — Nulle!';
@@ -878,6 +882,12 @@ window.onload = () => {
     initSF();
 };
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="shared/progress.js"></script>
+<link rel="stylesheet" href="shared/community.css">
+<script src="shared/community.js"></script>
 <script src="supa-dots-widget.js"></script>
 </body>
 </html>

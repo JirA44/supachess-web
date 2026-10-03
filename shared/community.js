@@ -1316,6 +1316,14 @@
 
     // --- Init ---
     function init() {
+        // The shared tracker is loaded after community.js on some legacy pages.
+        // Loading it here keeps usage and practice counts available site-wide.
+        if (!window.ChessNovaProgress && !document.querySelector('script[data-chessnova-progress]')) {
+            var progressScript = document.createElement('script');
+            progressScript.src = 'shared/progress.js';
+            progressScript.dataset.chessnovaProgress = 'true';
+            document.body.appendChild(progressScript);
+        }
         var firebaseReady = initFirebase();
         if (firebaseReady) {
             trackVisit();

@@ -67,11 +67,16 @@
                 try {
                     firebase.app();
                     auth = firebase.auth();
-                    db = firebase.firestore();
                 } catch (e) {
                     firebase.initializeApp(FIREBASE_CONFIG);
                     auth = firebase.auth();
-                    db = firebase.firestore();
+                }
+
+                // Authentication must remain available even on pages that do not
+                // load Firestore. The hub only needs Firebase Auth for Google sign-in.
+                if (firebase.firestore) {
+                    try { db = firebase.firestore(); }
+                    catch (firestoreError) { console.warn('[Community] Firestore unavailable:', firestoreError.message); }
                 }
 
                 // Test Firestore connectivity
@@ -349,7 +354,10 @@
     }
 
     function handleGoogleLogin() {
-        if (!auth) return;
+        if (!auth) {
+            showToast('Connexion Google indisponible : Firebase Auth n’a pas démarré. Recharge la page.', true);
+            return;
+        }
         var provider = new firebase.auth.GoogleAuthProvider();
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function () {
             return auth.signInWithPopup(provider);
@@ -364,7 +372,15 @@
             closeAuthModal();
         }).catch(function (err) {
             if (err.code !== 'auth/popup-closed-by-user') {
-                showToast(t('auth_error_generic'), true);
+                var messages = {
+                    'auth/unauthorized-domain': 'Domaine non autorisé par Firebase. Autorise jira44.github.io dans Authentication > Settings > Authorized domains.',
+                    'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication.',
+                    'auth/popup-blocked': 'La fenêtre Google a été bloquée. Autorise les popups pour ce site et réessaie.',
+                    'auth/network-request-failed': 'Connexion réseau impossible pendant la connexion Google. Réessaie.',
+                    'auth/too-many-requests': 'Trop de tentatives. Réessaie un peu plus tard.'
+                };
+                console.error('[Community] Google sign-in failed:', err.code, err.message);
+                showToast(messages[err.code] || (t('auth_error_generic') + ' (' + (err.code || 'auth/error') + ')'), true);
             }
         });
     }

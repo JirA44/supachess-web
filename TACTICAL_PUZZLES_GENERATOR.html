@@ -1459,7 +1459,7 @@
 
                 // XP integration with central progress system
                 if (typeof ChessNovaProgress !== 'undefined') {
-                    ChessNovaProgress.addXP(10, 'Puzzle resolu');
+                    ChessNovaProgress.recordPractice('puzzles', 10, 'Puzzle résolu');
                     var p = ChessNovaProgress.load();
                     p.puzzlesSolved = (p.puzzlesSolved || 0) + 1;
                     if (hintsUsed === 0) {

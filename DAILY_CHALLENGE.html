@@ -416,8 +416,8 @@ function markDone(idx) {
         state.solved = (state.solved || 0) + 1;
     }
     if (window.ChessNovaProgress) {
-        ChessNovaProgress.addXP(10, 'Défi quotidien résolu');
-        if (state.allDone && !wasComplete) ChessNovaProgress.addXP(20, 'Défi du jour terminé');
+        ChessNovaProgress.recordPractice('defi-quotidien', 10, 'Défi quotidien résolu');
+        if (state.allDone && !wasComplete) ChessNovaProgress.recordPractice('defi-quotidien', 20, 'Défi du jour terminé');
         ChessNovaProgress.checkTrainingBadges();
     }
     saveState(state);

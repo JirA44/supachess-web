@@ -125,7 +125,9 @@
         return {
             xp: 0, level: 1, currentStreak: 0, bestStreak: 0,
             totalWins: 0, totalGames: 0, badges: [], recentRewards: [],
-            puzzlesSolved: 0, puzzlePerfectStreak: 0
+            puzzlesSolved: 0, puzzlePerfectStreak: 0,
+            practice: { sessions: 0, activities: {} },
+            usage: { pageViews: 0, lastActivity: null }
         };
     }
 
@@ -141,12 +143,25 @@
         result.puzzlePerfectStreak = Math.max(0, Number(result.puzzlePerfectStreak) || 0);
         result.badges = Array.isArray(result.badges) ? Array.from(new Set(result.badges)) : [];
         result.recentRewards = Array.isArray(result.recentRewards) ? result.recentRewards.slice(0, 10) : [];
+        result.practice = result.practice && typeof result.practice === 'object' ? result.practice : {};
+        result.practice.sessions = Math.max(0, Number(result.practice.sessions) || 0);
+        result.practice.activities = result.practice.activities && typeof result.practice.activities === 'object'
+            ? result.practice.activities : {};
+        Object.keys(result.practice.activities).forEach(function(key) {
+            result.practice.activities[key] = Math.max(0, Number(result.practice.activities[key]) || 0);
+        });
+        result.usage = result.usage && typeof result.usage === 'object' ? result.usage : {};
+        result.usage.pageViews = Math.max(0, Number(result.usage.pageViews) || 0);
         return result;
     }
 
     function mergeProgress(local, cloud) {
         var a = normalize(local);
         var b = normalize(cloud);
+        var activities = Object.assign({}, a.practice.activities);
+        Object.keys(b.practice.activities).forEach(function(key) {
+            activities[key] = Math.max(activities[key] || 0, b.practice.activities[key]);
+        });
         return normalize({
             xp: Math.max(a.xp, b.xp),
             currentStreak: Math.max(a.currentStreak, b.currentStreak),
@@ -158,7 +173,15 @@
             badges: a.badges.concat(b.badges),
             recentRewards: a.recentRewards.concat(b.recentRewards)
                 .sort(function(x, y) { return (y.time || 0) - (x.time || 0); })
-                .slice(0, 10)
+                .slice(0, 10),
+            practice: {
+                sessions: Math.max(a.practice.sessions, b.practice.sessions),
+                activities: activities
+            },
+            usage: {
+                pageViews: Math.max(a.usage.pageViews, b.usage.pageViews),
+                lastActivity: a.usage.lastActivity || b.usage.lastActivity || null
+            }
         });
     }
 
@@ -175,6 +198,8 @@
                 bestStreak: progress.bestStreak,
                 totalWins: progress.totalWins,
                 totalGames: progress.totalGames,
+                practice: progress.practice,
+                usage: progress.usage,
                 progressUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).catch(function(err) {
                 console.warn('[Progress] Cloud save failed:', err.code || err.message);
@@ -212,6 +237,31 @@
     function save(progress) {
         localStorage.setItem('chessnova_progress', JSON.stringify(normalize(progress)));
         queueCloudSave();
+    }
+
+    function recordUsage(activity) {
+        var progress = load();
+        progress.usage.pageViews++;
+        progress.usage.lastActivity = { activity: activity, time: Date.now() };
+        save(progress);
+        return progress;
+    }
+
+    function recordPractice(activity, xp, reason) {
+        var progress = load();
+        progress.practice.sessions++;
+        progress.practice.activities[activity] = (progress.practice.activities[activity] || 0) + 1;
+        if (xp > 0) {
+            progress.xp += xp;
+            var oldLevel = progress.level;
+            progress.level = getLevelForXP(progress.xp);
+            progress.recentRewards.unshift({ text: '+' + xp + ' XP: ' + reason, time: Date.now() });
+            progress.recentRewards = progress.recentRewards.slice(0, 10);
+            if (progress.level > oldLevel) showRewardToast('LEVEL UP! Niveau ' + progress.level + ' - ' + getRankName(progress.level), 0);
+            showRewardToast(reason, xp);
+        }
+        save(progress);
+        return progress;
     }
 
     // Toast notification
@@ -367,6 +417,12 @@
         showRewardToast: showRewardToast,
         renderProgressBar: renderProgressBar,
         checkTrainingBadges: checkTrainingBadges,
-        syncWithCloud: syncWithCloud
+        syncWithCloud: syncWithCloud,
+        recordUsage: recordUsage,
+        recordPractice: recordPractice
     };
+
+    window.addEventListener('DOMContentLoaded', function() {
+        recordUsage(location.pathname.replace(/^\//, '') || 'accueil');
+    });
 })();

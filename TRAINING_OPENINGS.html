@@ -495,7 +495,7 @@ function markDone(id) {
         done.push(id);
         saveDone(done);
         if (window.ChessNovaProgress) {
-            ChessNovaProgress.addXP(20, 'Ouverture maîtrisée');
+            ChessNovaProgress.recordPractice('ouvertures', 20, 'Ouverture maîtrisée');
             ChessNovaProgress.checkTrainingBadges();
         }
     }

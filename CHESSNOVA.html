@@ -1070,6 +1070,10 @@
                     <div style="background: rgba(0,0,0,0.3); border-radius: 10px; height: 12px; overflow: hidden;">
                         <div id="xp-bar" style="background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 10px;"></div>
                     </div>
+                    <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; color: #cbd5e1; font-size: 0.8em;">
+                        <span>🎯 Pratiques : <strong id="practice-count">0</strong></span>
+                        <span>👣 Usages : <strong id="usage-count">0</strong></span>
+                    </div>
                 </div>
 
                 <!-- WINSTREAK (hidden - moved to profile modal) -->
@@ -1781,6 +1785,10 @@
             if (playerProgress.totalWins === 1) unlockBadge('first-win');
 
             saveProgress();
+            if (window.ChessNovaProgress) {
+                ChessNovaProgress.recordPractice('parties', 0, won ? 'Partie gagnée' : 'Partie terminée');
+                playerProgress = ChessNovaProgress.load();
+            }
             updateProgressUI();
         }
 
@@ -1815,6 +1823,9 @@
             // Niveau et XP
             setEl('player-level', playerProgress.level);
             setEl('player-xp', playerProgress.xp);
+            const trackedProgress = ChessNovaProgress.load();
+            setEl('practice-count', trackedProgress.practice.sessions);
+            setEl('usage-count', trackedProgress.usage.pageViews);
 
             // Rang (infinite leveling)
             const rankName = ChessNovaProgress.getRankName(playerProgress.level);

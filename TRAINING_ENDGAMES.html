@@ -1060,7 +1060,7 @@
             // Award XP
             var isNew = markCompleted(currentEndgame.id);
             if (isNew && window.ChessNovaProgress) {
-                ChessNovaProgress.addXP(15, 'Finale: ' + currentEndgame.name);
+                ChessNovaProgress.recordPractice('finales', 15, 'Finale: ' + currentEndgame.name);
             }
 
             // Check for badge

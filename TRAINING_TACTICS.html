@@ -435,7 +435,7 @@ function markSolved(id) {
         saveSolved(solved);
         streak++;
         if (window.ChessNovaProgress) {
-            ChessNovaProgress.addXP(10, 'Tactique résolue');
+            ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique résolue');
             ChessNovaProgress.checkTrainingBadges();
         }
     }

@@ -80,7 +80,7 @@
                 }
 
                 // Test Firestore connectivity
-                db.collection('community_chat').limit(1).get().then(function() {
+                if (db) db.collection('community_chat').limit(1).get().then(function() {
                     console.log('[Community] Firestore connected OK');
                 }).catch(function(err) {
                     console.error('[Community] Firestore connection test FAILED:', err.code, err.message);
@@ -359,9 +359,9 @@
             return;
         }
         var provider = new firebase.auth.GoogleAuthProvider();
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function () {
-            return auth.signInWithPopup(provider);
-        }).then(function (result) {
+        // Open Google directly from the click, preserving browser user activation.
+        // Persistence is configured when Firebase starts.
+        auth.signInWithPopup(provider).then(function (result) {
             // Check if new user
             if (result.additionalUserInfo && result.additionalUserInfo.isNewUser && db) {
                 db.collection('site_stats').doc('counters').set({

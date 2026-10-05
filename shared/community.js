@@ -12,6 +12,8 @@
 (function () {
     'use strict';
 
+    var SITE_VERSION = '1.12';
+
     // --- Firebase Config ---
     var FIREBASE_CONFIG = {
         apiKey: "AIzaSyA8duVGo5Vgzn7VXyDTJcdkvThVElYmTss",
@@ -565,7 +567,8 @@
                 '<span data-i18n="footer_members">' + t('footer_members') + '</span>: ' +
                 '<span class="cn-stat-value" id="cn-members-count">-</span>' +
             '</span>' +
-            '<span class="cn-footer-brand" data-i18n="footer_brand">' + t('footer_brand') + '</span>';
+            '<span class="cn-footer-brand" data-i18n="footer_brand">' + t('footer_brand') + '</span>' +
+            '<span class="cn-footer-stat" data-site-version>Version du site : <span class="cn-stat-value">' + SITE_VERSION + '</span></span>';
         document.body.appendChild(footer);
 
         if (db) {

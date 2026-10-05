@@ -547,6 +547,7 @@ function onDrop(src, tgt) {
 
 function onSnapEnd() {
     board.position(game.fen());
+    MagnusPrinciples.render(game, 'magnus-position');
     selSquare = null;
 }
 
@@ -660,6 +661,7 @@ function playMove(src, tgt, promo) {
     });
 
     board.position(game.fen());
+    MagnusPrinciples.render(game, 'magnus-position');
     selSquare = null;
     analysis  = {};
     clearHL();
@@ -695,6 +697,7 @@ async function opponentPlay() {
             });
         }
         board.position(game.fen());
+    MagnusPrinciples.render(game, 'magnus-position');
         updateHistory();
     }
 
@@ -813,6 +816,7 @@ function updateHistory() {
 function setStatus(msg) { document.getElementById('status').innerHTML = msg; }
 
 function handleEnd() {
+    MagnusPrinciples.render(game, 'magnus-position');
     if (!window.__supaTrainerGameRecorded && window.ChessNovaProgress) {
         window.__supaTrainerGameRecorded = true;
         ChessNovaProgress.recordPractice('parties-coachees', 0, 'Partie coachée terminée');
@@ -859,6 +863,7 @@ function undoMove() {
     if (moveLog.length >= 2) moveLog.splice(-2);
     else moveLog = [];
     board.position(game.fen());
+    MagnusPrinciples.render(game, 'magnus-position');
     analysis = {};
     clearHL();
     selSquare = null;

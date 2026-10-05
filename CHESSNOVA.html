@@ -4083,7 +4083,6 @@
         }
 
         async function updateSuggestedMovesWithStockfish() {
-            MagnusPrinciples.render(game, 'magnus-position');
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
             if (!container) return;
@@ -4291,6 +4290,7 @@
         }
 
         function updateSuggestedMoves() {
+            MagnusPrinciples.render(game, 'magnus-position');
             // Utiliser Stockfish si disponible
             if (stockfish && stockfishReady) {
                 updateSuggestedMovesWithStockfish();

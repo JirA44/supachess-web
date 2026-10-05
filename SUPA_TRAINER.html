@@ -355,6 +355,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const game       = new Chess();
 let board        = null;
+window.game = game;
 let sf           = null;
 let sfReady      = false;
 let sfCB         = null;
@@ -504,6 +505,7 @@ function initBoard() {
         onSnapEnd,
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     });
+    window.board = board;
 
     // Click on a square to select piece and show colored move dots
     document.getElementById('board').addEventListener('click', function(e) {

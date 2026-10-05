@@ -1018,6 +1018,7 @@
                     </div>
                 </div>
 
+                <div id="magnus-position" style="background:#1c293d;padding:15px;border-radius:12px;margin-bottom:20px;line-height:1.6"></div>
                 <!-- CONSEILS COACH -->
                 <div id="coach-tips-panel" style="background: linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(34,211,238,0.1) 100%); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(168,85,247,0.3);">
                     <div onclick="document.getElementById('coach-tips-content').style.display = document.getElementById('coach-tips-content').style.display === 'none' ? 'block' : 'none'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
@@ -1174,6 +1175,7 @@
     </div>
 
     <script src="shared/progress.js"></script>
+    <script src="shared/magnus-principles.js"></script>
     <script>
 
         // ========================================
@@ -4081,6 +4083,7 @@
         }
 
         async function updateSuggestedMovesWithStockfish() {
+            MagnusPrinciples.render(game, 'magnus-position');
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
             if (!container) return;

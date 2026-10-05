@@ -332,6 +332,7 @@
     <div class="right-col">
         <div class="panel">
             <h3>🧠 COACH SUPA</h3>
+            <div id="magnus-position" style="font-size:0.9em;line-height:1.65;margin-bottom:16px"></div>
             <div id="coach-msg" style="color:var(--muted)">Sélectionne une pièce pour voir les coups colorés.</div>
         </div>
 
@@ -347,6 +348,7 @@
     </div>
 </div>
 
+<script src="shared/magnus-principles.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -448,6 +450,7 @@ function parseLines(lines) {
 // POSITION ANALYSIS
 // ─────────────────────────────────────────────────────────────────────────────
 async function doAnalyze() {
+    MagnusPrinciples.render(game, 'magnus-position');
     if (!sfReady || game.game_over() || opponentTurn) return;
     const legalMoves = game.moves({ verbose: true });
     if (!legalMoves.length) return;

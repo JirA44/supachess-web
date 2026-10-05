@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repères Magnus — SupaChess</title>
+  <style>
+    body{margin:0;background:#101827;color:#e2e8f0;font:17px/1.65 system-ui,sans-serif}main{max-width:850px;margin:auto;padding:28px 20px}a{color:#67e8f9}h1{line-height:1.2}article,aside{background:#1c293d;padding:20px;border-radius:12px;margin:18px 0}h2{margin-top:0;font-size:1.25rem}button{font:inherit;background:#22435c;color:#fff;border:1px solid #67e8f9;border-radius:6px;padding:8px 14px;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #facc15;outline-offset:4px}
+  </style>
+</head>
+<body><main>
+  <a href="index.html">← Accueil SupaChess</a>
+  <h1>Apprendre du jeu de Magnus</h1>
+  <p>Huit repères inspirés de ses parties : des questions pour choisir un plan, à adapter à la position. Ce sont des reformulations pédagogiques, pas des citations de Carlsen.</p>
+  <aside><h2>Une routine avant chaque coup</h2><ol><li>Qu’est-ce que l’adversaire menace ?</li><li>Quels échecs, captures et menaces faut-il calculer ?</li><li>Si rien n’est forcé, quelle pièce ou quelle faiblesse améliorer ?</li><li>Après mon coup, quelle est sa meilleure réponse ?</li></ol><a href="SUPA_TRAINER.html">Pratiquer avec le coach</a> · <a href="CHESSNOVA.html">Jouer dans ChessNova</a></aside>
+  <section id="principles" aria-label="Les huit principes"></section>
+  <aside><h2>Après la partie</h2><p>Choisis un moment où tu as forcé le jeu, échangé sans but ou négligé le contre-jeu. Retrouve une autre idée, puis vérifie-la avec les variantes. Note une seule habitude à travailler dans la prochaine partie.</p><h2>Observer des parties</h2><p><a href="web/legendary-games/carlsen_modern.html">Parties de Carlsen</a> · <a href="carlsen_brilliancy_2013.html">Un exemple tactique</a> · <a href="TRAINING_ENDGAMES.html">Pratiquer les finales</a></p><p>Arrête-toi avant un échange et prédis la structure et l’activité qui en résulteront. Une partie spectaculaire complète l’étude des coups calmes.</p></aside>
+  <p>Source d’étude : <a href="https://www.newinchess.com/media/wysiwyg/product_pdf/9129.pdf">The Magnus Method, Emmanuel Neiman (extrait éditeur)</a>. Les repères ne remplacent pas le calcul ; une nulle ou une répétition peut être la bonne décision.</p>
+</main><script src="shared/magnus-principles.js"></script><script>
+  MagnusPrinciples.principles.forEach((tip, i) => {
+    const article = document.createElement('article');
+    const title = document.createElement('h2');
+    title.textContent = (i + 1) + '. ' + tip.title;
+    const text = document.createElement('p'); text.textContent = tip.text;
+    article.append(title, text); document.getElementById('principles').appendChild(article);
+  });
+</script></body></html>

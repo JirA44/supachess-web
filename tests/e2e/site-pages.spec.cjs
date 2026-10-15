@@ -143,3 +143,16 @@ test('the Fischer replay advances and returns to the initial position', async ({
   await expect(page.locator('a.back-button').first()).toHaveAttribute('href', '../../index.html');
   expect(browserErrors).toEqual([]);
 });
+
+test('nested legacy pages load the shared progress tracker from its own directory', async ({ page }) => {
+  await isolateExternalServices(page);
+  const missingProgressScripts=[];
+  page.on('response', response => {
+    if (/\/shared\/progress\.js(?:$|\?)/.test(new URL(response.url()).pathname) && response.status() >= 400) {
+      missingProgressScripts.push(response.url());
+    }
+  });
+  await page.goto('/web/legendary-games/fischer_game_of_century.html');
+  await expect.poll(() => page.evaluate(() => typeof window.ChessNovaProgress)).toBe('object');
+  expect(missingProgressScripts).toEqual([]);
+});

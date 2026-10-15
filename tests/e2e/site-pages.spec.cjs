@@ -89,7 +89,7 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
   }
   expect(pages.length).toBe(94);
   expect(failures).toEqual([]);
-  console.log(`Browser errors on legacy pages (review list): ${JSON.stringify(browserErrors)}`);
+  expect(browserErrors).toEqual([]);
 });
 
 test('a local training game accepts a legal user move and reset restores the start position', async ({ page }) => {

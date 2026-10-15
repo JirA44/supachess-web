@@ -265,18 +265,19 @@
             }
         }
 
-        // Actualiser immédiatement et toutes les 30 secondes
-        updateCounters();
-        setInterval(updateCounters, 30000);
-
-        // Mettre à jour l'heure
+        // Attendre que les compteurs existent avant le premier rendu.
         function updateTime() {
             const now = new Date();
-            document.getElementById('time').textContent = now.toLocaleTimeString('fr-FR');
+            const timeElement = document.getElementById('time');
+            if (timeElement) timeElement.textContent = now.toLocaleTimeString('fr-FR');
         }
 
-        updateTime();
-        setInterval(updateTime, 1000);
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCounters();
+            setInterval(updateCounters, 30000);
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
     </script>
 </head>
 <body>

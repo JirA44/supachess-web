@@ -868,7 +868,7 @@
             var config = {
                 position: 'start',
                 draggable: false,
-                pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
+                pieceTheme: 'assets/chess-pieces/{piece}.svg'
             };
             board = Chessboard('board', config);
             $(window).on('resize', function() {
@@ -961,7 +961,7 @@
                 position: currentEndgame.fen,
                 draggable: true,
                 orientation: 'white',
-                pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png',
+                pieceTheme: 'assets/chess-pieces/{piece}.svg',
                 onDragStart: onDragStart,
                 onDrop: onDrop,
                 onSnapEnd: onSnapEnd

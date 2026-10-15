@@ -2,5 +2,10 @@
   "version": "1.12",
   "dependencies": {
     "chess.js": "^0.10.3"
+  },
+  "scripts": {
+    "test:links": "node --test tests/site-links.test.cjs",
+    "test:e2e": "playwright test --config=playwright.config.cjs",
+    "test:unit": "node --test tests/tournament-model.test.cjs"
   }
 }

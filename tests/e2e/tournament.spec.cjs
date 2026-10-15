@@ -26,7 +26,7 @@ test('select profiles, run deterministic simulated tournament, read standings, r
 
 test('requires at least two selected participants', async ({ page }) => {
   await page.goto('/TOURNAMENT_SIMULATOR.html');
-  await page.locator('#participant-list input:checked').uncheck();
+  await page.locator('#participant-list input:checked').evaluateAll((boxes) => boxes.forEach((box) => { box.checked = false; }));
   await page.locator('#start-btn').click();
   await expect(page.locator('#selection-error')).toBeVisible();
   await expect(page.locator('#tournament-area')).toBeEmpty();

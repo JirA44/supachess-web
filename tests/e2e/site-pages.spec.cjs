@@ -23,7 +23,7 @@ window.Chart.defaults = window.Chart.defaults || {};
 window.Chart.getChart = window.Chart.getChart || function(){ return null; };
 window.Chessboard = window.Chessboard || function(id){ const el=document.getElementById(id); if(el){el.style.minHeight='320px';el.style.background='#ddd';el.textContent='Local chessboard fixture';} return {start:function(){},position:function(){},orientation:function(){},flip:function(){},resize:function(){}}; };
 window.$ = window.jQuery = window.$ || function(selector){
-  if(selector===document || selector===window) return {on:function(){return this;},ready:function(fn){fn();return this;}};
+  if(selector===document || selector===window) return {on:function(){return this;},resize:function(fn){window.addEventListener('resize',fn);return this;},ready:function(fn){fn();return this;}};
   const nodes=selector instanceof Element ? [selector] : typeof selector==='string' && selector.startsWith('<') ? [document.createElement('div')] : [...document.querySelectorAll(selector)];
   const api={nodes:nodes,html:function(v){if(v===undefined)return nodes[0]?.innerHTML;nodes.forEach(n=>n.innerHTML=v);return this;},text:function(v){if(v===undefined)return nodes[0]?.textContent;nodes.forEach(n=>n.textContent=v);return this;},addClass:function(c){nodes.forEach(n=>n.classList.add(c));return this;},removeClass:function(c){nodes.forEach(n=>n.classList.remove(c));return this;},eq:function(i){return window.$(nodes[i]);},append:function(c){nodes.forEach(n=>n.appendChild(c.nodes?c.nodes[0]:c));return this;},on:function(){return this;},click:function(){return this;},resize:function(fn){window.addEventListener('resize',fn);return this;},ready:function(fn){fn();return this;}};
   nodes.forEach((n,i)=>{api[i]=n;});api.length=nodes.length;return api;
@@ -51,7 +51,7 @@ window.$ = window.jQuery = window.$ || function(selector){
     }
     if (/code\.jquery\.com\/jquery/i.test(url)) {
       const jqueryFixture = `window.$ = window.jQuery = function (selector) {
-        if (selector === document || selector === window) return { on: function(){ return this; }, ready: function(fn){ fn(); return this; } };
+        if (selector === document || selector === window) return { on: function(){ return this; }, resize: function(fn){ window.addEventListener('resize',fn); return this; }, ready: function(fn){ fn(); return this; } };
         const nodes = selector instanceof Element ? [selector] : typeof selector === 'string' && selector.trim().startsWith('<') ? (() => { const template=document.createElement('template'); template.innerHTML=selector.trim(); return [template.content.firstElementChild]; })() : [...document.querySelectorAll(selector)];
         return { nodes: nodes, html: function(value){ if(value===undefined) return nodes[0]?.innerHTML; nodes.forEach(n=>n.innerHTML=value); return this; },
           text: function(value){ if(value===undefined) return nodes[0]?.textContent; nodes.forEach(n=>n.textContent=value); return this; },

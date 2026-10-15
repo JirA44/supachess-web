@@ -13,6 +13,8 @@
     'use strict';
 
     var SITE_VERSION = '1.12';
+    // Capture this script's URL now; init() may run after document.currentScript is cleared.
+    var communityScriptUrl = document.currentScript ? document.currentScript.src : null;
 
     // --- Firebase Config ---
     var FIREBASE_CONFIG = {
@@ -1339,7 +1341,9 @@
         // Loading it here keeps usage and practice counts available site-wide.
         if (!window.ChessNovaProgress && !document.querySelector('script[data-chessnova-progress]')) {
             var progressScript = document.createElement('script');
-            progressScript.src = 'shared/progress.js';
+            progressScript.src = communityScriptUrl
+                ? new URL('progress.js', communityScriptUrl).href
+                : new URL('shared/progress.js', document.baseURI).href;
             progressScript.dataset.chessnovaProgress = 'true';
             document.body.appendChild(progressScript);
         }

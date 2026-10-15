@@ -159,7 +159,7 @@
             </div>
             <div class="setup-item">
                 <label>Niveau SupaEngine</label>
-                <select id="cfg-level">
+                <select id="cfg-level" onchange="renderParticipants()">
                     <option value="1200">~1200 ELO (Débutant)</option>
                     <option value="1600">~1600 ELO (Intermédiaire)</option>
                     <option value="2000" selected>~2000 ELO (Avancé)</option>
@@ -202,7 +202,17 @@ const ALL_ENGINES = [
   { id:'crafty', name:'Crafty 25', elo:2400, icon:'🔨', kind:'Profil moteur simulé' }
 ];
 function renderParticipants() {
-  document.getElementById('participant-list').innerHTML = ALL_ENGINES.map((p,i) => `<label class="player-card" style="display:block;cursor:pointer;text-align:left"><input type="checkbox" value="${p.id}" ${i<4?'checked':''} aria-label="${p.name}"> <b>${p.icon} ${p.name}</b><br><small>${p.kind} · ${p.elo} ELO fictif</small></label>`).join('');
+  const list = document.getElementById('participant-list');
+  const hasExistingSelection = list.querySelectorAll('input[type="checkbox"]').length > 0;
+  const selectedIds = new Set([...list.querySelectorAll('input:checked')].map(box => box.value));
+  list.innerHTML = ALL_ENGINES.map((p,i) => {
+    const selected = hasExistingSelection ? selectedIds.has(p.id) : i < 4;
+    const elo = getConfiguredElo(p);
+    return `<label class="player-card" style="display:block;cursor:pointer;text-align:left"><input type="checkbox" value="${p.id}" ${selected?'checked':''} aria-label="${p.name}"> <b>${p.icon} ${p.name}</b><br><small>${p.kind} · ${elo} ELO fictif</small></label>`;
+  }).join('');
+}
+function getConfiguredElo(profile) {
+  return profile.id === 'supa' ? Number(document.getElementById('cfg-level').value) : profile.elo;
 }
 function expectedScore(eloA, eloB) { return 1 / (1 + Math.pow(10, (eloB - eloA) / 400)); }
 function makeRandom(seed) {
@@ -218,7 +228,10 @@ function simulateGame(pA, pB, random) {
 }
 let players=[], rounds=[], standings=[], simInterval=null, tournamentFormat='Round Robin';
 function startTournament() {
-  const selected=[...document.querySelectorAll('#participant-list input:checked')].map(box=>ALL_ENGINES.find(p=>p.id===box.value));
+  const selected=[...document.querySelectorAll('#participant-list input:checked')].map(box=>{
+    const profile=ALL_ENGINES.find(p=>p.id===box.value);
+    return {...profile,elo:getConfiguredElo(profile)};
+  });
   if(selected.length<2){document.getElementById('selection-error').hidden=false;return;}
   document.getElementById('selection-error').hidden=true;
   players=selected;
@@ -241,7 +254,13 @@ function startTournament() {
     renderLive();
   };
   runNext();
-  if(rounds.length>1) simInterval=setInterval(runNext,+document.getElementById('cfg-speed').value);
+  if(rounds.length>1) {
+    simInterval=setInterval(runNext,+document.getElementById('cfg-speed').value);
+  } else {
+    document.getElementById('start-btn').disabled=false;
+    document.getElementById('start-btn').textContent='🔄 Rejouer';
+    finishTournament();
+  }
 }
 function renderTournamentUI(){
  document.getElementById('tournament-area').innerHTML=`<p id="tournament-status" role="status">${tournamentFormat} en cours — graine ${document.getElementById('cfg-seed').value}</p><div class="players-grid" id="players-grid"></div><div class="rounds-wrap"><div class="section-title">📋 Résultats des parties</div><div id="rounds-list"></div></div><div class="section-title">📊 Tableau croisé</div><div class="crosstable-wrap"><table class="crosstable" id="crosstable"></table></div><div class="standings" id="standings-section"><div class="section-title">🏅 Classement</div><div id="standings-list"></div></div><div style="text-align:center"><button class="reset-btn" onclick="resetTournament()">↺ Réinitialiser</button></div>`;

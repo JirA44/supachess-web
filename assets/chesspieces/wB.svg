@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="White bishop">
+<g fill="#F8FAFC" stroke="#222B3B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<circle cx="50" cy="22" r="8"/><path d="M46 31h8l13 28-7 16H40l-7-16z"/><path d="m58 41-15 20" fill="none"/><path d="M31 78h38v10H31z"/>
+</g>
+</svg>

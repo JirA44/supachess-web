@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="White rook">
+<g fill="#F8FAFC" stroke="#222B3B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M27 19h12v13h8V19h12v13h8V19h12v23H27z"/><path d="M32 43h36l-4 31H36z"/><path d="M27 78h46v11H27z"/>
+</g>
+</svg>

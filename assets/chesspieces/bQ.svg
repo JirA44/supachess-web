@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Black queen">
+<g fill="#252B36" stroke="#E5E7EB" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+<circle cx="25" cy="25" r="7"/><circle cx="50" cy="18" r="7"/><circle cx="75" cy="25" r="7"/><path d="M25 33 36 55h28l11-22-5 31H31z"/><path d="M35 59h30l5 17H30z"/><path d="M24 80h52v9H24z"/>
+</g>
+</svg>

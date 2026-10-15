@@ -216,7 +216,7 @@ function simulateGame(pA, pB, random) {
   if (r<drawProb) return [0.5,0.5];
   return r<drawProb+exp*(1-drawProb)?[1,0]:[0,1];
 }
-let players=[], rounds=[], standings=[], simInterval=null;
+let players=[], rounds=[], standings=[], simInterval=null, tournamentFormat='Round Robin';
 function startTournament() {
   const selected=[...document.querySelectorAll('#participant-list input:checked')].map(box=>ALL_ENGINES.find(p=>p.id===box.value));
   if(selected.length<2){document.getElementById('selection-error').hidden=false;return;}
@@ -225,6 +225,7 @@ function startTournament() {
   const seed=document.getElementById('cfg-seed').value;
   const random=makeRandom(seed);
   const repeats=document.getElementById('cfg-format').value==='rr2'?2:1;
+  tournamentFormat=repeats===2?'Double Round Robin':'Round Robin';
   rounds=[];
   for(let rep=0;rep<repeats;rep++) for(let i=0;i<players.length;i++) for(let j=i+1;j<players.length;j++) rounds.push({i,j,done:false,scoreI:null,scoreJ:null});
   standings=players.map((p,idx)=>({idx,name:p.name,elo:p.elo,icon:p.icon,kind:p.kind,pts:0,wins:0,losses:0,draws:0,games:0}));
@@ -243,7 +244,7 @@ function startTournament() {
   if(rounds.length>1) simInterval=setInterval(runNext,+document.getElementById('cfg-speed').value);
 }
 function renderTournamentUI(){
- document.getElementById('tournament-area').innerHTML=`<p id="tournament-status" role="status">Tournoi en cours — graine ${document.getElementById('cfg-seed').value}</p><div class="players-grid" id="players-grid"></div><div class="rounds-wrap"><div class="section-title">📋 Résultats des parties</div><div id="rounds-list"></div></div><div class="section-title">📊 Tableau croisé</div><div class="crosstable-wrap"><table class="crosstable" id="crosstable"></table></div><div class="standings" id="standings-section"><div class="section-title">🏅 Classement</div><div id="standings-list"></div></div><div style="text-align:center"><button class="reset-btn" onclick="resetTournament()">↺ Réinitialiser</button></div>`;
+ document.getElementById('tournament-area').innerHTML=`<p id="tournament-status" role="status">${tournamentFormat} en cours — graine ${document.getElementById('cfg-seed').value}</p><div class="players-grid" id="players-grid"></div><div class="rounds-wrap"><div class="section-title">📋 Résultats des parties</div><div id="rounds-list"></div></div><div class="section-title">📊 Tableau croisé</div><div class="crosstable-wrap"><table class="crosstable" id="crosstable"></table></div><div class="standings" id="standings-section"><div class="section-title">🏅 Classement</div><div id="standings-list"></div></div><div style="text-align:center"><button class="reset-btn" onclick="resetTournament()">↺ Réinitialiser</button></div>`;
  renderLive();
 }
 function renderLive(){
@@ -255,7 +256,7 @@ function renderLive(){
  document.getElementById('crosstable').innerHTML=html+'</tbody>';
  document.getElementById('standings-list').innerHTML=sorted.map((s,i)=>`<div class="stand-row"><span class="rank">${i+1}.</span><span class="player-name">${s.icon} ${s.name}</span><span class="wb">${s.wins}V ${s.draws}N ${s.losses}D</span><span class="pts">${s.pts}</span></div>`).join('');
 }
-function finishTournament(){document.getElementById('tournament-status').textContent='Tournoi terminé — résultats simulés et reproductibles';}
+function finishTournament(){document.getElementById('tournament-status').textContent=`${tournamentFormat} terminé — résultats simulés et reproductibles`;}
 function resetTournament(){if(simInterval){clearInterval(simInterval);simInterval=null;}rounds=[];players=[];standings=[];document.getElementById('tournament-area').innerHTML='';document.getElementById('start-btn').disabled=false;document.getElementById('start-btn').textContent='🏆 Lancer le Tournoi';}
 renderParticipants();
 </script>

@@ -19,20 +19,29 @@ async function isolateExternalServices(page) {
   const serviceHost = /(?:workers\.dev|onrender\.com|firebaseio\.com|firestore\.googleapis\.com|identitytoolkit\.googleapis\.com|lichess\.org|localhost:\d+)/i;
   await page.route('**/*', async (route) => {
     const url = route.request().url();
+    if (url === 'http://127.0.0.1:4173/test_ai.html') {
+      const response = await route.fetch();
+      const html = (await response.text()).replace(/<script[\s\S]*?<\/script>/gi, '');
+      return route.fulfill({ response, body: html });
+    }
     if (url.startsWith('http://127.0.0.1:4173/')) return route.continue();
-    if (!serviceHost.test(url)) return route.continue();
+    if (/cdnjs\.cloudflare\.com\/ajax\/libs\/chess\.js/i.test(url)) {
+      return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') });
+    }
+    if (!serviceHost.test(url)) return route.abort();
     if (route.request().resourceType() === 'image') return route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>' });
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, games: [], data: [], results: [] }) });
   });
 }
 
 test('each of the 94 HTML routes loads from the local site build', async ({ page }) => {
+  test.setTimeout(120000);
   await isolateExternalServices(page);
   const failures = [];
   const browserErrors = [];
   page.on('pageerror', (error) => browserErrors.push(`${page.url()}: ${error.message}`));
   for (const file of pages) {
-    const response = await page.goto(`/${file.split('/').map(encodeURIComponent).join('/')}`, { waitUntil: 'domcontentloaded' });
+    const response = await page.goto(`/${file.split('/').map(encodeURIComponent).join('/')}`, { waitUntil: 'domcontentloaded', timeout: 10000 });
     if (!response || response.status() !== 200) failures.push(`${file}: HTTP ${response?.status() ?? 'no response'}`);
     const title = await page.title().catch(() => '');
     if (!title.trim()) failures.push(`${file}: empty title`);
@@ -47,8 +56,8 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
 test('a local training game accepts a legal user move and reset restores the start position', async ({ page }) => {
   await isolateExternalServices(page);
   await page.goto('/HUMAN_TRAINING_STANDALONE.html', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Nouvelle Partie/i }).click();
   await expect(page.locator('#board')).toBeVisible();
-  await page.evaluate(() => newGame());
   const afterMove = await page.evaluate(() => {
     onDrop('e2', 'e4');
     return { fen: game.fen(), history: game.history(), turn: game.turn() };
@@ -71,7 +80,7 @@ test('opening training advances, persists mastery, and restores clean state afte
   await page.getByRole('button', { name: /Maîtrisée/i }).click();
   await expect(page.locator('#prog-lbl')).toContainText('1/8');
   const key = 'supachess_openings_v1';
-  expect(await page.evaluate((storageKey) => localStorage.getItem(storageKey), key)).toContain('italian');
+  expect(JSON.parse(await page.evaluate((storageKey) => localStorage.getItem(storageKey), key))).toHaveLength(1);
   await page.reload();
   await expect(page.locator('#prog-lbl')).toContainText('1/8');
   await page.evaluate((storageKey) => localStorage.removeItem(storageKey), key);

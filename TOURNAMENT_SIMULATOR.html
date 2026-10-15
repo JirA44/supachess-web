@@ -140,7 +140,7 @@
 
     <div class="header">
         <h1>🏆 Tournoi Simulé</h1>
-        <p style="opacity:0.8; margin-top:8px;">SupaEngine vs les meilleurs moteurs du monde — Round Robin</p>
+        <p style="opacity:0.8; margin-top:8px;">Joueurs historiques et profils de moteurs — tournoi fictif reproductible</p>
     </div>
 
     <div class="setup-card" id="setup-section">
@@ -154,12 +154,8 @@
                 </select>
             </div>
             <div class="setup-item">
-                <label>Participants</label>
-                <select id="cfg-players">
-                    <option value="6">6 joueurs</option>
-                    <option value="8" selected>8 joueurs</option>
-                    <option value="10">10 joueurs</option>
-                </select>
+                <label for="cfg-seed">Graine de simulation</label>
+                <input id="cfg-seed" type="number" value="20261015" min="0" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)">
             </div>
             <div class="setup-item">
                 <label>Niveau SupaEngine</label>
@@ -181,6 +177,9 @@
                 </select>
             </div>
         </div>
+        <p id="simulation-notice" role="note" style="margin:0 0 16px;line-height:1.5">Simulation fictive : Carlsen et Kasparov sont des profils historiques, Stockfish Lite est un profil simulé. Aucun moteur d’échecs ne calcule de coups; résultats déterministes selon la graine.</p>
+        <fieldset style="border:0;margin:0 0 20px"><legend style="margin-bottom:10px;font-weight:bold">Choisissez au moins deux participants</legend><div id="participant-list" class="players-grid"></div></fieldset>
+        <p id="selection-error" role="alert" hidden>Il faut sélectionner au moins deux participants.</p>
         <button class="start-btn" id="start-btn" onclick="startTournament()">
             🏆 Lancer le Tournoi
         </button>
@@ -191,206 +190,74 @@
 
 <script>
 const ALL_ENGINES = [
-    { name:'SupaEngine v1.2', elo:2000, icon:'🔮', isUs:true },
-    { name:'Stockfish 17',    elo:3570, icon:'🐟' },
-    { name:'Leela Chess Zero',elo:3550, icon:'🧠' },
-    { name:'Komodo 14',       elo:3470, icon:'🦎' },
-    { name:'Houdini 6',       elo:3410, icon:'🎩' },
-    { name:'Rybka 4',         elo:3280, icon:'🐠' },
-    { name:'Critter 1.6',     elo:3200, icon:'🦔' },
-    { name:'Crafty 25',       elo:2960, icon:'🔨' },
-    { name:'Fruit 2.1',       elo:2850, icon:'🍎' },
-    { name:'Joker 1.7',       elo:2700, icon:'🃏' },
+  { id:'supa', name:'SupaEngine v1.2', elo:2000, icon:'🔮', kind:'Profil SupaEngine' },
+  { id:'carlsen', name:'Magnus Carlsen', elo:2830, icon:'♟️', kind:'Profil historique' },
+  { id:'kasparov', name:'Garry Kasparov', elo:2850, icon:'♟️', kind:'Profil historique' },
+  { id:'sf16', name:'Stockfish 16 Lite', elo:2750, icon:'🐟', kind:'Profil moteur simulé' },
+  { id:'sf17', name:'Stockfish 17 Lite', elo:2780, icon:'🐟', kind:'Profil moteur simulé' },
+  { id:'sf18', name:'Stockfish 18 Lite', elo:2800, icon:'🐟', kind:'Profil moteur simulé' },
+  { id:'sf19', name:'Stockfish 19 Lite', elo:2820, icon:'🐟', kind:'Profil moteur simulé' },
+  { id:'lc0', name:'Leela Chess Zero', elo:2720, icon:'🧠', kind:'Profil moteur simulé' },
+  { id:'komodo', name:'Komodo 14', elo:2670, icon:'🦎', kind:'Profil moteur simulé' },
+  { id:'crafty', name:'Crafty 25', elo:2400, icon:'🔨', kind:'Profil moteur simulé' }
 ];
-
-function expectedScore(eloA, eloB) {
-    return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+function renderParticipants() {
+  document.getElementById('participant-list').innerHTML = ALL_ENGINES.map((p,i) => `<label class="player-card" style="display:block;cursor:pointer;text-align:left"><input type="checkbox" value="${p.id}" ${i<4?'checked':''} aria-label="${p.name}"> <b>${p.icon} ${p.name}</b><br><small>${p.kind} · ${p.elo} ELO fictif</small></label>`).join('');
 }
-
-function simulateGame(pA, pB) {
-    const exp = expectedScore(pA.elo, pB.elo);
-    const diff = Math.abs(pA.elo - pB.elo);
-    const drawProb = Math.max(0.12, 0.42 - diff * 0.0004);
-    const r = Math.random();
-    if (r < drawProb) return [0.5, 0.5];
-    if (r < drawProb + exp * (1 - drawProb)) return [1, 0];
-    return [0, 1];
+function expectedScore(eloA, eloB) { return 1 / (1 + Math.pow(10, (eloB - eloA) / 400)); }
+function makeRandom(seed) {
+  let state = (Number(seed) >>> 0) || 1;
+  return () => { state = (state + 0x6D2B79F5) | 0; let t = Math.imul(state ^ state >>> 15, 1 | state); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
-
-let players = [], results = [], standings = [], rounds = [], simInterval = null;
-
+function simulateGame(pA, pB, random) {
+  const exp = expectedScore(pA.elo, pB.elo);
+  const drawProb = Math.max(0.12, 0.42 - Math.abs(pA.elo-pB.elo)*0.0004);
+  const r=random();
+  if (r<drawProb) return [0.5,0.5];
+  return r<drawProb+exp*(1-drawProb)?[1,0]:[0,1];
+}
+let players=[], rounds=[], standings=[], simInterval=null;
 function startTournament() {
-    const n = +document.getElementById('cfg-players').value;
-    const lvl = +document.getElementById('cfg-level').value;
-    const speed = +document.getElementById('cfg-speed').value;
-    const format = document.getElementById('cfg-format').value;
-
-    const engineList = JSON.parse(JSON.stringify(ALL_ENGINES));
-    engineList[0].elo = lvl;
-    players = engineList.slice(0, n);
-    players.sort((a,b) => b.elo - a.elo);
-
-    const matchups = [];
-    const repeats = format === 'rr2' ? 2 : 1;
-    for (let rep=0; rep<repeats; rep++) {
-        for (let i=0; i<n; i++)
-            for (let j=i+1; j<n; j++)
-                matchups.push({ i, j });
-    }
-    rounds = matchups.map(m => ({ ...m, done:false, scoreI:null, scoreJ:null }));
-    standings = players.map((p,i) => ({
-        idx:i, name:p.name, elo:p.elo, icon:p.icon, isUs:!!p.isUs,
-        pts:0, wins:0, losses:0, draws:0, games:0
-    }));
-
-    document.getElementById('start-btn').disabled = true;
-    document.getElementById('start-btn').innerHTML = '<span class="spinner">⚙️</span> Simulation en cours...';
-    renderTournamentUI();
-
-    let roundIdx = 0;
-    simInterval = setInterval(() => {
-        if (roundIdx >= rounds.length) {
-            clearInterval(simInterval);
-            document.getElementById('start-btn').disabled = false;
-            document.getElementById('start-btn').textContent = '🔄 Rejouer';
-            finishTournament();
-            return;
-        }
-        const r = rounds[roundIdx];
-        const [si, sj] = simulateGame(players[r.i], players[r.j]);
-        r.done = true; r.scoreI = si; r.scoreJ = sj;
-        const si_ = standings.find(s=>s.idx===r.i);
-        const sj_ = standings.find(s=>s.idx===r.j);
-        si_.pts += si; si_.games++; sj_.pts += sj; sj_.games++;
-        if (si===1) { si_.wins++; sj_.losses++; }
-        else if (sj===1) { sj_.wins++; si_.losses++; }
-        else { si_.draws++; sj_.draws++; }
-        roundIdx++;
-        renderLive();
-    }, speed);
-}
-
-function renderTournamentUI() {
-    document.getElementById('tournament-area').innerHTML = `
-        <div class="players-grid" id="players-grid"></div>
-        <div class="rounds-wrap">
-            <div class="section-title">📋 Rondes en Direct</div>
-            <div id="rounds-list"></div>
-        </div>
-        <div class="section-title">📊 Tableau Croisé</div>
-        <div class="crosstable-wrap"><table class="crosstable" id="crosstable"></table></div>
-        <div class="standings" id="standings-section">
-            <div class="section-title">🏅 Classement Final</div>
-            <div id="standings-list"></div>
-        </div>
-        <div style="text-align:center">
-            <button class="reset-btn" onclick="resetTournament()">↺ Nouveau tournoi</button>
-        </div>
-    `;
+  const selected=[...document.querySelectorAll('#participant-list input:checked')].map(box=>ALL_ENGINES.find(p=>p.id===box.value));
+  if(selected.length<2){document.getElementById('selection-error').hidden=false;return;}
+  document.getElementById('selection-error').hidden=true;
+  players=selected;
+  const seed=document.getElementById('cfg-seed').value;
+  const random=makeRandom(seed);
+  const repeats=document.getElementById('cfg-format').value==='rr2'?2:1;
+  rounds=[];
+  for(let rep=0;rep<repeats;rep++) for(let i=0;i<players.length;i++) for(let j=i+1;j<players.length;j++) rounds.push({i,j,done:false,scoreI:null,scoreJ:null});
+  standings=players.map((p,idx)=>({idx,name:p.name,elo:p.elo,icon:p.icon,kind:p.kind,pts:0,wins:0,losses:0,draws:0,games:0}));
+  document.getElementById('start-btn').disabled=true;
+  renderTournamentUI();
+  let roundIdx=0;
+  const runNext=()=>{
+    if(roundIdx>=rounds.length){clearInterval(simInterval);simInterval=null;document.getElementById('start-btn').disabled=false;document.getElementById('start-btn').textContent='🔄 Rejouer';finishTournament();return;}
+    const r=rounds[roundIdx++], [si,sj]=simulateGame(players[r.i],players[r.j],random);
+    r.done=true;r.scoreI=si;r.scoreJ=sj;
+    const a=standings[r.i],b=standings[r.j];a.pts+=si;b.pts+=sj;a.games++;b.games++;
+    if(si===1){a.wins++;b.losses++;}else if(sj===1){b.wins++;a.losses++;}else{a.draws++;b.draws++;}
     renderLive();
+  };
+  runNext();
+  if(rounds.length>1) simInterval=setInterval(runNext,+document.getElementById('cfg-speed').value);
 }
-
-function renderLive() {
-    // Players scores
-    const sorted = [...standings].sort((a,b)=>b.pts-a.pts);
-    document.getElementById('players-grid').innerHTML = sorted.map(s=>`
-        <div class="player-card ${s.isUs?'supa':''}">
-            <div style="font-size:1.4rem">${players[s.idx].icon}</div>
-            <div style="font-weight:bold;font-size:0.88rem;margin-top:4px">${s.name}</div>
-            <span class="elo-tag">${s.elo} ELO</span>
-            <div class="score-big">${s.pts%1===0?s.pts:s.pts.toFixed(1)}</div>
-            <div style="font-size:0.72rem;opacity:0.6;margin-top:4px">${s.wins}V ${s.draws}N ${s.losses}D</div>
-        </div>`).join('');
-
-    // Rounds
-    const done = rounds.filter(r=>r.done);
-    const list = document.getElementById('rounds-list');
-    if (!done.length) { list.innerHTML = '<div style="opacity:0.5;padding:10px">En attente...</div>'; }
-    else {
-        list.innerHTML = done.slice(-12).reverse().map(r=>{
-            const pA=players[r.i], pB=players[r.j];
-            const rel = pA.isUs ? r.scoreI : pB.isUs ? r.scoreJ : null;
-            let cls='', lbl='';
-            if (rel===1){cls='win';lbl='Victoire';}
-            else if(rel===0){cls='loss';lbl='Défaite';}
-            else if(rel===0.5){cls='draw';lbl='Nulle';}
-            const score = r.scoreI===1?'1-0':r.scoreI===0.5?'½-½':'0-1';
-            return `<div class="round-item fade-in">
-                <span class="match">${pA.icon} <b>${pA.name}</b> vs ${pB.icon} <b>${pB.name}</b></span>
-                <span class="result ${cls}">${cls?lbl+' — ':''} ${score}</span>
-            </div>`;
-        }).join('');
-    }
-
-    // Crosstable
-    const n = players.length;
-    const sortedIdx = [...Array(n).keys()].sort((a,b)=>{
-        const sa=standings.find(s=>s.idx===a), sb=standings.find(s=>s.idx===b);
-        return sb.pts-sa.pts;
-    });
-    let ht = '<thead><tr><th>#</th><th style="text-align:left">Joueur</th>';
-    for (let i=0;i<n;i++) ht += `<th>${i+1}</th>`;
-    ht += '<th>Pts</th></tr></thead><tbody>';
-    sortedIdx.forEach((pi,rank)=>{
-        const p=players[pi], st=standings.find(s=>s.idx===pi);
-        ht += `<tr>`;
-        ht += `<td>${rank+1}</td>`;
-        ht += `<td style="text-align:left;white-space:nowrap">${p.icon} <b>${p.name}</b></td>`;
-        for (let j=0;j<n;j++){
-            const pj=sortedIdx[j];
-            if (pi===pj){ht+='<td class="self">★</td>';continue;}
-            const r=rounds.find(r=>(r.i===pi&&r.j===pj)||(r.i===pj&&r.j===pi));
-            if (!r||!r.done){ht+='<td>-</td>';continue;}
-            const sc=r.i===pi?r.scoreI:r.scoreJ;
-            const cl=sc===1?'win':sc===0?'loss':'draw';
-            ht+=`<td class="${cl}">${sc===1?'1':sc===0?'0':'½'}</td>`;
-        }
-        ht+=`<td><b>${st.pts%1===0?st.pts:st.pts.toFixed(1)}</b></td></tr>`;
-    });
-    document.getElementById('crosstable').innerHTML = ht+'</tbody>';
-
-    // Standings
-    const supaS=standings.find(s=>s.isUs);
-    document.getElementById('standings-list').innerHTML = sorted.map((s,i)=>{
-        const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-        const med=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-        const perf=s.games>0?Math.round(s.elo+400*(s.pts/s.games-0.5)):s.elo;
-        return `<div class="stand-row fade-in">
-            <span class="rank ${rc}">${med||'#'+(i+1)}</span>
-            <span class="player-name ${s.isUs?'supa-name':''}">${players[s.idx].icon} ${s.name}</span>
-            <span class="perf">Perf: ${perf}</span>
-            <span class="wb">${s.wins}V ${s.draws}N ${s.losses}D</span>
-            <span class="pts">${s.pts%1===0?s.pts:s.pts.toFixed(1)}</span>
-        </div>`;
-    }).join('');
+function renderTournamentUI(){
+ document.getElementById('tournament-area').innerHTML=`<p id="tournament-status" role="status">Tournoi en cours — graine ${document.getElementById('cfg-seed').value}</p><div class="players-grid" id="players-grid"></div><div class="rounds-wrap"><div class="section-title">📋 Résultats des parties</div><div id="rounds-list"></div></div><div class="section-title">📊 Tableau croisé</div><div class="crosstable-wrap"><table class="crosstable" id="crosstable"></table></div><div class="standings" id="standings-section"><div class="section-title">🏅 Classement</div><div id="standings-list"></div></div><div style="text-align:center"><button class="reset-btn" onclick="resetTournament()">↺ Réinitialiser</button></div>`;
+ renderLive();
 }
-
-function finishTournament() {
-    const sorted = [...standings].sort((a,b)=>b.pts-a.pts);
-    const winner = sorted[0];
-    const supaRank = sorted.findIndex(s=>s.isUs)+1;
-    const supaS = standings.find(s=>s.isUs);
-    const banner = document.createElement('div');
-    banner.className = 'winner-banner fade-in';
-    banner.innerHTML = `
-        <div class="trophy">${winner.isUs?'🏆':players[sorted[0].idx].icon}</div>
-        <h2>${winner.isUs?'🎉 SupaEngine remporte le tournoi!':players[sorted[0].idx].icon+' '+winner.name+' remporte le tournoi!'}</h2>
-        <p style="margin-top:8px;opacity:0.8">
-            SupaEngine — <b>${supaRank}e place</b> | ${supaS.pts} pts | ${supaS.wins}V ${supaS.draws}N ${supaS.losses}D
-        </p>
-        ${supaRank<=3?'<p style="color:#ffd700;margin-top:8px;font-weight:bold">🌟 Podium atteint!</p>':''}
-    `;
-    const area = document.getElementById('tournament-area');
-    area.insertBefore(banner, area.firstChild);
+function renderLive(){
+ const sorted=[...standings].sort((a,b)=>b.pts-a.pts||b.elo-a.elo||a.name.localeCompare(b.name));
+ document.getElementById('players-grid').innerHTML=sorted.map(s=>`<div class="player-card"><div>${s.icon}</div><b>${s.name}</b><div><small>${s.kind}</small></div><span class="elo-tag">${s.elo} ELO fictif</span><div class="score-big">${s.pts}</div><small>${s.wins}V ${s.draws}N ${s.losses}D</small></div>`).join('');
+ document.getElementById('rounds-list').innerHTML=rounds.filter(r=>r.done).map(r=>`<div class="round-item"><span class="match"><b>${players[r.i].name}</b> vs <b>${players[r.j].name}</b></span><span class="result">${r.scoreI===1?'1-0':r.scoreI===.5?'½-½':'0-1'}</span></div>`).join('');
+ let html='<thead><tr><th>Joueur</th><th>Pts</th><th>Parties</th></tr></thead><tbody>';
+ sorted.forEach(s=>html+=`<tr><td style="text-align:left">${s.icon} ${s.name}</td><td>${s.pts}</td><td>${s.games}</td></tr>`);
+ document.getElementById('crosstable').innerHTML=html+'</tbody>';
+ document.getElementById('standings-list').innerHTML=sorted.map((s,i)=>`<div class="stand-row"><span class="rank">${i+1}.</span><span class="player-name">${s.icon} ${s.name}</span><span class="wb">${s.wins}V ${s.draws}N ${s.losses}D</span><span class="pts">${s.pts}</span></div>`).join('');
 }
-
-function resetTournament() {
-    if (simInterval) clearInterval(simInterval);
-    document.getElementById('tournament-area').innerHTML='';
-    document.getElementById('start-btn').disabled=false;
-    document.getElementById('start-btn').textContent='🏆 Lancer le Tournoi';
-    document.getElementById('setup-section').scrollIntoView({behavior:'smooth'});
-}
+function finishTournament(){document.getElementById('tournament-status').textContent='Tournoi terminé — résultats simulés et reproductibles';}
+function resetTournament(){if(simInterval){clearInterval(simInterval);simInterval=null;}rounds=[];players=[];standings=[];document.getElementById('tournament-area').innerHTML='';document.getElementById('start-btn').disabled=false;document.getElementById('start-btn').textContent='🏆 Lancer le Tournoi';}
+renderParticipants();
 </script>
 </body>
 </html>

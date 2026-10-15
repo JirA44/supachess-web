@@ -107,9 +107,9 @@ test('every configured chess piece is loaded from a local SVG asset', () => {
       assert.match(theme, /\{piece\}\.svg$/);
       assert.doesNotMatch(theme, /^https?:\/\//i);
       const asset = path.resolve(path.dirname(file), theme.replace('{piece}', 'wK'));
-      assert.ok(asset.startsWith(ROOT + path.sep), \`piece path escaped repository: \${path.relative(ROOT,file)} -> \${theme}\`);
-      assert.ok(fs.existsSync(asset), \`missing local piece for \${path.relative(ROOT,file)} -> \${theme}\`);
+      assert.ok(asset.startsWith(ROOT + path.sep), 'piece path escaped repository: ' + path.relative(ROOT,file) + ' -> ' + theme);
+      assert.ok(fs.existsSync(asset), 'missing local piece for ' + path.relative(ROOT,file) + ' -> ' + theme);
     }
   }
-  assert.ok(boardCount >= 30, \`expected to verify all board themes, found \${boardCount}\`);
+  assert.ok(boardCount >= 30, 'expected to verify all board themes, found ' + boardCount);
 });

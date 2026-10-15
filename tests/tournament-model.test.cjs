@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const html = fs.readFileSync('TOURNAMENT_SIMULATOR.html', 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1].replace('renderParticipants();', '') + '\nglobalThis.model = { ALL_ENGINES, makeRandom, simulateGame };';
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1].replace('renderParticipants();', '') + '\nglobalThis.model = { ALL_ENGINES, makeRandom, simulateGame, getConfiguredElo };';
 const context = {}; vm.runInNewContext(script, context);
 
 test('historic and lite profiles are selectable and clearly marked as simulated', () => {
@@ -17,4 +17,10 @@ test('same seed reproduces the same simulated match results', () => {
   const a=context.model.ALL_ENGINES[1], b=context.model.ALL_ENGINES[3];
   const run=()=>{const random=context.model.makeRandom(120);return Array.from({length:20},()=>context.model.simulateGame(a,b,random));};
   assert.deepEqual(run(),run());
+});
+
+test('configured SupaEngine level is used while other profile ratings stay fixed', () => {
+  context.document = { getElementById: id => ({ value: id === 'cfg-level' ? '3150' : '' }) };
+  assert.equal(context.model.getConfiguredElo(context.model.ALL_ENGINES.find(p => p.id === 'supa')), 3150);
+  assert.equal(context.model.getConfiguredElo(context.model.ALL_ENGINES.find(p => p.id === 'carlsen')), 2830);
 });

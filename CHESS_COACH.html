@@ -846,14 +846,14 @@ Exemple:
             // Initialize main board
             board = Chessboard('board', {
                 position: 'start',
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+                pieceTheme: 'assets/chess-pieces/{piece}.svg'
             });
 
             // Initialize puzzle board
             puzzleBoard = Chessboard('puzzle-board', {
                 position: 'start',
                 draggable: true,
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                pieceTheme: 'assets/chess-pieces/{piece}.svg',
                 onDrop: onPuzzleDrop
             });
 

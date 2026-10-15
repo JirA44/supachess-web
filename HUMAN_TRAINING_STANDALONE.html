@@ -1049,17 +1049,15 @@
             html += '}';
             html += '<\/script>';
 
-            html += '
-<!-- ChessNova Community -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="shared/progress.js"></script>
-<link rel="stylesheet" href="shared/community.css">
-<script src="shared/i18n.js"></script>
-<script src="shared/community.js"></script>
-<!-- /ChessNova Community -->
-</body></html>';
+            html += '\n<!-- ChessNova Community -->\n' +
+                '<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></scr' + 'ipt>\n' +
+                '<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></scr' + 'ipt>\n' +
+                '<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></scr' + 'ipt>\n' +
+                '<script src="shared/progress.js"></scr' + 'ipt>\n' +
+                '<link rel="stylesheet" href="shared/community.css">\n' +
+                '<script src="shared/i18n.js"></scr' + 'ipt>\n' +
+                '<script src="shared/community.js"></scr' + 'ipt>\n' +
+                '<!-- /ChessNova Community -->\n</body></html>';
 
             reportWin.document.write(html);
             reportWin.document.close();

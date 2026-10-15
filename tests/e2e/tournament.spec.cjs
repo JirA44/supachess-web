@@ -49,3 +49,31 @@ test('double round robin plays both legs and labels the selected format', async 
   await expect(page.locator('#tournament-area')).toBeEmpty();
   expect(errors).toEqual([]);
 });
+
+test('applies selected SupaEngine level to player card and tournament result', async ({ page }) => {
+  const errors=[];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/TOURNAMENT_SIMULATOR.html');
+  await page.locator('#cfg-level').selectOption('3150');
+  await expect(page.locator('#participant-list label').filter({hasText:'SupaEngine v1.2'})).toContainText('3150 ELO fictif');
+  await page.locator('#cfg-speed').selectOption('30');
+  await page.locator('#start-btn').click();
+  await expect(page.locator('#players-grid .player-card').filter({hasText:'SupaEngine v1.2'})).toContainText('3150 ELO fictif');
+  expect(errors).toEqual([]);
+});
+
+test('two selected participants complete a single round-robin match', async ({ page }) => {
+  const errors=[];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/TOURNAMENT_SIMULATOR.html');
+  await page.locator('#participant-list input:checked').evaluateAll((boxes) => boxes.slice(2).forEach((box) => { box.checked = false; }));
+  await expect(page.locator('#participant-list input:checked')).toHaveCount(2);
+  await page.locator('#cfg-speed').selectOption('30');
+  await page.locator('#start-btn').click();
+  await expect(page.locator('#tournament-status')).toContainText('Round Robin terminé', { timeout: 15000 });
+  await expect(page.locator('#rounds-list .round-item')).toHaveCount(1);
+  await expect(page.locator('#standings-list .stand-row')).toHaveCount(2);
+  await page.getByRole('button',{name:/Réinitialiser/}).click();
+  await expect(page.locator('#tournament-area')).toBeEmpty();
+  expect(errors).toEqual([]);
+});

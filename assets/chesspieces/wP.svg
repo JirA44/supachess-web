@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="White pawn">
+<g fill="#F8FAFC" stroke="#222B3B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<circle cx="50" cy="28" r="12"/><path d="M40 43h20l5 23q3 7 12 12H23q9-5 12-12z"/><path d="M28 79h44v9H28z"/>
+</g>
+</svg>

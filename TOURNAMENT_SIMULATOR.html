@@ -279,5 +279,7 @@ function finishTournament(){document.getElementById('tournament-status').textCon
 function resetTournament(){if(simInterval){clearInterval(simInterval);simInterval=null;}rounds=[];players=[];standings=[];document.getElementById('tournament-area').innerHTML='';document.getElementById('start-btn').disabled=false;document.getElementById('start-btn').textContent='🏆 Lancer le Tournoi';}
 renderParticipants();
 </script>
+
+<script defer src="shared/site-global.js"></script>
 </body>
 </html>

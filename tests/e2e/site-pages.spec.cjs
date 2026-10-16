@@ -259,6 +259,54 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
 });
 
 
+test('every legendary card on the home page exposes a legal, copyable and downloadable PGN', async ({ page }) => {
+  test.setTimeout(120000);
+  await isolateExternalServices(page);
+  const files = [
+    'fischer_game_of_century_interactive_v2.html',
+    'kasparov_immortal_1999.html',
+    'tal_masterpiece_1958.html',
+    'karpov_positional_1978.html',
+    'carlsen_brilliancy_2013.html',
+    'alphazero_vs_stockfish.html',
+    'zup_victory_detailed.html',
+    'supaengine_vs_stockfish_report.html',
+    'leela_vs_stockfish_2019.html',
+    'deep_blue_kasparov_1997.html',
+    'alphazero_vs_stockfish_game2.html',
+    'stockfish_vs_komodo_2018.html',
+    'alphazero_sacrificial_masterpiece.html'
+  ];
+
+  for (const file of files) {
+    await page.goto('/' + file, { waitUntil: 'domcontentloaded' });
+    let pgn;
+    const panel = page.locator('.supachess-pgn-export');
+    if (await panel.count()) {
+      await expect(panel).toBeVisible();
+      pgn = await panel.locator('textarea').inputValue();
+      expect(pgn).toMatch(/^\[Event "/);
+      expect(await page.evaluate((value) => new Chess().load_pgn(value), pgn)).toBe(true);
+      await panel.getByRole('button', { name: 'Copier le PGN' }).click();
+      await expect(panel.locator('[role="status"]')).toContainText('PGN copié.');
+      const downloadPromise = page.waitForEvent('download');
+      await panel.getByRole('button', { name: 'Télécharger le fichier .pgn' }).click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toBe(file.replace(/\.html$/i, '') + '.pgn');
+      expect((await fs.promises.readFile(await download.path(), 'utf8')).trim()).toBe(pgn.trim());
+    } else {
+      const content = page.locator('#pgnContent');
+      pgn = await content.textContent();
+      expect(pgn).toMatch(/^\[Event "/);
+      expect(await page.evaluate((value) => new Chess().load_pgn(value), pgn)).toBe(true);
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByRole('button', { name: /Télécharger le PGN/ }).click();
+      const download = await downloadPromise;
+      expect((await fs.promises.readFile(await download.path(), 'utf8')).trim()).toContain('44. Qa7 1-0');
+    }
+  }
+});
+
 test('the Stockfish report renders complete chessboard diagrams', async ({ page }) => {
   await isolateExternalServices(page);
   await page.goto('/supaengine_vs_stockfish_report.html', { waitUntil: 'domcontentloaded' });

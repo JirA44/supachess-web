@@ -7,7 +7,20 @@
     'carlsen_modern.html': { white: 'Magnus Carlsen', black: 'Sergey Karjakin', date: '2016.??.??', event: 'World Championship Tiebreak, Game 1', result: '*' },
     'karpov_positional.html': { white: 'Anatoly Karpov', black: 'Viktor Korchnoi', date: '1978.10.17', event: 'World Championship Match, Game 32', result: '1-0' },
     'kasparov_immortal.html': { white: 'Garry Kasparov', black: 'Veselin Topalov', date: '1999.01.20', event: 'Hoogovens, Wijk aan Zee', result: '1-0' },
-    'tal_masterpiece.html': { white: 'Mikhail Tal', black: 'Vasily Smyslov', date: '1959.??.??' }
+    'tal_masterpiece.html': { white: 'Mikhail Tal', black: 'Vasily Smyslov', date: '1959.??.??' },
+    'fischer_game_of_century_interactive_v2.html': { white: 'Donald Byrne', black: 'Robert James Fischer', date: '1956.10.17', event: 'Third Rosenwald Trophy, Round 8', result: '0-1' },
+    'kasparov_immortal_1999.html': { white: 'Garry Kasparov', black: 'Veselin Topalov', date: '1999.01.20', event: 'Hoogovens, Wijk aan Zee, Round 4', result: '1-0' },
+    'tal_masterpiece_1958.html': { white: 'Mikhail Tal', black: 'Vasily Vasiukov', date: '1958.??.??', event: 'USSR Championship' },
+    'karpov_positional_1978.html': { white: 'Anatoly Karpov', black: 'Viktor Korchnoi', date: '1978.??.??', event: 'World Championship Match' },
+    'carlsen_brilliancy_2013.html': { white: 'Magnus Carlsen', black: 'Viswanathan Anand', date: '2013.??.??', event: 'World Chess Championship' },
+    'alphazero_vs_stockfish.html': { white: 'AlphaZero', black: 'Stockfish 8', date: '2017.??.??', event: 'AlphaZero vs Stockfish, Game 10' },
+    'zup_victory_detailed.html': { white: 'ZUP ULTIMATE', black: 'Stockfish MAX', date: '2025.??.??', event: 'SupaChess simulated match', result: '1-0' },
+    'supaengine_vs_stockfish_report.html': { white: 'SupaEngine v1.3', black: 'Stockfish 17 (Skill 20)', date: '2026.01.30', event: 'SupaEngine vs Stockfish Test', result: '1/2-1/2' },
+    'leela_vs_stockfish_2019.html': { white: 'Leela Chess Zero', black: 'Stockfish 11', date: '2019.??.??', event: 'TCEC Season 16' },
+    'deep_blue_kasparov_1997.html': { white: 'Deep Blue', black: 'Garry Kasparov', date: '1997.05.11', event: 'World Championship Match, Game 6', result: '1-0' },
+    'alphazero_vs_stockfish_game2.html': { white: 'AlphaZero', black: 'Stockfish 8', date: '2017.??.??', event: 'AlphaZero vs Stockfish, Game 2' },
+    'stockfish_vs_komodo_2018.html': { white: 'Stockfish 9', black: 'Komodo MCTS', date: '2018.??.??', event: 'TCEC Season 13 Final' },
+    'alphazero_sacrificial_masterpiece.html': { white: 'AlphaZero', black: 'Stockfish', date: '2017.??.??', event: 'AlphaZero sacrificial masterpiece' }
   };
 
   function cleanPgn(value) {
@@ -15,38 +28,76 @@
   }
 
   function pgnFromMoves(list, info) {
+    if (typeof Chess !== 'function') throw new Error('Le moteur chess.js est requis pour générer le PGN.');
+    const chess = new Chess();
+    for (let index = 0; index < list.length; index += 1) {
+      const entry = list[index];
+      const san = typeof entry === 'string' ? entry : entry && (entry.move || entry.san);
+      if (!san) continue;
+      if (!chess.move(san, { sloppy: true })) {
+        throw new Error(`Coup PGN illégal à la position ${index + 1}: ${san}`);
+      }
+    }
+
+    const moves = chess.history();
+    const result = info.result || (chess.game_over()
+      ? chess.in_checkmate() ? (chess.turn() === 'w' ? '0-1' : '1-0') : '1/2-1/2'
+      : '*');
     const headers = [
       ['Event', info.event || 'SupaChess - partie légendaire'],
-      ['White', info.white],
-      ['Black', info.black],
-      ['Date', info.date],
-      ['Result', info.result || '*']
+      ['Site', info.site || '?'],
+      ['Date', info.date || '????.??.??'],
+      ['Round', info.round || '?'],
+      ['White', info.white || '?'],
+      ['Black', info.black || '?'],
+      ['Result', result]
     ];
     const movetext = [];
-    list.forEach((entry, index) => {
-      const san = typeof entry === 'string' ? entry : entry && entry.move;
-      if (!san) return;
+    for (let index = 0; index < moves.length; index += 1) {
       if (index % 2 === 0) movetext.push(`${Math.floor(index / 2) + 1}.`);
-      movetext.push(san);
-    });
-    return headers.map(([key, value]) => `[${key} "${value}"]`).join('\n') + '\n\n' + movetext.join(' ') + ' ' + (info.result || '*');
+      movetext.push(moves[index]);
+    }
+    return headers.map(([key, value]) => `[${key} "${String(value).replace(/["\\\\]/g, '')}"]`).join('\n')
+      + '\n\n' + movetext.join(' ') + ' ' + result;
+  }
+
+  function normalizePgn(value, info) {
+    const clean = cleanPgn(value);
+    if (/^\[Event\s/m.test(clean)) return clean;
+    if (typeof Chess !== 'function') return '';
+    const parsed = new Chess();
+    if (!parsed.load_pgn(clean)) return '';
+    return pgnFromMoves(parsed.history(), info);
   }
 
   function currentPgn() {
-    if (typeof gamePGN !== 'undefined' && gamePGN) return cleanPgn(gamePGN);
+    const info = players[page] || {};
+    if (typeof gamePGN !== 'undefined' && gamePGN) return normalizePgn(gamePGN, info);
 
-    const visiblePgn = document.querySelector('.pgn-box');
-    if (visiblePgn && visiblePgn.textContent.trim()) return cleanPgn(visiblePgn.textContent);
+    const visiblePgn = document.querySelector('.pgn-box, .pgn-container');
+    if (visiblePgn && visiblePgn.textContent.trim()) return normalizePgn(visiblePgn.textContent, info);
+
+    if (typeof pgnMoves !== 'undefined' && pgnMoves) return normalizePgn(pgnMoves, info);
+
+    if (typeof gameMoves !== 'undefined' && Array.isArray(gameMoves)) {
+      return pgnFromMoves(gameMoves, info);
+    }
 
     if (typeof moves !== 'undefined' && Array.isArray(moves)) {
-      const info = players[page];
-      if (info) return pgnFromMoves(moves, info);
+      return pgnFromMoves(moves, info);
     }
     return '';
   }
 
   function addPanel() {
-    const pgn = currentPgn();
+    if (document.querySelector('.supachess-pgn-export')) return;
+    let pgn = '';
+    try {
+      pgn = currentPgn();
+    } catch (error) {
+      console.error('PGN indisponible pour cette partie:', error);
+      return;
+    }
     if (!pgn) return;
 
     const panel = document.createElement('section');

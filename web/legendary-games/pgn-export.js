@@ -4,9 +4,9 @@
 
   const page = location.pathname.split('/').pop();
   const players = {
-    'carlsen_modern.html': { white: 'Magnus Carlsen', black: 'Sergey Karjakin', date: '2016.??.??' },
-    'karpov_positional.html': { white: 'Anatoly Karpov', black: 'Viktor Korchnoi', date: '1978.10.17' },
-    'kasparov_immortal.html': { white: 'Garry Kasparov', black: 'Veselin Topalov', date: '1999.01.20' },
+    'carlsen_modern.html': { white: 'Magnus Carlsen', black: 'Sergey Karjakin', date: '2016.??.??', event: 'World Championship Tiebreak, Game 1', result: '*' },
+    'karpov_positional.html': { white: 'Anatoly Karpov', black: 'Viktor Korchnoi', date: '1978.10.17', event: 'World Championship Match, Game 32', result: '1-0' },
+    'kasparov_immortal.html': { white: 'Garry Kasparov', black: 'Veselin Topalov', date: '1999.01.20', event: 'Hoogovens, Wijk aan Zee', result: '1-0' },
     'tal_masterpiece.html': { white: 'Mikhail Tal', black: 'Vasily Smyslov', date: '1959.??.??' }
   };
 
@@ -16,11 +16,11 @@
 
   function pgnFromMoves(list, info) {
     const headers = [
-      ['Event', 'SupaChess - partie légendaire'],
+      ['Event', info.event || 'SupaChess - partie légendaire'],
       ['White', info.white],
       ['Black', info.black],
       ['Date', info.date],
-      ['Result', '*']
+      ['Result', info.result || '*']
     ];
     const movetext = [];
     list.forEach((entry, index) => {
@@ -29,7 +29,7 @@
       if (index % 2 === 0) movetext.push(`${Math.floor(index / 2) + 1}.`);
       movetext.push(san);
     });
-    return headers.map(([key, value]) => `[${key} "${value}"]`).join('\n') + '\n\n' + movetext.join(' ') + ' *';
+    return headers.map(([key, value]) => `[${key} "${value}"]`).join('\n') + '\n\n' + movetext.join(' ') + ' ' + (info.result || '*');
   }
 
   function currentPgn() {

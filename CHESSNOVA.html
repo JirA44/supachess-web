@@ -8262,7 +8262,7 @@
 
             // LEÇON HISTORIQUE CONTEXTUELLE (30% de chance)
             if (Math.random() < 0.3) {
-                const evalDiff = prevEval !== null ? (currentEval - prevEval) : 0;
+                const evalDiff = afterEval - beforeEval;
                 const historicLesson = getContextualHistoricLesson(phase, move, evalDiff);
                 if (historicLesson) {
                     teachings.push(historicLesson);
@@ -8275,7 +8275,7 @@
             }
 
             // LEÇON DE PARTIE CÉLÈBRE (15% de chance sur coups spéciaux)
-            const evalDiffForFamous = prevEval !== null ? (currentEval - prevEval) : 0;
+            const evalDiffForFamous = afterEval - beforeEval;
             const gameSituation = detectGameSituation(move, evalDiffForFamous, phase);
             if (gameSituation && Math.random() < 0.15) {
                 const famousLesson = getFamousGameLesson(gameSituation);

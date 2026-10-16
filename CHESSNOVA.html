@@ -7823,6 +7823,9 @@
             if (typeof evalDiff !== 'number' || isNaN(evalDiff)) evalDiff = 0;
             if (typeof afterEval !== 'number' || isNaN(afterEval)) afterEval = 0;
             if (typeof beforeEval !== 'number' || isNaN(beforeEval)) beforeEval = 0;
+// The historical-lesson code below compares the previous position.
+// analyzePlayerMove passes this value as beforeEval.
+            const prevEval = beforeEval;
 
             const positives = [];
             const negatives = [];

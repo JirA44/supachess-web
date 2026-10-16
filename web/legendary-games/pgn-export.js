@@ -24,7 +24,7 @@
   };
 
   function cleanPgn(value) {
-    return String(value || '').replace(/\uFEFF/g, '').replace(/\r/g, '').replace(/\s+$/, '').replace(/\b([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?)(?:!|\?)+/g, '$1');
+    return String(value || '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim().replace(/\b([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?)(?:!|\?)+/g, '$1');
   }
 
   function pgnFromMoves(list, info) {

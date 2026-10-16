@@ -278,9 +278,12 @@ test('every legendary card on the home page exposes a legal, copyable and downlo
     'alphazero_sacrificial_masterpiece.html'
   ];
 
+  const failures = [];
   for (const file of files) {
     const browserMessages = [];
-    page.on('console', message => { if (message.type() === 'error') browserMessages.push(message.text()); });
+    const onConsole = message => { if (message.type() === 'error') browserMessages.push(message.text()); };
+    page.on('console', onConsole);
+    try {
     await page.goto('/' + file, { waitUntil: 'domcontentloaded' });
     let pgn;
     const panel = page.locator('.supachess-pgn-export');
@@ -308,7 +311,13 @@ test('every legendary card on the home page exposes a legal, copyable and downlo
     } else {
       throw new Error(`${file}: PGN export panel missing. Browser errors: ${browserMessages.join(' | ') || 'none'}`);
     }
+    } catch (error) {
+      failures.push(`${file}: ${error.message}`);
+    } finally {
+      page.off('console', onConsole);
+    }
   }
+  expect(failures).toEqual([]);
 });
 
 test('the Stockfish report renders complete chessboard diagrams', async ({ page }) => {

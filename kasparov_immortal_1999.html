@@ -480,7 +480,7 @@
                 const moveNumber = Math.floor(i / 2) + 1;
                 numberedMoves.push(`${moveNumber}. ${sanMoves[i]}${sanMoves[i + 1] ? ` ${sanMoves[i + 1]}` : ''}`);
             }
-            return `${headers.join('\\n')}\\n\\n${numberedMoves.join(' ')} 1-0`;
+            return `${headers.join('\n')}\n\n${numberedMoves.join(' ')} 1-0`;
         }
 
         function initPgn() {

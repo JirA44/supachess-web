@@ -375,6 +375,13 @@
                 <h2>📋 Coups de la Partie</h2>
                 <div id="movesList"></div>
             </div>
+            <div class="moves-section" id="pgnSection">
+                <h2>PGN de la partie</h2>
+                <div class="controls">
+                    <button class="btn" type="button" onclick="downloadPgn()">⬇️ Télécharger le PGN</button>
+                </div>
+                <pre id="pgnContent" style="white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#111827;color:#f3f4f6;border-radius:8px;"></pre>
+            </div>
         </div>
     </div>
 
@@ -445,8 +452,99 @@
             { move: 'Qxd5', comment: 'Topalov prend la dame - dernier espoir de survie.' },
             { move: 'Ra7', comment: '⭐⭐⭐ MAT IMPARABLE!! La tour sur la 7ème rangée crée des menaces MORTELLES!! CHEF-D\'ŒUVRE!!' },
             { move: 'Bb7', comment: 'Tentative désespérée de bloquer - mais c\'est FINI!' },
-            { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov ABANDONNE face au mat imparable! Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
+            { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov poursuit la partie; la victoire ne sera obtenue qu’après 44.Qa7. Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
+            ,{ move: 'Qc4', comment: 'La dame noire se place en c4 et maintient la défense.' },
+            { move: 'Qxf6', comment: 'Kasparov prend le cavalier et continue l’attaque.' },
+            { move: 'Kxa3', comment: 'Le roi noir capture le pion a3.' },
+            { move: 'Qxa6+', comment: 'Échec : la dame blanche attire le roi vers b4.' },
+            { move: 'Kxb4', comment: 'Le roi noir prend le pion b4.' },
+            { move: 'c3+', comment: 'Le pion c donne échec et force le roi à capturer.' },
+            { move: 'Kxc3', comment: 'Le roi noir prend le pion c3.' },
+            { move: 'Qa1+', comment: 'Échec : la dame blanche chasse le roi.' },
+            { move: 'Kd2', comment: 'Le roi noir avance en d2.' },
+            { move: 'Qb2+', comment: 'Nouvel échec sur la deuxième rangée.' },
+            { move: 'Kd1', comment: 'Le roi noir se réfugie en d1.' },
+            { move: 'Bf1', comment: 'Le fou entre en jeu avec une menace décisive.' },
+            { move: 'Rd2', comment: 'La tour noire tente de bloquer.' },
+            { move: 'Rd7', comment: 'La tour blanche intervient sur la septième rangée.' },
+            { move: 'Rxd7', comment: 'Les Noirs échangent les tours.' },
+            { move: 'Bxc4', comment: 'Le fou blanc capture la dame noire.' },
+            { move: 'bxc4', comment: 'Le pion reprend le fou.' },
+            { move: 'Qxh8', comment: 'La dame blanche capture la tour h8.' },
+            { move: 'Rd3', comment: 'La tour noire cherche du contre-jeu.' },
+            { move: 'Qa8', comment: 'La dame blanche se place sur la diagonale.' },
+            { move: 'c3', comment: 'Le pion noir avance vers la promotion.' },
+            { move: 'Qa4+', comment: 'Échec : la dame force encore le déplacement du roi.' },
+            { move: 'Ke1', comment: 'Le roi noir se dirige vers e1.' },
+            { move: 'f4', comment: 'Kasparov avance son pion f.' },
+            { move: 'f5', comment: 'Les Noirs poussent le pion f.' },
+            { move: 'Kc1', comment: 'Le roi blanc vient soutenir l’attaque.' },
+            { move: 'Rd2', comment: 'La tour noire revient en d2.' },
+            { move: 'Qa7', comment: 'Le dernier coup scelle la victoire; Topalov abandonne.' }
         ];
+
+        function buildPgnText() {
+            const pgnGame = new Chess();
+            const sanMoves = [];
+            for (const [index, moveData] of gameMoves.entries()) {
+                const played = pgnGame.move(moveData.move, { sloppy: true });
+                if (!played) {
+                    throw new Error(`Coup PGN illégal à la position ${index + 1}: ${moveData.move}`);
+                }
+                sanMoves.push(played.san);
+            }
+
+            const headers = [
+                '[Event "Hoogovens Group A"]',
+                '[Site "Wijk aan Zee NED"]',
+                '[EventDate "1999.01.16"]',
+                '[Date "1999.01.20"]',
+                '[Round "4"]',
+                '[White "Garry Kasparov"]',
+                '[Black "Veselin Topalov"]',
+                '[Result "1-0"]',
+                '[ECO "B07"]',
+                '[WhiteElo "2812"]',
+                '[BlackElo "2700"]',
+                '[PlyCount "87"]'
+            ];
+            const numberedMoves = [];
+            for (let i = 0; i < sanMoves.length; i += 2) {
+                const moveNumber = Math.floor(i / 2) + 1;
+                numberedMoves.push(`${moveNumber}. ${sanMoves[i]}${sanMoves[i + 1] ? ` ${sanMoves[i + 1]}` : ''}`);
+            }
+            return `${headers.join('\n')}\n\n${numberedMoves.join(' ')} 1-0`;
+        }
+
+        function initPgn() {
+            const content = document.getElementById('pgnContent');
+            try {
+                content.textContent = buildPgnText();
+            } catch (error) {
+                content.textContent = 'Le PGN n’a pas pu être généré : ' + error.message;
+                console.error('Erreur de génération PGN:', error);
+            }
+        }
+
+        function downloadPgn() {
+            let pgn;
+            try {
+                pgn = buildPgnText();
+            } catch (error) {
+                console.error('Téléchargement PGN impossible:', error);
+                alert('Le PGN ne peut pas être téléchargé : ' + error.message);
+                return;
+            }
+            const blob = new Blob([pgn], { type: 'application/x-chess-pgn;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'kasparov-topalov-wijk-aan-zee-1999.pgn';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
 
         // Mapping des pièces chess.js vers Unicode (mêmes symboles outline pour les deux couleurs)
         // On utilise les symboles outline ♔♕♖♗♘♙ pour TOUS - différenciés par le CSS background
@@ -609,6 +707,7 @@
         // Initialisation
         initBoard();
         createMovesList();
+        initPgn();
         updateMoveInfo();
 
         // Navigation au clavier

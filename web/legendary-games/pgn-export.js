@@ -18,9 +18,9 @@
     'supaengine_vs_stockfish_report.html': { white: 'SupaEngine v1.3', black: 'Stockfish 17 (Skill 20)', date: '2026.01.30', event: 'SupaEngine vs Stockfish Test', result: '1/2-1/2' },
     'leela_vs_stockfish_2019.html': { white: 'Leela Chess Zero', black: 'Stockfish 11', date: '2019.??.??', event: 'TCEC Season 16' },
     'deep_blue_kasparov_1997.html': { white: 'Deep Blue', black: 'Garry Kasparov', date: '1997.05.11', event: 'World Championship Match, Game 6', result: '1-0' },
-    'alphazero_vs_stockfish_game2.html': { white: 'AlphaZero', black: 'Stockfish 8', date: '2017.??.??', event: 'AlphaZero vs Stockfish, Game 2' },
+    'alphazero_vs_stockfish_game2.html': { white: 'AlphaZero', black: 'Stockfish 8', date: '2017.??.??', event: 'AlphaZero vs Stockfish, Game 2', result: '1-0' },
     'stockfish_vs_komodo_2018.html': { white: 'Stockfish 9', black: 'Komodo MCTS', date: '2018.??.??', event: 'TCEC Season 13 Final' },
-    'alphazero_sacrificial_masterpiece.html': { white: 'AlphaZero', black: 'Stockfish', date: '2017.??.??', event: 'AlphaZero sacrificial masterpiece' }
+    'alphazero_sacrificial_masterpiece.html': { white: 'AlphaZero', black: 'Stockfish', date: '2017.??.??', event: 'AlphaZero sacrificial masterpiece', result: '1-0' }
   };
 
   function cleanPgn(value) {

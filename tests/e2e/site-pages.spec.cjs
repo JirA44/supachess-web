@@ -122,12 +122,16 @@ test('Kasparov–Topalov 1999 replay reaches move 44 and exposes the full PGN', 
   await expect(page.locator('#moveInfo')).toContainText('Coup 1');
   const moveNotations = page.locator('.move-notation');
   await expect(moveNotations).toHaveCount(87);
-  for (let index = 0; index < 87; index += 1) {
-    if (index > 0) await page.getByRole('button', { name: /Suivant/ }).click();
-    await expect.poll(() => page.locator('.move-notation.currently-played').evaluate((element) =>
-      Array.from(document.querySelectorAll('.move-notation')).indexOf(element)
-    )).toBe(index);
-  }
+  const highlightedIndices = await page.evaluate(() => {
+    const indices = [];
+    for (let index = 0; index < gameMoves.length; index += 1) {
+      goToMove(index);
+      indices.push(Array.from(document.querySelectorAll('.move-notation'))
+        .findIndex((element) => element.classList.contains('currently-played')));
+    }
+    return indices;
+  });
+  expect(highlightedIndices).toEqual(Array.from({ length: 87 }, (_, index) => index));
   await page.getByRole('button', { name: /Fin/ }).click();
   await expect(page.locator('#moveInfo')).toContainText('Coup 44');
   const final = await page.evaluate(() => ({

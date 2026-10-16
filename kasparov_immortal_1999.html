@@ -346,7 +346,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">⚡ Nombre de coups</div>
-                <div class="stat-value">44</div>
+                <div class="stat-value">30</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">🌟 Résultat</div>
@@ -456,6 +456,7 @@
         };
 
         let currentMoveIndex = -1;
+        let replayBlocked = false;
 
         function initBoard() {
             const board = document.getElementById('chessboard');
@@ -519,6 +520,7 @@
 
         function updateMoveInfo() {
             const info = document.getElementById('moveInfo');
+            if (replayBlocked) return; // keep the error message visible
             if (currentMoveIndex === -1) {
                 info.textContent = 'Position initiale';
             } else {
@@ -537,14 +539,36 @@
             });
         }
 
+        function notifyReplayError(index, notation, error) {
+            // A single illegal move means the data is wrong; the board must not
+            // silently desync. Freeze navigation and show the culprit.
+            replayBlocked = true;
+            const info = document.getElementById('moveInfo');
+            const ply = index + 1, moveNo = Math.floor(index / 2) + 1;
+            const side = index % 2 === 0 ? 'Blancs' : 'Noirs';
+            info.innerHTML = `<strong style="color:#f87171">Erreur de séquence</strong> — coup n°${ply} ` +
+                `(${moveNo}. ${side}) <code>${notation}</code> est illégal. ` +
+                `Le replay est arrêté pour ne pas désynchroniser l'échiquier.`;
+            console.error(`[replay] illegal move at index ${index} (${notation}):`, error);
+        }
+
+        function tryApplyMove(index) {
+            const move = gameMoves[index].move;
+            try {
+                const applied = chess.move(move, { sloppy: true });
+                if (!applied) throw new Error('chess.move returned no result');
+                return true;
+            } catch (e) {
+                notifyReplayError(index, move, e);
+                return false;
+            }
+        }
+
         function playOneMove() {
+            if (replayBlocked) return;
             if (currentMoveIndex < gameMoves.length - 1) {
-                currentMoveIndex++;
-                const move = gameMoves[currentMoveIndex].move;
-                try {
-                    chess.move(move, { sloppy: true });
-                } catch (e) {
-                    console.error('Erreur de coup:', move, e);
+                if (tryApplyMove(currentMoveIndex + 1)) {
+                    currentMoveIndex++;
                 }
             }
         }
@@ -573,7 +597,7 @@
         }
 
         function goToEnd() {
-            while (currentMoveIndex < gameMoves.length - 1) {
+            while (!replayBlocked && currentMoveIndex < gameMoves.length - 1) {
                 playOneMove();
             }
             initBoard();
@@ -586,7 +610,7 @@
                 rebuildGame();
                 updateMoveInfo();
             } else {
-                while (currentMoveIndex < index) {
+                while (!replayBlocked && currentMoveIndex < index) {
                     playOneMove();
                 }
                 initBoard();
@@ -596,11 +620,11 @@
 
         function rebuildGame() {
             chess.reset();
+            replayBlocked = false;
             for (let i = 0; i <= currentMoveIndex; i++) {
-                try {
-                    chess.move(gameMoves[i].move, { sloppy: true });
-                } catch (e) {
-                    console.error('Erreur de reconstruction:', gameMoves[i].move, e);
+                if (!tryApplyMove(i)) {
+                    currentMoveIndex = i - 1;
+                    break;
                 }
             }
             initBoard();

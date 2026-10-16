@@ -1746,7 +1746,10 @@
             game = new Chess();
 
             for (let i = 0; i <= index; i++) {
-                game.move(movesData[i].uci);
+                const uci = movesData[i].uci;
+                const move = { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+                if (uci.length > 4) move.promotion = uci[4];
+                game.move(move);
             }
 
             board.position(game.fen());

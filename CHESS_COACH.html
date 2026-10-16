@@ -2513,7 +2513,7 @@ Exemple:
                 <div style="width: 250px; height: 12px; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden;">
                     <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d9ff, #667eea); border-radius: 6px;"></div>
                 </div>
-                <div style="margin-top: 15px; font-size: 0.9em; color: #888;">Profondeur Stockfish: 18</div>
+                <div style="margin-top: 15px; font-size: 0.9em; color: #888;">Profondeur Stockfish : 12 avant / 10 après chaque coup</div>
             `;
 
             // Update game info
@@ -2541,14 +2541,14 @@ Exemple:
                 const fenBefore = analysisGame.fen();
 
                 // Get evaluation before the move (single analysis per move for speed)
-                const analysisBefore = await analyzePositionAsync(fenBefore, 15);
+                const analysisBefore = await analyzePositionAsync(fenBefore, 12);
 
                 // Make the move
                 analysisGame.move(move);
                 const fenAfter = analysisGame.fen();
 
                 // Get evaluation after - use quicker depth for second analysis
-                const analysisAfter = await analyzePositionAsync(fenAfter, 12);
+                const analysisAfter = await analyzePositionAsync(fenAfter, 10);
 
                 // Track time for this move
                 const moveTime = Date.now() - moveStartTime;

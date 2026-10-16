@@ -660,7 +660,7 @@
                 const black = gameMoves[i + 1]?.move || '';
                 moves.push(number + '. ' + white + (black ? ' ' + black : ''));
             }
-            return headers.join('\\n') + '\\n\\n' + moves.join(' ') + ' 1-0';
+            return headers.join('\n') + '\n\n' + moves.join(' ') + ' 1-0';
         }
 
         async function copyKasparovPgn() {

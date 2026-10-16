@@ -279,6 +279,8 @@ test('every legendary card on the home page exposes a legal, copyable and downlo
   ];
 
   for (const file of files) {
+    const browserMessages = [];
+    page.on('console', message => { if (message.type() === 'error') browserMessages.push(message.text()); });
     await page.goto('/' + file, { waitUntil: 'domcontentloaded' });
     let pgn;
     const panel = page.locator('.supachess-pgn-export');
@@ -294,15 +296,17 @@ test('every legendary card on the home page exposes a legal, copyable and downlo
       const download = await downloadPromise;
       expect(download.suggestedFilename()).toBe(file.replace(/\.html$/i, '') + '.pgn');
       expect((await fs.promises.readFile(await download.path(), 'utf8')).trim()).toBe(pgn.trim());
-    } else {
+    } else if (file === 'kasparov_immortal_1999.html') {
       const content = page.locator('#pgnContent');
-      pgn = await content.textContent();
+      pgn = await content.textContent({ timeout: 5000 });
       expect(pgn).toMatch(/^\[Event "/);
       expect(await page.evaluate((value) => new Chess().load_pgn(value), pgn)).toBe(true);
       const downloadPromise = page.waitForEvent('download');
       await page.getByRole('button', { name: /Télécharger le PGN/ }).click();
       const download = await downloadPromise;
       expect((await fs.promises.readFile(await download.path(), 'utf8')).trim()).toContain('44. Qa7 1-0');
+    } else {
+      throw new Error(`${file}: PGN export panel missing. Browser errors: ${browserMessages.join(' | ') || 'none'}`);
     }
   }
 });

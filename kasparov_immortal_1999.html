@@ -378,6 +378,16 @@
         </div>
     </div>
 
+    <section aria-labelledby="pgn-heading" style="max-width:1100px;margin:28px auto;padding:24px;background:#1e293b;border:1px solid #475569;border-radius:16px;">
+        <h2 id="pgn-heading">📄 PGN complet — Kasparov–Topalov, 1999</h2>
+        <p style="margin:8px 0 14px;color:#cbd5e1;">Partie complète, du premier coup jusqu’à l’abandon de Topalov.</p>
+        <textarea id="pgnText" aria-label="PGN complet" readonly rows="14" style="box-sizing:border-box;width:100%;padding:12px;background:#0f172a;color:#f8fafc;border:1px solid #64748b;border-radius:8px;font:14px/1.5 monospace;white-space:pre;overflow:auto;"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+            <button class="btn" type="button" onclick="copyKasparovPgn()">📋 Copier le PGN</button>
+            <button class="btn" type="button" onclick="downloadKasparovPgn()">⬇️ Télécharger le PGN</button>
+        </div>
+    </section>
+
     <!-- Bibliothèque chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
@@ -445,7 +455,35 @@
             { move: 'Qxd5', comment: 'Topalov prend la dame - dernier espoir de survie.' },
             { move: 'Ra7', comment: '⭐⭐⭐ MAT IMPARABLE!! La tour sur la 7ème rangée crée des menaces MORTELLES!! CHEF-D\'ŒUVRE!!' },
             { move: 'Bb7', comment: 'Tentative désespérée de bloquer - mais c\'est FINI!' },
-            { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov ABANDONNE face au mat imparable! Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
+            { move: 'Rxb7', comment: 'Kasparov prend la tour et la combinaison continue.' },
+            { move: 'Qc4', comment: 'Topalov cherche du contre-jeu avec sa dame.' },
+            { move: 'Qxf6', comment: 'La dame blanche élimine le cavalier et poursuit l’attaque.' },
+            { move: 'Kxa3', comment: 'Le roi noir capture le pion a3.' },
+            { move: 'Qxa6+', comment: 'Échec : la dame blanche force le roi à bouger.' },
+            { move: 'Kxb4', comment: 'Le roi noir capture le pion b4.' },
+            { move: 'c3+', comment: 'Le pion c donne échec et ouvre une nouvelle ligne.' },
+            { move: 'Kxc3', comment: 'Le roi prend le pion c3.' },
+            { move: 'Qa1+', comment: 'La dame donne échec depuis la première rangée.' },
+            { move: 'Kd2', comment: 'Le roi noir avance vers d2.' },
+            { move: 'Qb2+', comment: 'Nouvel échec : la dame pousse le roi vers le bord.' },
+            { move: 'Kd1', comment: 'Le roi noir se place en d1.' },
+            { move: 'Bf1', comment: 'Le fou rejoint la défense et prépare la suite.' },
+            { move: 'Rd2', comment: 'La tour noire tente de se défendre.' },
+            { move: 'Rd7+', comment: 'La tour blanche donne échec.' },
+            { move: 'Rxd7', comment: 'La tour noire capture la tour blanche.' },
+            { move: 'Bxc4', comment: 'Le fou blanc capture la dame noire.' },
+            { move: 'bxc4', comment: 'Le pion reprend le fou.' },
+            { move: 'Qxh8', comment: 'La dame blanche capture la tour h8.' },
+            { move: 'Rd3', comment: 'La tour noire contre-attaque.' },
+            { move: 'Qa8', comment: 'La dame blanche se place sur la huitième rangée.' },
+            { move: 'c3', comment: 'Le pion noir avance.' },
+            { move: 'Qa4+', comment: 'Échec : la dame blanche poursuit le roi.' },
+            { move: 'Ke1', comment: 'Le roi noir se réfugie en e1.' },
+            { move: 'f4', comment: 'Le pion blanc avance pour limiter les cases du roi.' },
+            { move: 'f5', comment: 'Topalov pousse son pion f.' },
+            { move: 'Kc1', comment: 'Le roi blanc rejoint la finale.' },
+            { move: 'Rd2', comment: 'La tour noire tente de créer du contre-jeu.' },
+            { move: 'Qa7', comment: 'Kasparov maintient la pression et Topalov abandonne.' }
         ];
 
         // Mapping des pièces chess.js vers Unicode (mêmes symboles outline pour les deux couleurs)
@@ -606,7 +644,49 @@
             initBoard();
         }
 
+        function buildKasparovPgn() {
+            const headers = [
+                '[Event "Hoogovens Wijk aan Zee"]',
+                '[Site "Wijk aan Zee, Netherlands"]',
+                '[Date "1999.??.??"]',
+                '[White "Garry Kasparov"]',
+                '[Black "Veselin Topalov"]',
+                '[Result "1-0"]'
+            ];
+            const moves = [];
+            for (let i = 0; i < gameMoves.length; i += 2) {
+                const number = Math.floor(i / 2) + 1;
+                const white = gameMoves[i]?.move || '';
+                const black = gameMoves[i + 1]?.move || '';
+                moves.push(number + '. ' + white + (black ? ' ' + black : ''));
+            }
+            return headers.join('\\n') + '\\n\\n' + moves.join(' ') + ' 1-0';
+        }
+
+        async function copyKasparovPgn() {
+            const text = document.getElementById('pgnText').value;
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (error) {
+                const field = document.getElementById('pgnText');
+                field.focus();
+                field.select();
+                document.execCommand('copy');
+            }
+        }
+
+        function downloadKasparovPgn() {
+            const blob = new Blob([document.getElementById('pgnText').value], { type: 'application/x-chess-pgn;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'kasparov-topalov-wijk-aan-zee-1999.pgn';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
         // Initialisation
+        document.getElementById('pgnText').value = buildKasparovPgn();
         initBoard();
         createMovesList();
         updateMoveInfo();

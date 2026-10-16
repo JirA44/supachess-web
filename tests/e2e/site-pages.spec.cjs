@@ -180,6 +180,8 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
     const pgn = await panel.locator('textarea').inputValue();
     expect(pgn).toMatch(/^\[Event "/);
     expect(pgn).toMatch(/\n\n1\./);
+    const legalPgn = await page.evaluate((value) => new Chess().load_pgn(value), pgn);
+    expect(legalPgn).toBe(true);
 
     await panel.getByRole('button', { name: 'Copier le PGN' }).click();
     await expect(panel.locator('[role="status"]')).toContainText('PGN copié.');

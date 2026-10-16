@@ -156,3 +156,37 @@ test('nested legacy pages load the shared progress tracker from its own director
   await expect.poll(() => page.evaluate(() => typeof window.ChessNovaProgress)).toBe('object');
   expect(missingProgressScripts).toEqual([]);
 });
+
+
+test('each legendary game exposes a copyable and downloadable PGN', async ({ page }) => {
+  test.setTimeout(60000);
+  await isolateExternalServices(page);
+  const files = [
+    'anand_vs_kasparov.html',
+    'carlsen_modern.html',
+    'carlsen_vs_kasparov.html',
+    'deep_blue_vs_kasparov.html',
+    'fischer_game_of_century.html',
+    'karpov_positional.html',
+    'kasparov_immortal.html',
+    'kasparov_vs_karpov.html',
+    'tal_masterpiece.html'
+  ];
+
+  for (const file of files) {
+    await page.goto(`/web/legendary-games/${file}`, { waitUntil: 'domcontentloaded' });
+    const panel = page.locator('.supachess-pgn-export');
+    await expect(panel).toBeVisible();
+    const pgn = await panel.locator('textarea').inputValue();
+    expect(pgn).toMatch(/^\\[Event "/);
+    expect(pgn).toMatch(/\\n\\n1\\./);
+
+    await panel.getByRole('button', { name: 'Copier le PGN' }).click();
+    await expect(panel.locator('[role="status"]')).toContainText('PGN copié.');
+
+    const downloadPromise = page.waitForEvent('download');
+    await panel.getByRole('button', { name: 'Télécharger le fichier .pgn' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(file.replace(/\\.html$/i, '.pgn'));
+  }
+});

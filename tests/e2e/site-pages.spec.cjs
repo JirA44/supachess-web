@@ -17,9 +17,8 @@ const pages = walk(ROOT).map((file) => path.relative(ROOT, file).split(path.sep)
 const BASE_URL = new URL(process.env.SUPACHESS_BASE_URL || 'http://127.0.0.1:4173/');
 if (!BASE_URL.pathname.endsWith('/')) BASE_URL.pathname += '/';
 function siteUrl(relativePath) {
-  return new URL(String(relativePath).replace(/^\\/+/, ''), BASE_URL).toString();
+  return new URL(String(relativePath).replace(/^\/+/, ''), BASE_URL).toString();
 }
-
 async function isolateExternalServices(page) {
   const chessRuntime = fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') + `
 window.Chess = Chess;

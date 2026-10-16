@@ -92,6 +92,56 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
   expect(browserErrors).toEqual([]);
 });
 
+test('ChessNova comment generation handles a legal move without undefined evaluation variables', async ({ page }) => {
+  await isolateExternalServices(page);
+  const browserErrors = [];
+  page.on('pageerror', error => browserErrors.push(error.message));
+  await page.goto('/CHESSNOVA.html', { waitUntil: 'domcontentloaded' });
+  const result = await page.evaluate(() => {
+    const played = game.move({ from: 'e2', to: 'e4' });
+    const originalRandom = Math.random;
+    Math.random = () => 0.2; // Exercise the historical-lesson branch deterministically.
+    try {
+      return { san: played.san, comment: generateMoveComment(played, 0, 0, 0, 5, []) };
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+  expect(result.san).toBe('e4');
+  expect(result.comment).toContain('move-comment');
+  expect(browserErrors).toEqual([]);
+});
+
+test('Kasparov–Topalov 1999 replay reaches move 44 and exposes the full PGN', async ({ page }) => {
+  await isolateExternalServices(page);
+  const browserErrors = [];
+  page.on('pageerror', error => browserErrors.push(error.message));
+  await page.goto('/kasparov_immortal_1999.html', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Suivant/ }).click();
+  await expect(page.locator('#moveInfo')).toContainText('Coup 1');
+  await page.getByRole('button', { name: /Fin/ }).click();
+  await expect(page.locator('#moveInfo')).toContainText('Coup 44');
+  const final = await page.evaluate(() => ({
+    moveCount: gameMoves.length,
+    currentMoveIndex,
+    lastMove: gameMoves.at(-1).move,
+    pgn: document.getElementById('pgnContent').textContent
+  }));
+  expect(final.moveCount).toBe(87);
+  expect(final.currentMoveIndex).toBe(86);
+  expect(final.lastMove).toBe('Qa7');
+  expect(final.pgn).toContain('44. Qa7 1-0');
+  await page.getByRole('button', { name: /Précédent/ }).click();
+  await page.getByRole('button', { name: /Suivant/ }).click();
+  await expect(page.locator('#moveInfo')).toContainText('Coup 44');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Télécharger le PGN/ }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('kasparov-topalov-wijk-aan-zee-1999.pgn');
+  expect(await fs.promises.readFile(await download.path(), 'utf8')).toContain('44. Qa7 1-0');
+  expect(browserErrors).toEqual([]);
+});
+
 test('a local training game accepts a legal user move and reset restores the start position', async ({ page }) => {
   await isolateExternalServices(page);
   const browserErrors=[]; page.on('pageerror', error => browserErrors.push(error.message));

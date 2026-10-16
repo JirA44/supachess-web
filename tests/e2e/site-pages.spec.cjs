@@ -174,12 +174,12 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
   ];
 
   for (const file of files) {
-    await page.goto(`/web/legendary-games/${file}`, { waitUntil: 'domcontentloaded' });
+    await page.goto('/web/legendary-games/' + file, { waitUntil: 'domcontentloaded' });
     const panel = page.locator('.supachess-pgn-export');
     await expect(panel).toBeVisible();
     const pgn = await panel.locator('textarea').inputValue();
-    expect(pgn).toMatch(/^\\[Event "/);
-    expect(pgn).toMatch(/\\n\\n1\\./);
+    expect(pgn).toMatch(/^\[Event "/);
+    expect(pgn).toMatch(/\n\n1\./);
 
     await panel.getByRole('button', { name: 'Copier le PGN' }).click();
     await expect(panel.locator('[role="status"]')).toContainText('PGN copié.');
@@ -187,6 +187,6 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
     const downloadPromise = page.waitForEvent('download');
     await panel.getByRole('button', { name: 'Télécharger le fichier .pgn' }).click();
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe(file.replace(/\\.html$/i, '.pgn'));
+    expect(download.suggestedFilename()).toBe(file.replace(/\.html$/i, '.pgn'));
   }
 });

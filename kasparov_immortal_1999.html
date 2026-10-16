@@ -375,6 +375,13 @@
                 <h2>📋 Coups de la Partie</h2>
                 <div id="movesList"></div>
             </div>
+            <div class="moves-section" id="pgnSection">
+                <h2>PGN de la partie</h2>
+                <div class="controls">
+                    <button class="btn" type="button" onclick="downloadPgn()">⬇️ Télécharger le PGN</button>
+                </div>
+                <pre id="pgnContent" style="white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#111827;color:#f3f4f6;border-radius:8px;"></pre>
+            </div>
         </div>
     </div>
 
@@ -447,6 +454,64 @@
             { move: 'Bb7', comment: 'Tentative désespérée de bloquer - mais c\'est FINI!' },
             { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov ABANDONNE face au mat imparable! Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
         ];
+
+        function buildPgnText() {
+            const pgnGame = new Chess();
+            const sanMoves = [];
+            for (const [index, moveData] of gameMoves.entries()) {
+                const played = pgnGame.move(moveData.move, { sloppy: true });
+                if (!played) {
+                    throw new Error(`Coup PGN illégal à la position ${index + 1}: ${moveData.move}`);
+                }
+                sanMoves.push(played.san);
+            }
+
+            const headers = [
+                '[Event "Hoogovens Wijk aan Zee"]',
+                '[Site "Wijk aan Zee NED"]',
+                '[Date "1999.01.20"]',
+                '[Round "4"]',
+                '[White "Garry Kasparov"]',
+                '[Black "Veselin Topalov"]',
+                '[Result "1-0"]'
+            ];
+            const numberedMoves = [];
+            for (let i = 0; i < sanMoves.length; i += 2) {
+                const moveNumber = Math.floor(i / 2) + 1;
+                numberedMoves.push(`${moveNumber}. ${sanMoves[i]}${sanMoves[i + 1] ? ` ${sanMoves[i + 1]}` : ''}`);
+            }
+            return `${headers.join('\\n')}\\n\\n${numberedMoves.join(' ')} 1-0`;
+        }
+
+        function initPgn() {
+            const content = document.getElementById('pgnContent');
+            try {
+                content.textContent = buildPgnText();
+            } catch (error) {
+                content.textContent = 'Le PGN n’a pas pu être généré : ' + error.message;
+                console.error('Erreur de génération PGN:', error);
+            }
+        }
+
+        function downloadPgn() {
+            let pgn;
+            try {
+                pgn = buildPgnText();
+            } catch (error) {
+                console.error('Téléchargement PGN impossible:', error);
+                alert('Le PGN ne peut pas être téléchargé : ' + error.message);
+                return;
+            }
+            const blob = new Blob([pgn], { type: 'application/x-chess-pgn;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'kasparov-topalov-wijk-aan-zee-1999.pgn';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
 
         // Mapping des pièces chess.js vers Unicode (mêmes symboles outline pour les deux couleurs)
         // On utilise les symboles outline ♔♕♖♗♘♙ pour TOUS - différenciés par le CSS background
@@ -609,6 +674,7 @@
         // Initialisation
         initBoard();
         createMovesList();
+        initPgn();
         updateMoveInfo();
 
         // Navigation au clavier

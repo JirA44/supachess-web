@@ -5,11 +5,11 @@ const test = require('node:test');
 const Chess = require('chess.js').Chess;
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'DAILY_CHALLENGE.html'), 'utf8');
-const data = html.match(/const PUZZLES = \[([\s\S]*?)\n\];/);
+const data = html.match(/const PUZZLES = \\[([\\s\\S]*?)\\n\\];/);
 assert.ok(data, 'daily puzzle database exists');
 
 function property(block, name) {
-  const match = block.match(new RegExp('\\b' + name + ':\\s*"([^"]*)"'));
+  const match = block.match(new RegExp('\\\\b' + name + ':\\\\s*"([^"]*)"'));
   assert.ok(match, 'missing ' + name + ' in puzzle: ' + block.slice(0, 80));
   return match[1];
 }
@@ -32,15 +32,17 @@ function boardToFen(encoded) {
   return ranks.join('/');
 }
 
-const puzzles = data[1].match(/\{[^{}]*\}/g) || [];
+const puzzles = data[1].match(/\\{[^{}]*\\}/g) || [];
 test('the daily rotation contains eight playable puzzles with legal solutions', () => {
   assert.equal(puzzles.length, 8);
   for (const [index, puzzle] of puzzles.entries()) {
     const turn = property(puzzle, 'turn');
     const board = property(puzzle, 'board');
-    const solution = property(puzzle, 'solutionUci').split(',');
-    const san = property(puzzle, 'solution').split('|')[0];
-    const uci = solution[0].replace(/["\s]/g, '');
+    const uciMatch = puzzle.match(/\\bsolutionUci:\\s*\\["([^"]+)"/);
+    const sanMatch = puzzle.match(/\\bsolution:\\s*\\["([^"]+)"/);
+    assert.ok(uciMatch && sanMatch, 'puzzle ' + index + ' includes its solution move and notation');
+    const uci = uciMatch[1];
+    const san = sanMatch[1];
     assert.match(uci, /^[a-h][1-8][a-h][1-8]$/, 'puzzle ' + index + ' has a UCI solution');
     const fen = boardToFen(board) + ' ' + (turn === 'white' ? 'w' : 'b') + ' - - 0 1';
     const game = new Chess(fen);

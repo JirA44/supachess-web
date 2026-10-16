@@ -14,6 +14,11 @@ function walk(dir) {
   return out;
 }
 const pages = walk(ROOT).map((file) => path.relative(ROOT, file).split(path.sep).join('/')).sort();
+const BASE_URL = new URL(process.env.SUPACHESS_BASE_URL || 'http://127.0.0.1:4173/');
+if (!BASE_URL.pathname.endsWith('/')) BASE_URL.pathname += '/';
+function siteUrl(relativePath) {
+  return new URL(String(relativePath).replace(/^\\/+/, ''), BASE_URL).toString();
+}
 
 async function isolateExternalServices(page) {
   const chessRuntime = fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') + `
@@ -32,7 +37,7 @@ window.$ = window.jQuery = window.$ || function(selector){
   const serviceHost = /(?:workers\.dev|onrender\.com|firebaseio\.com|firestore\.googleapis\.com|identitytoolkit\.googleapis\.com|lichess\.org|localhost:\d+)/i;
   await page.route('**/*', async (route) => {
     const url = route.request().url();
-    if (url === 'http://127.0.0.1:4173/test_ai.html') {
+    if (url === siteUrl('test_ai.html')) {
       const response = await route.fetch();
       const html = (await response.text()).replace(/<script[\s\S]*?<\/script>/gi, '');
       return route.fulfill({ response, body: html });
@@ -40,7 +45,7 @@ window.$ = window.jQuery = window.$ || function(selector){
     if (/\/data\/max_vs_max\/tournament_summary\.json(?:$|\?)/i.test(url)) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ total_games: 0, chessnova_wins: 0, stockfish_wins: 0, draws: 0, chessnova_win_rate: 0, draw_rate: 0 }) });
     }
-    if (url.startsWith('http://127.0.0.1:4173/')) return route.continue();
+    if (url.startsWith(BASE_URL.toString())) return route.continue();
     if (/chart(?:\.[^/?]+)*\.js/i.test(url)) {
       const chartFixture = 'window.Chart = function(){ this.destroy=function(){}; this.update=function(){}; }; window.Chart.defaults={}; window.Chart.getChart=function(){ return null; };';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chartFixture });
@@ -80,7 +85,7 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
   const browserErrors = [];
   page.on('pageerror', (error) => browserErrors.push(`${page.url()}: ${error.message}`));
   for (const file of pages) {
-    const response = await page.goto(`/${file.split('/').map(encodeURIComponent).join('/')}`, { waitUntil: 'domcontentloaded', timeout: 10000 });
+    const response = await page.goto(siteUrl(file.split('/').map(encodeURIComponent).join('/')), { waitUntil: 'domcontentloaded', timeout: 10000 });
     if (!response || response.status() !== 200) failures.push(`${file}: HTTP ${response?.status() ?? 'no response'}`);
     const title = await page.title().catch(() => '');
     if (!title.trim() && file !== 'deployed_enhanced.html') failures.push(`${file}: empty title`);
@@ -95,7 +100,7 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
 test('a local training game accepts a legal user move and reset restores the start position', async ({ page }) => {
   await isolateExternalServices(page);
   const browserErrors=[]; page.on('pageerror', error => browserErrors.push(error.message));
-  await page.goto('/HUMAN_TRAINING_STANDALONE.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(siteUrl('HUMAN_TRAINING_STANDALONE.html'), { waitUntil: 'domcontentloaded' });
   console.log('Training page startup:', await page.evaluate(() => ({ title: document.title, state: document.readyState, buttonCount: document.querySelectorAll('button').length, chess: typeof Chess, board: typeof Chessboard })));
   await page.locator('button[onclick="newGame()"]').click({ timeout: 10000 });
   await expect(page.locator('#board')).toBeVisible();
@@ -114,7 +119,7 @@ test('a local training game accepts a legal user move and reset restores the sta
 test('opening training advances, persists mastery, and restores clean state after reset', async ({ page }) => {
   await isolateExternalServices(page);
   const browserErrors=[]; page.on('pageerror', error => browserErrors.push(error.message));
-  await page.goto('/TRAINING_OPENINGS.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(siteUrl('TRAINING_OPENINGS.html'), { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator('#opening-grid .card').first().click();
@@ -135,7 +140,7 @@ test('opening training advances, persists mastery, and restores clean state afte
 test('the Fischer replay advances and returns to the initial position', async ({ page }) => {
   await isolateExternalServices(page);
   const browserErrors=[]; page.on('pageerror', error => browserErrors.push(error.message));
-  await page.goto('/web/legendary-games/fischer_game_of_century.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(siteUrl('web/legendary-games/fischer_game_of_century.html'), { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /Suivant/i }).click();
   await expect(page.locator('#moveInfo')).not.toContainText(/Position de départ/i);
   await page.getByRole('button', { name: /Début/i }).click();

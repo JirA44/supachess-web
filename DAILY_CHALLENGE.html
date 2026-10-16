@@ -70,12 +70,14 @@
         .cell {
             width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 2.2rem; cursor: default; user-select: none;
+            font-size: 2.2rem; cursor: pointer; user-select: none;
+            padding: 0; border: 0; color: inherit;
             transition: background 0.2s;
         }
         .cell.light { background: #f0d9b5; }
         .cell.dark  { background: #b58863; }
         .cell.highlight { background: rgba(249,115,22,0.6) !important; }
+        .cell:focus-visible { outline: 3px solid #f97316; outline-offset: -4px; z-index: 1; }
         .coord-row {
             display: flex; justify-content: center; gap: 0; margin-top: 5px;
         }
@@ -194,81 +196,15 @@
 <script>
 // ─── Puzzle database (30 puzzles cycling by day-of-month) ───────────────────
 const PUZZLES = [
-    // Each entry: { title, fen_desc, turn, desc, solution, difficulty, board, highlights }
-    // board = 64 chars: uppercase = white, lowercase = black, '.' = empty
-    // pieces: K Q R B N P / k q r b n p
-    {
-        title: "Mat en 1 — Fourchette de Cavalier",
-        turn: "white",
-        difficulty: "easy",
-        desc: "Les Blancs jouent et font mat en 1 coup. Le cavalier blanc est en mesure d'aller porter l'estocade fatale au roi noir.",
-        board: "....k..r/....pppp/......../.......N/......../......../PPPP.PPP/....K..R",
-        highlights: [39, 23],
-        solution: ["Nf7#", "Mat en 1 — Le cavalier en h5 saute en f7, faisant échec et mat au roi en e8. Le roi ne peut pas fuir car les pions f7/g7/h7 bloquent l'échappée."]
-    },
-    {
-        title: "Mat en 1 — Colonne ouverte",
-        turn: "white",
-        difficulty: "easy",
-        desc: "Tour blanche sur la colonne e, roi noir exposé. Mat en 1 coup.",
-        board: "....k.../....p.../......../.......P/......../......../PPPP.PPP/....R..K",
-        highlights: [4, 60],
-        solution: ["Re8#", "Mat en 1 — La tour blanche prend la colonne e et donne mat. Le roi en e8 ne peut aller nulle part."]
-    },
-    {
-        title: "Mat en 2 — Sacrifice de Dame",
-        turn: "white",
-        difficulty: "medium",
-        desc: "Position classique de mat en 2. Les Blancs sacrifient leur dame pour forcer un mat irrésistible.",
-        board: "r....rk./ppp..ppp/..np..n./....p.../..B.P..../...P..N./PPP..PPP/R..QR.K.",
-        highlights: [6, 14],
-        solution: ["Qxh7+!", "1.Qxh7+! Rxh7  2.Rg1# — Sacrifice de dame classique sur h7, suivi du mat de la tour en g1. Mat en 2 forcé!"]
-    },
-    {
-        title: "Fourchette de Pion",
-        turn: "white",
-        difficulty: "easy",
-        desc: "Un simple coup de pion attaque simultanément deux pièces noires importantes. Lequel?",
-        board: "r...k..r/ppp..ppp/..n..n../....p.../...pP..b/......../PPP..PPP/RNBQKBNR",
-        highlights: [36, 43],
-        solution: ["e5!", "1.e5 — Le pion en e4 avance en e5, attaquant simultanément le cavalier en f6 et le cavalier en c6. Fourchette gagnant du matériel!"]
-    },
-    {
-        title: "Clouage absolu",
-        turn: "black",
-        difficulty: "medium",
-        desc: "Les Noirs peuvent exploiter le clouage du cavalier blanc contre le roi. Trouvez le coup gagnant.",
-        board: "r....rk./ppp..ppp/..n..n../...Nb.../...pP..q/......../PPP..PPP/R.BQKB.R",
-        highlights: [27, 60],
-        solution: ["Bxd4!", "1...Bxd4! — Le fou noir capture le cavalier cloué en d4, car celui-ci ne peut pas se déplacer (clouage sur la dame blanche en d1). Gain d'une pièce!"]
-    },
-    {
-        title: "Enfilade de Tour",
-        turn: "white",
-        difficulty: "easy",
-        desc: "La tour blanche peut créer une enfilade dévastatrice. Roi noir, dame noire: dans quel ordre?",
-        board: "....k.../...q..../......../......../......../......../......../R...K...",
-        highlights: [60, 4],
-        solution: ["Ra8+!", "1.Ra8+! Kd7  2.Rd8+ Kxd8  3.Rxd8 — L'enfilade en a8 force le roi à bouger, exposant la dame noire en d4 qui sera capturée. Gain de la dame!"]
-    },
-    {
-        title: "Mat du Berger",
-        turn: "white",
-        difficulty: "easy",
-        desc: "Position du Mat du Berger (Scholar's Mate). Les Blancs ont f7 dans leur viseur. Trouvez le coup final.",
-        board: "r.bqkb.r/pppp.ppp/..n..n../....p.../..B.P..Q/......../PPPP.PPP/RNB.K.NR",
-        highlights: [54, 12],
-        solution: ["Qxf7#", "1.Qxf7# — Mat du Berger! La dame en h4 capture le pion en f7 clouée par le fou en c4. Le roi en e8 ne peut pas capturer (gardé par le fou) et ne peut fuir. MAT!"]
-    },
-    {
-        title: "Surcharge Défensive",
-        turn: "white",
-        difficulty: "hard",
-        desc: "La dame noire surcharge — elle défend à la fois c6 et g6. Comment exploiter cette surcharge?",
-        board: "r...k..r/pp...ppp/..n..npq/...p...b/...P...B/..N..N../PPP..PPP/R..Q.RK.",
-        highlights: [22, 30],
-        solution: ["Bxf6!", "1.Bxf6! Qxf6  2.Nxd5 — Le fou capture le cavalier en f6, forçant la dame à recapturer. Mais alors la dame quitte c6, permettant Nxd5 avec gain de pion et position dominante!"]
-    },
+    // Plateau encodé du rang 8 au rang 1; solutionUci contient le coup à trouver.
+    { title:"Mat en 1 — Roi en cage", turn:"white", difficulty:"easy", desc:"La dame blanche peut donner mat. Cliquez sur la dame, puis sur la case de destination.", board:".......k/8/.....KQ1/8/8/8/8/8", highlights:[21,13], solutionUci:["g6g7"], solution:["Qg7#","La dame arrive en g7 avec échec et mat. Le roi blanc en f6 protège la dame; g8 et h7 sont contrôlées."] },
+    { title:"Mat en 1 — Tour sur la huitième rangée", turn:"white", difficulty:"easy", desc:"La tour peut donner mat sur la huitième rangée. Trouvez la case d'arrivée.", board:"..k...../8/..K...../8/8/8/8/R7", highlights:[56,0], solutionUci:["a1a8"], solution:["Ra8#","La tour donne échec sur la huitième rangée. Le roi blanc contrôle les cases de fuite; la tour couvre la huitième rangée."] },
+    { title:"Mat en 1 — Dame protégée", turn:"white", difficulty:"medium", desc:"La dame blanche peut terminer la partie en un coup. À vous de trouver le mat.", board:"k7/8/1QK5/8/8/8/8/8", highlights:[17,9], solutionUci:["b6b7"], solution:["Qb7#","La dame donne échec et mat en b7. Le roi blanc en c6 protège la dame et couvre les cases de fuite."] },
+    { title:"Fourchette de Pion", turn:"white", difficulty:"easy", desc:"Avancez le pion : il attaquera simultanément les deux tours noires.", board:".......k/2r1r3/8/3P4/8/8/8/K7", highlights:[27,19], solutionUci:["d5d6"], solution:["d6!","Le pion avance en d6 et attaque les tours en c7 et e7. La fourchette gagne une tour."] },
+    { title:"Capture de la Dame", turn:"black", difficulty:"medium", desc:"Les Noirs jouent. Le fou peut capturer la dame blanche.", board:"4k3/8/8/4b3/3Q4/8/8/4K3", highlights:[28,35], solutionUci:["e5d4"], solution:["Bxd4!","Le fou noir de e5 capture la dame en d4."] },
+    { title:"Mat en 1 — Dame et roi", turn:"white", difficulty:"easy", desc:"Le roi noir est enfermé dans le coin. Trouvez le mat avec la dame.", board:"k7/8/1QK5/8/8/8/8/8", highlights:[17,9], solutionUci:["b6b7"], solution:["Qb7#","La dame donne échec et mat en b7, protégée par le roi blanc."] },
+    { title:"Mat du Berger", turn:"white", difficulty:"easy", desc:"La dame blanche capture le pion f7 et mate le roi noir.", board:"r.bqkb.r/pppp.ppp/..n..n../....p..Q/..B.P.../......../PPPP.PPP/RNB.K.NR", highlights:[31,13], solutionUci:["h5f7"], solution:["Qxf7#","La dame capture le pion f7 et donne mat. Le fou blanc en c4 protège la dame."] },
+    { title:"Surcharge Défensive", turn:"white", difficulty:"hard", desc:"Le fou blanc peut capturer le cavalier f6 et détourner la dame noire.", board:"r...k..r/pp...ppp/..n..npq/...p...b/...P...B/..N..N../PPP..PPP/R..Q.RK.", highlights:[31,21], solutionUci:["h4f6"], solution:["Bxf6!","Le fou h4 capture le cavalier f6. La suite est ...Qxf6 puis Nxd5, qui exploite la surcharge de la dame."] },
 ];
 
 // ─── State ──────────────────────────────────────────────────────────────────
@@ -316,34 +252,59 @@ const PIECES = {
 };
 const FILES = ['a','b','c','d','e','f','g','h'];
 
-function renderBoard(boardStr, highlights=[]) {
-    const rows = boardStr.split('/');
-    let cells = [];
-    for (const row of rows) {
-        for (const ch of row) {
-            if (ch >= '1' && ch <= '8') {
-                for (let i=0; i<parseInt(ch); i++) cells.push('.');
-            } else cells.push(ch);
-        }
+function expandBoard(boardStr) {
+    const cells=[];
+    for(const row of boardStr.split('/')) for(const ch of row) {
+        if(ch>='1'&&ch<='8') for(let i=0;i<Number(ch);i++) cells.push('.');
+        else cells.push(ch);
     }
-    let html = '<div class="board-wrap"><div class="board">';
-    for (let r=0; r<8; r++) {
-        for (let c=0; c<8; c++) {
-            const idx = r*8+c;
-            const isLight = (r+c)%2===0;
-            const isHl = highlights.includes(idx);
-            const piece = cells[idx] !== '.' ? (PIECES[cells[idx]] || '') : '';
-            const color = (cells[idx] === cells[idx]?.toUpperCase() && cells[idx] !== '.') ? 'style="color:#1a1a2e;text-shadow:0 1px 2px rgba(255,255,255,0.3)"' : 'style="color:#1a1a2e"';
-            html += `<div class="cell ${isLight?'light':'dark'}${isHl?' highlight':''}"><span ${color}>${piece}</span></div>`;
-        }
-    }
-    html += '</div></div>';
-    html += '<div class="coord-row">';
-    for (const f of FILES) html += `<div class="coord-lbl">${f}</div>`;
-    html += '</div>';
-    return html;
+    if(cells.length!==64) throw new Error('Le plateau du puzzle doit contenir 64 cases.');
+    return cells;
 }
-
+let activePuzzleIdx=null, liveBoard=[], selectedSquare=null, solvedThisPuzzle=false;
+function squareName(i){return FILES[i%8]+(8-Math.floor(i/8));}
+function renderBoard(boardState,highlights=[],selected=null){
+    const cells=Array.isArray(boardState)?boardState:expandBoard(boardState);
+    let html='<div class="board-wrap"><div class="board" role="group" aria-label="Échiquier interactif">';
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+        const i=r*8+c,s=cells[i],piece=s!=='.'?(PIECES[s]||''):'',white=s!=='.'&&s===s.toUpperCase();
+        const color=white?'style="color:#1a1a2e;text-shadow:0 1px 2px rgba(255,255,255,0.3)"':'style="color:#1a1a2e"';
+        const label=`${squareName(i)}${piece?`, ${white?'blanc':'noir'} ${piece}`: ', vide'}`;
+        html+=`<button type="button" class="cell ${(r+c)%2===0?'light':'dark'}${(highlights.includes(i)||selected===i)?' highlight':''}" aria-label="${label}" onclick="handleSquareClick(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleSquareClick(${i})}"><span ${color}>${piece}</span></button>`;
+    }
+    html+='</div></div><div class="coord-row">';
+    for(const f of FILES)html+=`<div class="coord-lbl">${f}</div>`;
+    return html+'</div>';
+}
+function refreshBoard(){
+    const el=document.getElementById('board-container');
+    if(el)el.innerHTML=renderBoard(liveBoard,todayPuzzles[currentIdx].highlights,selectedSquare);
+}
+function handleSquareClick(index){
+    const p=todayPuzzles[currentIdx];
+    if(solvedThisPuzzle||state.allDone)return;
+    const piece=liveBoard[index],belongs=piece!=='.'&&(p.turn==='white'?piece===piece.toUpperCase():piece===piece.toLowerCase());
+    if(selectedSquare===null){
+        if(!belongs){document.getElementById('move-feedback').textContent=p.turn==='white'?'Sélectionnez une pièce blanche.':'Sélectionnez une pièce noire.';return;}
+        selectedSquare=index;
+        document.getElementById('move-feedback').textContent=`Pièce en ${squareName(index)} sélectionnée. Choisissez la case d'arrivée.`;
+        refreshBoard();return;
+    }
+    if(index===selectedSquare){selectedSquare=null;refreshBoard();return;}
+    const move=squareName(selectedSquare)+squareName(index);
+    if(p.solutionUci&&p.solutionUci.includes(move)){
+        liveBoard[index]=liveBoard[selectedSquare];liveBoard[selectedSquare]='.';
+        selectedSquare=null;solvedThisPuzzle=true;
+        document.getElementById('move-feedback').textContent='✅ Bon coup ! Puzzle résolu.';
+        const sol=document.getElementById(`sol-${currentIdx}`);if(sol)sol.classList.add('visible');
+        const revealButton=document.querySelector('.btn-reveal');if(revealButton)revealButton.style.display='none';
+        const doneButton=document.getElementById(`btn-done-${currentIdx}`);if(doneButton)doneButton.style.display='inline-flex';
+    }else{
+        selectedSquare=null;
+        document.getElementById('move-feedback').textContent='Ce n’est pas le coup attendu. Réessayez.';
+    }
+    refreshBoard();
+}
 // ─── Render puzzle ───────────────────────────────────────────────────────────
 function renderPuzzle(idx) {
     if (state.allDone) {
@@ -353,6 +314,7 @@ function renderPuzzle(idx) {
         return;
     }
     const p = todayPuzzles[idx];
+    if(activePuzzleIdx!==idx){activePuzzleIdx=idx;liveBoard=expandBoard(p.board);selectedSquare=null;solvedThisPuzzle=false;}
     const revealed = !!state.revealedPuzzles[idx];
     const diffClass = p.difficulty === 'easy' ? 'diff-easy' : p.difficulty === 'medium' ? 'diff-med' : 'diff-hard';
     const diffLabel = p.difficulty === 'easy' ? '⭐ Facile' : p.difficulty === 'medium' ? '⭐⭐ Moyen' : '⭐⭐⭐ Difficile';
@@ -363,7 +325,8 @@ function renderPuzzle(idx) {
                 <h2>${p.title}</h2>
                 <span class="difficulty ${diffClass}">${diffLabel}</span>
             </div>
-            ${renderBoard(p.board, p.highlights)}
+            <div id="board-container">${renderBoard(liveBoard,p.highlights,selectedSquare)}</div>
+            <p id="move-feedback" role="status" aria-live="polite" style="min-height:1.5em;text-align:center;margin:8px 0;color:#fde68a;">Cliquez une pièce, puis sa case d’arrivée.</p>
             <div class="puzzle-desc">
                 <span class="turn-badge ${p.turn==='white'?'turn-white':'turn-black'}">
                     ${p.turn === 'white' ? '⬜ Blancs jouent' : '⬛ Noirs jouent'}
@@ -374,7 +337,7 @@ function renderPuzzle(idx) {
                 <button class="btn btn-reveal" onclick="reveal(${idx})" ${revealed?'style="display:none"':''}>
                     💡 Révéler la solution
                 </button>
-                <button class="btn btn-done" onclick="markDone(${idx})" ${revealed?'':'style="display:none"'} id="btn-done-${idx}">
+                <button class="btn btn-done" onclick="markDone(${idx})" ${(revealed||solvedThisPuzzle)?'':'style="display:none"'} id="btn-done-${idx}">
                     ✅ Compris! Suivant →
                 </button>
             </div>
@@ -405,6 +368,7 @@ function reveal(idx) {
 }
 
 function markDone(idx) {
+    if(!state.revealedPuzzles[idx]&&!solvedThisPuzzle)return;
     const wasComplete = state.allDone;
     state.done = idx + 1;
     if (state.done >= 3) {

@@ -6,6 +6,6 @@
   "scripts": {
     "test:links": "node --test tests/site-links.test.cjs",
     "test:e2e": "playwright test --config=playwright.config.cjs",
-    "test:unit": "node --test tests/tournament-model.test.cjs"
+    "test:unit": "node --test tests/tournament-model.test.cjs tests/daily-challenge.test.cjs"
   }
 }

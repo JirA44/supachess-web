@@ -188,5 +188,7 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
     await panel.getByRole('button', { name: 'Télécharger le fichier .pgn' }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(file.replace(/\.html$/i, '.pgn'));
+    const downloadedPgn = await fs.promises.readFile(await download.path(), 'utf8');
+    expect(downloadedPgn.trim()).toBe(pgn.trim());
   }
 });

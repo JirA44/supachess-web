@@ -1012,7 +1012,7 @@
                         <div class="stat-value" id="blunders">0</div>
                         <div class="stat-label">💥 Gaffes</div>
                     </div>
-                    <div class="stat-card" title="Parties complétées">
+                    <div class="stat-card" title="Parties commencées avec au moins un coup légal">
                         <div class="stat-value" id="games-played">0</div>
                         <div class="stat-label">Parties</div>
                     </div>
@@ -1393,6 +1393,7 @@
         // ========================================
         let board = null;
         let game = new Chess();
+        let gameCountedThisGame = false;
         let difficulty = 'beginner';
 
         // Exposer pour debug et tests
@@ -8656,6 +8657,14 @@
                     return 'snapback';
                 }
 
+                if (!gameCountedThisGame) {
+                    gameCountedThisGame = true;
+                    sessionStats.gamesPlayed++;
+                    document.getElementById('games-played').textContent = sessionStats.gamesPlayed;
+                    unlockAchievement('ach-first-game');
+                    saveToLocalStorage();
+                }
+
                 // Forcer la sync immédiate du board
                 if (board) board.position(game.fen(), false);
 
@@ -8772,10 +8781,7 @@
                 `;
             }
 
-            sessionStats.gamesPlayed++;
-            document.getElementById('games-played').textContent = sessionStats.gamesPlayed;
-            unlockAchievement('ach-first-game');
-            saveToLocalStorage();
+            gameCountedThisGame = false;
 
             // Afficher les suggestions de coups dès le départ
             updateSuggestedMoves();

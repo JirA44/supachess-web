@@ -194,3 +194,18 @@ test('each legendary game exposes a copyable and downloadable PGN', async ({ pag
     expect(downloadedPgn.trim()).toBe(pgn.trim());
   }
 });
+
+
+test('the Stockfish report renders complete chessboard diagrams', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.goto('/supaengine_vs_stockfish_report.html', { waitUntil: 'domcontentloaded' });
+  const boards = page.locator('svg.chess-board');
+  await expect(boards).toHaveCount(9);
+  for (const board of await boards.all()) {
+    await expect(board).toHaveAttribute('role', 'img');
+    await expect(board).toHaveAttribute('aria-label', /Position/);
+    await expect(board.locator('rect.board-square')).toHaveCount(64);
+    expect(await board.locator('text.piece').count()).toBeGreaterThan(0);
+    expect(await board.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(0);
+  }
+});

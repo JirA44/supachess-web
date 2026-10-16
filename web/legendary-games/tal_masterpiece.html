@@ -305,47 +305,29 @@
     <script>
         // Initialisation de Chess.js
         const game = new Chess();
+        const gamePGN = `[Event "Bled Candidates"]
+[Site "Bled"]
+[Date "1959.??.??"]
+[Round "?"]
+[White "Mikhail Tal"]
+[Black "Vasily Smyslov"]
+[Result "1-0"]
+[Source "ChessBox"]
+
+1. e4 c6 2. d3 d5 3. Nd2 e5 4. Ngf3 Nd7 5. d4 dxe4 6. Nxe4 exd4
+7. Qxd4 Ngf6 8. Bg5 Be7 9. O-O-O O-O 10. Nd6 Qa5 11. Bc4 b5
+12. Bd2 Qa6 13. Nf5 Bd8 14. Qh4 bxc4 15. Qg5 Nh5 16. Nh6+ Kh8
+17. Qxh5 Qxa2 18. Bc3 Nf6 19. Qxf7 Qa1+ 20. Kd2 Rxf7 21. Nxf7+ Kg8
+22. Rxa1 Kxf7 23. Ne5+ Ke6 24. Nxc6 Ne4+ 25. Ke3 Bb6+ 26. Bd4 1-0`;
         let board = null;
         let currentMove = 0;
 
-        // Partie complète avec commentaires en français
-        const moves = [
-            { move: 'e4', comment: "Tal ouvre e4!" },
-            { move: 'c6', comment: "Smyslov joue Caro-Kann." },
-            { move: 'Nf3', comment: "Nf3 développement." },
-            { move: 'd5', comment: "d5 contre!" },
-            { move: 'Nc3', comment: "Nc3 cavalier." },
-            { move: 'Bg4', comment: "Bg4 cloue!" },
-            { move: 'h3', comment: "h3 question au fou." },
-            { move: 'Bxf3', comment: "Bxf3 échange." },
-            { move: 'Qxf3', comment: "Qxf3 récupère." },
-            { move: 'e6', comment: "e6 solide." },
-            { move: 'd4', comment: "d4 centre." },
-            { move: 'Nf6', comment: "Nf6 développe." },
-            { move: 'Bd3', comment: "Bd3 diagonal." },
-            { move: 'dxe4', comment: "dxe4 capture!" },
-            { move: 'Nxe4', comment: "Nxe4 prend!" },
-            { move: 'Qxd4', comment: "Qxd4 dame active!" },
-            { move: 'c3', comment: "c3 attaque dame!" },
-            { move: 'Qd8', comment: "Qd8 recule." },
-            { move: 'Bc4', comment: "Bc4 fou actif." },
-            { move: 'Nbd7', comment: "Nbd7 développe." },
-            { move: 'Qg3', comment: "Qg3 attaque g7!" },
-            { move: 'Qc7', comment: "Qc7 défend." },
-            { move: 'Qxg7', comment: "Qxg7 PREND LE PION!" },
-            { move: 'Rg8', comment: "Rg8 attaque dame!" },
-            { move: 'Qh6', comment: "Qh6 dame active!" },
-            { move: 'O-O-O', comment: "O-O-O roque long!" },
-            { move: 'Ng5', comment: "Ng5 attaque e6!" },
-            { move: 'Rg6', comment: "Rg6 bloque!" },
-            { move: 'Qh4', comment: "Qh4 dame recule." },
-            { move: 'Be7', comment: "Be7 développe." },
-            { move: 'Nxe6', comment: "Nxe6 SACRIFICE!" },
-            { move: 'fxe6', comment: "fxe6 forcé!" },
-            { move: 'Bxe6', comment: "Bxe6 prend!" },
-            { move: 'Kb8', comment: "Kb8 roi fuit!" },
-            { move: 'Qh5', comment: "Qh5 menace tour!" }
-        ];
+        // Le replay provient du PGN exporté pour éviter deux séquences différentes.
+        const moves = (() => {
+            const replay = new Chess();
+            if (!replay.load_pgn(gamePGN)) throw new Error('PGN Tal-Smyslov invalide');
+            return replay.history().map(move => ({ move, comment: '' }));
+        })();
 
         // Configuration du plateau
         const config = {
@@ -454,5 +436,6 @@
 <script src="../../shared/i18n.js"></script>
 <script src="../../shared/community.js"></script>
 <!-- /ChessNova Community -->
+    <script src="pgn-export.js"></script>
 </body>
 </html>

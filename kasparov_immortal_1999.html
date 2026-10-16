@@ -258,6 +258,17 @@
             font-family: 'Courier New', monospace;
             font-size: 1.1em;
             font-weight: 600;
+            display: inline-block;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            padding: 2px 6px;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .move-notation.currently-played {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.18);
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.22);
         }
 
         .move-comment {
@@ -624,6 +635,11 @@
                 const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
                 info.innerHTML = `<strong>Coup ${moveNumber}</strong> - ${color}: ${gameMoves[currentMoveIndex].move}`;
             }
+
+            // Encadrer la notation exacte du demi-coup actuellement affiché.
+            document.querySelectorAll('.move-notation').forEach((notation, index) => {
+                notation.classList.toggle('currently-played', index === currentMoveIndex);
+            });
 
             // Highlight active move - each move has its own item now
             document.querySelectorAll('.move-item').forEach((item, index) => {

@@ -87,7 +87,7 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
     const bodyText = await page.locator('body').innerText().catch(() => '');
     if (!bodyText.trim()) failures.push(`${file}: empty body`);
   }
-  expect(pages.length).toBe(94);
+  expect(pages.length).toBe(95);
   expect(failures).toEqual([]);
   expect(browserErrors).toEqual([]);
 });

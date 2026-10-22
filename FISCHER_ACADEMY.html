@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Académie Fischer — SupaChess</title>
+<style>
+:root{color-scheme:dark;--bg:#101827;--panel:#19263a;--line:#31435d;--gold:#f4c95d;--ink:#eff4fb;--muted:#b4c0d0;--green:#78d6a1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#263b5e,var(--bg) 48%);color:var(--ink);font:16px/1.55 system-ui,Segoe UI,sans-serif}
+main{max-width:1050px;margin:auto;padding:24px}.top a{color:var(--gold)}header{padding:34px 0 20px}h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.1;margin:.5rem 0}h2{color:var(--gold);margin-top:0}p{color:var(--muted)}.tag{color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}.card{background:rgba(25,38,58,.94);border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+.steps{counter-reset:step}.step{border-left:3px solid var(--gold);padding:4px 0 4px 16px;margin:14px 0}.step b{color:#fff}
+label{display:block;font-weight:650;margin:12px 0 5px}textarea,input,select{width:100%;background:#0e1726;color:var(--ink);border:1px solid #52657e;border-radius:8px;padding:11px;font:inherit}textarea{min-height:76px;resize:vertical}button,.linkbtn{display:inline-block;background:var(--gold);color:#182235;border:0;border-radius:9px;padding:11px 16px;font-weight:750;cursor:pointer;text-decoration:none;margin:8px 8px 0 0}button.secondary{background:#324761;color:white}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #9acaff;outline-offset:2px}.notice{border-left:4px solid #6eb8ff;padding:12px 16px;background:#142238;color:var(--muted)}.status{color:var(--green);min-height:1.5em}.pill{display:inline-block;border:1px solid var(--line);border-radius:100px;padding:4px 10px;margin:3px;color:var(--muted)}footer{padding:25px 0;color:var(--muted)}@media(max-width:600px){main{padding:16px}.card{padding:17px}}
+</style>
+</head>
+<body>
+<main>
+<p class="top"><a href="index.html">← Retour au hub SupaChess</a></p>
+<header><div class="tag">SupaChess · entraînement décisionnel</div><h1>La méthode Fischer</h1><p>Une routine pour chercher, calculer la réponse adverse, vérifier et apprendre de ses erreurs.</p></header>
+<div class="notice"><strong>Information complète, avenir inconnu.</strong> Aux échecs, la position actuelle et les coups légaux sont visibles ; le prochain choix de l’adversaire ne l’est pas. Le joueur doit anticiper une meilleure réponse possible. En trading, l’état du marché est lui-même partiellement observé : ordres cachés, liquidité, acteurs, nouvelles et régime futur ajoutent de l’incertitude.</div>
+<section class="grid">
+<article class="card"><h2>La routine en 5 temps</h2><div class="steps">
+<div class="step"><b>Observer :</b> roi en danger, pièces attaquées, menaces et contraintes des deux camps.</div>
+<div class="step"><b>Proposer :</b> noter deux ou trois coups candidats avant d’en choisir un.</div>
+<div class="step"><b>Réfuter :</b> chercher la réponse adverse la plus forte, y compris échec, capture ou coup intermédiaire.</div>
+<div class="step"><b>Comparer :</b> calculer la suite forcée et évaluer la position obtenue pour les deux camps.</div>
+<div class="step"><b>Vérifier :</b> enregistrer son idée, jouer ou rejouer, puis consulter un entraîneur ou Stockfish.</div>
+</div></article>
+<article class="card"><h2>Parcours guidé</h2><p>Rejoue la partie Byrne–Fischer de 1956. Arrête-toi avant les moments critiques, écris tes candidats et imagine la meilleure défense avant de continuer.</p><a class="linkbtn" href="fischer_game_of_century_interactive_v2.html">Ouvrir la partie interactive</a><p>Cette page ne calcule pas les coups et ne prétend pas noter une position. Le replay et l’analyse du Coach restent les références pour vérifier une variante réelle.</p><a class="linkbtn" href="CHESS_COACH.html">Ouvrir le Chess Coach</a></article>
+</section>
+<section class="card" aria-labelledby="journal-title"><h2 id="journal-title">Journal d’une séance</h2><p>Écris avant de vérifier. Le journal reste sur cet appareil, dans ce navigateur.</p>
+<label for="position">Position ou moment étudié</label><input id="position" maxlength="180" placeholder="Ex. partie Fischer–Byrne, avant 17…Be6">
+<label for="candidates">Mes coups candidats et variantes</label><textarea id="candidates" placeholder="A. … ; réponse adverse ; ma suite. B. … ; réponse adverse ; ma suite."></textarea>
+<label for="refutation">La meilleure réfutation que j’ai trouvée</label><textarea id="refutation" placeholder="Quel est le coup adverse le plus gênant ? Qu’est-ce qu’il menace ?"></textarea>
+<label for="lesson">Erreur ou idée à retenir</label><textarea id="lesson" placeholder="Qu’ai-je oublié ? Quelle vérification refaire ?"></textarea>
+<div><label for="review">Date de révision</label><select id="review"><option value="1">Demain</option><option value="3">Dans 3 jours</option><option value="7">Dans une semaine</option></select></div>
+<button id="save">Enregistrer la séance</button><button class="secondary" id="clear">Effacer le journal local</button><p class="status" id="status" role="status" aria-live="polite"></p><div id="saved" class="pill" aria-live="polite"></div>
+</section>
+<section class="grid"><article class="card"><h2>Mesurer sans se tromper</h2><p>Mesure séparément le processus (candidats notés, réfutations cherchées, analyse sans moteur) et la force en partie (erreurs, ACPL sur des parties comparables, résultats). Une bonne décision peut perdre ; un gain isolé ne prouve pas que l’analyse était bonne.</p></article>
+<article class="card"><h2>Répéter et corriger</h2><p>Reviens sur une position après un délai, refais le calcul sans relire la solution, puis compare. Classe l’erreur : menace adverse oubliée, variante interrompue trop tôt, calcul erroné, évaluation ou gestion du temps.</p></article></section>
+<footer>Routine pédagogique inspirée des pratiques d’étude attribuées à Fischer. Ce parcours n’est pas une reconstitution de son emploi du temps ni une promesse de progression.</footer>
+</main>
+<script>
+(() => {
+  const key = 'supachess.fischerJournal.v1';
+  const fields = ['position','candidates','refutation','lesson','review'];
+  const status = document.getElementById('status');
+  const saved = document.getElementById('saved');
+  function load() {
+    try { const data = JSON.parse(localStorage.getItem(key) || 'null'); if (!data) return;
+      for (const id of fields) if (typeof data[id] === 'string') document.getElementById(id).value = data[id];
+      render(data);
+    } catch { status.textContent = 'Le journal enregistré ne peut pas être lu.'; }
+  }
+  function render(data) {
+    saved.textContent = data && data.reviewAt ? 'Révision prévue le ' + new Date(data.reviewAt).toLocaleDateString('fr-FR') : '';
+  }
+  document.getElementById('save').addEventListener('click', () => {
+    const data = Object.fromEntries(fields.map(id => [id, document.getElementById(id).value]));
+    if (!data.position.trim() || !data.candidates.trim() || !data.refutation.trim()) {
+      status.textContent = 'Renseigne la position, tes candidats et la réfutation adverse avant d’enregistrer.'; return;
+    }
+    const days = Number(data.review);
+    if (![1,3,7].includes(days)) { status.textContent = 'Délai de révision invalide.'; return; }
+    const due = new Date(); due.setDate(due.getDate() + days); data.reviewAt = due.toISOString();
+    try { localStorage.setItem(key, JSON.stringify(data)); render(data); status.textContent = 'Séance enregistrée sur cet appareil.'; }
+    catch { status.textContent = 'Enregistrement impossible dans le stockage local.'; }
+  });
+  document.getElementById('clear').addEventListener('click', () => {
+    try { localStorage.removeItem(key); for (const id of fields) document.getElementById(id).value = ''; saved.textContent = ''; status.textContent = 'Journal local effacé.'; }
+    catch { status.textContent = 'Effacement impossible dans le stockage local.'; }
+  });
+  load();
+})();
+</script>
+</body>
+</html>

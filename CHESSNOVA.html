@@ -9768,13 +9768,7 @@
                     await auth.signInWithRedirect(provider);
                 } else {
                     console.error('Google login error:', err);
-                    const messages = {
-                        'auth/unauthorized-domain': 'Ce domaine n’est pas autorisé dans Firebase Authentication. Ajoutez jira44.github.io dans les domaines autorisés du projet chessnova.',
-                        'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication > Méthodes de connexion.',
-                        'auth/invalid-api-key': 'La clé Firebase de ChessNova est invalide.',
-                        'auth/network-request-failed': 'Connexion réseau impossible au service Google/Firebase. Vérifiez votre réseau puis réessayez.'
-                    };
-                    showAuthError(messages[err.code] || `${err.code || 'Erreur'} : ${err.message || 'Connexion Google impossible.'}`);
+                    showAuthError(err.message);
                 }
             }
         }

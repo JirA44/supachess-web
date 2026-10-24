@@ -587,6 +587,7 @@
         createButton();
         createTacticsPanel();
         attachClickHandler();
+        setActive(true);
         initSF();
     }
 

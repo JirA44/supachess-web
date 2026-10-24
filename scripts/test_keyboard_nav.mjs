@@ -16,7 +16,7 @@ function check(name, cond, detail) {
 
 /** Loads community.js in a page that exposes the given move functions. */
 function harness(defs) {
-  const dom = new JSDOM('<!DOCTYPE html><body></body>', { runScripts: 'outside-only' });
+  const dom = new JSDOM('<!DOCTYPE html><body></body>', { runScripts: 'outside-only', url: 'https://example.test/' });
   const { window } = dom;
   window.firebase = undefined;
   // community.js logs a Firebase error when the SDK is absent; that is fine.

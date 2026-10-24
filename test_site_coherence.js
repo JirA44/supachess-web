@@ -104,7 +104,8 @@ function testInternalLinks() {
             if (checked.has(key)) continue;
             checked.add(key);
 
-            const target = path.join(DIR, ref);
+            const localRef = ref.split(/[?#]/, 1)[0];
+            const target = path.join(DIR, localRef);
             if (!fs.existsSync(target)) {
                 fail(`${page} → "${ref}" introuvable`);
             }

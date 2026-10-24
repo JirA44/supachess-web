@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { mkdtempSync, rmSync } from 'node:fs';
 
 const root = process.argv[2];
 const files = execFileSync('git', ['ls-files', '*.html', '*.js'], { cwd: root, encoding: 'utf8' })
@@ -9,7 +11,7 @@ const files = execFileSync('git', ['ls-files', '*.html', '*.js'], { cwd: root, e
 
 let checked = 0;
 const failures = [];
-const tmpDir = 'D:/Temp/mammouth/mammouth/syntmp';
+const tmpDir = mkdtempSync(join(tmpdir(), 'supachess-syntax-'));
 
 for (const rel of files) {
   const abs = join(root, rel);
@@ -45,3 +47,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log('all clean');
+rmSync(tmpDir, { recursive: true, force: true });

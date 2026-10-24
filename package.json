@@ -4,7 +4,10 @@
     "test:keys": "node scripts/test_keyboard_nav.mjs",
     "test:site": "node test_site_coherence.js",
     "test:syntax": "node scripts/test_script_syntax.mjs .",
-    "test:periods": "node scripts/test_period_stats.mjs"
+    "test:periods": "node scripts/test_period_stats.mjs",
+    "test:links": "npm run test:site",
+    "test:unit": "npm run test:keys && npm run test:syntax && npm run test:periods && node scripts/test_chess_display.mjs",
+    "test:e2e": "node scripts/test_chess_ui.mjs"
   },
   "dependencies": {
     "chess.js": "^0.10.3"

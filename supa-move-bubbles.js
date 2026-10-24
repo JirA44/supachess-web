@@ -1,5 +1,5 @@
 /**
- * SUPA Move Bubbles — Note /10 + symbole d'annotation après chaque coup joué
+ * SUPA Move Bubbles — Note + symbole d'annotation après chaque coup joué
  *
  * Dépend de supa-dots-widget.js (window.supaDots) pour le moteur d'analyse.
  * Inclure APRÈS supa-dots-widget.js :
@@ -8,7 +8,7 @@
  *
  * Ce que ça fait :
  *   1. Bulle flottante sur la case d'arrivée après chaque coup du joueur :
- *      note /10 + symbole (!!, !, !?, ?, ??, ???)
+ *      note décimale + évaluation + symbole (!!, !, !?, ?, ??, ???)
  *   2. Résumé chiffré : « X coups jouables — Y brillants, Z très bons, ... »
  *   3. Panneau des coups recommandés, cliquables pour jouer le coup
  *
@@ -69,7 +69,7 @@
     }
 
     function scoreText(score) {
-        return (Math.round(score * 2) / 2).toFixed(1).replace('.0', '');
+        return (Math.round(score * 2) / 2).toFixed(1);
     }
 
     // Éval position (pions, perspective blancs) — ex: -0.05, +0.35, #3
@@ -446,7 +446,7 @@
         btnEl = document.createElement('button');
         btnEl.id = 'supa-bubbles-btn';
         btnEl.innerHTML = '💬 Bulles <span id="supa-bubbles-lbl">ON</span>';
-        btnEl.title = 'SUPA Bulles — note /10 + symbole après chaque coup';
+        btnEl.title = 'SUPA Bulles — note décimale et évaluation après chaque coup';
         btnEl.style.cssText = [
             'position:fixed', 'bottom:20px', 'left:20px', 'z-index:9999',
             'padding:10px 18px', 'background:rgba(139,92,246,0.18)', 'color:#a78bfa',

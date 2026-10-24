@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://www.gstatic.com https://*.firebaseio.com blob:; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https://aimix-api.hugo-padilla-pro.workers.dev https://cdn.jsdelivr.net https://aimix-engine-server.onrender.com http://localhost:3001 https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com; worker-src 'self' blob:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://www.gstatic.com https://*.firebaseio.com blob:; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' https: data:; frame-src 'self' https://chessnova.firebaseapp.com https://accounts.google.com; font-src 'self' data:; connect-src 'self' https://aimix-api.hugo-padilla-pro.workers.dev https://cdn.jsdelivr.net https://aimix-engine-server.onrender.com http://localhost:3001 https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com; worker-src 'self' blob:">
     <meta name="description" content="ChessNova Pro - Plateforme d'entraînement aux échecs avec IA avancée, analyse tactique et suivi de progression">
     <meta name="keywords" content="échecs, chess, IA, entraînement, tactique, ChessNova">
     <title>🎓 ChessMentor Pro v5.9.1 - ChessNova Academy</title>
@@ -3912,9 +3912,9 @@
                 : '';
 
             analysisDiv.innerHTML = `
-                <strong>${quality} (${rating}/10)</strong>
+                <strong>${quality} ${Number(rating).toFixed(1)}</strong>
                 <p style="margin-top: 5px; font-size: 0.9em;">
-                    ${move.san} : Eval 🐟 ${(afterEval/100).toFixed(2)}
+                    ${move.san} : Évaluation ${(afterEval/100).toFixed(2)}
                     ${evalDiff > 0 ? `<span style="color: var(--error);"> (−${(evalDiff/100).toFixed(2)} vs meilleur)</span>` : ''}
                 </p>
                 ${rankInfo}
@@ -8306,9 +8306,10 @@
                 <div style="background: linear-gradient(135deg, ${moveTypeColor}22, transparent); padding: 12px; border-radius: 10px; border-left: 4px solid ${moveTypeColor};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 1.2em; color: ${moveTypeColor}; font-weight: bold;">${moveType} ${moveTypeIcon ? `<span style="font-family: monospace;">${moveTypeIcon}</span>` : ''}</span>
-                        <span style="background: ${moveTypeColor}33; padding: 3px 8px; border-radius: 5px; font-size: 0.85em;">${rating}/10</span>
+                        <span style="background: ${moveTypeColor}33; padding: 3px 8px; border-radius: 5px; font-size: 0.85em;">${Number(rating).toFixed(1)}</span>
                     </div>
-                    <div style="color: #9ca3af; font-style: italic; margin-bottom: 12px; font-size: 0.9em;">${moveExplanation}</div>
+                    <div style="color: #9ca3af; font-style: italic; margin-bottom: 6px; font-size: 0.9em;">${moveExplanation}</div>
+                    <div style="color: #cbd5e1; margin-bottom: 12px; font-size: 0.85em;">Évaluation : ${(afterEval / 100).toFixed(2)}</div>
             `;
 
             // Section erreur détaillée "Ce coup est une erreur car..."
@@ -9762,12 +9763,18 @@
                 }
             } catch (err) {
                 // If popup blocked/failed, fallback to redirect
-                if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+                if (['auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/web-storage-unsupported', 'auth/operation-not-supported-in-this-environment'].includes(err.code)) {
                     console.warn('Popup blocked, falling back to redirect');
                     await auth.signInWithRedirect(provider);
                 } else {
                     console.error('Google login error:', err);
-                    showAuthError(err.message);
+                    const messages = {
+                        'auth/unauthorized-domain': 'Ce domaine n’est pas autorisé dans Firebase Authentication. Ajoutez jira44.github.io dans les domaines autorisés du projet chessnova.',
+                        'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication > Méthodes de connexion.',
+                        'auth/invalid-api-key': 'La clé Firebase de ChessNova est invalide.',
+                        'auth/network-request-failed': 'Connexion réseau impossible au service Google/Firebase. Vérifiez votre réseau puis réessayez.'
+                    };
+                    showAuthError(messages[err.code] || (err.code || 'Erreur') + ' : ' + (err.message || 'Connexion Google impossible.'));
                 }
             }
         }
@@ -10164,8 +10171,8 @@
 <script src="shared/i18n.js"></script>
 <script src="shared/community.js"></script>
 <!-- /ChessNova Community -->
-<script src="supa-dots-widget.js"></script>
-<script src="supa-move-bubbles.js"></script>
+<script src="supa-dots-widget.js?v=20261025a"></script>
+<script src="supa-move-bubbles.js?v=20261025a"></script>
 <script src="supa-style-engine.js"></script>
 <script src="supa-quick-solve.js"></script>
 <script src="js/decision_audit.js"></script>

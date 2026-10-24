@@ -96,6 +96,11 @@
                 // Force persistence locale (survit aux redémarrages navigateur)
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});
 
+                // Compléter un flux signInWithRedirect (fallback si popup bloquée)
+                auth.getRedirectResult().catch(function (err) {
+                    console.warn('[auth] redirect result error', err && err.code, err && err.message);
+                });
+
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
                     window.dispatchEvent(new CustomEvent('chessnova:auth-state', { detail: { user: user } }));
@@ -213,6 +218,7 @@
                     '<input type="password" class="cn-auth-input" id="cn-login-password" data-i18n="auth_password" data-i18n-attr="placeholder" placeholder="' + t('auth_password') + '">' +
                     '<div class="cn-auth-error" id="cn-login-error"></div>' +
                     '<button class="cn-auth-btn-primary" id="cn-login-submit" data-i18n="auth_btn_login">' + t('auth_btn_login') + '</button>' +
+                    '<a href="#" id="cn-forgot-password" style="display:block;text-align:center;margin:8px 0 0;font-size:.85em;color:#8fb6d9;cursor:pointer;" data-i18n="auth_forgot">Mot de passe oublié ? Renvoyer le mot de passe</a>' +
                     '<div class="cn-auth-divider"><span data-i18n="auth_or">' + t('auth_or') + '</span></div>' +
                     '<button class="cn-google-btn" id="cn-google-login">' +
                         '<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>' +
@@ -257,6 +263,8 @@
         document.getElementById('cn-login-password').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') handleEmailLogin();
         });
+        var forgotLink = document.getElementById('cn-forgot-password');
+        if (forgotLink) forgotLink.addEventListener('click', function (e) { e.preventDefault(); handlePasswordReset(); });
 
         // Email signup
         document.getElementById('cn-signup-submit').addEventListener('click', handleEmailSignup);
@@ -357,6 +365,24 @@
         });
     }
 
+    function handlePasswordReset() {
+        if (!auth) return;
+        var email = document.getElementById('cn-login-email').value.trim();
+        var errorEl = document.getElementById('cn-login-error');
+        if (!email) { errorEl.textContent = t('auth_error_invalid_email'); return; }
+        errorEl.textContent = '';
+        auth.sendPasswordResetEmail(email).then(function () {
+            showToast(t('auth_reset_sent') || 'Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.', false);
+            errorEl.style.color = '#4CAF50';
+            errorEl.textContent = t('auth_reset_sent') || 'Email envoyé !';
+        }).catch(function (err) {
+            var msg = t('auth_error_generic');
+            if (err.code === 'auth/user-not-found') msg = t('auth_error_wrong_password');
+            else if (err.code === 'auth/invalid-email') msg = t('auth_error_invalid_email');
+            errorEl.style.color = '';
+            errorEl.textContent = msg;
+        });
+    }
     function handleGoogleLogin() {
         if (!auth) {
             showToast('Connexion Google indisponible : Firebase Auth n’a pas démarré. Recharge la page.', true);
@@ -375,7 +401,7 @@
             showToast(t('auth_success_login'), false);
             closeAuthModal();
         }).catch(function (err) {
-            if (err.code !== 'auth/popup-closed-by-user') {
+            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                 var messages = {
                     'auth/unauthorized-domain': 'Domaine non autorisé par Firebase. Autorise jira44.github.io dans Authentication > Settings > Authorized domains.',
                     'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication.',
@@ -384,8 +410,18 @@
                     'auth/too-many-requests': 'Trop de tentatives. Réessaie un peu plus tard.'
                 };
                 console.error('[Community] Google sign-in failed:', err.code, err.message);
+                if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
+                    showToast('Popup bloquée — bascule en redirection...', true);
+                    auth.signInWithRedirect(provider).catch(function (e2) {
+                        showToast('Redirection impossible: ' + (e2.code || e2.message), true);
+                    });
+                    return;
+                }
                 showToast(messages[err.code] || (t('auth_error_generic') + ' (' + (err.code || 'auth/error') + ')'), true);
             }
+            if (err.code === 'auth/unauthorized-domain') { showToast('Domaine non autorisé dans Firebase (ajoutez jira44.github.io dans Console Firebase > Auth > Settings)', true); return; }
+            if (err.code === 'auth/network-request-failed') { showToast('Réseau indisponible — réessayez', true); return; }
+            showToast(t('auth_error_generic') + ' (' + (err.code||'') + ')', true);
         });
     }
 
@@ -1335,6 +1371,59 @@
         }
     }
 
+    // --- Keyboard move navigation ---
+    // Every page spells its move functions differently (nextMove/goForward,
+    // previousMove/goBack/prevMove), and several had no handler at all. This
+    // resolves whichever name the page exposes so the arrows work everywhere.
+    // Flag lives on window because the IIFE can be evaluated more than once
+    // (duplicate script tags, hot reload), and each run would rebind.
+    var KEY_NAV_FLAG = '__cnKeyboardNavBound';
+
+    var KEY_NAV_MAP = [
+        { keys: ['ArrowLeft'], names: ['previousMove', 'goBack', 'prevMove', 'movePrev'] },
+        { keys: ['ArrowRight'], names: ['nextMove', 'goForward', 'next_pl', 'moveNext'] },
+        { keys: ['Home'], names: ['goToStart', 'goToBeginning', 'firstMove'] },
+        { keys: ['End'], names: ['goToEnd', 'lastMove'] }
+    ];
+
+    function resolveNavHandler(names) {
+        for (var i = 0; i < names.length; i++) {
+            if (typeof window[names[i]] === 'function') return window[names[i]];
+        }
+        return null;
+    }
+
+    function isTypingTarget(target) {
+        if (!target) return false;
+        var tag = target.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function initKeyboardNav() {
+        if (window[KEY_NAV_FLAG]) return;
+        window[KEY_NAV_FLAG] = true;
+
+        // The page's own globals are usually declared after this bundle, and
+        // on some pages in a later script tag entirely, so the handler lookup
+        // happens per keystroke rather than being cached here.
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+            if (isTypingTarget(e.target)) return;
+
+            for (var i = 0; i < KEY_NAV_MAP.length; i++) {
+                var entry = KEY_NAV_MAP[i];
+                if (entry.keys.indexOf(e.key) === -1) continue;
+
+                var handler = resolveNavHandler(entry.names);
+                if (!handler) continue;
+
+                e.preventDefault();
+                handler();
+                return;
+            }
+        });
+    }
+
     // --- Init ---
     function init() {
         // The shared tracker is loaded after community.js on some legacy pages.
@@ -1347,6 +1436,7 @@
             progressScript.dataset.chessnovaProgress = 'true';
             document.body.appendChild(progressScript);
         }
+        initKeyboardNav();
         var firebaseReady = initFirebase();
         if (firebaseReady) {
             trackVisit();

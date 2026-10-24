@@ -389,7 +389,9 @@
     </div>
 
     <!-- Bibliothèque chess.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js">
+document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previousMove(); if(e.key==='ArrowRight') nextMove(); });
+</script>
 
     <script>
         // Initialisation du moteur chess.js
@@ -480,6 +482,7 @@
             { move: 'Rxa6', comment: '⚡ ENCORE UN PION! La tour ramasse tout!' },
             { move: 'Rxd5', comment: 'La tour noire prend le pion d5 - dernier espoir.' },
             { move: 'Ra7', comment: '🔥 LA TOUR DOMINE LA 7EME! Position completement gagnante!' },
+            { move: '1-0', comment: '🏆🏆🏆 STOCKFISH ABANDONNE! VICTOIRE MAGISTRALE D\'ALPHAZERO! Le sacrifice de fou suivi de la promotion du pion h en dame restera dans l\'histoire comme un chef-d\'oeuvre positionnel et tactique! UN TRIOMPHE ABSOLU!' }
         ];
 
         // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)
@@ -648,8 +651,5 @@
 <script src="shared/community.js"></script>
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
-<script src="web/legendary-games/pgn-export.js"></script>
 </body>
 </html>

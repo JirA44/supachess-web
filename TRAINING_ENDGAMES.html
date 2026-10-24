@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -868,7 +868,7 @@
             var config = {
                 position: 'start',
                 draggable: false,
-                pieceTheme: 'assets/chess-pieces/{piece}.svg'
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
             };
             board = Chessboard('board', config);
             $(window).on('resize', function() {
@@ -961,7 +961,7 @@
                 position: currentEndgame.fen,
                 draggable: true,
                 orientation: 'white',
-                pieceTheme: 'assets/chess-pieces/{piece}.svg',
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
                 onDragStart: onDragStart,
                 onDrop: onDrop,
                 onSnapEnd: onSnapEnd
@@ -1060,7 +1060,7 @@
             // Award XP
             var isNew = markCompleted(currentEndgame.id);
             if (isNew && window.ChessNovaProgress) {
-                ChessNovaProgress.recordPractice('finales', 15, 'Finale: ' + currentEndgame.name);
+                ChessNovaProgress.addXP(15, 'Finale: ' + currentEndgame.name);
             }
 
             // Check for badge
@@ -1287,7 +1287,5 @@
     })();
     </script>
 <script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
 </body>
 </html>

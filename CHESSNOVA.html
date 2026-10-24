@@ -664,6 +664,7 @@
                         <optgroup label="⚫ ÉLITE (3300+)" style="background: #0f172a;">
                             <option value="stockfish-18">✅ 🐟 3300 - Stockfish Lv.18</option>
                             <option value="stockfish-19">✅ 🐟 3400 - Stockfish Lv.19</option>
+                            <option value="stockfish-19-nnue">🧠 🐟 3600 - Stockfish 19 (NNUE réel)</option>
                             <option value="native-rubichess">✅ 💎 3300 - RubiChess (NNUE)</option>
                             <option value="native-koivisto" disabled>⛔ 🐺 3350 - Koivisto (DLL manquante)</option>
                             <option value="native-berserk" disabled>⛔ 🦁 3400 - Berserk (DLL manquante)</option>
@@ -810,6 +811,10 @@
                         <div class="difficulty-label">🐟 Lv.19</div>
                         <div class="difficulty-elo">3400 ELO</div>
                     </div>
+                    <div class="difficulty-btn" onclick="selectOpponent('stockfish-19-nnue')" data-level="stockfish-19-nnue" style="border-color: rgba(34,197,94,0.6);">
+                        <div class="difficulty-label">🧠 SF19 NNUE</div>
+                        <div class="difficulty-elo">3600 ELO</div>
+                    </div>
                     <div class="difficulty-btn" onclick="selectOpponent('stockfish-20')" data-level="stockfish-20" style="border-color: rgba(220,38,38,0.5);">
                         <div class="difficulty-label">🐟 MAX</div>
                         <div class="difficulty-elo">3550 ELO</div>
@@ -936,9 +941,9 @@
                     </div>
                     <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
                         <button onclick="filterMoves('all')" class="move-filter-btn active" data-filter="all" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #444; background: #333; color: #fff; cursor: pointer; font-size: 0.75em;">Tous</button>
-                        <button onclick="filterMoves('brilliant')" class="move-filter-btn" data-filter="brilliant" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #facc15; background: transparent; color: #facc15; cursor: pointer; font-size: 0.75em;">🌟 Brillants</button>
-                        <button onclick="filterMoves('ok')" class="move-filter-btn" data-filter="ok" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #22d3ee; background: transparent; color: #22d3ee; cursor: pointer; font-size: 0.75em;">✅ OK</button>
-                        <button onclick="filterMoves('blunder')" class="move-filter-btn" data-filter="blunder" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #ef4444; background: transparent; color: #ef4444; cursor: pointer; font-size: 0.75em;">💥 Gaffes</button>
+                        <button onclick="filterMoves('excellent')" class="move-filter-btn" data-filter="excellent" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #4ade80; background: transparent; color: #4ade80; cursor: pointer; font-size: 0.75em;">🌟 Top 3</button>
+                        <button onclick="filterMoves('good')" class="move-filter-btn" data-filter="good" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #22d3ee; background: transparent; color: #22d3ee; cursor: pointer; font-size: 0.75em;">✅ Bons</button>
+                        <button onclick="filterMoves('bad')" class="move-filter-btn" data-filter="bad" style="padding: 4px 8px; border-radius: 5px; border: 1px solid #ef4444; background: transparent; color: #ef4444; cursor: pointer; font-size: 0.75em;">❌ À éviter</button>
                     </div>
                     <div id="suggested-moves-list" style="max-height: 280px; overflow-y: auto;">
                         <p style="color: #888; font-style: italic;">Les coups apparaîtront ici...</p>
@@ -954,6 +959,10 @@
                         <div id="move-analysis" style="max-height: 200px; overflow-y: auto;">
                             <strong style="color: var(--accent-primary);">Prêt à jouer!</strong>
                             <p style="margin-top: 5px; font-size: 0.9em;">Faites votre premier coup</p>
+                        </div>
+                        <div id="decision-audit-panel" role="status" aria-live="polite" style="margin-top: 10px; padding: 10px; background: rgba(245,158,11,0.08); border-left: 3px solid #f59e0b; border-radius: 6px; font-size: 0.82em;">
+                            <strong>Anti-surprise</strong>
+                            <p style="margin-top: 4px; color: #aaa;">L’audit apparaîtra après votre prochain coup.</p>
                         </div>
                     </div>
                     <!-- SUPA AI Coach -->
@@ -1012,13 +1021,12 @@
                         <div class="stat-value" id="blunders">0</div>
                         <div class="stat-label">💥 Gaffes</div>
                     </div>
-                    <div class="stat-card" title="Parties commencées avec au moins un coup légal">
+                    <div class="stat-card" title="Parties complétées">
                         <div class="stat-value" id="games-played">0</div>
                         <div class="stat-label">Parties</div>
                     </div>
                 </div>
 
-                <div id="magnus-position" style="background:#1c293d;padding:15px;border-radius:12px;margin-bottom:20px;line-height:1.6"></div>
                 <!-- CONSEILS COACH -->
                 <div id="coach-tips-panel" style="background: linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(34,211,238,0.1) 100%); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(168,85,247,0.3);">
                     <div onclick="document.getElementById('coach-tips-content').style.display = document.getElementById('coach-tips-content').style.display === 'none' ? 'block' : 'none'" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
@@ -1070,10 +1078,6 @@
                     </div>
                     <div style="background: rgba(0,0,0,0.3); border-radius: 10px; height: 12px; overflow: hidden;">
                         <div id="xp-bar" style="background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 10px;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; color: #cbd5e1; font-size: 0.8em;">
-                        <span>🎯 Pratiques : <strong id="practice-count">0</strong></span>
-                        <span>👣 Usages : <strong id="usage-count">0</strong></span>
                     </div>
                 </div>
 
@@ -1175,7 +1179,6 @@
     </div>
 
     <script src="shared/progress.js"></script>
-    <script src="shared/magnus-principles.js"></script>
     <script>
 
         // ========================================
@@ -1393,7 +1396,6 @@
         // ========================================
         let board = null;
         let game = new Chess();
-        let gameCountedThisGame = false;
         let difficulty = 'beginner';
 
         // Exposer pour debug et tests
@@ -1788,10 +1790,6 @@
             if (playerProgress.totalWins === 1) unlockBadge('first-win');
 
             saveProgress();
-            if (window.ChessNovaProgress) {
-                ChessNovaProgress.recordPractice('parties', 0, won ? 'Partie gagnée' : 'Partie terminée');
-                playerProgress = ChessNovaProgress.load();
-            }
             updateProgressUI();
         }
 
@@ -1826,9 +1824,6 @@
             // Niveau et XP
             setEl('player-level', playerProgress.level);
             setEl('player-xp', playerProgress.xp);
-            const trackedProgress = ChessNovaProgress.load();
-            setEl('practice-count', trackedProgress.practice.sessions);
-            setEl('usage-count', trackedProgress.usage.pageViews);
 
             // Rang (infinite leveling)
             const rankName = ChessNovaProgress.getRankName(playerProgress.level);
@@ -1875,11 +1870,7 @@
         }
 
         function saveProgress() {
-            if (window.ChessNovaProgress) {
-                ChessNovaProgress.save(playerProgress);
-            } else {
-                localStorage.setItem('chessnova_progress', JSON.stringify(playerProgress));
-            }
+            localStorage.setItem('chessnova_progress', JSON.stringify(playerProgress));
         }
 
         let eloHistory = [1200];
@@ -1900,6 +1891,7 @@
             'stockfish-17': { elo: 3200, depth: 16, moveTime: 1800, errorRate: 0, topN: 1, name: 'Stockfish Lv.17', emoji: '🐟', useStockfish: true, skillLevel: 17 },
             'stockfish-18': { elo: 3300, depth: 17, moveTime: 1800, errorRate: 0, topN: 1, name: 'Stockfish Lv.18', emoji: '🐟', useStockfish: true, skillLevel: 18 },
             'stockfish-19': { elo: 3400, depth: 17, moveTime: 2000, errorRate: 0, topN: 1, name: 'Stockfish Lv.19', emoji: '🐟', useStockfish: true, skillLevel: 19 },
+            'stockfish-19-nnue': { elo: 3600, depth: 22, moveTime: 2500, errorRate: 0, topN: 1, name: 'Stockfish 19 (NNUE réel)', emoji: '🧠', useStockfish: true, skillLevel: 20 },
             'stockfish-20': { elo: 3550, depth: 18, moveTime: 2000, errorRate: 0, topN: 1, name: 'Stockfish MAX', emoji: '🐟', useStockfish: true, skillLevel: 20 },
 
             // === ENGINES NATIFS (Backend Server - rapides) ===
@@ -2180,6 +2172,21 @@
 
         async function initStockfish() {
             try {
+                // Méthode 0: Stockfish 19 réel (NNUE, build single-thread local)
+                if (!window.sf19Tried) {
+                    window.sf19Tried = true;
+                    try {
+                        console.log('Loading real Stockfish 19 (NNUE lite-single)...');
+                        stockfish = new Worker('js/sf19/package/bin/stockfish-19-lite-single.js');
+                        window.sf19Active = true;
+                        setupStockfishHandlers();
+                        return;
+                    } catch (e19) {
+                        console.log('SF19 local indisponible, fallback:', e19.message);
+                        stockfish = null;
+                    }
+                }
+
                 // Méthode 1: Essayer la fonction globale STOCKFISH() (si le script l'a créée)
                 if (typeof STOCKFISH === 'function') {
                     console.log('Using global STOCKFISH() function');
@@ -2210,6 +2217,10 @@
                     stockfishReady = true;
                     console.log('Stockfish ready!');
                     updateStockfishIndicator();
+                    if (window.sf19Active) {
+                        const ind = document.getElementById('stockfish-indicator');
+                        if (ind) ind.innerHTML = '🧠 <span style="color: #22c55e;">Stockfish 19 (NNUE réel) actif</span>';
+                    }
                     // Lancer l'analyse des suggestions maintenant que SF est prêt
                     updateSuggestedMoves();
                 }
@@ -4086,14 +4097,16 @@
         async function updateSuggestedMovesWithStockfish() {
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
-            if (!container) return;
-            const analysisId = ++suggestionAnalysisId;
-            if (game.game_over()) {
-                allEvaluatedMoves = [];
-                container.innerHTML = '<p style="color: #888;">Partie terminée : aucun coup jouable.</p>';
-                if (statsContainer) statsContainer.textContent = '0 coup jouable';
+            if (!container || game.game_over()) return;
+
+            // Ne pas analyser les coups pendant le tour de l'IA
+            if (game.turn() !== 'w') {
+                container.innerHTML = '<p style="color: #888; font-style: italic;">L\'IA réfléchit...</p>';
                 return;
             }
+
+            // Reset le flag d'annulation pour permettre l'analyse
+            analysisAborted = false;
 
             if (!stockfish || !stockfishReady) {
                 container.innerHTML = '<p style="color: #fbbf24;">⏳ Stockfish en chargement...</p>';
@@ -4124,11 +4137,6 @@
             renderFilteredMoves();
             container.querySelector('p')?.remove(); // Enlever "analyse en cours"
 
-            // L'IA utilise aussi Stockfish : garder son tour sur l'évaluation rapide.
-            if (game.turn() !== 'w') return;
-            analysisAborted = false;
-            const analyzedFen = game.fen();
-
             // ÉTAPE 2: Lancer analyse Stockfish en arrière-plan (top 10 seulement)
             const topMoves = quickEvaluated.slice(0, 10);
             console.log(`[SF] Analyzing top ${topMoves.length} moves in background...`);
@@ -4137,7 +4145,7 @@
             (async () => {
                 const sfResults = [];
                 for (const item of topMoves) {
-                    if (analysisAborted || analysisId !== suggestionAnalysisId || game.fen() !== analyzedFen) break;
+                    if (analysisAborted) break;
                     const moveResult = game.move(item.move);
                     if (!moveResult) continue; // Skip stale/invalid moves
                     const fenAfter = game.fen();
@@ -4155,7 +4163,7 @@
                 }
 
                 // Mettre à jour avec scores Stockfish (FUSIONNER, pas remplacer)
-                if (sfResults.length > 0 && !analysisAborted && analysisId === suggestionAnalysisId && game.fen() === analyzedFen) {
+                if (sfResults.length > 0) {
                     sfResults.sort((a, b) => b.sfScore - a.sfScore);
                     const bestScore = sfResults[0].sfScore;
 
@@ -4169,13 +4177,13 @@
                     allEvaluatedMoves = allEvaluatedMoves.map(item => {
                         const sfScore = sfScoreMap.get(item.move.san);
                         if (sfScore !== undefined) {
-                            const evalDiff = sfScore - bestScore;
+                            const evalDiff = bestScore - sfScore;
                             let category;
-                            if (evalDiff >= -10) category = 'excellent';
-                            else if (evalDiff >= -30) category = 'good';
-                            else if (evalDiff >= -80) category = 'ok';
-                            else if (evalDiff >= -150) category = 'dubious';
-                            else if (evalDiff >= -300) category = 'bad';
+                            if (evalDiff <= 10) category = 'excellent';
+                            else if (evalDiff <= 30) category = 'good';
+                            else if (evalDiff <= 80) category = 'ok';
+                            else if (evalDiff <= 150) category = 'dubious';
+                            else if (evalDiff <= 300) category = 'bad';
                             else category = 'blunder';
 
                             return {
@@ -4216,6 +4224,11 @@
                     console.log('[SF] Analysis complete!');
                 }
             })();
+
+            // Mettre à jour les panneaux
+            if (statsContainer) {
+                statsContainer.innerHTML = `<strong>${moves.length} coups (Stockfish en arrière-plan)</strong>`;
+            }
 
             // Afficher meilleur coup minimax en attendant Stockfish
             const sfBestEl = document.getElementById('sf-best-move');
@@ -4262,36 +4275,10 @@
         // ========================================
         let currentMoveFilter = 'all';
         let allEvaluatedMoves = [];
-        let suggestionAnalysisId = 0;
         // Exposer pour debug
         window.getSuggestions = () => allEvaluatedMoves;
 
-        // Trois verdicts exclusifs : chaque coup légal apparaît dans un seul compteur.
-        function getMoveVerdict(item) {
-            const loss = Math.max(0, -item.evalDiff);
-            const move = item.move;
-            if (move.san.includes('#')) return 'brilliant';
-            let tactical = false;
-
-            if (!tactical && loss <= 50 && move.piece !== 'p') {
-                // Un sacrifice plausible doit rester parmi les bons coups après évaluation.
-                const played = game.move(move);
-                if (played) {
-                    tactical = game.moves({ verbose: true }).some(reply =>
-                        reply.to === move.to && reply.captured === move.piece &&
-                        (pieceValues[reply.piece] || 0) < (pieceValues[move.piece] || 0)
-                    );
-                    game.undo();
-                }
-            }
-
-            if (loss <= 50 && tactical) return 'brilliant';
-            if (loss > 150) return 'blunder';
-            return 'ok';
-        }
-
         function updateSuggestedMoves() {
-            MagnusPrinciples.render(game, 'magnus-position');
             // Utiliser Stockfish si disponible
             if (stockfish && stockfishReady) {
                 updateSuggestedMovesWithStockfish();
@@ -4299,14 +4286,12 @@
             }
 
             // Fallback NON-BLOQUANT si Stockfish non dispo
-            suggestionAnalysisId++;
             const container = document.getElementById('suggested-moves-list');
             const statsContainer = document.getElementById('moves-stats');
-            if (!container) return;
-            if (game.game_over()) {
-                allEvaluatedMoves = [];
-                container.innerHTML = '<p style="color: #888;">Partie terminée : aucun coup jouable.</p>';
-                if (statsContainer) statsContainer.textContent = '0 coup jouable';
+            if (!container || game.game_over() || game.turn() !== 'w') {
+                if (container && game.turn() !== 'w') {
+                    container.innerHTML = '<p style="color: #888; font-style: italic;">L\'IA réfléchit...</p>';
+                }
                 return;
             }
 
@@ -4333,6 +4318,10 @@
 
             allEvaluatedMoves = quickMoves;
             renderFilteredMoves();
+
+            if (statsContainer) {
+                statsContainer.innerHTML = `<strong>${moves.length} coups</strong> <span style="color: #fbbf24;">(éval rapide)</span>`;
+            }
         }
 
         function categorizeMoveByEval(evalDiff, move) {
@@ -4366,25 +4355,18 @@
             const container = document.getElementById('suggested-moves-list');
             if (!container) return;
 
-            const counts = { brilliant: 0, ok: 0, blunder: 0 };
-            allEvaluatedMoves.forEach(item => {
-                item.verdict = getMoveVerdict(item);
-                counts[item.verdict]++;
-            });
-            const statsContainer = document.getElementById('moves-stats');
-            if (statsContainer) {
-                statsContainer.innerHTML = `<strong>${allEvaluatedMoves.length} coups jouables</strong> · ` +
-                    `<span style="color:#facc15">${counts.brilliant} brillants</span> · ` +
-                    `<span style="color:#22d3ee">${counts.ok} OK</span> · ` +
-                    `<span style="color:#ef4444">${counts.blunder} gaffes</span>` +
-                    (allEvaluatedMoves.some(item => !item.isStockfish) ?
-                        ' <span style="color:#888">(estimation rapide pour les coups sans analyse Stockfish)</span>' : '');
-            }
-
             let movesToShow = allEvaluatedMoves;
 
             if (currentMoveFilter !== 'all') {
-                movesToShow = allEvaluatedMoves.filter(item => item.verdict === currentMoveFilter);
+                if (currentMoveFilter === 'excellent') {
+                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'excellent');
+                } else if (currentMoveFilter === 'good') {
+                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'good' || m.category === 'ok');
+                } else if (currentMoveFilter === 'dubious') {
+                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'dubious');
+                } else if (currentMoveFilter === 'bad') {
+                    movesToShow = allEvaluatedMoves.filter(m => m.category === 'bad' || m.category === 'blunder');
+                }
             }
 
             let html = '';
@@ -4399,12 +4381,21 @@
                 const sideIndicator = isPositive ? '⬜' : '⬛'; // Blanc ou Noir gagne
                 const rankNum = allEvaluatedMoves.indexOf(item) + 1;
 
-                const verdictStyle = {
-                    brilliant: { label: '🌟 Brillant', color: '#facc15', bg: 'rgba(250,204,21,0.12)' },
-                    ok: { label: '✅ OK', color: '#22d3ee', bg: 'rgba(34,211,238,0.1)' },
-                    blunder: { label: '💥 Gaffe', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' }
-                }[item.verdict];
-                const { label, color, bg } = verdictStyle;
+                // Label basé sur le rang, pas sur l'éval absolue
+                let label, color, bg;
+                if (rankNum === 1) {
+                    label = '🥇 Meilleur'; color = '#4ade80'; bg = 'rgba(74,222,128,0.15)';
+                } else if (rankNum <= 3) {
+                    label = '🥈 Très bon'; color = '#22d3ee'; bg = 'rgba(34,211,238,0.1)';
+                } else if (rankNum <= 6) {
+                    label = '👍 Correct'; color = '#60a5fa'; bg = 'rgba(96,165,250,0.08)';
+                } else if (item.evalDiff <= -100) {
+                    label = '⚠️ Risqué'; color = '#fbbf24'; bg = 'rgba(251,191,36,0.1)';
+                } else if (item.evalDiff <= -200) {
+                    label = '❌ Mauvais'; color = '#ef4444'; bg = 'rgba(239,68,68,0.1)';
+                } else {
+                    label = '➡️ Jouable'; color = '#94a3b8'; bg = 'rgba(148,163,184,0.08)';
+                }
 
                 const medal = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : `#${rankNum}`;
 
@@ -4414,14 +4405,14 @@
                     : '';
 
                 html += `
-                    <div onclick="playSuggestedMove('${m.from}', '${m.to}', '${m.promotion || 'q'}')"
+                    <div onclick="playSuggestedMove('${m.from}', '${m.to}')"
                          style="padding: 10px; margin-bottom: 6px; background: ${bg}; border-radius: 8px; cursor: pointer; border-left: 3px solid ${color};"
                          onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="min-width: 28px; color: #666;">${medal}</span>
                                 <span style="font-weight: bold; color: #fff;">${m.san}</span>
-                                <span style="color: ${color}; font-size: 0.75em;">${label}${item.isStockfish ? '' : ' (estimé)'}</span>
+                                <span style="color: ${color}; font-size: 0.75em;">${label}</span>
                             </div>
                             <div>
                                 <span style="color: ${isPositive ? '#4ade80' : '#ef4444'}; font-family: monospace; font-size: 0.9em;">🐟 ${sideIndicator}${isPositive ? '+' : '-'}${evalDisplay}</span>
@@ -4573,10 +4564,10 @@
             return comments.length > 0 ? comments.join(' • ') : "Coup jouable";
         }
 
-        function playSuggestedMove(from, to, promotion = 'q') {
+        function playSuggestedMove(from, to) {
             if (game.turn() !== 'w' || isAIThinking) return;
 
-            const move = game.move({ from, to, promotion });
+            const move = game.move({ from, to, promotion: 'q' });
             if (move) {
                 board.position(game.fen());
                 analyzePlayerMove(move);
@@ -8262,7 +8253,7 @@
 
             // LEÇON HISTORIQUE CONTEXTUELLE (30% de chance)
             if (Math.random() < 0.3) {
-                const evalDiff = afterEval - beforeEval;
+                const evalDiff = prevEval !== null ? (currentEval - prevEval) : 0;
                 const historicLesson = getContextualHistoricLesson(phase, move, evalDiff);
                 if (historicLesson) {
                     teachings.push(historicLesson);
@@ -8275,7 +8266,7 @@
             }
 
             // LEÇON DE PARTIE CÉLÈBRE (15% de chance sur coups spéciaux)
-            const evalDiffForFamous = afterEval - beforeEval;
+            const evalDiffForFamous = prevEval !== null ? (currentEval - prevEval) : 0;
             const gameSituation = detectGameSituation(move, evalDiffForFamous, phase);
             if (gameSituation && Math.random() < 0.15) {
                 const famousLesson = getFamousGameLesson(gameSituation);
@@ -8624,7 +8615,7 @@
                     onDragStart: onDragStart,
                     onDrop: onDrop,
                     onSnapEnd: onSnapEnd,
-                    pieceTheme: 'assets/chess-pieces/{piece}.svg'
+                    pieceTheme: 'https://raw.githubusercontent.com/oakmac/chessboardjs/master/website/img/chesspieces/wikipedia/{piece}.png'
                 };
                 board = Chessboard('board', config);
                 lastEval = evaluateBoard();
@@ -8642,10 +8633,27 @@
             return true;
         }
 
+        function renderDecisionAudit(audit) {
+            const panel = document.getElementById('decision-audit-panel');
+            if (!panel || !audit) return;
+            if (audit.error) {
+                panel.innerHTML = '<strong>Anti-surprise</strong><p>' + audit.error + '</p>';
+                return;
+            }
+            const refs = audit.refutation_candidates.length
+                ? audit.refutation_candidates.join(', ')
+                : 'Aucune ressource forcée détectée';
+            panel.innerHTML = '<strong>Anti-surprise · ' + audit.move + '</strong>' +
+                '<p>Risque surprise: <b>' + audit.surprise_risk + '/100</b></p>' +
+                '<p>Réfutations candidates: ' + refs + '</p>' +
+                '<small>' + audit.note + '</small>';
+        }
+
         function onDrop(source, target) {
             try {
                 // Annuler le snapback visuel pendant le traitement
                 removeGreySquares();
+                const fenBeforeMove = game.fen();
 
                 const move = game.move({
                     from: source,
@@ -8657,16 +8665,12 @@
                     return 'snapback';
                 }
 
-                if (!gameCountedThisGame) {
-                    gameCountedThisGame = true;
-                    sessionStats.gamesPlayed++;
-                    document.getElementById('games-played').textContent = sessionStats.gamesPlayed;
-                    unlockAchievement('ach-first-game');
-                    saveToLocalStorage();
-                }
-
                 // Forcer la sync immédiate du board
                 if (board) board.position(game.fen(), false);
+
+                if (window.SupaChessDecisionAudit && typeof Chess === 'function') {
+                    renderDecisionAudit(SupaChessDecisionAudit.auditMove(new Chess(fenBeforeMove), move.san));
+                }
 
                 // Analyse et mise à jour (avec protection)
                 try {
@@ -8739,6 +8743,7 @@
                     'stockfish-17': 'Stockfish Lv.17',
                     'stockfish-18': 'Stockfish Lv.18',
                     'stockfish-19': 'Stockfish Lv.19',
+                    'stockfish-19-nnue': 'Stockfish 19 (NNUE réel)',
                     'stockfish-20': 'Stockfish MAX'
                 };
                 const settings = difficultyLevels[difficulty] || difficultyLevels['beginner'];
@@ -8781,7 +8786,10 @@
                 `;
             }
 
-            gameCountedThisGame = false;
+            sessionStats.gamesPlayed++;
+            document.getElementById('games-played').textContent = sessionStats.gamesPlayed;
+            unlockAchievement('ach-first-game');
+            saveToLocalStorage();
 
             // Afficher les suggestions de coups dès le départ
             updateSuggestedMoves();
@@ -9754,11 +9762,9 @@
                 }
             } catch (err) {
                 // If popup blocked/failed, fallback to redirect
-                if (err.code === 'auth/popup-blocked') {
+                if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
                     console.warn('Popup blocked, falling back to redirect');
                     await auth.signInWithRedirect(provider);
-                } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-                    return;
                 } else {
                     console.error('Google login error:', err);
                     showAuthError(err.message);
@@ -9860,12 +9866,22 @@
         
         async function syncLocalToCloud() {
             if (!db || !currentUser?.uid) return;
-            if (window.ChessNovaProgress?.syncWithCloud && auth?.currentUser) {
-                playerProgress = await ChessNovaProgress.syncWithCloud(auth.currentUser);
-                updateProgressUI();
+            const localProgress = JSON.parse(localStorage.getItem('chessnova_progress') || '{}');
+            if (localProgress.totalGames > 0) {
+                await db.collection('users').doc(currentUser.uid).update({
+                    xp: firebase.firestore.FieldValue.increment(localProgress.xp || 0),
+                    totalGames: firebase.firestore.FieldValue.increment(localProgress.totalGames || 0),
+                    totalWins: firebase.firestore.FieldValue.increment(localProgress.totalWins || 0),
+                    bestStreak: Math.max(currentUser.bestStreak || 0, localProgress.bestStreak || 0)
+                });
+                // Reload user data after sync to reflect merged stats
                 const updated = await loadUserFromFirestore(currentUser.uid);
-                if (updated) currentUser = updated;
-                updateUserUI();
+                if (updated) {
+                    currentUser = updated;
+                    updateUserUI();
+                }
+                localStorage.removeItem('chessnova_progress');
+                showToast('Progression synchronisée!', 'success');
             }
         }
         
@@ -10149,7 +10165,9 @@
 <script src="shared/community.js"></script>
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
+<script src="supa-move-bubbles.js"></script>
+<script src="supa-style-engine.js"></script>
+<script src="supa-quick-solve.js"></script>
+<script src="js/decision_audit.js"></script>
 </body>
 </html>

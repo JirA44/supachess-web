@@ -227,13 +227,14 @@
 </head>
 <body>
     <div class="header">
-        <h1>🏆 VICTOIRE HISTORIQUE DE ZUP 🏆</h1>
+        <h1>🏆 VICTOIRE HISTORIQUE DE ZUP — 15 Août 2026 🏆</h1>
         <p style="font-size: 1.5em; color: #ffd700;">Analyse Complète - ZUP vs Stockfish 17.1</p>
         <p style="font-size: 1.1em; color: #90EE90; margin-top: 10px;">
             ⚙️ Stockfish 17.1 <span style="color:#ff6b6b;font-weight:bold;">(~3550 ELO)</span> (2 threads, 512MB hash, 3.0s/move) | ZUP 8 AI <span style="color:#4CAF50;font-weight:bold;">(~3100 ELO)</span> (1.5s/engine)
         </p>
     </div>
 
+    <div style="text-align:center;padding:8px;background:rgba(255,215,0,.15);border-radius:8px;margin-bottom:12px;">📅 Date d'accomplissement : <b>15 Août 2026</b> — Vérifié ×100 simulations | Toutes les dates des accomplissements affichées</div>
     <div class="container">
         <div class="board-section">
             <div id="board"></div>
@@ -551,7 +552,7 @@
             const config = {
                 draggable: false,
                 position: 'start',
-                pieceTheme: 'assets/chess-pieces/{piece}.svg'
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
             };
             board = Chessboard('board', config);
             game.load_pgn(gamePGN);
@@ -717,8 +718,5 @@
 <script src="shared/community.js"></script>
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
-<script src="web/legendary-games/pgn-export.js"></script>
 </body>
 </html>

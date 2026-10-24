@@ -27,7 +27,6 @@
     "toast_sent": "Message sent!",
     "toast_error": "An error occurred. Please try again.",
     "toast_feedback_sent": "Feedback sent successfully!",
-
     "auth_login": "Sign In",
     "auth_logout": "Sign Out",
     "auth_signup": "Sign Up",
@@ -48,7 +47,6 @@
     "auth_error_generic": "Authentication error",
     "auth_success_signup": "Account created successfully!",
     "auth_success_login": "Signed in!",
-
     "stats_title": "Site Statistics",
     "stats_total_visits": "Total Visits",
     "stats_unique_visitors": "Unique Visitors",
@@ -56,18 +54,15 @@
     "stats_online_now": "Online Now",
     "stats_most_popular": "Popular Section",
     "stats_total_sections": "Sections Available",
-
     "header_title": "ChessNova Chess Engine",
     "header_subtitle": "Hybrid Intelligence System - Training Dashboard",
     "header_elo_info": "5 AI Components | Current ELO: ~3150 | Target: 3600+",
     "header_improvement": "+13.9% Improvement in 2 games!",
-
     "status_session": "Active Session",
     "status_session_value": "RUNNING",
     "status_elo": "Current ELO",
     "status_improvement": "Improvement",
     "status_time": "Total Time",
-
     "action_chess_coach": "Chess Coach",
     "action_live_training": "LIVE Training",
     "action_tournament": "Simulated Tournament",
@@ -76,12 +71,10 @@
     "action_gallery": "Games Gallery",
     "action_lessons": "Lessons",
     "action_style_analysis": "Style Analysis",
-
     "section_hub": "Visualization Hub",
     "section_legendary": "Legendary Games Library",
     "section_legendary_desc": "Collection of analyzed and commented historical games with interactive boards",
     "section_dashboards": "Dashboards & Analytics",
-
     "card_fischer_title": "Fischer - Game of the Century",
     "card_fischer_desc": "Bobby Fischer (age 13!) vs Donald Byrne - New York, 1956 | Grunfeld Defense. Legendary Queen sacrifice on move 17 (Be6!!). 41 annotated moves.",
     "card_kasparov_title": "Kasparov - Immortal Game",
@@ -111,7 +104,6 @@
     "card_propose_title": "Suggest a Game",
     "card_propose_desc": "Have a legendary game suggestion to add? Games with brilliant moves and tactical insights are preferred!",
     "card_propose_badge": "Click for more info",
-
     "card_training_dashboard_title": "Training Dashboard LIVE",
     "card_training_dashboard_desc": "Real-time training monitoring. Auto-refresh every 30s.",
     "card_live_game_title": "LIVE Game Tracking",
@@ -166,18 +158,15 @@
     "card_zup_victory_desc": "Celebrating ZUP ULTIMATE's victory against Stockfish MAX!",
     "card_coming_soon_title": "Coming Soon",
     "card_coming_soon_desc": "Opening library, side-by-side comparison, export & sharing, AI integration.",
-
     "footer_engine_name": "ChessNova Chess Engine",
     "footer_engine_desc": "Hybrid Intelligence System",
     "footer_tech": "Minimax + Alpha-Beta Pruning + Stockfish 17.1 FULL",
     "footer_last_update": "Last update:",
-
     "autoresponse_how_to_play": "To play chess on SupaChess, go to ChessNova Teacher! Choose your level (Beginner to Grandmaster) and start a game.",
     "autoresponse_what_is_supachess": "SupaChess is a chess platform with a hybrid AI engine (ChessNova). Play, learn and analyze your games for free!",
     "autoresponse_analyze": "To analyze a game, use the Chess Coach! Import a PGN or Lichess game for deep analysis.",
     "autoresponse_elo": "Check your ELO progression on the ELO Progress Dashboard or Tournament Dashboard.",
     "autoresponse_levels": "ChessNova Teacher offers 6 levels: Beginner, Novice, Intermediate, Advanced, Expert and Grandmaster.",
-
     "faq_local_1_q": "How do I play chess on SupaChess?",
     "faq_local_1_a": "Click on 'ChessNova Teacher' in the hub. Choose your level and start playing against the AI!",
     "faq_local_2_q": "What is SupaEngine?",
@@ -187,5 +176,7 @@
     "faq_local_4_q": "How does the level system work?",
     "faq_local_4_a": "6 levels from Beginner to Grandmaster. The AI adapts to your strength with personalized suggestions.",
     "faq_local_5_q": "How do I suggest a legendary game?",
-    "faq_local_5_a": "Click on 'Suggest a Game' in the Legendary section. Provide the PGN and historical context."
+    "faq_local_5_a": "Click on 'Suggest a Game' in the Legendary section. Provide the PGN and historical context.",
+    "auth_forgot": "Forgot password? Resend password",
+    "auth_reset_sent": "Reset email sent! Check your inbox."
 }

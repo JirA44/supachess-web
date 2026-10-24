@@ -249,6 +249,7 @@
         renderTacticsPanel(null);
 
         if (currentSel) showMovesForSquare(currentSel);
+        emitAnalysis();
     }
 
     async function fetchBookMoves(fen) {
@@ -535,6 +536,50 @@
     window.supaDotsActivate = function() { if (!active) setActive(true); };
     window.supaDotsDeactivate = function() { if (active) setActive(false); };
 
+    // ── Shared engine API (consumed by supa-move-bubbles / supa-style-engine) ─
+    let analysisSubs = [];
+    function emitAnalysis() {
+        for (const fn of analysisSubs) {
+            try { fn(snapshot()); } catch(e) {}
+        }
+    }
+    function snapshot() {
+        const g = getGame();
+        return {
+            fen: g ? g.fen() : null,
+            turn: g ? g.turn() : null,
+            moveCount: g ? g.history().length : 0,
+            history: g ? g.history({ verbose: true }) : [],
+            analysis: Object.assign({}, analysis),
+            pvLines: pvLines.slice(),
+            bookMoves: new Set(bookMoves),
+        };
+    }
+    window.supaDots = {
+        getGame: getGame,
+        getBoard: getBoard,
+        getBoardEl: function() { return boardEl; },
+        snapshot: snapshot,
+        getAnalysis: function() { return analysis; },
+        getPvLines: function() { return pvLines.slice(); },
+        getBookMoves: function() { return new Set(bookMoves); },
+        isReady: function() { return sfReady; },
+        isActive: function() { return active; },
+        setActive: setActive,
+        activate: function() { setActive(true); },
+        deactivate: function() { setActive(false); },
+        onAnalysis: function(fn) {
+            analysisSubs.push(fn);
+            fn(snapshot());
+            return function() {
+                const i = analysisSubs.indexOf(fn);
+                if (i >= 0) analysisSubs.splice(i, 1);
+            };
+        },
+        // Force a re-analysis of the current position (used after an undo/new game)
+        refresh: function() { analyzePosition(); },
+    };
+
     // ── Init ─────────────────────────────────────────────────────────────────
     function init() {
         boardEl = findBoardEl();
@@ -552,3 +597,5 @@
     }
 
 })();
+
+// ZUP8AI detects brilliant/sacrifice/strategic/tactical

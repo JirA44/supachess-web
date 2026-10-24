@@ -1244,6 +1244,84 @@
     color: #ef4444;
 }
 
+/* ============================================
+   Current-move spotlight
+   Marks the move currently on the board. The
+   pages already toggle .active / .current on the
+   move element, so this only has to restyle them.
+   ============================================ */
+
+@property --cn-spot-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+.move-item.active,
+.move-item.current,
+.timeline-move.active {
+    position: relative;
+    isolation: isolate;
+    background: rgba(0, 217, 255, 0.14) !important;
+    box-shadow: none !important;
+}
+
+/* Rotating conic ring drawn behind the card content. */
+.move-item.active::after,
+.move-item.current::after,
+.timeline-move.active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 3px;
+    background: conic-gradient(
+        from var(--cn-spot-angle),
+        #00d9ff,
+        #7b5cff,
+        #ff3d7f,
+        #ffd700,
+        #22c55e,
+        #00d9ff
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: cn-spot-spin 3.5s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes cn-spot-spin {
+    to {
+        --cn-spot-angle: 360deg;
+    }
+}
+
+/* Fallback for engines without @property: a plain glowing border. */
+@supports not (background: conic-gradient(from var(--x), red, blue)) {
+    .move-item.active,
+    .move-item.current,
+    .timeline-move.active {
+        outline: 3px solid #00d9ff;
+        outline-offset: -3px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .move-item.active::after,
+    .move-item.current::after,
+    .timeline-move.active::after {
+        animation: none;
+        --cn-spot-angle: 90deg;
+    }
+}
+
 /* --- Responsive --- */
 @media (max-width: 480px) {
     .cn-panel {

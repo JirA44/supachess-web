@@ -3,3 +3,6 @@ node_modules/
 dist/
 nul
 .wrangler/
+
+js/sf18/
+js/sf19/

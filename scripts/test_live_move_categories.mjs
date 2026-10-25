@@ -26,6 +26,7 @@ try {
     window.renderLiveMoves();
   });
   assert.equal(await page.locator('[data-live-category="brilliant"] [data-live-move="1. e4"]').count(), 1);
+  assert.equal(await page.locator('[data-live-count="brilliant"]').innerText(), '!! Brilliant\n+1');
 
   await page.evaluate(() => {
     window.gameHistory.push(
@@ -36,18 +37,21 @@ try {
       { moveNum: 3, san: 'a6', rating: 6, quality: 'Acceptable', isOpponent: false },
       { moveNum: 4, san: 'Ba4', rating: 4, quality: 'Imprécision', isOpponent: false },
       { moveNum: 4, san: 'Nf6', rating: 3, quality: 'Erreur', isOpponent: false },
-      { moveNum: 5, san: 'O-O', rating: 1, quality: 'GAFFE', isOpponent: false }
+      { moveNum: 5, san: 'O-O', rating: 1, quality: 'GAFFE', isOpponent: false },
+      { moveNum: 5, san: 'c4', rating: 10, quality: '🌟 BRILLANT', isOpponent: false }
     );
     window.renderLiveMoves();
   });
 
   for (const category of ['brilliant', 'best', 'very-good', 'good', 'ok', 'inaccuracy', 'mistake', 'blunder']) {
     assert.equal(await page.locator('[data-live-category="' + category + '"]').count(), 1, category + ' group is shown');
+    const expectedCount = category === 'brilliant' ? '+2' : '+1';
+    assert.ok((await page.locator('[data-live-count="' + category + '"]').innerText()).endsWith(expectedCount), category + ' type total increments');
   }
-  assert.equal(await page.locator('[data-live-move]').count(), 8, 'all rated player half-moves remain visible');
+  assert.equal(await page.locator('[data-live-move]').count(), 9, 'all rated player half-moves remain visible');
   assert.equal(await page.locator('[data-live-move="1. e5"]').count(), 0, 'opponent moves are not counted as player moves');
-  assert.match(await page.locator('#live-move-tally').innerText(), /Moves played · grouped by type \(8\)/);
-  console.log('Live played half-moves appear immediately in the correct category on the right.');
+  assert.match(await page.locator('#live-move-tally').innerText(), /Moves played · grouped by type \(9\)/);
+  console.log('Each analyzed half-move increments its type column immediately.');
 } finally {
   await browser.close();
 }

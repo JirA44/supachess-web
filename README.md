@@ -1,4 +1,4 @@
-# SupaChess - Hub Central
+# SupaChess — apprendre et progresser aux échecs
 
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange)](https://pages.cloudflare.com/)
 [![Version](https://img.shields.io/badge/version-2.0-blue)]()
@@ -110,7 +110,7 @@ git add .
 git commit -m "feat: AIMix Pro v2.0 avec IA minimax avancée"
 
 # 2. Poussez vers GitHub/GitLab
-git remote add origin <votre-repo-url>
+git remote add origin https://github.com/JirA44/supachess-web.git
 git push -u origin main
 
 # 3. Sur Cloudflare Pages, connectez votre repo
@@ -208,7 +208,7 @@ MIT License - Voir le fichier LICENSE pour plus de détails
 ## 📞 Support
 
 Pour toute question ou problème :
-- 📧 Email : (ouvrir une issue sur GitHub)
+- Questions et problèmes : ouvrir une issue sur GitHub.
 - 🐛 Issues : [GitHub Issues](https://github.com/JirA44/supachess-web/issues)
 
 ---

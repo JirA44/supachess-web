@@ -14,7 +14,7 @@
     'karpov_positional_1978.html': { white: 'Anatoly Karpov', black: 'Viktor Korchnoi', date: '1978.??.??', event: 'World Championship Match' },
     'carlsen_brilliancy_2013.html': { white: 'Magnus Carlsen', black: 'Viswanathan Anand', date: '2013.??.??', event: 'World Chess Championship' },
     'alphazero_vs_stockfish.html': { white: 'AlphaZero', black: 'Stockfish 8', date: '2017.??.??', event: 'AlphaZero vs Stockfish, Game 10' },
-    'zup_victory_detailed.html': { white: 'ZUP ULTIMATE', black: 'Stockfish MAX', date: '2025.??.??', event: 'SupaChess simulated match', result: '1-0' },
+    'zup_victory_detailed.html': { white: 'ZUP 8 AI', black: 'Stockfish 17.1 FULL', date: '2026.08.15', event: 'SupaChess recorded replay (stalemate)', result: '1/2-1/2' },
     'supaengine_vs_stockfish_report.html': { white: 'SupaEngine v1.3', black: 'Stockfish 17 (Skill 20)', date: '2026.01.30', event: 'SupaEngine vs Stockfish Test', result: '1/2-1/2' },
     'leela_vs_stockfish_2019.html': { white: 'Leela Chess Zero', black: 'Stockfish 11', date: '2019.??.??', event: 'TCEC Season 16' },
     'deep_blue_kasparov_1997.html': { white: 'Deep Blue', black: 'Garry Kasparov', date: '1997.05.11', event: 'World Championship Match, Game 6', result: '1-0' },

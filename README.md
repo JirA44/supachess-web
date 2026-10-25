@@ -6,6 +6,12 @@
 
 SupaChess est un site d’apprentissage des échecs : il aide à jouer, revoir des parties et comprendre les décisions prises sur l’échiquier. L’objectif est de transformer une partie en entraînement utile : repérer les moments importants, comprendre les erreurs et choisir quoi travailler ensuite.
 
+
+
+## À quoi sert SupaChess ?
+
+Le site donne un espace pour jouer et étudier les échecs. Il vise à aider les joueurs à comprendre leurs décisions et à transformer les erreurs récurrentes en thèmes d’entraînement.
+
 ## Pourquoi l’utiliser ?
 
 Connaître une bonne réponse ne suffit pas toujours pour progresser. Il faut pouvoir revenir à la position, comparer les choix possibles et comprendre ce qui a changé. SupaChess rassemble des parties, des exercices et des outils d’analyse dans un parcours accessible depuis le navigateur.

@@ -8656,35 +8656,41 @@
             const el = document.getElementById('live-move-tally');
             if (!el) return;
             const played = (window.gameHistory || []).filter(m => !m.isOpponent && m.rating !== null && m.rating !== '' && Number.isFinite(Number(m.rating)));
-            const counts = { brilliant: 0, best: 0, veryGood: 0, good: 0, ok: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
-            played.forEach(m => {
-                if (/BRILLANT/i.test(m.quality || '')) counts.brilliant++;
-                else if (/MEILLEUR COUP/i.test(m.quality || '')) counts.best++;
-                else if (m.rating >= 8.5) counts.veryGood++;
-                else if (m.rating >= 7) counts.good++;
-                else if (m.rating >= 5) counts.ok++;
-                else if (m.rating >= 4) counts.inaccuracy++;
-                else if (m.rating >= 2) counts.mistake++;
-                else counts.blunder++;
-            });
-            const row = (label, value) => `<span style="white-space:nowrap">${label} ${value}</span>`;
             const lang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'fr';
             const labels = lang === 'en'
-                ? { title: 'Moves played · live estimate', suggestion: 'At-play suggestion', live: 'Live grade', gap: 'gap to best', missing: 'No suggestion recorded', note: 'A deeper post-game Stockfish analysis can change these provisional grades. A 10/10 suggestion is not proof that it is the best move.' }
-                : { title: 'Coups joués · estimation en direct', suggestion: 'Conseil reçu', live: 'Note en direct', gap: 'écart au meilleur', missing: 'Aucun conseil enregistré', note: 'Une analyse Stockfish approfondie après la partie peut modifier ces notes provisoires. Un conseil 10/10 ne garantit pas que ce soit le meilleur coup.' };
-            const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
-            const translateQuality = value => lang === 'en'
-                ? String(value || '—').replace(/BRILLANT/gi, 'Brilliant').replace(/MEILLEUR COUP/gi, 'Best move').replace(/Bon coup/gi, 'Good move').replace(/Coup OK/gi, 'OK move').replace(/Coup Correct/gi, 'OK move').replace(/Coup Acceptable/gi, 'Acceptable move').replace(/Imprécision/gi, 'Inaccuracy').replace(/Erreur/gi, 'Mistake').replace(/GAFFE/gi, 'Blunder').replace(/Coup joué/gi, 'Move played')
-                : String(value || '—');
-            const moveRows = played.slice(-12).reverse().map(move => {
-                const moveName = `${move.moveNum || ''}. ${move.san || ''}`.trim();
-                const suggestion = move.suggestionScore !== null && move.suggestionScore !== undefined
-                    ? `${move.suggestionSymbol || ''} ${Number(move.suggestionScore).toFixed(1)}/10${move.engineRankAtPlay ? ` · #${move.engineRankAtPlay}` : ''}`
-                    : (move.engineRankAtPlay ? `#${move.engineRankAtPlay} · ${escape(move.suggestionCategory || '')}` : labels.missing);
-                const gap = Number.isFinite(Number(move.evalDiff)) ? `${Number(move.evalDiff) > 0 ? '+' : ''}${Math.round(Number(move.evalDiff))} cp` : '—';
-                return `<div style="display:grid;grid-template-columns:minmax(60px,.7fr) minmax(100px,1fr);gap:6px;padding:5px 3px;border-top:1px solid rgba(255,255,255,.08);font-size:.78em"><strong>${escape(moveName)}</strong><span>${escape(translateQuality(move.quality))}</span><span style="color:#aaa">${escape(labels.suggestion)}: ${escape(suggestion)}</span><span style="color:#aaa">${escape(labels.gap)}: ${escape(gap)}</span></div>`;
+                ? { title: 'Moves played · grouped by type', suggestion: 'At-play suggestion', gap: 'gap to best', missing: 'No suggestion recorded', empty: 'Your played half-moves will appear here as soon as they are analyzed.', note: 'These are live estimates. A deeper post-game Stockfish analysis can change a move’s classification.' }
+                : { title: 'Demi-coups joués · classés par type', suggestion: 'Conseil reçu', gap: 'écart au meilleur', missing: 'Aucun conseil enregistré', empty: 'Vos demi-coups apparaîtront ici dès leur analyse.', note: 'Ces notes sont provisoires. L’analyse Stockfish approfondie peut modifier le classement d’un coup.' };
+            const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }));
+            const categories = [
+                { key: 'brilliant', symbol: '!!', label: lang === 'en' ? 'Brilliant' : 'Brillant', matches: m => /BRILLANT/i.test(m.quality || '') },
+                { key: 'best', symbol: '★', label: lang === 'en' ? 'Best move' : 'Meilleur coup', matches: m => /MEILLEUR COUP/i.test(m.quality || '') },
+                { key: 'very-good', symbol: '!', label: lang === 'en' ? 'Very good' : 'Très bon', matches: m => Number(m.rating) >= 8.5 },
+                { key: 'good', symbol: '✓', label: lang === 'en' ? 'Good' : 'Bon', matches: m => Number(m.rating) >= 7 },
+                { key: 'ok', symbol: '=', label: lang === 'en' ? 'OK' : 'OK', matches: m => Number(m.rating) >= 5 },
+                { key: 'inaccuracy', symbol: '?!', label: lang === 'en' ? 'Inaccuracy' : 'Imprécision', matches: m => Number(m.rating) >= 4 },
+                { key: 'mistake', symbol: '?', label: lang === 'en' ? 'Mistake' : 'Erreur', matches: m => Number(m.rating) >= 2 },
+                { key: 'blunder', symbol: '??', label: lang === 'en' ? 'Blunder' : 'Gaffe', matches: () => true }
+            ];
+            const grouped = Object.fromEntries(categories.map(category => [category.key, []]));
+            played.forEach(move => {
+                const category = categories.find(item => item.matches(move));
+                if (category) grouped[category.key].push(move);
+            });
+            const categoryCounts = categories.map(category =>
+                `<span style="white-space:nowrap">${category.symbol} ${category.label} <strong>${grouped[category.key].length}</strong></span>`
+            ).join('');
+            const moveRows = categories.filter(category => grouped[category.key].length).map(category => {
+                const rows = grouped[category.key].slice().reverse().map(move => {
+                    const moveName = `${move.moveNum || ''}. ${move.san || ''}`.trim();
+                    const suggestion = move.suggestionScore !== null && move.suggestionScore !== undefined
+                        ? `${move.suggestionSymbol || ''} ${Number(move.suggestionScore).toFixed(1)}/10${move.engineRankAtPlay ? ` · #${move.engineRankAtPlay}` : ''}`
+                        : (move.engineRankAtPlay ? `#${move.engineRankAtPlay} · ${escape(move.suggestionCategory || '')}` : labels.missing);
+                    const gap = Number.isFinite(Number(move.evalDiff)) ? `${Number(move.evalDiff) > 0 ? '+' : ''}${Math.round(Number(move.evalDiff))} cp` : '—';
+                    return `<div data-live-move="${escape(moveName)}" style="display:grid;grid-template-columns:minmax(70px,.7fr) minmax(100px,1fr);gap:4px 8px;padding:7px 3px;border-top:1px solid rgba(255,255,255,.08);font-size:.8em"><strong>${escape(moveName)}</strong><strong style="text-align:right">${Number(move.rating).toFixed(1)}/10</strong><span style="grid-column:1/-1;color:#aaa">${escape(labels.suggestion)}: ${escape(suggestion)} · ${escape(labels.gap)}: ${escape(gap)}</span></div>`;
+                }).join('');
+                return `<section data-live-category="${category.key}" style="background:rgba(255,255,255,.035);border-radius:6px;padding:6px 9px"><h5 style="margin:2px 0 4px;color:#ddd;font-size:.82em">${category.symbol} ${category.label} <span style="color:#aaa">(${grouped[category.key].length})</span></h5>${rows}</section>`;
             }).join('');
-            el.innerHTML = `<strong>${labels.title}</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px">${row('!!', counts.brilliant)}${row('★', counts.best)}${row('!', counts.veryGood)}${row('✓', counts.good)}${row('=', counts.ok)}${row('?!', counts.inaccuracy)}${row('?', counts.mistake)}${row('??', counts.blunder)}</div>${moveRows ? `<div style="max-height:180px;overflow:auto;margin-top:8px">${moveRows}</div>` : ''}<small style="display:block;color:#999;margin-top:5px">${labels.note}</small>`;
+            el.innerHTML = `<strong>${labels.title} (${played.length})</strong><div style="display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:.8em;color:#bbb">${categoryCounts}</div>${moveRows ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;max-height:260px;overflow:auto;margin-top:8px">${moveRows}</div>` : `<div style="margin-top:6px;color:#999;font-size:.82em">${labels.empty}</div>`}<small style="display:block;color:#999;margin-top:6px">${labels.note}</small>`;
         }
 
         function resignGame() {

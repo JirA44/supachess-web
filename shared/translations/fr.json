@@ -211,5 +211,7 @@
     "purpose_example3_title": "Exemple : apprendre un principe",
     "purpose_example3_text": "Relier une erreur observée à une explication et à un exercice pour éviter de la répéter.",
     "purpose_example3_link": "Voir les enseignements →",
-    "purpose_note": "Les évaluations automatiques dépendent du moteur et de la profondeur de recherche. Elles doivent être accompagnées d’une explication et ne constituent pas, seules, une preuve de niveau ou de progrès."
+    "purpose_note": "Les évaluations automatiques dépendent du moteur et de la profondeur de recherche. Elles doivent être accompagnées d’une explication et ne constituent pas, seules, une preuve de niveau ou de progrès.",
+    "players_unavailable": "La liste des joueurs en ligne est temporairement indisponible.",
+    "players_permission_denied": "La liste des joueurs en ligne est indisponible : l’application n’a pas l’autorisation de lire les données de présence."
 }

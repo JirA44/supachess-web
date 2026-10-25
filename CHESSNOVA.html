@@ -8677,7 +8677,7 @@
                 if (category) grouped[category.key].push(move);
             });
             const categoryCounts = categories.filter(category => grouped[category.key].length).map(category =>
-                `<div data-live-count="${category.key}" style="display:flex;justify-content:space-between;gap:8px;padding:5px 2px;border-top:1px solid rgba(255,255,255,.08);font-size:.82em"><span>${category.symbol} ${category.label}</span><strong>+${grouped[category.key].length}</strong></div>`
+                `<div data-live-count="${category.key}" style="display:flex;gap:8px;padding:5px 2px;border-top:1px solid rgba(255,255,255,.08);font-size:.82em"><strong>+${grouped[category.key].length}</strong><span>${category.symbol} ${category.label}</span></div>`
             ).join('');
             const moveRows = categories.filter(category => grouped[category.key].length).map(category => {
                 const rows = grouped[category.key].slice().reverse().map(move => {

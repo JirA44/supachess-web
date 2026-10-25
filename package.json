@@ -7,7 +7,7 @@
     "test:periods": "node scripts/test_period_stats.mjs",
     "test:links": "npm run test:site",
     "test:unit": "npm run test:keys && node scripts/test_i18n.mjs && node scripts/test_presence_unavailable.mjs && npm run test:syntax && npm run test:periods && node scripts/test_chess_display.mjs",
-    "test:e2e": "node scripts/test_chess_ui.mjs && node scripts/test_puzzle_modes.mjs"
+    "test:e2e": "node scripts/test_chess_ui.mjs && node scripts/test_puzzle_modes.mjs && node scripts/test_live_move_categories.mjs"
   },
   "dependencies": {
     "chess.js": "^0.10.3"

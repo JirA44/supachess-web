@@ -385,7 +385,7 @@
     }
     function handleGoogleLogin() {
         if (!auth) {
-            showToast('Connexion Google indisponible : Firebase Auth n’a pas démarré. Recharge la page.', true);
+            showToast(t('auth_google_not_ready'), true);
             return;
         }
         var provider = new firebase.auth.GoogleAuthProvider();
@@ -403,25 +403,23 @@
         }).catch(function (err) {
             if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                 var messages = {
-                    'auth/unauthorized-domain': 'Domaine non autorisé par Firebase. Autorise jira44.github.io dans Authentication > Settings > Authorized domains.',
-                    'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication.',
-                    'auth/popup-blocked': 'La fenêtre Google a été bloquée. Autorise les popups pour ce site et réessaie.',
-                    'auth/network-request-failed': 'Connexion réseau impossible pendant la connexion Google. Réessaie.',
-                    'auth/too-many-requests': 'Trop de tentatives. Réessaie un peu plus tard.'
+                    'auth/unauthorized-domain': t('auth_google_unauthorized_domain'),
+                    'auth/operation-not-allowed': t('auth_google_disabled'),
+                    'auth/popup-blocked': t('auth_google_popup_blocked'),
+                    'auth/network-request-failed': t('auth_google_network_error'),
+                    'auth/too-many-requests': t('auth_google_too_many_requests')
                 };
                 console.error('[Community] Google sign-in failed:', err.code, err.message);
                 if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
-                    showToast('Popup bloquée — bascule en redirection...', true);
+                    showToast(t('auth_google_popup_fallback'), true);
                     auth.signInWithRedirect(provider).catch(function (e2) {
                         showToast('Redirection impossible: ' + (e2.code || e2.message), true);
                     });
                     return;
                 }
                 showToast(messages[err.code] || (t('auth_error_generic') + ' (' + (err.code || 'auth/error') + ')'), true);
+                return;
             }
-            if (err.code === 'auth/unauthorized-domain') { showToast('Domaine non autorisé dans Firebase (ajoutez jira44.github.io dans Console Firebase > Auth > Settings)', true); return; }
-            if (err.code === 'auth/network-request-failed') { showToast('Réseau indisponible — réessayez', true); return; }
-            showToast(t('auth_error_generic') + ' (' + (err.code||'') + ')', true);
         });
     }
 

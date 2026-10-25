@@ -66,14 +66,14 @@
     // Apply translations to all data-i18n elements
     function applyTranslations() {
         var dict = translations[currentLang] || {};
+        document.documentElement.lang = currentLang;
         var elements = document.querySelectorAll('[data-i18n]');
         for (var i = 0; i < elements.length; i++) {
             var key = elements[i].getAttribute('data-i18n');
             if (dict[key] !== undefined) {
-                // Check for placeholder attribute
                 var attr = elements[i].getAttribute('data-i18n-attr');
-                if (attr === 'placeholder') {
-                    elements[i].placeholder = dict[key];
+                if (attr) {
+                    elements[i].setAttribute(attr, dict[key]);
                 } else {
                     elements[i].textContent = dict[key];
                 }

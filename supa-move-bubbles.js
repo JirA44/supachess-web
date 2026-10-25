@@ -12,7 +12,7 @@
  *   2. Résumé chiffré : « X coups jouables — Y brillants, Z très bons, ... »
  *   3. Panneau des coups recommandés, cliquables pour jouer le coup
  *
- * Note /10 = écart au meilleur coup (centipions), fenêtre de mesure :
+ * Note décimale basée sur l'écart au meilleur coup (centipions), fenêtre de mesure :
  *   diff = score(meilleur coup) - score(coup joué)
  *   0 cp → 10/10 · 10 cp → 9.5 · 30 → 8.5 · 60 → 7 · 120 → 5 · 300+ → 2 · mat perdu → 0
  */

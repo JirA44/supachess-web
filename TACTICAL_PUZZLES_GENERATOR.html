@@ -172,6 +172,25 @@
             margin-top: 20px;
         }
 
+        .exercise-mode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 18px 0 8px;
+            color: var(--text-secondary);
+        }
+
+        .exercise-mode select {
+            background: #111827;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 215, 0, 0.55);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font: inherit;
+        }
+
         button {
             background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
             color: white;
@@ -476,6 +495,15 @@
                 <div class="timer" id="timer">&#x23F1; 00:00</div>
 
                 <div id="board"></div>
+
+                <label class="exercise-mode" for="exercise-mode-select">
+                    <span data-i18n="exercise_mode_label">Mode d’exercice</span>
+                    <select id="exercise-mode-select" data-i18n="exercise_mode_label" data-i18n-attr="aria-label" aria-label="Mode d’exercice">
+                        <option value="one" data-i18n="exercise_mode_one">Trouver le meilleur demi-coup</option>
+                        <option value="two-auto" data-i18n="exercise_mode_auto">Trouver le meilleur coup — réponse adverse automatique</option>
+                        <option value="two-manual" data-i18n="exercise_mode_manual">Trouver les deux demi-coups</option>
+                    </select>
+                </label>
 
                 <div class="controls">
                     <button onclick="giveHint()" class="warning">Indice</button>
@@ -1323,6 +1351,20 @@
         var movesHistory = [];
         var hintsUsed = 0;
         var puzzleSolved = false;
+        var exerciseMode = 'one';
+        var awaitingSecondHalfMove = false;
+        var autoReplyTimer = null;
+
+        function puzzleText(key, fallback) {
+            return window.ChessNovaI18n ? window.ChessNovaI18n.t(key) : fallback;
+        }
+
+        function getPuzzleOrderForMode() {
+            var ordered = getSortedPuzzleOrder();
+            return exerciseMode === 'one' ? ordered : ordered.filter(function (puzzleIndex) {
+                return hasPlayableTwoMoveLine(PUZZLES[puzzleIndex]);
+            });
+        }
 
         // Load stats from localStorage
         if (localStorage.getItem('puzzle_stats')) {
@@ -1347,6 +1389,23 @@
             };
             board = Chessboard('board', config);
 
+            var modeSelect = document.getElementById('exercise-mode-select');
+            modeSelect.addEventListener('change', function () {
+                exerciseMode = modeSelect.value;
+                var ordered = getPuzzleOrderForMode();
+                if (ordered.length === 0) {
+                    exerciseMode = 'one';
+                    modeSelect.value = 'one';
+                    document.getElementById('feedback').className = 'feedback error';
+                    document.getElementById('feedback').textContent = puzzleText('exercise_no_two_move_puzzle', 'Aucun puzzle avec une suite légale de deux demi-coups n’est disponible.');
+                    document.getElementById('feedback').style.display = 'block';
+                    return;
+                }
+                puzzleOrder = ordered;
+                puzzleOrderPosition = 0;
+                loadPuzzle(puzzleOrder[0]);
+            });
+
             // Sort puzzles by ELO proximity and start with closest
             puzzleOrder = getSortedPuzzleOrder();
             puzzleOrderPosition = 0;
@@ -1354,9 +1413,14 @@
         }
 
         function loadPuzzle(index) {
+            if (autoReplyTimer) {
+                clearTimeout(autoReplyTimer);
+                autoReplyTimer = null;
+            }
             currentPuzzleIndex = index;
             var puzzle = PUZZLES[index];
             puzzleSolved = false;
+            awaitingSecondHalfMove = false;
 
             game = new Chess(puzzle.fen);
             board.position(puzzle.fen);
@@ -1406,6 +1470,7 @@
             if (game.game_over() || puzzleSolved) return false;
 
             var puzzle = PUZZLES[currentPuzzleIndex];
+            if (exerciseMode === 'two-manual' && awaitingSecondHalfMove && movesHistory.length === 1) return;
             var playerColor = puzzle.fen.includes(' w ') ? 'w' : 'b';
 
             if ((playerColor === 'w' && piece.search(/^b/) !== -1) ||
@@ -1440,11 +1505,22 @@
             // v3.1 FIX: Strip check/mate symbols for comparison
             // chess.js adds + and # but puzzle solutions may not include them
             var sanClean = lastMoveSAN.replace(/[+#]/g, '');
-            var solutionClean = puzzle.solution.map(function(s) { return s.replace(/[+#]/g, ''); });
+            var expectedMoves = exerciseMode === 'one' ? (puzzle.solution || []) : (puzzle.solution || []).slice(0, 1);
+            if (exerciseMode === 'two-manual' && movesHistory.length === 2) {
+                expectedMoves = (puzzle.continuation || []).slice(0, 1);
+            }
+            var solutionClean = expectedMoves.map(function(s) { return s.replace(/[+#]/g, ''); });
 
             var feedback = document.getElementById('feedback');
 
             if (solutionClean.includes(sanClean)) {
+                if (exerciseMode === 'two-manual' && movesHistory.length === 1) {
+                    awaitingSecondHalfMove = true;
+                    feedback.className = 'feedback success';
+                    feedback.textContent = puzzleText('exercise_first_move_correct', 'Premier demi-coup correct. À toi de jouer la réponse !');
+                    feedback.style.display = 'block';
+                    return;
+                }
                 // Correct!
                 puzzleSolved = true;
                 feedback.className = 'feedback success';
@@ -1499,18 +1575,18 @@
                 }, 2000);
 
                 // Play continuation moves
-                if (puzzle.continuation && puzzle.continuation.length > 0) {
+                if (exerciseMode === 'two-auto' && puzzle.continuation && puzzle.continuation.length > 0) {
                     feedback.innerHTML += '<br><em>Suite de la partie...</em>';
-                    puzzle.continuation.forEach(function(moveStr, index) {
-                        setTimeout(function() {
-                            var move = game.move(moveStr, {sloppy: true});
-                            if (move) {
-                                board.position(game.fen());
-                                movesHistory.push(move);
-                                updateMoveList();
-                            }
-                        }, (index + 1) * 700);
-                    });
+                    autoReplyTimer = setTimeout(function() {
+                        autoReplyTimer = null;
+                        var response = game.move(puzzle.continuation[0], {sloppy: true});
+                        if (response) {
+                            board.position(game.fen());
+                            movesHistory.push(response);
+                            updateMoveList();
+                            feedback.textContent = puzzleText('exercise_auto_reply_done', 'Excellent ! Coup juste, puis meilleure réponse adverse :') + ' ' + response.san;
+                        }
+                    }, 700);
                 }
             } else {
                 // Incorrect — show what was expected
@@ -1590,16 +1666,25 @@
                 game.undo();
                 board.position(game.fen());
                 movesHistory.pop();
+                awaitingSecondHalfMove = exerciseMode === 'two-manual' && movesHistory.length === 1;
                 updateMoveList();
                 document.getElementById('feedback').style.display = 'none';
             }
+        }
+
+        function hasPlayableTwoMoveLine(puzzle) {
+            if (!puzzle || !puzzle.solution || !puzzle.solution.length || !puzzle.continuation || !puzzle.continuation.length) return false;
+            var position = new Chess(puzzle.fen);
+            var first = position.move(puzzle.solution[0], {sloppy: true});
+            if (!first) return false;
+            return !!position.move(puzzle.continuation[0], {sloppy: true});
         }
 
         function nextPuzzle() {
             puzzleOrderPosition++;
             if (puzzleOrderPosition >= puzzleOrder.length) {
                 // Re-sort based on updated ELO
-                puzzleOrder = getSortedPuzzleOrder();
+                puzzleOrder = getPuzzleOrderForMode();
                 puzzleOrderPosition = 0;
             }
             loadPuzzle(puzzleOrder[puzzleOrderPosition]);

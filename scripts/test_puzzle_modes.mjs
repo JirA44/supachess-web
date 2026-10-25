@@ -26,8 +26,22 @@ try {
   await page.evaluate(() => window.onload());
 
   const modes = page.locator('#exercise-mode-select option');
-  assert.equal(await modes.count(), 3, 'one-move and both two-half-move modes are offered');
-  assert.deepEqual(await modes.evaluateAll(options => options.map(option => option.value)), ['one', 'two-auto', 'two-manual']);
+  assert.equal(await modes.count(), 4, 'one-move, hidden-brilliant, and both two-half-move modes are offered');
+  assert.deepEqual(await modes.evaluateAll(options => options.map(option => option.value)), ['one', 'hidden-brilliant', 'two-auto', 'two-manual']);
+
+  await page.locator('#exercise-mode-select').selectOption('hidden-brilliant');
+  const brilliantIds = await page.evaluate(() => puzzleOrder.map(index => index + 1).sort((a, b) => a - b));
+  assert.deepEqual(brilliantIds, [23, 32, 39], 'the hidden-brilliant mode contains only the three curated non-obvious positions');
+  const hiddenBrilliant = await page.evaluate(() => {
+    const puzzle = PUZZLES[currentPuzzleIndex];
+    const probe = new Chess(puzzle.fen);
+    const move = probe.move(puzzle.solution[0], { sloppy: true });
+    onDrop(move.from, move.to);
+    return { feedback: document.getElementById('feedback').textContent, solved: puzzleSolved, moveCount: movesHistory.length };
+  });
+  assert.match(hiddenBrilliant.feedback, /coup brillant caché/i);
+  assert.equal(hiddenBrilliant.solved, true, 'the curated hidden brilliant move solves in one half-move');
+  assert.equal(hiddenBrilliant.moveCount, 1, 'the hidden-brilliant mode does not autoplay the continuation');
 
   await page.locator('#exercise-mode-select').selectOption('two-manual');
   const firstManual = await page.evaluate(() => {

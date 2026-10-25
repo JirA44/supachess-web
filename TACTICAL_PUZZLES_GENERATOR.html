@@ -500,6 +500,7 @@
                     <span data-i18n="exercise_mode_label">Mode d’exercice</span>
                     <select id="exercise-mode-select" data-i18n="exercise_mode_label" data-i18n-attr="aria-label" aria-label="Mode d’exercice">
                         <option value="one" data-i18n="exercise_mode_one">Trouver le meilleur demi-coup</option>
+                        <option value="hidden-brilliant" data-i18n="exercise_mode_hidden_brilliant">Trouver le coup brillant caché (pas évident)</option>
                         <option value="two-auto" data-i18n="exercise_mode_auto">Trouver le meilleur coup — réponse adverse automatique</option>
                         <option value="two-manual" data-i18n="exercise_mode_manual">Trouver les deux demi-coups</option>
                     </select>
@@ -839,6 +840,8 @@
                 themes: ["Coup tranquille", "Menace de mat"],
                 difficulty: "expert",
                 rating: 2600,
+                // Quiet queen reroute creating a subtle mating threat.
+                hiddenBrilliant: true,
                 description: "Coup tranquille devastateur! La dame se place en d5 pour menacer Df7+ suivi de Fg7 mat.",
                 hint: "La dame doit se repositionner pour creer une menace de mat imparable avec le fou h6."
             },
@@ -936,6 +939,8 @@
                 themes: ["Percee de pions", "Sacrifice"],
                 difficulty: "expert",
                 rating: 2700,
+                // Counterintuitive pawn sacrifice that creates an unstoppable passer.
+                hiddenBrilliant: true,
                 description: "La percee de pions! Sacrifiez un pion pour creer un pion passe imparable. Peu importe comment les noirs capturent, un pion blanc passe a la promotion.",
                 hint: "Poussez le pion central en sacrifice. Apres la capture, un des deux pions restants est libre."
             },
@@ -1011,6 +1016,8 @@
                 themes: ["Sacrifice positionnel", "Gain de pion"],
                 difficulty: "hard",
                 rating: 1850,
+                // Positional knight sacrifice whose compensation is long-term.
+                hiddenBrilliant: true,
                 description: "Sacrifice de cavalier pour demolir la structure de pions et envahir avec la dame.",
                 hint: "Un des cavaliers peut capturer un pion qui semble protege. Calculez les consequences!"
             },
@@ -1361,7 +1368,11 @@
 
         function getPuzzleOrderForMode() {
             var ordered = getSortedPuzzleOrder();
-            return exerciseMode === 'one' ? ordered : ordered.filter(function (puzzleIndex) {
+            if (exerciseMode === 'one') return ordered;
+            if (exerciseMode === 'hidden-brilliant') return ordered.filter(function (puzzleIndex) {
+                return PUZZLES[puzzleIndex].hiddenBrilliant === true;
+            });
+            return ordered.filter(function (puzzleIndex) {
                 return hasPlayableTwoMoveLine(PUZZLES[puzzleIndex]);
             });
         }
@@ -1429,8 +1440,9 @@
             board.orientation(game.turn() === 'w' ? 'white' : 'black');
 
             document.getElementById('puzzle-title').textContent = 'Puzzle Tactique #' + (index + 1);
-            document.getElementById('puzzle-objective').textContent =
-                (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' au trait - Trouvez le meilleur coup!';
+            document.getElementById('puzzle-objective').textContent = exerciseMode === 'hidden-brilliant'
+                ? puzzleText('exercise_hidden_brilliant_objective', 'Trouvez le coup brillant qui ne saute pas aux yeux.')
+                : (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' au trait - Trouvez le meilleur coup!';
 
             // Difficulty badge with ELO
             var difficultyBadge = document.getElementById('difficulty-badge');
@@ -1524,7 +1536,9 @@
                 // Correct!
                 puzzleSolved = true;
                 feedback.className = 'feedback success';
-                feedback.innerHTML = '<strong>Excellent!</strong> Vous avez trouve la solution!';
+                feedback.textContent = exerciseMode === 'hidden-brilliant'
+                    ? puzzleText('exercise_hidden_brilliant_success', 'Excellent ! Vous avez trouvé le coup brillant caché !')
+                    : 'Excellent! Vous avez trouve la solution!';
                 feedback.style.display = 'block';
 
                 stopTimer();

@@ -9611,7 +9611,7 @@
                 const notMastered = masteryRows.filter(item => item.done < item.total).map(item => item.label);
                 const mastered = masteryRows.filter(item => item.done >= item.total).map(item => item.label);
                 const nextMastery = masteryRows.slice(1).find(item => item.done < item.total) || masteryRows[1] || masteryRows[0];
-                const masteryGraph = masteryRows.map((item, index) => `<div style="margin:10px 0" data-mastery="${item.id}"><div style="display:flex;justify-content:space-between;gap:10px;color:#ddd;font-size:.9em"><span>${item.label}</span><span>${item.done}/${item.total} · ${item.status}</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:8px;margin-top:5px;overflow:hidden"><div style="width:${item.pct}%;height:100%;background:${item.pct===100?'#4ade80':'#22d3ee'}"></div></div><a href="${item.href}" style="display:inline-block;margin-top:6px;color:#67e8f9;font-size:.85em">${profileCopy.practice} → ${item.action}</a></div>`).join('');
+                const masteryGraph = masteryRows.map((item, index) => `<div style="margin:10px 0" data-mastery="${item.id}"><div style="display:flex;justify-content:space-between;gap:10px;color:#ddd;font-size:.9em"><span>${item.label}</span><span>${item.done}/${item.total} · ${item.status}</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:8px;margin-top:5px;overflow:hidden"><div style="width:${item.pct}%;height:100%;background:${item.pct===100?'#4ade80':'#22d3ee'}"></div></div><a href="TRAINING_TACTICS.html" data-mastery-link="${item.id}" style="display:inline-block;margin-top:6px;color:#67e8f9;font-size:.85em">${profileCopy.practice} → ${item.action}</a></div>`).join('');
                 const masteryPoints = masteryRows.map((item, index) => `${15 + index * 35},${90 - item.pct * .75}`).join(' ');
                 const weakSummary = games.length
                     ? `${recentBlunders} ${profileLang === 'en' ? 'blunders' : 'gaffe(s)'} · ${recentErrors} ${profileLang === 'en' ? 'mistakes or inaccuracies' : 'erreur(s) ou imprécision(s)'} ${profileLang === 'en' ? 'in the last' : 'sur les'} ${recentGames.length} ${profileLang === 'en' ? 'games' : 'parties'}.`
@@ -9658,7 +9658,7 @@
                     <section aria-labelledby="profile-mastery-title" style="padding:14px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:16px">
                         <h4 id="profile-mastery-title" style="color:#00d9ff;margin:0 0 6px">📚 ${profileCopy.mastery}</h4>
                         <p style="color:#999;font-size:.82em;margin:0 0 12px">${profileCopy.basedOn}</p>
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px"><a href="TRAINING_TACTICS.html" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#087f8c;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeExercises}</a><a href="${nextMastery.href}" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#4c3b91;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeMastery}</a></div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px"><a href="TRAINING_TACTICS.html" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#087f8c;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeExercises}</a><a href="TRAINING_OPENINGS.html" data-profile-resume="mastery" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#4c3b91;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeMastery}</a></div>
                         <svg viewBox="0 0 100 100" role="img" aria-label="${profileCopy.mastery}" style="width:100%;height:90px;background:rgba(255,255,255,.025);border-radius:8px"><polyline points="${masteryPoints}" fill="none" stroke="#22d3ee" stroke-width="3" vector-effect="non-scaling-stroke"/>${masteryRows.map((item,index)=>`<circle cx="${15+index*35}" cy="${90-item.pct*.75}" r="3" fill="#22d3ee"><title>${item.label}: ${item.pct}%</title></circle>`).join('')}</svg>
                         ${masteryGraph}
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:14px"><div style="padding:11px;background:rgba(34,197,94,.1);border-radius:8px;color:#ddd"><strong style="color:#4ade80">${profileCopy.strengths}</strong><div style="margin-top:5px">${mastered.length ? mastered.join(' · ') : (profileLang === 'en' ? 'Keep practicing to record your first mastered topic.' : 'Continuez les exercices pour valider votre premier thème.')}</div></div><div style="padding:11px;background:rgba(239,68,68,.1);border-radius:8px;color:#ddd"><strong style="color:#f87171">${profileCopy.weaknesses}</strong><div style="margin-top:5px">${notMastered.length ? notMastered.join(' · ') : (profileLang === 'en' ? 'All tracked training topics are completed.' : 'Tous les thèmes suivis sont terminés.')}</div></div></div><small style="display:block;margin-top:8px;color:#aaa">${profileCopy.observed}: ${weakSummary}</small>
@@ -9773,6 +9773,12 @@
                 }
 
                 content.innerHTML = html;
+                content.querySelectorAll('[data-mastery-link]').forEach(link => {
+                    const topic = masteryRows.find(item => item.id === link.dataset.masteryLink);
+                    if (topic) link.href = topic.href;
+                });
+                const resumeMasteryLink = content.querySelector('[data-profile-resume="mastery"]');
+                if (resumeMasteryLink) resumeMasteryLink.href = nextMastery.href;
             } catch (err) {
                 console.error('Profile error:', err);
                 content.innerHTML = '<p style="text-align: center; color: #ff6b6b; padding: 20px;">Erreur de chargement du profil</p>';

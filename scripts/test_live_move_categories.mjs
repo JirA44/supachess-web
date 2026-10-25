@@ -46,7 +46,7 @@ try {
   for (const category of ['brilliant', 'best', 'very-good', 'good', 'ok', 'inaccuracy', 'mistake', 'blunder']) {
     assert.equal(await page.locator('[data-live-category="' + category + '"]').count(), 1, category + ' group is shown');
     const expectedCount = category === 'brilliant' ? '+2' : '+1';
-    assert.ok((await page.locator('[data-live-count="' + category + '"]').innerText()).endsWith(expectedCount), category + ' type total increments');
+    assert.ok((await page.locator('[data-live-count="' + category + '"]').innerText()).startsWith(expectedCount), category + ' type total increments');
   }
   assert.equal(await page.locator('[data-live-move]').count(), 9, 'all rated player half-moves remain visible');
   assert.equal(await page.locator('[data-live-move="1. e5"]').count(), 0, 'opponent moves are not counted as player moves');

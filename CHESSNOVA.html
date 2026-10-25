@@ -8658,8 +8658,8 @@
             const played = (window.gameHistory || []).filter(m => !m.isOpponent && m.rating !== null && m.rating !== '' && Number.isFinite(Number(m.rating)));
             const lang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'fr';
             const labels = lang === 'en'
-                ? { title: 'Moves played · grouped by type', suggestion: 'At-play suggestion', gap: 'gap to best', missing: 'No suggestion recorded', empty: 'Your played half-moves will appear here as soon as they are analyzed.', note: 'These are live estimates. A deeper post-game Stockfish analysis can change a move’s classification.' }
-                : { title: 'Demi-coups joués · classés par type', suggestion: 'Conseil reçu', gap: 'écart au meilleur', missing: 'Aucun conseil enregistré', empty: 'Vos demi-coups apparaîtront ici dès leur analyse.', note: 'Ces notes sont provisoires. L’analyse Stockfish approfondie peut modifier le classement d’un coup.' };
+                ? { title: 'Moves played · grouped by type', typeColumn: 'Move type', suggestion: 'At-play suggestion', gap: 'gap to best', missing: 'No suggestion recorded', empty: 'Your played half-moves will appear here as soon as they are analyzed.', note: 'These are live estimates. A deeper post-game Stockfish analysis can change a move’s classification.' }
+                : { title: 'Demi-coups joués · classés par type', typeColumn: 'Type de coup', suggestion: 'Conseil reçu', gap: 'écart au meilleur', missing: 'Aucun conseil enregistré', empty: 'Vos demi-coups apparaîtront ici dès leur analyse.', note: 'Ces notes sont provisoires. L’analyse Stockfish approfondie peut modifier le classement d’un coup.' };
             const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }));
             const categories = [
                 { key: 'brilliant', symbol: '!!', label: lang === 'en' ? 'Brilliant' : 'Brillant', matches: m => /BRILLANT/i.test(m.quality || '') },
@@ -8676,8 +8676,8 @@
                 const category = categories.find(item => item.matches(move));
                 if (category) grouped[category.key].push(move);
             });
-            const categoryCounts = categories.map(category =>
-                `<span style="white-space:nowrap">${category.symbol} ${category.label} <strong>${grouped[category.key].length}</strong></span>`
+            const categoryCounts = categories.filter(category => grouped[category.key].length).map(category =>
+                `<div data-live-count="${category.key}" style="display:flex;gap:8px;padding:5px 2px;border-top:1px solid rgba(255,255,255,.08);font-size:.82em"><strong>+${grouped[category.key].length}</strong><span>${category.symbol} ${category.label}</span></div>`
             ).join('');
             const moveRows = categories.filter(category => grouped[category.key].length).map(category => {
                 const rows = grouped[category.key].slice().reverse().map(move => {
@@ -8690,7 +8690,7 @@
                 }).join('');
                 return `<section data-live-category="${category.key}" style="background:rgba(255,255,255,.035);border-radius:6px;padding:6px 9px"><h5 style="margin:2px 0 4px;color:#ddd;font-size:.82em">${category.symbol} ${category.label} <span style="color:#aaa">(${grouped[category.key].length})</span></h5>${rows}</section>`;
             }).join('');
-            el.innerHTML = `<strong>${labels.title} (${played.length})</strong><div style="display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:.8em;color:#bbb">${categoryCounts}</div>${moveRows ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;max-height:260px;overflow:auto;margin-top:8px">${moveRows}</div>` : `<div style="margin-top:6px;color:#999;font-size:.82em">${labels.empty}</div>`}<small style="display:block;color:#999;margin-top:6px">${labels.note}</small>`;
+            el.innerHTML = `<strong>${labels.title} (${played.length})</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;max-height:260px;overflow:auto;margin-top:8px"><section aria-label="${labels.typeColumn}" style="background:rgba(255,255,255,.035);border-radius:6px;padding:6px 9px"><h5 style="margin:2px 0 4px;color:#ddd;font-size:.82em">${labels.typeColumn}</h5>${categoryCounts || `<div style="margin-top:6px;color:#999;font-size:.82em">${labels.empty}</div>`}</section>${moveRows ? `<div style="display:grid;gap:7px;align-content:start">${moveRows}</div>` : ''}</div><small style="display:block;color:#999;margin-top:6px">${labels.note}</small>`;
         }
 
         function resignGame() {

@@ -26,6 +26,25 @@ Les évaluations automatiques sont des aides à l’analyse. Elles dépendent du
 
 
 
+## English
+
+### What is SupaChess for?
+
+SupaChess is a browser-based chess learning project. It aims to help players review decisions, understand recurring mistakes, and turn them into focused practice.
+
+### Why use it?
+
+Progress requires more than knowing the best move: players need to revisit the position, compare choices, and understand what changed. SupaChess brings play and study tools together in one learning space.
+
+### Examples
+
+- Play a game at an available difficulty, then review moves marked as inaccuracies or mistakes.
+- Follow an annotated game on the board and pause at positions that are hard to understand.
+- Use recurring themes—such as leaving pieces en prise or missing tactics—to choose what to practice next.
+
+Engine evaluations depend on the engine and search depth. Treat them as analysis aids, not as explanations by themselves.
+
+
 ## 🚀 Améliorations Version 2.0
 
 ### ✨ Algorithme IA Avancé

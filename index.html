@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupaChess - Hub Central</title>
+    <title>SupaChess — Académie des erreurs</title>
     <style>
         * {
             margin: 0;
@@ -241,39 +241,83 @@
         .action-btn.danger {
             background: linear-gradient(90deg, #f44336, #da190b);
         }
+    
+        .purpose-panel {
+            background: rgba(8, 16, 38, 0.78);
+            border: 1px solid rgba(120, 180, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 0 0 28px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+        }
+        .purpose-panel h2 {
+            font-size: clamp(1.5rem, 3vw, 2.1rem);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .purpose-lead, .purpose-note {
+            max-width: 900px;
+            margin: 0 auto 20px;
+            text-align: center;
+            color: rgba(255,255,255,.82);
+        }
+        .purpose-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .purpose-card {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 14px;
+            padding: 18px;
+        }
+        .purpose-card h3 { margin-bottom: 8px; color: #8ddcff; }
+        .purpose-card p { line-height: 1.55; color: rgba(255,255,255,.84); }
+        .purpose-card a { display: inline-block; margin-top: 12px; color: #9ce7ff; font-weight: 700; }
+        .purpose-note { margin: 18px auto 0; font-size: .9rem; }
+        @media (max-width: 640px) { .purpose-panel { padding: 20px 16px; } }
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 data-i18n="header_title">ChessNova Chess Engine</h1>
-            <p class="subtitle" data-i18n="header_subtitle">Hybrid Intelligence System - Training Dashboard</p>
-            <p style="margin-top: 10px; opacity: 0.8;" data-i18n="header_elo_info">5 AI Components | ELO actuel : ~3150 | Objectif : 3600+</p>
-            <p style="margin-top: 5px; opacity: 0.9; color: #4CAF50; font-weight: bold;" data-i18n="header_improvement">+13.9% Amelioration en 2 parties !</p>
+            <h1 data-i18n="header_title">SupaChess — Académie des erreurs</h1>
+            <p class="subtitle" data-i18n="header_subtitle">Comprendre ses parties, apprendre de ses erreurs et savoir quoi travailler.</p>
         </div>
 
-        <div class="status-bar">
-            <div class="status-card">
-                <div class="icon">&#x1F3AE;</div>
-                <div class="label" data-i18n="status_session">Session Active</div>
-                <div class="value" data-i18n="status_session_value">EN COURS</div>
+        
+        <section class="purpose-panel" aria-labelledby="purpose-title">
+            <h2 id="purpose-title" data-i18n="purpose_title">SupaChess : comprendre ses parties pour progresser</h2>
+            <p class="purpose-lead" data-i18n="purpose_lead">Une académie d’échecs qui transforme les erreurs et les bons coups en leçons concrètes.</p>
+            <div class="purpose-grid">
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_what_title">À quoi ça sert ?</h3>
+                    <p data-i18n="purpose_what_text">Revoir une partie, repérer les moments décisifs et comprendre ce qu’un demi-coup change dans la position.</p>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_why_title">Pourquoi l’utiliser ?</h3>
+                    <p data-i18n="purpose_why_text">Connaître le meilleur coup ne suffit pas : il faut comprendre pourquoi un coup fonctionne, où l’on s’est trompé et quel thème travailler ensuite.</p>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example1_title">Exemple : étudier une partie</h3>
+                    <p data-i18n="purpose_example1_text">Suivre les demi-coups sur l’échiquier, s’arrêter à un moment critique et comparer les choix possibles.</p>
+                    <a href="kasparov_immortal_1999.html" data-i18n="purpose_example1_link">Ouvrir une partie commentée →</a>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example2_title">Exemple : cibler une difficulté</h3>
+                    <p data-i18n="purpose_example2_text">Revoir une position où une pièce était en prise ou une tactique a été manquée, puis travailler ce thème.</p>
+                    <a href="CHESS_COACH.html" data-i18n="purpose_example2_link">Ouvrir Chess Coach →</a>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example3_title">Exemple : apprendre un principe</h3>
+                    <p data-i18n="purpose_example3_text">Relier une erreur observée à une explication et à un exercice pour éviter de la répéter.</p>
+                    <a href="ENSEIGNEMENTS_ECHECS.html" data-i18n="purpose_example3_link">Voir les enseignements →</a>
+                </article>
             </div>
-            <div class="status-card">
-                <div class="icon">&#x1F4CA;</div>
-                <div class="label" data-i18n="status_elo">ELO Actuel</div>
-                <div class="value">~3150</div>
-            </div>
-            <div class="status-card">
-                <div class="icon">&#x1F525;</div>
-                <div class="label" data-i18n="status_improvement">Amelioration</div>
-                <div class="value">+13.9%</div>
-            </div>
-            <div class="status-card">
-                <div class="icon">&#x23F1;</div>
-                <div class="label" data-i18n="status_time">Temps Total</div>
-                <div class="value">20h+</div>
-            </div>
-        </div>
+            <p class="purpose-note" data-i18n="purpose_note">Les évaluations automatiques dépendent du moteur et de la profondeur de recherche. Elles doivent être accompagnées d’une explication et ne constituent pas, seules, une preuve de niveau ou de progrès.</p>
+        </section>
 
         <div class="quick-actions">
             <button class="action-btn" data-section="chess-coach" onclick="window.location.href='CHESS_COACH.html'" style="background: linear-gradient(90deg, #00d9ff, #667eea);">
@@ -732,10 +776,8 @@
 
         <div class="footer">
             <p><strong data-i18n="footer_engine_name">ChessNova Chess Engine</strong> - <span data-i18n="footer_engine_desc">Hybrid Intelligence System</span></p>
-            <p data-i18n="footer_tech">Minimax + Alpha-Beta Pruning + Stockfish 17.1 FULL</p>
-            <p style="margin-top: 15px; font-size: 0.9rem;">
-                Session ID: 20251024_161849 | Auto-Learning Pipeline Active
-            </p>
+            <p data-i18n="footer_tech">Parties commentées, entraînement et explications</p>
+            
             <p style="margin-top: 10px; opacity: 0.6; font-size: 0.85rem;">
                 <span data-i18n="footer_last_update">Derniere mise a jour :</span> <span id="lastUpdate"></span>
             </p>

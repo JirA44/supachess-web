@@ -17,7 +17,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
   await page.setContent('<div id="live-move-tally" aria-live="polite"></div>');
-  await page.addScriptTag({ content: "window.ChessNovaI18n = { getLang: () => 'en' };\n" + renderer + "\nwindow.renderLiveMoves = updateLiveMoveTally;" });
+  await page.addScriptTag({ content: `window.ChessNovaI18n = { getLang: () => 'en' };\n${renderer}\nwindow.renderLiveMoves = updateLiveMoveTally;` });
 
   await page.evaluate(() => {
     window.gameHistory = [];
@@ -26,7 +26,7 @@ try {
     window.renderLiveMoves();
   });
   assert.equal(await page.locator('[data-live-category="brilliant"] [data-live-move="1. e4"]').count(), 1);
-  assert.equal(await page.locator('[data-live-count="brilliant"]').innerText(), '!! Brilliant\n+1');
+  assert.equal(await page.locator('[data-live-count="brilliant"]').innerText(), '+1\n!! Brilliant');
 
   await page.evaluate(() => {
     window.gameHistory.push(
@@ -44,9 +44,9 @@ try {
   });
 
   for (const category of ['brilliant', 'best', 'very-good', 'good', 'ok', 'inaccuracy', 'mistake', 'blunder']) {
-    assert.equal(await page.locator('[data-live-category="' + category + '"]').count(), 1, category + ' group is shown');
+    assert.equal(await page.locator(`[data-live-category="${category}"]`).count(), 1, `${category} group is shown`);
     const expectedCount = category === 'brilliant' ? '+2' : '+1';
-    assert.ok((await page.locator('[data-live-count="' + category + '"]').innerText()).startsWith(expectedCount), category + ' type total increments');
+    assert.ok((await page.locator(`[data-live-count="${category}"]`).innerText()).startsWith(expectedCount), `${category} type total increments`);
   }
   assert.equal(await page.locator('[data-live-move]').count(), 9, 'all rated player half-moves remain visible');
   assert.equal(await page.locator('[data-live-move="1. e5"]').count(), 0, 'opponent moves are not counted as player moves');
@@ -55,3 +55,4 @@ try {
 } finally {
   await browser.close();
 }
+

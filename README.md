@@ -4,6 +4,22 @@
 [![Version](https://img.shields.io/badge/version-2.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 
+SupaChess est un site d’apprentissage des échecs : il aide à jouer, revoir des parties et comprendre les décisions prises sur l’échiquier. L’objectif est de transformer une partie en entraînement utile : repérer les moments importants, comprendre les erreurs et choisir quoi travailler ensuite.
+
+## Pourquoi l’utiliser ?
+
+Connaître une bonne réponse ne suffit pas toujours pour progresser. Il faut pouvoir revenir à la position, comparer les choix possibles et comprendre ce qui a changé. SupaChess rassemble des parties, des exercices et des outils d’analyse dans un parcours accessible depuis le navigateur.
+
+## Exemples d’utilisation
+
+- **Jouer pour s’entraîner** : ouvrir le site, choisir une difficulté disponible et jouer une partie ; après la partie, relever les coups signalés comme erreurs ou imprécisions.
+- **Étudier une partie** : ouvrir une partie commentée disponible, suivre les demi-coups sur l’échiquier et s’arrêter aux positions qui posent question.
+- **Travailler une faiblesse** : après plusieurs parties, choisir un thème récurrent — par exemple les pièces en prise ou les tactiques manquées — puis refaire des exercices sur ce thème.
+
+Les évaluations automatiques sont des aides à l’analyse. Elles dépendent du moteur, de sa profondeur et de la position ; elles ne remplacent pas une explication compréhensible ni une revue humaine.
+
+
+
 ## 🚀 Améliorations Version 2.0
 
 ### ✨ Algorithme IA Avancé
@@ -192,8 +208,8 @@ MIT License - Voir le fichier LICENSE pour plus de détails
 ## 📞 Support
 
 Pour toute question ou problème :
-- 📧 Email : support@aimix.chess
-- 🐛 Issues : [GitHub Issues](https://github.com/votre-repo/issues)
+- 📧 Email : (ouvrir une issue sur GitHub)
+- 🐛 Issues : [GitHub Issues](https://github.com/JirA44/supachess-web/issues)
 
 ---
 

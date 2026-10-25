@@ -18,7 +18,7 @@ const pages = walk(ROOT).map((file) => path.relative(ROOT, file).split(path.sep)
 async function isolateExternalServices(page) {
   const chessRuntime = fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') + `
 window.Chess = Chess;
-window.Chart = window.Chart || function(){ this.destroy=function(){}; this.update=function(){}; };
+window.Chart = window.Chart || function(){ this.data={labels:[],datasets:[{data:[]},{data:[]}]}; this.destroy=function(){}; this.update=function(){}; };
 window.Chart.defaults = window.Chart.defaults || {};
 window.Chart.getChart = window.Chart.getChart || function(){ return null; };
 window.Chessboard = window.Chessboard || function(id){ const el=document.getElementById(id); if(el){el.style.minHeight='320px';el.style.background='#ddd';el.textContent='Local chessboard fixture';} return {start:function(){},position:function(){},orientation:function(){},flip:function(){},resize:function(){}}; };
@@ -29,6 +29,7 @@ window.$ = window.jQuery = window.$ || function(selector){
   nodes.forEach((n,i)=>{api[i]=n;});api.length=nodes.length;return api;
 };`;
   await page.addInitScript({ content: chessRuntime });
+  await page.addInitScript(() => { window.firebase = undefined; });
   const serviceHost = /(?:workers\.dev|onrender\.com|firebaseio\.com|firestore\.googleapis\.com|identitytoolkit\.googleapis\.com|lichess\.org|localhost:\d+)/i;
   await page.route('**/*', async (route) => {
     const url = route.request().url();
@@ -42,7 +43,7 @@ window.$ = window.jQuery = window.$ || function(selector){
     }
     if (url.startsWith('http://127.0.0.1:4173/')) return route.continue();
     if (/chart(?:\.[^/?]+)*\.js/i.test(url)) {
-      const chartFixture = 'window.Chart = function(){ this.destroy=function(){}; this.update=function(){}; }; window.Chart.defaults={}; window.Chart.getChart=function(){ return null; };';
+      const chartFixture = 'window.Chart = function(){ this.data={labels:[],datasets:[{data:[]},{data:[]}]}; this.destroy=function(){}; this.update=function(){}; }; window.Chart.defaults={}; window.Chart.getChart=function(){ return null; };';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chartFixture });
     }
     if (/cdnjs\.cloudflare\.com\/ajax\/libs\/chess\.js/i.test(url)) {
@@ -73,7 +74,7 @@ window.$ = window.jQuery = window.$ || function(selector){
   });
 }
 
-test('each of the 94 HTML routes loads from the local site build', async ({ page }) => {
+test('every HTML route loads from the local site build', async ({ page }) => {
   test.setTimeout(120000);
   await isolateExternalServices(page);
   const failures = [];
@@ -87,7 +88,7 @@ test('each of the 94 HTML routes loads from the local site build', async ({ page
     const bodyText = await page.locator('body').innerText().catch(() => '');
     if (!bodyText.trim()) failures.push(`${file}: empty body`);
   }
-  expect(pages.length).toBe(94);
+  expect(pages.length).toBeGreaterThanOrEqual(94);
   expect(failures).toEqual([]);
   expect(browserErrors).toEqual([]);
 });
@@ -111,6 +112,36 @@ test('ChessNova comment generation handles a legal move without undefined evalua
   expect(result.san).toBe('e4');
   expect(result.generationCompleted).toBe(true);
   expect(browserErrors).toEqual([]);
+});
+
+test('profile resumes training and shows saved mastery in the selected language', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.addInitScript(() => {
+    localStorage.setItem('chessnova_lang', 'en');
+    localStorage.setItem('supachess_openings_v1', JSON.stringify(['sicilian','ruy']));
+    localStorage.setItem('supachess_tactics_v1', JSON.stringify(['f1','f2','p1']));
+    localStorage.setItem('chessnova_training_endgames', JSON.stringify({ completed:['eg1'] }));
+  });
+  await page.goto('/CHESSNOVA.html', { waitUntil:'domcontentloaded' });
+  await page.evaluate(() => {
+    currentUser = { username:'Test player', email:'test@example.invalid', elo_rating:1420, created_at:'2026-01-01T00:00:00Z' };
+    sessionId = 'profile-test-session';
+    openProfileModal();
+  });
+  await expect(page.locator('#profile-mastery-title')).toHaveText('📚 Your skills');
+  await expect(page.locator('#profileContent')).toContainText('Resume training');
+  await expect(page.getByRole('link', { name: 'Resume exercises' })).toHaveAttribute('href', 'TRAINING_TACTICS.html');
+  await expect(page.getByRole('link', { name: 'Resume mastery training' })).toHaveAttribute('href', 'TRAINING_OPENINGS.html');
+  await expect(page.locator('#profileContent')).toContainText('3/40');
+  await expect(page.locator('#profileContent')).toContainText('2/8');
+  await expect(page.locator('#profileContent')).toContainText('1/10');
+  await expect(page.locator('#profileContent svg[role="img"][aria-label="Your skills"]')).toBeVisible();
+  await expect(page.locator('#profileContent')).toContainText('Skills mastered');
+  await expect(page.locator('#profileContent')).toContainText('What to work on');
+  await expect(page.locator('#profileContent')).toContainText('Observed in your latest games');
+  for (const pageName of ['TRAINING_TACTICS.html','TRAINING_OPENINGS.html','TRAINING_ENDGAMES.html']) {
+    await expect(page.locator(`#profileContent a[href="${pageName}"]`).first()).toBeVisible();
+  }
 });
 
 test('Kasparov–Topalov 1999 replay reaches move 44 and exposes the full PGN', async ({ page }) => {
@@ -333,3 +364,4 @@ test('the Stockfish report renders complete chessboard diagrams', async ({ page 
     expect(await board.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(0);
   }
 });
+

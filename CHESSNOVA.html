@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- Deploy: 134108347279934760 -->
 <html lang="fr">
 <head>
@@ -736,6 +736,7 @@
 
                 <div class="controls">
                     <button onclick="newGame()">🎮 Nouvelle Partie</button>
+                    <button onclick="resignGame()" id="resignBtn" style="background:#7f1d1d;border:1px solid #ef4444;">🏳️ Abandonner</button>
                     <button onclick="undoMove()" id="undoBtn">↩️ Retour</button>
                     <button onclick="getHint()">💡 Indice</button>
                     <button onclick="toggleAutoPlay()" id="autoPlayBtn">🤖 Auto</button>
@@ -949,6 +950,9 @@
                         <p style="color: #888; font-style: italic;">Les coups apparaîtront ici...</p>
                     </div>
                     <div id="moves-stats" style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px; font-size: 0.85em; color: #888;"></div>
+                    <div id="live-move-tally" aria-live="polite" style="margin-top:8px;padding:10px;background:rgba(0,0,0,.3);border-radius:7px;font-size:.85em;color:#ddd;">
+                        <strong>Coups joués · estimation provisoire</strong><div>En attente du premier demi-coup analysé.</div>
+                    </div>
                 </div>
 
                 <!-- ANALYSE DU COUP JOUÉ + HISTORIQUE (côte à côte) -->
@@ -3471,7 +3475,7 @@
         }
 
         async function makeAIMove() {
-            if (game.game_over() || isAIThinking) return;
+            if (window.gameResigned || game.game_over() || isAIThinking) return;
 
             isAIThinking = true;
             const thinkingEl = document.getElementById('thinking');
@@ -3507,6 +3511,7 @@
                 console.log('[Native] Getting move from ' + settings.name);
                 try {
                     const moveStr = await getNativeBestMove(game.fen(), [], settings.moveTime || 1000);
+                    if (window.gameResigned) return;
                     console.log('[Native] Best move:', moveStr);
 
                     // Convertir le coup UCI (e2e4) en format chess.js
@@ -3558,6 +3563,11 @@
                     stockfish.postMessage(`go depth ${settings.depth} movetime ${settings.moveTime}`);
 
                     pendingMove = function(moveStr) {
+                        if (window.gameResigned) {
+                            isAIThinking = false;
+                            thinkingEl.classList.remove('active');
+                            return;
+                        }
                         // Clear auto-unstick timer
                         if (autoUnstickTimer) { clearTimeout(autoUnstickTimer); autoUnstickTimer = null; }
                         // Clear timeout car on a reçu une réponse
@@ -3728,7 +3738,8 @@
                 function analyzePlayerMove(move) {
             // Chercher le coup dans les suggestions déjà analysées par Stockfish
             const foundMove = allEvaluatedMoves.find(m =>
-                m.move.from === move.from && m.move.to === move.to
+                m.move.from === move.from && m.move.to === move.to &&
+                (m.move.promotion || '') === (move.promotion || '')
             );
 
             let afterEval, evalDiff, rankInSuggestions;
@@ -3789,11 +3800,10 @@
                         playerColor: game.turn() === 'w' ? 'Noirs' : 'Blancs'
                     });
                 } else if (rankInSuggestions === 1) {
-                    quality = '🥇 MEILLEUR COUP!';
+                    quality = '★ MEILLEUR COUP';
                     rating = 10;
-                    className = 'analysis-brilliant';
-                    sessionStats.brilliantMoves++;
-                    unlockAchievement('ach-brilliant');
+                    className = 'analysis-excellent';
+                    sessionStats.perfectMoves++;
                 } else if (rankInSuggestions <= 3) {
                     quality = '🥈 Excellent';
                     rating = 9;
@@ -3879,6 +3889,9 @@
 
             // Sauvegarder dans l'historique des coups
             if (!window.gameHistory) window.gameHistory = [];
+            const liveEval = window.supaBubbles && window.supaBubbles.getHistory
+                ? window.supaBubbles.getHistory().slice(-1)[0] : null;
+            const matchedLiveEval = liveEval && liveEval.san === move.san && liveEval.moveNumber === game.history().length ? liveEval : null;
             window.gameHistory.push({
                 moveNum: Math.ceil(game.history().length / 2),
                 san: move.san,
@@ -3888,8 +3901,16 @@
                 rating: rating,
                 quality: quality,
                 comment: moveComment,
-                tactical: tacticalInfo
+                tactical: tacticalInfo,
+                isOpponent: false,
+                suggestionScore: matchedLiveEval ? matchedLiveEval.score : null,
+                suggestionSymbol: matchedLiveEval ? matchedLiveEval.symbol : null,
+                suggestionDiff: matchedLiveEval ? matchedLiveEval.diff : null,
+                engineRankAtPlay: rankInSuggestions,
+                suggestionCategory: foundMove ? foundMove.category : null,
+                suggestionEvalDiff: foundMove ? foundMove.evalDiff : null
             });
+            updateLiveMoveTally();
 
             // Affichage de l'analyse
             const analysisDiv = document.getElementById('move-analysis');
@@ -4239,11 +4260,36 @@
             }
         }
 
+        let reviewPly = null;
+        function reviewMove(ply) {
+            const moves = game.history();
+            reviewPly = Math.max(0, Math.min(moves.length, Number(ply) || 0));
+            if (reviewPly === moves.length) reviewPly = null;
+            const replay = new Chess();
+            const targetPly = reviewPly === null ? moves.length : reviewPly;
+            for (let i = 0; i < targetPly; i++) replay.move(moves[i]);
+            if (board) board.position(replay.fen(), false);
+            document.querySelectorAll('[data-review-ply]').forEach(el => {
+                el.style.outline = reviewPly !== null && Number(el.dataset.reviewPly) === reviewPly ? '2px solid #ffd700' : '';
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+            if (event.target && /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+            if (document.querySelector('.modal.active, #game-report-modal, #game-over-modal')) return;
+            if (!game || !game.history().length) return;
+            event.preventDefault();
+            const current = reviewPly === null ? game.history().length : reviewPly;
+            reviewMove(current + (event.key === 'ArrowRight' ? 1 : -1));
+        });
+
         function updateMoveHistory() {
             const container = document.getElementById('move-history');
             if (!container) return;
 
             const history = game.history();
+            if (reviewPly !== null && reviewPly > history.length) reviewPly = null;
 
             // Mettre à jour le compteur total
             const totalDisplay = document.getElementById('total-moves-display');
@@ -4262,13 +4308,14 @@
 
                 html += `<div style="display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">`;
                 html += `<span style="color: #888; min-width: 25px;">${moveNum}.</span>`;
-                html += `<span style="color: #4ade80; min-width: 50px; font-weight: bold;">${whiteMove}</span>`;
-                html += `<span style="color: #f87171; min-width: 50px; font-weight: bold;">${blackMove}</span>`;
+                html += `<button type="button" data-review-ply="${i + 1}" onclick="reviewMove(${i + 1})" aria-label="Revoir ${moveNum}. ${whiteMove}" style="color:#4ade80;min-width:50px;font-weight:bold;background:transparent;border:0;cursor:pointer;">${whiteMove}</button>`;
+                if (blackMove) html += `<button type="button" data-review-ply="${i + 2}" onclick="reviewMove(${i + 2})" aria-label="Revoir ${moveNum}... ${blackMove}" style="color:#f87171;min-width:50px;font-weight:bold;background:transparent;border:0;cursor:pointer;">${blackMove}</button>`;
                 html += `</div>`;
             }
 
             container.innerHTML = html;
             container.scrollTop = container.scrollHeight;
+            if (reviewPly !== null) reviewMove(reviewPly);
         }
 
         // SUGGESTIONS DE COUPS AVEC COMMENTAIRES
@@ -7814,6 +7861,8 @@
             if (typeof evalDiff !== 'number' || isNaN(evalDiff)) evalDiff = 0;
             if (typeof afterEval !== 'number' || isNaN(afterEval)) afterEval = 0;
             if (typeof beforeEval !== 'number' || isNaN(beforeEval)) beforeEval = 0;
+            const prevEval = beforeEval;
+            const currentEval = afterEval;
 
             const positives = [];
             const negatives = [];
@@ -8418,10 +8467,12 @@
 
             // Partie en cours
             if (hasCurrentGame) {
-                const totalMoves = window.gameHistory.length;
-                const avgRating = (window.gameHistory.reduce((a, b) => a + b.rating, 0) / totalMoves).toFixed(1);
-                const brilliants = window.gameHistory.filter(m => m.rating >= 9).length;
-                const blunders = window.gameHistory.filter(m => m.rating <= 3).length;
+                const playerHistory = window.gameHistory.filter(m => !m.isOpponent && Number.isFinite(Number(m.rating)));
+                const totalMoves = playerHistory.length;
+                const avgRating = totalMoves ? (playerHistory.reduce((a, b) => a + Number(b.rating), 0) / totalMoves).toFixed(1) : '—';
+                const brilliants = playerHistory.filter(m => /BRILLANT/i.test(m.quality || '')).length;
+                const bestMoves = playerHistory.filter(m => /MEILLEUR COUP/i.test(m.quality || '')).length;
+                const blunders = playerHistory.filter(m => Number(m.rating) < 2).length;
                 const opponent = window.currentOpponent || 'IA';
 
                 reportHTML += `
@@ -8438,9 +8489,13 @@
                                 <div style="color: #888; font-size: 0.85em;">Moyenne</div>
                             </div>
                             <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; text-align: center;">
-                                <div style="font-size: 1.8em; color: #facc15;">⭐ ${brilliants}</div>
-                                <div style="color: #888; font-size: 0.85em;">Brillants</div>
+                                    <div style="font-size: 1.8em; color: #facc15;">!! ${brilliants}</div>
+                                    <div style="color: #888; font-size: 0.85em;">Brillants</div>
                             </div>
+                                <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 1.8em; color: #fde68a;">★ ${bestMoves}</div>
+                                    <div style="color: #888; font-size: 0.85em;">Meilleurs coups</div>
+                                </div>
                             <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; text-align: center;">
                                 <div style="font-size: 1.8em; color: #f87171;">${blunders}</div>
                                 <div style="color: #888; font-size: 0.85em;">Gaffes</div>
@@ -8448,19 +8503,23 @@
                         </div>
 
                         <details style="cursor: pointer;">
-                            <summary style="color: var(--accent-primary); padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px;">📋 Voir analyse coup par coup (${totalMoves} coups)</summary>
+                            <summary style="color: var(--accent-primary); padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px;">📋 Voir analyse coup par coup (${totalMoves} demi-coups joués par vous)</summary>
                             <div style="max-height: 300px; overflow-y: auto; padding: 10px;">
                 `;
 
                 window.gameHistory.forEach((m, i) => {
                     const bgColor = m.rating >= 8 ? 'rgba(74,222,128,0.15)' : m.rating <= 3 ? 'rgba(248,113,113,0.15)' : 'rgba(255,255,255,0.05)';
                     const borderColor = m.rating >= 8 ? '#4ade80' : m.rating <= 3 ? '#f87171' : '#00d9ff';
+                    const suggestionText = m.suggestionScore !== null && m.suggestionScore !== undefined
+                        ? `Conseil pendant la partie : ${m.suggestionSymbol || ''} ${m.suggestionScore}/10${m.engineRankAtPlay ? ` · rang moteur #${m.engineRankAtPlay}` : ''}`
+                        : (m.engineRankAtPlay ? `Conseil pendant la partie : rang moteur #${m.engineRankAtPlay} · catégorie ${m.suggestionCategory || 'non précisée'}` : 'Aucun conseil moteur capturé pour ce demi-coup.');
                     reportHTML += `
                         <div style="background: ${bgColor}; margin: 8px 0; padding: 12px; border-radius: 8px; border-left: 3px solid ${borderColor};">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <strong style="color: var(--accent-primary);">${m.moveNum}. ${m.san} (${m.color})</strong>
                                 <span style="background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">${m.quality}</span>
                             </div>
+                            <div style="color:#9ca3af;font-size:.82em;margin-bottom:6px">${suggestionText} · résultat immédiat : ${Number(m.rating).toFixed(1)}/10</div>
                             ${m.comment}
                         </div>
                     `;
@@ -8593,6 +8652,42 @@
             updateEloChart();
         }
 
+        function updateLiveMoveTally() {
+            const el = document.getElementById('live-move-tally');
+            if (!el) return;
+            const played = (window.gameHistory || []).filter(m => !m.isOpponent && Number.isFinite(Number(m.rating)));
+            const counts = { brilliant: 0, best: 0, veryGood: 0, good: 0, ok: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
+            played.forEach(m => {
+                if (/BRILLANT/i.test(m.quality || '')) counts.brilliant++;
+                else if (/MEILLEUR COUP/i.test(m.quality || '')) counts.best++;
+                else if (m.rating >= 8.5) counts.veryGood++;
+                else if (m.rating >= 7) counts.good++;
+                else if (m.rating >= 5) counts.ok++;
+                else if (m.rating >= 4) counts.inaccuracy++;
+                else if (m.rating >= 2) counts.mistake++;
+                else counts.blunder++;
+            });
+            const row = (label, value) => `<span style="white-space:nowrap">${label} ${value}</span>`;
+            el.innerHTML = `<strong>Coups joués · estimation provisoire</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px">${row('!!', counts.brilliant)}${row('★', counts.best)}${row('!', counts.veryGood)}${row('✓', counts.good)}${row('=', counts.ok)}${row('?!', counts.inaccuracy)}${row('?', counts.mistake)}${row('??', counts.blunder)}</div><small style="display:block;color:#999;margin-top:5px">Le bilan Stockfish approfondi peut reclasser ces coups. Le rang ou la note 10/10 des suggestions n’est pas une garantie du meilleur coup.</small>`;
+        }
+
+        function resignGame() {
+            if (!game || game.game_over() || !game.history().length) {
+                showToast('Jouez au moins un coup avant d’abandonner.', 'info');
+                return;
+            }
+            if (!confirm('Abandonner cette partie ?')) return;
+            window.gameResigned = true;
+            isAIThinking = false;
+            if (autoUnstickTimer) clearTimeout(autoUnstickTimer);
+            if (stockfishTimeout) clearTimeout(stockfishTimeout);
+            if (stockfish && stockfishReady) { try { stockfish.postMessage('stop'); } catch (e) {} }
+            sessionStats.losses++;
+            saveToLocalStorage();
+            saveGameToServer('loss');
+            showGameOverModal('loss', 'Partie abandonnée', '🏳️');
+        }
+
         // ========================================
         // ACHIEVEMENTS
         // ========================================
@@ -8625,6 +8720,7 @@
         }
 
         function onDragStart(source, piece, position, orientation) {
+            if (reviewPly !== null) return false;
             // Bloquer le drag si conditions non remplies
             if (game.game_over()) return false;
             if (isAIThinking) return false;
@@ -8758,7 +8854,10 @@
             }
 
             // Réinitialiser pour la nouvelle partie
+            window.gameResigned = false;
             window.gameHistory = [];
+            reviewPly = null;
+            updateLiveMoveTally();
             const currentSettings = difficultyLevels[difficulty] || difficultyLevels['beginner'];
             window.currentOpponent = `IA ${currentSettings.elo} ELO`;
 
@@ -9030,19 +9129,22 @@
             const playerMoves = history.filter((m, i) => i % 2 === 0).length;
 
             // Stats depuis gameHistory si disponible
-            const gameStats = window.gameHistory || [];
-            const brilliants = gameStats.filter(m => m.rating >= 9).length;
-            const goodMoves = gameStats.filter(m => m.rating >= 7 && m.rating < 9).length;
-            const inaccuracies = gameStats.filter(m => m.rating >= 5 && m.rating < 7).length;
-            const mistakes = gameStats.filter(m => m.rating >= 3 && m.rating < 5).length;
-            const blunders = gameStats.filter(m => m.rating < 3).length;
+            const gameStats = (window.gameHistory || []).filter(m => !m.isOpponent && Number.isFinite(Number(m.rating)));
+            const brilliants = gameStats.filter(m => /BRILLANT/i.test(m.quality || '')).length;
+            const bestMoves = gameStats.filter(m => /MEILLEUR COUP/i.test(m.quality || '')).length;
+            const veryGoodMoves = gameStats.filter(m => !/BRILLANT|MEILLEUR COUP/i.test(m.quality || '') && Number(m.rating) >= 8.5).length;
+            const goodMoves = gameStats.filter(m => Number(m.rating) >= 7 && Number(m.rating) < 8.5).length;
+            const okMoves = gameStats.filter(m => Number(m.rating) >= 5 && Number(m.rating) < 7).length;
+            const inaccuracies = gameStats.filter(m => Number(m.rating) >= 4 && Number(m.rating) < 5).length;
+            const mistakes = gameStats.filter(m => Number(m.rating) >= 2 && Number(m.rating) < 4).length;
+            const blunders = gameStats.filter(m => Number(m.rating) < 2).length;
             const avgRating = gameStats.length > 0
-                ? (gameStats.reduce((a, b) => a + b.rating, 0) / gameStats.length).toFixed(1)
+                ? (gameStats.reduce((a, b) => a + Number(b.rating), 0) / gameStats.length).toFixed(1)
                 : '-';
 
             // Calculer l'accuracy
             const accuracy = gameStats.length > 0
-                ? Math.round((gameStats.filter(m => m.rating >= 7).length / gameStats.length) * 100)
+                ? Math.round((gameStats.filter(m => Number(m.rating) >= 7).length / gameStats.length) * 100)
                 : 0;
 
             const opponent = window.currentOpponent || difficultyLevels[difficulty]?.name || 'IA';
@@ -9079,14 +9181,26 @@
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(74px, 1fr)); gap: 8px; text-align: center;">
                                 <div style="background: rgba(250,204,21,0.2); padding: 8px; border-radius: 6px;">
                                     <div style="color: #facc15; font-weight: bold;">⭐${brilliants}</div>
                                     <div style="color: #888; font-size: 0.7em;">Brillant</div>
                                 </div>
+                                <div style="background: rgba(250,204,21,0.12); padding: 8px; border-radius: 6px;">
+                                    <div style="color: #fde68a; font-weight: bold;">★${bestMoves}</div>
+                                    <div style="color: #888; font-size: 0.7em;">Meilleur</div>
+                                </div>
+                                <div style="background: rgba(74,222,128,0.14); padding: 8px; border-radius: 6px;">
+                                    <div style="color: #86efac; font-weight: bold;">!${veryGoodMoves}</div>
+                                    <div style="color: #888; font-size: 0.7em;">Très bon</div>
+                                </div>
                                 <div style="background: rgba(74,222,128,0.2); padding: 8px; border-radius: 6px;">
                                     <div style="color: #4ade80; font-weight: bold;">✓${goodMoves}</div>
                                     <div style="color: #888; font-size: 0.7em;">Bon</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.08); padding: 8px; border-radius: 6px;">
+                                    <div style="color: #ddd; font-weight: bold;">=${okMoves}</div>
+                                    <div style="color: #888; font-size: 0.7em;">OK</div>
                                 </div>
                                 <div style="background: rgba(251,191,36,0.2); padding: 8px; border-radius: 6px;">
                                     <div style="color: #fbbf24; font-weight: bold;">?${inaccuracies}</div>
@@ -9457,6 +9571,51 @@
                 const losses = games.filter(g => g.result === 'loss').length;
                 const draws = games.filter(g => g.result === 'draw').length;
                 const winRate = games.length > 0 ? Math.round((wins / games.length) * 100) : 0;
+                const puzzleElo = Math.max(0, Number(localStorage.getItem('puzzle_elo')) || 0);
+                const puzzleLevel = puzzleElo >= 1800 ? 'Or' : puzzleElo >= 1600 ? 'Argent' : puzzleElo >= 1400 ? 'Bronze' : 'Débutant';
+                const recentGames = games.slice(0, 12).slice().reverse();
+                const accuracyPoints = recentGames.map(g => Math.max(0, Math.min(100, Number(g.accuracy) || 0)));
+                const graphPoints = accuracyPoints.length > 1
+                    ? accuracyPoints.map((value, index) => `${(index / (accuracyPoints.length - 1)) * 100},${100 - value}`).join(' ')
+                    : '';
+                const recentBlunders = recentGames.reduce((sum, g) => sum + (Number(g.blunders) || 0), 0);
+                const recentErrors = recentGames.reduce((sum, g) => sum + (Number(g.mistakes) || 0) + (Number(g.inaccuracies) || 0), 0);
+                const profileLang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'en';
+                const profileCopy = profileLang === 'en' ? {
+                    practice: 'Resume training', exercises: 'Tactical exercises', openings: 'Opening fundamentals', endgames: 'Endgame fundamentals',
+                    mastery: 'Your skills', mastered: 'Mastered', inProgress: 'In progress', toDiscover: 'To explore',
+                    completed: 'completed', weaknesses: 'What to work on', noWeaknesses: 'No recurring weakness can be identified yet; complete more exercises and game reviews.',
+                    tactics: 'Tactics', progressLabel: 'Training progress', exerciseCount: 'puzzles solved',
+                    resumeExercises: 'Resume exercises', resumeMastery: 'Resume mastery training', strengths: 'Skills mastered',
+                    observed: 'Observed in your latest games', basedOn: 'Based on saved training and game data; this is not an official rating.'
+                } : {
+                    practice: 'Reprendre mes apprentissages', exercises: 'Exercices tactiques', openings: 'Fondamentaux des ouvertures', endgames: 'Fondamentaux des finales',
+                    mastery: 'Vos compétences', mastered: 'Maîtrisé', inProgress: 'En cours', toDiscover: 'À découvrir',
+                    completed: 'terminés', weaknesses: 'À travailler', noWeaknesses: 'Aucune faiblesse récurrente ne peut encore être dégagée ; terminez davantage d’exercices et d’analyses.',
+                    tactics: 'Tactique', progressLabel: 'Progression des apprentissages', exerciseCount: 'puzzles résolus',
+                    resumeExercises: 'Reprendre mes exercices', resumeMastery: 'Reprendre mes maîtrises', strengths: 'Compétences maîtrisées',
+                    observed: 'Observé dans vos dernières parties', basedOn: 'Calculé à partir des exercices et parties enregistrés ; ce n’est pas un classement officiel.'
+                };
+                const readStored = (key, fallback) => {
+                    try { const value = JSON.parse(localStorage.getItem(key) || 'null'); return value || fallback; }
+                    catch (_error) { return fallback; }
+                };
+                const openingDone = readStored('supachess_openings_v1', []);
+                const tacticDone = readStored('supachess_tactics_v1', []);
+                const endgameData = readStored('chessnova_training_endgames', { completed: [] });
+                const masteryRows = [
+                    { id:'tactics', label:profileCopy.tactics, done:Array.isArray(tacticDone) ? tacticDone.length : 0, total:40, href:'TRAINING_TACTICS.html', action:profileCopy.exercises },
+                    { id:'openings', label:profileCopy.openings, done:Array.isArray(openingDone) ? openingDone.length : 0, total:8, href:'TRAINING_OPENINGS.html', action:profileCopy.openings },
+                    { id:'endgames', label:profileCopy.endgames, done:Array.isArray(endgameData.completed) ? endgameData.completed.length : 0, total:10, href:'TRAINING_ENDGAMES.html', action:profileCopy.endgames }
+                ].map(item => ({ ...item, pct:Math.min(100, Math.round(item.done / item.total * 100)), status:item.done >= item.total ? profileCopy.mastered : item.done > 0 ? profileCopy.inProgress : profileCopy.toDiscover }));
+                const notMastered = masteryRows.filter(item => item.done < item.total).map(item => item.label);
+                const mastered = masteryRows.filter(item => item.done >= item.total).map(item => item.label);
+                const nextMastery = masteryRows.slice(1).find(item => item.done < item.total) || masteryRows[1] || masteryRows[0];
+                const masteryGraph = masteryRows.map((item, index) => `<div style="margin:10px 0" data-mastery="${item.id}"><div style="display:flex;justify-content:space-between;gap:10px;color:#ddd;font-size:.9em"><span>${item.label}</span><span>${item.done}/${item.total} · ${item.status}</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:8px;margin-top:5px;overflow:hidden"><div style="width:${item.pct}%;height:100%;background:${item.pct===100?'#4ade80':'#22d3ee'}"></div></div><a href="${item.href}" style="display:inline-block;margin-top:6px;color:#67e8f9;font-size:.85em">${profileCopy.practice} → ${item.action}</a></div>`).join('');
+                const masteryPoints = masteryRows.map((item, index) => `${15 + index * 35},${90 - item.pct * .75}`).join(' ');
+                const weakSummary = games.length
+                    ? `${recentBlunders} ${profileLang === 'en' ? 'blunders' : 'gaffe(s)'} · ${recentErrors} ${profileLang === 'en' ? 'mistakes or inaccuracies' : 'erreur(s) ou imprécision(s)'} ${profileLang === 'en' ? 'in the last' : 'sur les'} ${recentGames.length} ${profileLang === 'en' ? 'games' : 'parties'}.`
+                    : profileCopy.noWeaknesses;
 
                 let html = `
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2)); border-radius: 15px; margin-bottom: 20px;">
@@ -9484,6 +9643,29 @@
                             <div style="font-size: 1.5em; color: #00d9ff;">${winRate}%</div>
                             <div style="color: #888; font-size: 0.8em;">Win Rate</div>
                         </div>
+                    </div>
+
+                    <h4 style="color:#00d9ff;margin:18px 0 10px">📈 Progression et maîtrise</h4>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:16px">
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#ffd700">${user.elo_rating || 1200}</div><small style="color:#999">ELO SupaChess</small></div>
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#a78bfa">${puzzleElo || '—'}</div><small style="color:#999">Puzzle · ${puzzleLevel}</small></div>
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#4ade80">${games.length ? `${Math.round(games.reduce((sum,g)=>sum+(Number(g.accuracy)||0),0)/games.length)}%` : '—'}</div><small style="color:#999">Précision moyenne</small></div>
+                    </div>
+                    <div style="padding:14px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:16px">
+                        <div style="color:#ddd;margin-bottom:8px">Précision par partie récente</div>
+                        ${graphPoints ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Graphique de progression de la précision" style="width:100%;height:120px"><polyline points="${graphPoints}" fill="none" stroke="#22d3ee" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${accuracyPoints.map((v,i)=>`<circle cx="${(i/(accuracyPoints.length-1))*100}" cy="${100-v}" r="2" fill="#22d3ee"><title>Partie ${i+1}: ${v}%</title></circle>`).join('')}</svg>` : '<div style="color:#999">Jouez et enregistrez plusieurs parties pour afficher la courbe.</div>'}
+                    </div>
+                    <section aria-labelledby="profile-mastery-title" style="padding:14px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:16px">
+                        <h4 id="profile-mastery-title" style="color:#00d9ff;margin:0 0 6px">📚 ${profileCopy.mastery}</h4>
+                        <p style="color:#999;font-size:.82em;margin:0 0 12px">${profileCopy.basedOn}</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px"><a href="TRAINING_TACTICS.html" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#087f8c;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeExercises}</a><a href="${nextMastery.href}" style="display:inline-block;padding:9px 13px;border-radius:8px;background:#4c3b91;color:#fff;text-decoration:none;font-weight:700">${profileCopy.resumeMastery}</a></div>
+                        <svg viewBox="0 0 100 100" role="img" aria-label="${profileCopy.mastery}" style="width:100%;height:90px;background:rgba(255,255,255,.025);border-radius:8px"><polyline points="${masteryPoints}" fill="none" stroke="#22d3ee" stroke-width="3" vector-effect="non-scaling-stroke"/>${masteryRows.map((item,index)=>`<circle cx="${15+index*35}" cy="${90-item.pct*.75}" r="3" fill="#22d3ee"><title>${item.label}: ${item.pct}%</title></circle>`).join('')}</svg>
+                        ${masteryGraph}
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:14px"><div style="padding:11px;background:rgba(34,197,94,.1);border-radius:8px;color:#ddd"><strong style="color:#4ade80">${profileCopy.strengths}</strong><div style="margin-top:5px">${mastered.length ? mastered.join(' · ') : (profileLang === 'en' ? 'Keep practicing to record your first mastered topic.' : 'Continuez les exercices pour valider votre premier thème.')}</div></div><div style="padding:11px;background:rgba(239,68,68,.1);border-radius:8px;color:#ddd"><strong style="color:#f87171">${profileCopy.weaknesses}</strong><div style="margin-top:5px">${notMastered.length ? notMastered.join(' · ') : (profileLang === 'en' ? 'All tracked training topics are completed.' : 'Tous les thèmes suivis sont terminés.')}</div></div></div><small style="display:block;margin-top:8px;color:#aaa">${profileCopy.observed}: ${weakSummary}</small>
+                    </section>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px">
+                        <div style="padding:12px;background:rgba(34,197,94,.1);border-radius:9px;color:#ddd"><strong style="color:#4ade80">Points forts</strong><div style="margin-top:5px">${games.length ? `${wins} victoire(s) sur ${games.length} partie(s), ${winRate}% de réussite.` : 'Pas encore assez de parties enregistrées.'}</div></div>
+                        <div style="padding:12px;background:rgba(239,68,68,.1);border-radius:9px;color:#ddd"><strong style="color:#f87171">À travailler</strong><div style="margin-top:5px">${games.length ? `${recentBlunders} gaffe(s) et ${recentErrors} erreur(s)/imprécision(s) sur les ${recentGames.length} dernières parties.` : 'Les lacunes apparaîtront après vos premières analyses.'}</div></div>
                     </div>
 
                     <!-- WINSTREAK & STATS LOCALES -->
@@ -10178,3 +10360,4 @@
 <script src="js/decision_audit.js"></script>
 </body>
 </html>
+

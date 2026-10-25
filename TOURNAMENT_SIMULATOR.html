@@ -45,6 +45,12 @@
             color: #fff; font-size: 0.95rem; cursor: pointer; outline: none;
         }
         .setup-item select option { background: #1e3c72; }
+        .participant-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin:8px 0 20px; }
+        .participant-option { display:flex; align-items:center; gap:10px; padding:11px 13px; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(255,255,255,.07); cursor:pointer; }
+        .participant-option:has(input:checked) { border-color:#ffd700; background:rgba(255,215,0,.12); }
+        .participant-option input { width:18px; height:18px; accent-color:#ffd700; }
+        .participant-kind { display:block; opacity:.65; font-size:.75rem; margin-top:3px; }
+        .selection-error { color:#fecaca; margin:10px 0; }
         .start-btn {
             width: 100%; padding: 16px; border: none; border-radius: 12px;
             background: linear-gradient(90deg, #ffd700, #f97316);
@@ -140,7 +146,7 @@
 
     <div class="header">
         <h1>🏆 Tournoi Simulé</h1>
-        <p style="opacity:0.8; margin-top:8px;">SupaEngine vs les meilleurs moteurs du monde — Round Robin</p>
+        <p style="opacity:0.8; margin-top:8px;">Choisis les joueurs et moteurs pour composer ton tournoi.</p>
     </div>
 
     <div class="setup-card" id="setup-section">
@@ -151,14 +157,6 @@
                 <select id="cfg-format">
                     <option value="rr">Round Robin (tous vs tous)</option>
                     <option value="rr2">Double Round Robin</option>
-                </select>
-            </div>
-            <div class="setup-item">
-                <label>Participants</label>
-                <select id="cfg-players">
-                    <option value="6">6 joueurs</option>
-                    <option value="8" selected>8 joueurs</option>
-                    <option value="10">10 joueurs</option>
                 </select>
             </div>
             <div class="setup-item">
@@ -173,14 +171,6 @@
                 </select>
             </div>
             <div class="setup-item">
-                <label>Mode tournoi</label>
-                <select id="cfg-mode">
-                    <option value="engines" selected>Moteurs (Stockfish/Leela)</option>
-                    <option value="legends">Légendes (meilleurs joueurs de tous les temps)</option>
-                    <option value="mixed">Mixte (IA + Légendes)</option>
-                </select>
-            </div>
-            <div class="setup-item">
                 <label>Vitesse simulation</label>
                 <select id="cfg-speed">
                     <option value="30">Rapide (instantané)</option>
@@ -189,6 +179,10 @@
                 </select>
             </div>
         </div>
+        <h3 style="margin:8px 0;color:#ffd700">Participants</h3>
+        <p id="simulation-notice" style="opacity:.78;margin:0 0 12px">Aucun moteur d’échecs ne calcule de coups : les résultats sont une simulation indicative basée sur des ELO fictifs.</p>
+        <div class="participant-list" id="participant-list"></div>
+        <div class="selection-error" id="selection-error" role="alert" hidden>Sélectionne au moins deux participants.</div>
         <button class="start-btn" id="start-btn" onclick="startTournament()">
             🏆 Lancer le Tournoi
         </button>
@@ -199,38 +193,53 @@
 
 <script>
 const ALL_ENGINES = [
-    { name:'SupaEngine v1.2', elo:2000, icon:'🎯', isUs:true },
-    { name:'Stockfish 17',    elo:3570, icon:'🐟' },
-    { name:'Leela Chess Zero',elo:3550, icon:'🧠' },
-    { name:'Komodo 14',       elo:3470, icon:'🐉' },
-    { name:'Houdini 6',       elo:3410, icon:'🎩' },
-    { name:'Rybka 4',         elo:3280, icon:'🐠' },
-    { name:'Critter 1.6',     elo:3200, icon:'🦝' },
-    { name:'Crafty 25',       elo:2960, icon:'🔧' },
-    { name:'Fruit 2.1',       elo:2850, icon:'🍎' },
-    { name:'Joker 1.7',       elo:2700, icon:'🃏' },
+    { id:'supa', name:'SupaEngine v1.2', elo:2000, icon:'🎯', isUs:true, kind:'moteur simulé' },
+    { id:'sf16', name:'Stockfish 16', elo:3600, icon:'🐟', kind:'moteur simulé' },
+    { id:'sf17', name:'Stockfish 17', elo:3650, icon:'🐟', kind:'moteur simulé' },
+    { id:'sf18', name:'Stockfish 18', elo:3700, icon:'🐟', kind:'moteur simulé' },
+    { id:'sf19', name:'Stockfish 19', elo:3750, icon:'🐟', kind:'moteur simulé' },
+    { id:'lc0', name:'Leela Chess Zero', elo:3600, icon:'🧠', kind:'moteur simulé' },
+    { id:'komodo', name:'Komodo', elo:3450, icon:'🐉', kind:'moteur simulé' },
+    { id:'carlsen', name:'Magnus Carlsen', elo:2830, icon:'👑', kind:'historique simulé' },
+    { id:'kasparov', name:'Garry Kasparov', elo:2830, icon:'👑', kind:'historique simulé' },
+    { id:'fischer', name:'Bobby Fischer', elo:2785, icon:'♟️', kind:'historique simulé' },
+    { id:'karpov', name:'Anatoly Karpov', elo:2780, icon:'♟️', kind:'historique simulé' },
+    { id:'tal', name:'Mikhail Tal', elo:2700, icon:'🎯', kind:'historique simulé' },
+    { id:'kramnik', name:'Vladimir Kramnik', elo:2817, icon:'♔', kind:'historique simulé' },
+    { id:'anand', name:'Viswanathan Anand', elo:2817, icon:'🐯', kind:'historique simulé' },
 ];
-const LEGENDARY_PLAYERS = [
-    { name:'Magnus Carlsen', elo:2839, icon:'👑', era:'2013-2023 Champion' },
-    { name:'Garry Kasparov', elo:2838, icon:'👑', era:'1985-2000 Champion' },
-    { name:'Bobby Fischer', elo:2785, icon:'👑', era:'1972 Champion' },
-    { name:'Anatoly Karpov', elo:2780, icon:'👑', era:'1975-1985 Champion' },
-    { name:'Mikhail Tal', elo:2700, icon:'🎯', era:'Magicien de Riga' },
-    { name:'Vladimir Kramnik', elo:2800, icon:'♔', era:'2000-2007 Champion' },
-    { name:'Viswanathan Anand', elo:2817, icon:'🐯', era:'2007-2013 Champion' },
-    { name:'AlphaZero', elo:3500, icon:'🤖', era:'2017 IA Révolution' },
-    { name:'ZUP 8 AI', elo:3600, icon:'🏆', era:'15 Août 2026 — Victoire Historique' },
-];
+
+function getConfiguredElo(player) {
+    return player.isUs ? +(document.getElementById('cfg-level')?.value || player.elo) : player.elo;
+}
+
+function makeRandom(seed) {
+    let value = seed >>> 0;
+    return () => { value = (value * 1664525 + 1013904223) >>> 0; return value / 4294967296; };
+}
+
+function renderParticipants() {
+    const list = document.getElementById('participant-list');
+    if (!list) return;
+    list.innerHTML = ALL_ENGINES.map((player, index) => {
+        const selected = ['supa','sf16','carlsen','kasparov'].includes(player.id);
+        const elo = getConfiguredElo(player);
+        return `<label class="participant-option"><input type="checkbox" value="${player.id}" ${selected ? 'checked' : ''}><span>${player.icon} <b>${player.name}</b><small class="participant-kind">${elo} ELO fictif · ${player.kind}</small></span></label>`;
+    }).join('');
+    list.querySelectorAll('input').forEach(input => input.addEventListener('change', () => {
+        document.getElementById('selection-error').hidden = true;
+    }));
+}
 
 function expectedScore(eloA, eloB) {
     return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
 }
 
-function simulateGame(pA, pB) {
+function simulateGame(pA, pB, random = Math.random) {
     const exp = expectedScore(pA.elo, pB.elo);
     const diff = Math.abs(pA.elo - pB.elo);
     const drawProb = Math.max(0.12, 0.42 - diff * 0.0004);
-    const r = Math.random();
+    const r = random();
     if (r < drawProb) return [0.5, 0.5];
     if (r < drawProb + exp * (1 - drawProb)) return [1, 0];
     return [0, 1];
@@ -239,21 +248,19 @@ function simulateGame(pA, pB) {
 let players = [], results = [], standings = [], rounds = [], simInterval = null;
 
 function startTournament() {
-    const n = +document.getElementById('cfg-players').value;
-    const lvl = +document.getElementById('cfg-level').value;
     const speed = +document.getElementById('cfg-speed').value;
     const format = document.getElementById('cfg-format').value;
-    const mode = document.getElementById('cfg-mode').value;
-
-    let baseList;
-    if (mode === 'legends') baseList = LEGENDARY_PLAYERS;
-    else if (mode === 'mixed') baseList = [...ALL_ENGINES.slice(0,5), ...LEGENDARY_PLAYERS.slice(0,5)];
-    else baseList = ALL_ENGINES;
-    const engineList = JSON.parse(JSON.stringify(baseList));
-    if (engineList[0] && engineList[0].isUs) engineList[0].elo = lvl;
-    players = engineList.slice(0, n);
+    const selectedIds = new Set([...document.querySelectorAll('#participant-list input:checked')].map(input => input.value));
+    const selected = ALL_ENGINES.filter(player => selectedIds.has(player.id));
+    if (selected.length < 2) {
+        document.getElementById('selection-error').hidden = false;
+        return;
+    }
+    document.getElementById('selection-error').hidden = true;
+    players = selected.map(player => ({ ...player, elo:getConfiguredElo(player) }));
     players.sort((a,b) => b.elo - a.elo);
 
+    const n = players.length;
     const matchups = [];
     const repeats = format === 'rr2' ? 2 : 1;
     for (let rep=0; rep<repeats; rep++) {
@@ -272,6 +279,7 @@ function startTournament() {
     renderTournamentUI();
 
     let roundIdx = 0;
+    const random = makeRandom(120);
     simInterval = setInterval(() => {
         if (roundIdx >= rounds.length) {
             clearInterval(simInterval);
@@ -281,7 +289,7 @@ function startTournament() {
             return;
         }
         const r = rounds[roundIdx];
-        const [si, sj] = simulateGame(players[r.i], players[r.j]);
+        const [si, sj] = simulateGame(players[r.i], players[r.j], random);
         r.done = true; r.scoreI = si; r.scoreJ = sj;
         const si_ = standings.find(s=>s.idx===r.i);
         const sj_ = standings.find(s=>s.idx===r.j);
@@ -308,7 +316,7 @@ function renderTournamentUI() {
             <div id="standings-list"></div>
         </div>
         <div style="text-align:center">
-            <button class="reset-btn" onclick="resetTournament()">↺ Nouveau tournoi</button>
+            <button class="reset-btn" onclick="resetTournament()">↺ Réinitialiser le tournoi</button>
         </div>
     `;
     renderLive();
@@ -321,7 +329,7 @@ function renderLive() {
         <div class="player-card ${s.isUs?'supa':''}">
             <div style="font-size:1.4rem">${players[s.idx].icon}</div>
             <div style="font-weight:bold;font-size:0.88rem;margin-top:4px">${s.name}</div>
-            <span class="elo-tag">${s.elo} ELO</span>
+            <span class="elo-tag">${s.elo} ELO fictif</span>
             <div class="score-big">${s.pts%1===0?s.pts:s.pts.toFixed(1)}</div>
             <div style="font-size:0.72rem;opacity:0.6;margin-top:4px">${s.wins}V ${s.draws}N ${s.losses}D</div>
         </div>`).join('');
@@ -331,7 +339,7 @@ function renderLive() {
     const list = document.getElementById('rounds-list');
     if (!done.length) { list.innerHTML = '<div style="opacity:0.5;padding:10px">En attente...</div>'; }
     else {
-        list.innerHTML = done.slice(-12).reverse().map(r=>{
+        list.innerHTML = done.slice().reverse().map(r=>{
             const pA=players[r.i], pB=players[r.j];
             const rel = pA.isUs ? r.scoreI : pB.isUs ? r.scoreJ : null;
             let cls='', lbl='';
@@ -392,17 +400,12 @@ function renderLive() {
 function finishTournament() {
     const sorted = [...standings].sort((a,b)=>b.pts-a.pts);
     const winner = sorted[0];
-    const supaRank = sorted.findIndex(s=>s.isUs)+1;
-    const supaS = standings.find(s=>s.isUs);
     const banner = document.createElement('div');
     banner.className = 'winner-banner fade-in';
     banner.innerHTML = `
         <div class="trophy">${winner.isUs?'🏆':players[sorted[0].idx].icon}</div>
-        <h2>${winner.isUs?'🎉 SupaEngine remporte le tournoi!':players[sorted[0].idx].icon+' '+winner.name+' remporte le tournoi!'}</h2>
-        <p style="margin-top:8px;opacity:0.8">
-            SupaEngine — <b>${supaRank}e place</b> | ${supaS.pts} pts | ${supaS.wins}V ${supaS.draws}N ${supaS.losses}D
-        </p>
-        ${supaRank<=3?'<p style="color:#ffd700;margin-top:8px;font-weight:bold">🌟 Podium atteint!</p>':''}
+        <h2>${players[sorted[0].idx].icon} ${winner.name} remporte le tournoi!</h2>
+        <p id="tournament-status" style="margin-top:8px;opacity:0.8">${document.getElementById('cfg-format').value === 'rr2' ? 'Double Round Robin' : 'Round Robin'} terminé — résultats simulés, non issus de parties moteur.</p>
     `;
     const area = document.getElementById('tournament-area');
     area.insertBefore(banner, area.firstChild);
@@ -415,6 +418,15 @@ function resetTournament() {
     document.getElementById('start-btn').textContent='🏆 Lancer le Tournoi';
     document.getElementById('setup-section').scrollIntoView({behavior:'smooth'});
 }
+
+const levelControl = typeof document !== 'undefined' ? document.getElementById('cfg-level') : null;
+if (levelControl?.addEventListener) levelControl.addEventListener('change', renderParticipants);
+const startButton = typeof document !== 'undefined' ? document.getElementById('start-btn') : null;
+if (startButton?.addEventListener) startButton.addEventListener('click', () => {
+    document.getElementById('tournament-status')?.remove();
+});
+renderParticipants();
 </script>
 </body>
 </html>
+

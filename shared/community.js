@@ -1094,7 +1094,7 @@
         panel.innerHTML =
             '<div class="cn-players-panel-header">' +
                 '<span style="color:#eee;font-size:13px;font-weight:600;">Joueurs en ligne</span>' +
-                '<span id="cn-players-count">0</span>' +
+                '<span id="cn-players-count">—</span>' +
             '</div>' +
             '<div class="cn-status-btns" id="cn-status-btns">' +
                 '<button class="cn-status-btn cn-status-btn--active" data-status="dispo">&#x1F7E2; Dispo</button>' +
@@ -1181,8 +1181,8 @@
         var list = document.getElementById('cn-players-list');
         var countEl = document.getElementById('cn-players-count');
         if (!db) {
-            if (countEl) countEl.textContent = '0';
-            if (list) list.innerHTML = '<div class="cn-players-empty">Joueurs indisponibles pour le moment</div>';
+            if (countEl) countEl.textContent = '—';
+            if (list) list.innerHTML = '<div class="cn-players-empty">' + escapeHTML(t('players_unavailable')) + '</div>';
             return;
         }
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -1240,8 +1240,11 @@
                 console.warn('[Community] loadOnlinePlayers error:', err);
                 var list = document.getElementById('cn-players-list');
                 var countEl = document.getElementById('cn-players-count');
-                if (countEl) countEl.textContent = '0';
-                if (list) list.innerHTML = '<div class="cn-players-empty">Joueurs indisponibles pour le moment</div>';
+                if (countEl) countEl.textContent = '—';
+                var message = err && err.code === 'permission-denied'
+                    ? t('players_permission_denied')
+                    : t('players_unavailable');
+                if (list) list.innerHTML = '<div class="cn-players-empty">' + escapeHTML(message) + '</div>';
             });
     }
 

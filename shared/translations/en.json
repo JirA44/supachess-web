@@ -211,5 +211,7 @@
     "purpose_example3_title": "Example: learn a principle",
     "purpose_example3_text": "Connect a mistake you noticed to an explanation and an exercise so you are less likely to repeat it.",
     "purpose_example3_link": "Browse chess lessons →",
-    "purpose_note": "Automatic evaluations depend on the engine and search depth. They need an explanation and are not, by themselves, proof of playing strength or improvement."
+    "purpose_note": "Automatic evaluations depend on the engine and search depth. They need an explanation and are not, by themselves, proof of playing strength or improvement.",
+    "players_unavailable": "Online players are temporarily unavailable.",
+    "players_permission_denied": "Online players are unavailable because this app does not have permission to read presence data."
 }

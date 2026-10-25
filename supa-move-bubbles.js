@@ -108,6 +108,22 @@
         const target = squareEl(sq);
         if (!target) return;
         const rect = target.getBoundingClientRect();
+        const layoutBubble = function (entry, index, count) {
+            const cols = count === 1 ? 1 : 2;
+            const rows = count <= 2 ? 1 : Math.ceil(count / 2);
+            const col = count === 1 ? 0 : index % 2;
+            const row = count <= 2 ? 0 : Math.floor(index / 2);
+            const width = rect.width / cols;
+            const height = rect.height / rows;
+            entry.el.style.left = Math.round(rect.left + col * width) + 'px';
+            entry.el.style.top = Math.round(rect.top + row * height) + 'px';
+            entry.el.style.width = Math.round(width) + 'px';
+            entry.el.style.height = Math.round(height) + 'px';
+            const textNodes = entry.el.children;
+            if (textNodes[0]) textNodes[0].style.fontSize = Math.max(9, Math.round(width * 0.34)) + 'px';
+            if (textNodes[1]) textNodes[1].style.fontSize = Math.max(7, Math.round(width * 0.26)) + 'px';
+            if (textNodes[2]) textNodes[2].style.fontSize = Math.max(6, Math.round(width * 0.20)) + 'px';
+        };
 
         const el = document.createElement('div');
         el.className = 'supa-bubble';
@@ -159,29 +175,60 @@
         if (payload.symbol) el.appendChild(note);
         if (payload.eval) el.appendChild(evalLine);
         document.body.appendChild(el);
-        bubbles.push({ el: el, timer: null });
+        const entry = { el: el, timer: null, square: sq };
+        bubbles.push(entry);
+        const squareEntries = bubbles.filter(function (b) { return b.square === sq; });
+        squareEntries.forEach(function (bubble, index) { layoutBubble(bubble, index, squareEntries.length); });
 
         // repositionne si la fenêtre change de taille
         const onResize = function () {
             const r2 = target.getBoundingClientRect();
-            el.style.left = Math.round(r2.left) + 'px';
-            el.style.top = Math.round(r2.top) + 'px';
-            el.style.width = Math.round(r2.width) + 'px';
-            el.style.height = Math.round(r2.height) + 'px';
+            const current = bubbles.filter(function (b) { return b.square === sq; });
+            current.forEach(function (bubble, index) {
+                const cols = current.length === 1 ? 1 : 2;
+                const rows = current.length <= 2 ? 1 : Math.ceil(current.length / 2);
+                const col = current.length === 1 ? 0 : index % 2;
+                const row = current.length <= 2 ? 0 : Math.floor(index / 2);
+                const width = r2.width / cols, height = r2.height / rows;
+                bubble.el.style.left = Math.round(r2.left + col * width) + 'px';
+                bubble.el.style.top = Math.round(r2.top + row * height) + 'px';
+                bubble.el.style.width = Math.round(width) + 'px';
+                bubble.el.style.height = Math.round(height) + 'px';
+            });
         };
         window.addEventListener('resize', onResize);
         setTimeout(function () { window.removeEventListener('resize', onResize); }, 4000);
 
-        const entry = bubbles[bubbles.length - 1];
         entry.timer = setTimeout(function () { removeBubble(el); }, 4200);    }
 
     function removeBubble(el) {
         const i = bubbles.findIndex(function (b) { return b.el === el; });
+        const square = i >= 0 ? bubbles[i].square : null;
         if (i >= 0) {
             clearTimeout(bubbles[i].timer);
             bubbles.splice(i, 1);
         }
         if (el && el.parentNode) el.parentNode.removeChild(el);
+        if (square) {
+            const target = squareEl(square);
+            const rect = target && target.getBoundingClientRect();
+            const remaining = bubbles.filter(function (b) { return b.square === square; });
+            if (rect) remaining.forEach(function (entry, index) {
+                const cols = remaining.length === 1 ? 1 : 2;
+                const rows = remaining.length <= 2 ? 1 : Math.ceil(remaining.length / 2);
+                const col = remaining.length === 1 ? 0 : index % 2;
+                const row = remaining.length <= 2 ? 0 : Math.floor(index / 2);
+                const width = rect.width / cols, height = rect.height / rows;
+                entry.el.style.left = Math.round(rect.left + col * width) + 'px';
+                entry.el.style.top = Math.round(rect.top + row * height) + 'px';
+                entry.el.style.width = Math.round(width) + 'px';
+                entry.el.style.height = Math.round(height) + 'px';
+                const nodes = entry.el.children;
+                if (nodes[0]) nodes[0].style.fontSize = Math.max(9, Math.round(width * 0.34)) + 'px';
+                if (nodes[1]) nodes[1].style.fontSize = Math.max(7, Math.round(width * 0.26)) + 'px';
+                if (nodes[2]) nodes[2].style.fontSize = Math.max(6, Math.round(width * 0.20)) + 'px';
+            });
+        }
     }
 
     function clearBubbles() {
@@ -527,3 +574,4 @@
     }
 
 })();
+

@@ -164,7 +164,16 @@
                 '<div class="cn-auth-bar-avatar">' + escapeHTML(initials) + '</div>' +
                 '<span class="cn-auth-bar-name">' + escapeHTML(name) + '</span>' +
                 badgeHtml +
+                '<button class="cn-auth-bar-btn" id="cn-auth-bar-players" type="button" aria-label="Joueurs en ligne" title="Joueurs en ligne">👥</button>' +
                 '<button class="cn-auth-bar-btn cn-auth-bar-btn--logout" id="cn-auth-bar-logout" data-i18n="auth_logout">' + t('auth_logout') + '</button>';
+
+            var playersBtn = document.getElementById('cn-auth-bar-players');
+            if (playersBtn) {
+                playersBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    togglePlayersPanel();
+                });
+            }
 
             var logoutBtn = document.getElementById('cn-auth-bar-logout');
             if (logoutBtn) {
@@ -178,10 +187,10 @@
                 });
             }
 
-            // Bar click → open players panel
+            // Account click opens the profile; the dedicated people button opens presence.
             bar.onclick = function (e) {
-                if (e.target.id === 'cn-auth-bar-logout') return;
-                togglePlayersPanel();
+                if (e.target.closest('button')) return;
+                openMyProfile();
             };
 
         } else {
@@ -1142,6 +1151,26 @@
         if (playersOpen) loadOnlinePlayers();
     }
 
+    function openMyProfile() {
+        closePlayersPanel();
+        if (!currentUser) {
+            openAuthModal();
+            return;
+        }
+        if (typeof window.openProfileModal === 'function') {
+            window.openProfileModal();
+            return;
+        }
+        if (window.SupaProfiles && typeof window.SupaProfiles.getProfile === 'function') {
+            window.SupaProfiles.getProfile(currentUser.uid).then(function (profile) {
+                if (profile) window.SupaProfiles.renderProfileModal(profile);
+                else togglePlayersPanel();
+            }).catch(function () { togglePlayersPanel(); });
+            return;
+        }
+        togglePlayersPanel();
+    }
+
     function closePlayersPanel() {
         playersOpen = false;
         var panel = document.getElementById('cn-players-panel');
@@ -1149,7 +1178,13 @@
     }
 
     function loadOnlinePlayers() {
-        if (!db) return;
+        var list = document.getElementById('cn-players-list');
+        var countEl = document.getElementById('cn-players-count');
+        if (!db) {
+            if (countEl) countEl.textContent = '0';
+            if (list) list.innerHTML = '<div class="cn-players-empty">Joueurs indisponibles pour le moment</div>';
+            return;
+        }
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
         db.collection('presence')
             .where('lastSeen', '>', fiveMinAgo)
@@ -1204,7 +1239,9 @@
             }).catch(function (err) {
                 console.warn('[Community] loadOnlinePlayers error:', err);
                 var list = document.getElementById('cn-players-list');
-                if (list) list.innerHTML = '<div class="cn-players-empty">Erreur de chargement</div>';
+                var countEl = document.getElementById('cn-players-count');
+                if (countEl) countEl.textContent = '0';
+                if (list) list.innerHTML = '<div class="cn-players-empty">Joueurs indisponibles pour le moment</div>';
             });
     }
 
@@ -1455,3 +1492,4 @@
         init();
     }
 })();
+

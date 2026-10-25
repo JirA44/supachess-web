@@ -8655,7 +8655,7 @@
         function updateLiveMoveTally() {
             const el = document.getElementById('live-move-tally');
             if (!el) return;
-            const played = (window.gameHistory || []).filter(m => !m.isOpponent && Number.isFinite(Number(m.rating)));
+            const played = (window.gameHistory || []).filter(m => !m.isOpponent && m.rating !== null && m.rating !== '' && Number.isFinite(Number(m.rating)));
             const counts = { brilliant: 0, best: 0, veryGood: 0, good: 0, ok: 0, inaccuracy: 0, mistake: 0, blunder: 0 };
             played.forEach(m => {
                 if (/BRILLANT/i.test(m.quality || '')) counts.brilliant++;
@@ -8668,7 +8668,23 @@
                 else counts.blunder++;
             });
             const row = (label, value) => `<span style="white-space:nowrap">${label} ${value}</span>`;
-            el.innerHTML = `<strong>Coups joués · estimation provisoire</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px">${row('!!', counts.brilliant)}${row('★', counts.best)}${row('!', counts.veryGood)}${row('✓', counts.good)}${row('=', counts.ok)}${row('?!', counts.inaccuracy)}${row('?', counts.mistake)}${row('??', counts.blunder)}</div><small style="display:block;color:#999;margin-top:5px">Le bilan Stockfish approfondi peut reclasser ces coups. Le rang ou la note 10/10 des suggestions n’est pas une garantie du meilleur coup.</small>`;
+            const lang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'fr';
+            const labels = lang === 'en'
+                ? { title: 'Moves played · live estimate', suggestion: 'At-play suggestion', live: 'Live grade', gap: 'gap to best', missing: 'No suggestion recorded', note: 'A deeper post-game Stockfish analysis can change these provisional grades. A 10/10 suggestion is not proof that it is the best move.' }
+                : { title: 'Coups joués · estimation en direct', suggestion: 'Conseil reçu', live: 'Note en direct', gap: 'écart au meilleur', missing: 'Aucun conseil enregistré', note: 'Une analyse Stockfish approfondie après la partie peut modifier ces notes provisoires. Un conseil 10/10 ne garantit pas que ce soit le meilleur coup.' };
+            const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+            const translateQuality = value => lang === 'en'
+                ? String(value || '—').replace(/BRILLANT/gi, 'Brilliant').replace(/MEILLEUR COUP/gi, 'Best move').replace(/Bon coup/gi, 'Good move').replace(/Coup OK/gi, 'OK move').replace(/Coup Correct/gi, 'OK move').replace(/Coup Acceptable/gi, 'Acceptable move').replace(/Imprécision/gi, 'Inaccuracy').replace(/Erreur/gi, 'Mistake').replace(/GAFFE/gi, 'Blunder').replace(/Coup joué/gi, 'Move played')
+                : String(value || '—');
+            const moveRows = played.slice(-12).reverse().map(move => {
+                const moveName = `${move.moveNum || ''}. ${move.san || ''}`.trim();
+                const suggestion = move.suggestionScore !== null && move.suggestionScore !== undefined
+                    ? `${move.suggestionSymbol || ''} ${Number(move.suggestionScore).toFixed(1)}/10${move.engineRankAtPlay ? ` · #${move.engineRankAtPlay}` : ''}`
+                    : (move.engineRankAtPlay ? `#${move.engineRankAtPlay} · ${escape(move.suggestionCategory || '')}` : labels.missing);
+                const gap = Number.isFinite(Number(move.evalDiff)) ? `${Number(move.evalDiff) > 0 ? '+' : ''}${Math.round(Number(move.evalDiff))} cp` : '—';
+                return `<div style="display:grid;grid-template-columns:minmax(60px,.7fr) minmax(100px,1fr);gap:6px;padding:5px 3px;border-top:1px solid rgba(255,255,255,.08);font-size:.78em"><strong>${escape(moveName)}</strong><span>${escape(translateQuality(move.quality))}</span><span style="color:#aaa">${escape(labels.suggestion)}: ${escape(suggestion)}</span><span style="color:#aaa">${escape(labels.gap)}: ${escape(gap)}</span></div>`;
+            }).join('');
+            el.innerHTML = `<strong>${labels.title}</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px">${row('!!', counts.brilliant)}${row('★', counts.best)}${row('!', counts.veryGood)}${row('✓', counts.good)}${row('=', counts.ok)}${row('?!', counts.inaccuracy)}${row('?', counts.mistake)}${row('??', counts.blunder)}</div>${moveRows ? `<div style="max-height:180px;overflow:auto;margin-top:8px">${moveRows}</div>` : ''}<small style="display:block;color:#999;margin-top:5px">${labels.note}</small>`;
         }
 
         function resignGame() {
@@ -9553,18 +9569,25 @@
         }
         async function loadProfile() {
             const content = document.getElementById('profileContent');
-            content.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading"></div><p>Chargement...</p></div>';
+            const profileLang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'en';
+            const profileLabels = profileLang === 'en'
+                ? { loading: 'Loading profile…', loadError: 'Profile data is unavailable. You can still review your locally saved training progress.', wins: 'Wins', losses: 'Losses', draws: 'Draws', winRate: 'Win rate', progress: 'Progress and mastery', elo: 'SupaChess rating', puzzle: 'Puzzle', average: 'Average accuracy', perGame: 'Accuracy by recent game', playMore: 'Play and save more games to see your progress chart.', games: 'Game history', noGames: 'No saved games yet. Play a game to see it here.', strengths: 'Strengths', weaknesses: 'To work on', performance: 'Current performance', badges: 'Unlocked badges', memberSince: 'Member since', victories: 'wins', on: 'of', gamesLabel: 'games', trackedEmpty: 'No games recorded yet.', ratingLevels: ['Beginner', 'Intermediate', 'Advanced', 'Expert'], streak: 'Win streak', record: 'Best streak', moves: 'Moves', accuracy: 'Accuracy', brilliant: 'Brilliants', blunders: 'Blunders', duration: 'Duration', report: 'Report', download: 'PGN', resultWin: 'Win', resultLoss: 'Loss', resultDraw: 'Draw' }
+                : { loading: 'Chargement du profil…', loadError: 'Les données du profil sont indisponibles. Votre progression enregistrée localement reste consultable.', wins: 'Victoires', losses: 'Défaites', draws: 'Nulles', winRate: 'Taux de victoire', progress: 'Progression et maîtrise', elo: 'Classement SupaChess', puzzle: 'Puzzle', average: 'Précision moyenne', perGame: 'Précision par partie récente', playMore: 'Jouez et enregistrez plusieurs parties pour afficher la courbe.', games: 'Historique des parties', noGames: 'Aucune partie enregistrée. Jouez une partie pour la voir ici.', strengths: 'Points forts', weaknesses: 'À travailler', performance: 'Performance actuelle', badges: 'Badges débloqués', memberSince: 'Membre depuis', victories: 'victoire(s)', on: 'sur', gamesLabel: 'partie(s)', trackedEmpty: 'Pas encore assez de parties enregistrées.', ratingLevels: ['Débutant', 'Bronze', 'Argent', 'Or'], streak: 'Série de victoires', record: 'Record', moves: 'Coups', accuracy: 'Précision', brilliant: 'Brillants', blunders: 'Gaffes', duration: 'Durée', report: 'Rapport', download: 'PGN', resultWin: 'Victoire', resultLoss: 'Défaite', resultDraw: 'Nulle' };
+            content.innerHTML = `<div style="text-align:center;padding:20px"><div class="loading"></div><p>${profileLabels.loading}</p></div>`;
             try {
-                // Charger profil et historique en parallèle
-                const [profileRes, gamesRes] = await Promise.all([
-                    fetch(`${API_URL}/api/profile`, { headers: { 'Authorization': `Bearer ${sessionId}` }}),
-                    fetch(`${API_URL}/api/games`, { headers: { 'Authorization': `Bearer ${sessionId}` }})
-                ]);
-                const profileData = await profileRes.json();
-                const gamesData = await gamesRes.json();
+                // A games endpoint outage must not hide the user's profile and locally saved mastery.
+                const requestJson = async (path) => {
+                    try {
+                        const response = await fetch(`${API_URL}${path}`, { headers: { 'Authorization': `Bearer ${sessionId}` }});
+                        if (!response.ok) return {};
+                        return await response.json();
+                    } catch (_error) { return {}; }
+                };
+                const [profileData, gamesData] = await Promise.all([requestJson('/api/profile'), requestJson('/api/games')]);
 
-                const user = profileData.user || currentUser;
-                const games = gamesData.games || [];
+                const user = profileData.user || currentUser || {};
+                const games = Array.isArray(gamesData.games) ? gamesData.games : [];
+                const displayName = user.username || user.displayName || (profileLang === 'en' ? 'Player' : 'Joueur');
 
                 // Calculer stats
                 const wins = games.filter(g => g.result === 'win').length;
@@ -9572,7 +9595,7 @@
                 const draws = games.filter(g => g.result === 'draw').length;
                 const winRate = games.length > 0 ? Math.round((wins / games.length) * 100) : 0;
                 const puzzleElo = Math.max(0, Number(localStorage.getItem('puzzle_elo')) || 0);
-                const puzzleLevel = puzzleElo >= 1800 ? 'Or' : puzzleElo >= 1600 ? 'Argent' : puzzleElo >= 1400 ? 'Bronze' : 'Débutant';
+                const puzzleLevel = profileLabels.ratingLevels[puzzleElo >= 1800 ? 3 : puzzleElo >= 1600 ? 2 : puzzleElo >= 1400 ? 1 : 0];
                 const recentGames = games.slice(0, 12).slice().reverse();
                 const accuracyPoints = recentGames.map(g => Math.max(0, Math.min(100, Number(g.accuracy) || 0)));
                 const graphPoints = accuracyPoints.length > 1
@@ -9580,7 +9603,6 @@
                     : '';
                 const recentBlunders = recentGames.reduce((sum, g) => sum + (Number(g.blunders) || 0), 0);
                 const recentErrors = recentGames.reduce((sum, g) => sum + (Number(g.mistakes) || 0) + (Number(g.inaccuracies) || 0), 0);
-                const profileLang = window.ChessNovaI18n?.getLang() || localStorage.getItem('chessnova_lang') || 'en';
                 const profileCopy = profileLang === 'en' ? {
                     practice: 'Resume training', exercises: 'Tactical exercises', openings: 'Opening fundamentals', endgames: 'Endgame fundamentals',
                     mastery: 'Your skills', mastered: 'Mastered', inProgress: 'In progress', toDiscover: 'To explore',
@@ -9620,40 +9642,40 @@
                 let html = `
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2)); border-radius: 15px; margin-bottom: 20px;">
                         <div style="font-size: 3em; margin-bottom: 10px;">👤</div>
-                        <h3 style="color: #00d9ff; margin: 0;">${user.username}</h3>
+                        <h3 style="color: #00d9ff; margin: 0;">${displayName}</h3>
                         ${user.email ? `<div style="color: #888; font-size: 0.9em; margin-top: 5px;">🔒 ${user.email} <span style="font-size: 0.8em; color: #666;">(privé)</span></div>` : ''}
-                        <div style="font-size: 2em; color: #ffd700; margin: 10px 0;">${user.elo_rating} ELO</div>
-                        <div style="color: #888;">Membre depuis ${new Date(user.created_at || Date.now()).toLocaleDateString('fr-FR')}</div>
+                        <div style="font-size: 2em; color: #ffd700; margin: 10px 0;">${Number(user.elo_rating) || 1200} ELO</div>
+                        <div style="color: #888;">${profileLabels.memberSince} ${new Date(user.created_at || Date.now()).toLocaleDateString(profileLang === 'en' ? 'en-US' : 'fr-FR')}</div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
                         <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                             <div style="font-size: 1.5em; color: #4ade80;">${wins}</div>
-                            <div style="color: #888; font-size: 0.8em;">Victoires</div>
+                            <div style="color: #888; font-size: 0.8em;">${profileLabels.wins}</div>
                         </div>
                         <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                             <div style="font-size: 1.5em; color: #ef4444;">${losses}</div>
-                            <div style="color: #888; font-size: 0.8em;">Défaites</div>
+                            <div style="color: #888; font-size: 0.8em;">${profileLabels.losses}</div>
                         </div>
                         <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                             <div style="font-size: 1.5em; color: #fbbf24;">${draws}</div>
-                            <div style="color: #888; font-size: 0.8em;">Nulles</div>
+                            <div style="color: #888; font-size: 0.8em;">${profileLabels.draws}</div>
                         </div>
                         <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
                             <div style="font-size: 1.5em; color: #00d9ff;">${winRate}%</div>
-                            <div style="color: #888; font-size: 0.8em;">Win Rate</div>
+                            <div style="color: #888; font-size: 0.8em;">${profileLabels.winRate}</div>
                         </div>
                     </div>
 
-                    <h4 style="color:#00d9ff;margin:18px 0 10px">📈 Progression et maîtrise</h4>
+                    <h4 style="color:#00d9ff;margin:18px 0 10px">📈 ${profileLabels.progress}</h4>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:16px">
-                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#ffd700">${user.elo_rating || 1200}</div><small style="color:#999">ELO SupaChess</small></div>
-                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#a78bfa">${puzzleElo || '—'}</div><small style="color:#999">Puzzle · ${puzzleLevel}</small></div>
-                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#4ade80">${games.length ? `${Math.round(games.reduce((sum,g)=>sum+(Number(g.accuracy)||0),0)/games.length)}%` : '—'}</div><small style="color:#999">Précision moyenne</small></div>
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#ffd700">${Number(user.elo_rating) || 1200}</div><small style="color:#999">${profileLabels.elo}</small></div>
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#a78bfa">${puzzleElo || '—'}</div><small style="color:#999">${profileLabels.puzzle} · ${puzzleLevel}</small></div>
+                        <div style="padding:14px;background:rgba(255,255,255,.05);border-radius:10px;text-align:center"><div style="font-size:1.35em;color:#4ade80">${games.length ? `${Math.round(games.reduce((sum,g)=>sum+(Number(g.accuracy)||0),0)/games.length)}%` : '—'}</div><small style="color:#999">${profileLabels.average}</small></div>
                     </div>
                     <div style="padding:14px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:16px">
-                        <div style="color:#ddd;margin-bottom:8px">Précision par partie récente</div>
-                        ${graphPoints ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Graphique de progression de la précision" style="width:100%;height:120px"><polyline points="${graphPoints}" fill="none" stroke="#22d3ee" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${accuracyPoints.map((v,i)=>`<circle cx="${(i/(accuracyPoints.length-1))*100}" cy="${100-v}" r="2" fill="#22d3ee"><title>Partie ${i+1}: ${v}%</title></circle>`).join('')}</svg>` : '<div style="color:#999">Jouez et enregistrez plusieurs parties pour afficher la courbe.</div>'}
+                        <div style="color:#ddd;margin-bottom:8px">${profileLabels.perGame}</div>
+                        ${graphPoints ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="${profileLabels.perGame}" style="width:100%;height:120px"><polyline points="${graphPoints}" fill="none" stroke="#22d3ee" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${accuracyPoints.map((v,i)=>`<circle cx="${(i/(accuracyPoints.length-1))*100}" cy="${100-v}" r="2" fill="#22d3ee"><title>${profileLabels.gamesLabel} ${i+1}: ${v}%</title></circle>`).join('')}</svg>` : `<div style="color:#999">${profileLabels.playMore}</div>`}
                     </div>
                     <section aria-labelledby="profile-mastery-title" style="padding:14px;background:rgba(0,0,0,.25);border-radius:10px;margin-bottom:16px">
                         <h4 id="profile-mastery-title" style="color:#00d9ff;margin:0 0 6px">📚 ${profileCopy.mastery}</h4>
@@ -9664,37 +9686,37 @@
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:14px"><div style="padding:11px;background:rgba(34,197,94,.1);border-radius:8px;color:#ddd"><strong style="color:#4ade80">${profileCopy.strengths}</strong><div style="margin-top:5px">${mastered.length ? mastered.join(' · ') : (profileLang === 'en' ? 'Keep practicing to record your first mastered topic.' : 'Continuez les exercices pour valider votre premier thème.')}</div></div><div style="padding:11px;background:rgba(239,68,68,.1);border-radius:8px;color:#ddd"><strong style="color:#f87171">${profileCopy.weaknesses}</strong><div style="margin-top:5px">${notMastered.length ? notMastered.join(' · ') : (profileLang === 'en' ? 'All tracked training topics are completed.' : 'Tous les thèmes suivis sont terminés.')}</div></div></div><small style="display:block;margin-top:8px;color:#aaa">${profileCopy.observed}: ${weakSummary}</small>
                     </section>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px">
-                        <div style="padding:12px;background:rgba(34,197,94,.1);border-radius:9px;color:#ddd"><strong style="color:#4ade80">Points forts</strong><div style="margin-top:5px">${games.length ? `${wins} victoire(s) sur ${games.length} partie(s), ${winRate}% de réussite.` : 'Pas encore assez de parties enregistrées.'}</div></div>
-                        <div style="padding:12px;background:rgba(239,68,68,.1);border-radius:9px;color:#ddd"><strong style="color:#f87171">À travailler</strong><div style="margin-top:5px">${games.length ? `${recentBlunders} gaffe(s) et ${recentErrors} erreur(s)/imprécision(s) sur les ${recentGames.length} dernières parties.` : 'Les lacunes apparaîtront après vos premières analyses.'}</div></div>
+                        <div style="padding:12px;background:rgba(34,197,94,.1);border-radius:9px;color:#ddd"><strong style="color:#4ade80">${profileLabels.strengths}</strong><div style="margin-top:5px">${games.length ? `${wins} ${profileLabels.victories} ${profileLabels.on} ${games.length} ${profileLabels.gamesLabel}, ${winRate}% ${profileLang === 'en' ? 'win rate' : 'de réussite'}.` : profileLabels.trackedEmpty}</div></div>
+                        <div style="padding:12px;background:rgba(239,68,68,.1);border-radius:9px;color:#ddd"><strong style="color:#f87171">${profileLabels.weaknesses}</strong><div style="margin-top:5px">${games.length ? `${recentBlunders} ${profileLang === 'en' ? 'blunders' : 'gaffe(s)'} ${profileLang === 'en' ? 'and' : 'et'} ${recentErrors} ${profileLang === 'en' ? 'mistakes/inaccuracies' : 'erreur(s)/imprécision(s)'} ${profileLang === 'en' ? 'in the last' : 'sur les'} ${recentGames.length} ${profileLabels.gamesLabel}.` : profileLabels.trackedEmpty}</div></div>
                     </div>
 
                     <!-- WINSTREAK & STATS LOCALES -->
-                    <h4 style="color: #00d9ff; margin-bottom: 10px;">🔥 Performance Actuelle</h4>
+                    <h4 style="color: #00d9ff; margin-bottom: 10px;">🔥 ${profileLabels.performance}</h4>
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <div style="flex: 1; background: rgba(34,197,94,0.15); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(34,197,94,0.3);">
                             <div style="font-size: 1.5em;">🔥</div>
                             <div style="color: #22c55e; font-weight: bold; font-size: 1.2em;">${document.getElementById('current-streak')?.textContent || '0'}</div>
-                            <div style="color: #888; font-size: 0.75em;">Winstreak</div>
+                            <div style="color: #888; font-size: 0.75em;">${profileLabels.streak}</div>
                         </div>
                         <div style="flex: 1; background: rgba(245,158,11,0.15); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(245,158,11,0.3);">
                             <div style="font-size: 1.5em;">👑</div>
                             <div style="color: #f59e0b; font-weight: bold; font-size: 1.2em;">${document.getElementById('best-streak')?.textContent || '0'}</div>
-                            <div style="color: #888; font-size: 0.75em;">Record</div>
+                            <div style="color: #888; font-size: 0.75em;">${profileLabels.record}</div>
                         </div>
                         <div style="flex: 1; background: rgba(239,68,68,0.15); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(239,68,68,0.3);">
                             <div style="font-size: 1.5em;">📊</div>
                             <div style="color: #ef4444; font-weight: bold; font-size: 1.2em;">${document.getElementById('total-wins')?.textContent || '0'}</div>
-                            <div style="color: #888; font-size: 0.75em;">Victoires</div>
+                            <div style="color: #888; font-size: 0.75em;">${profileLabels.wins}</div>
                         </div>
                     </div>
 
                     <!-- BADGES -->
-                    <h4 style="color: #00d9ff; margin-bottom: 10px;">🏆 Badges Débloqués</h4>
+                    <h4 style="color: #00d9ff; margin-bottom: 10px;">🏆 ${profileLabels.badges}</h4>
                     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px;">
                         ${generateProfileBadgesHtml()}
                     </div>
 
-                    <h4 style="color: #00d9ff; margin-bottom: 10px;">📜 Historique des parties (${games.length})</h4>
+                    <h4 style="color: #00d9ff; margin-bottom: 10px;">📜 ${profileLabels.games} (${games.length})</h4>
                 `;
 
                 if (games.length > 0) {
@@ -9704,21 +9726,21 @@
                     games.slice(0, 20).forEach((game, idx) => {
                         const resultColor = game.result === 'win' ? '#4ade80' : game.result === 'loss' ? '#ef4444' : '#fbbf24';
                         const resultIcon = game.result === 'win' ? '✅' : game.result === 'loss' ? '❌' : '🤝';
-                        const resultText = game.result === 'win' ? 'Victoire' : game.result === 'loss' ? 'Défaite' : 'Nulle';
+                        const resultText = game.result === 'win' ? profileLabels.resultWin : game.result === 'loss' ? profileLabels.resultLoss : profileLabels.resultDraw;
                         // Fix dates invalides
                         let dateStr = '-', timeStr = '';
                         try {
                             const d = new Date(game.created_at);
                             if (!isNaN(d.getTime())) {
-                                dateStr = d.toLocaleDateString('fr-FR');
-                                timeStr = d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+                                dateStr = d.toLocaleDateString(profileLang === 'en' ? 'en-US' : 'fr-FR');
+                                timeStr = d.toLocaleTimeString(profileLang === 'en' ? 'en-US' : 'fr-FR', {hour: '2-digit', minute: '2-digit'});
                             }
                         } catch(e) {}
                         const levelLabels = {
-                            'beginner': '🌱 Débutant',
-                            'intermediate': '⚡ Intermédiaire',
-                            'advanced': '🔥 Avancé',
-                            'expert': '👑 Expert'
+                            'beginner': `🌱 ${profileLabels.ratingLevels[0]}`,
+                            'intermediate': `⚡ ${profileLabels.ratingLevels[1]}`,
+                            'advanced': `🔥 ${profileLabels.ratingLevels[2]}`,
+                            'expert': `👑 ${profileLabels.ratingLevels[3]}`
                         };
                         const opponent = game.opponent_type === 'ai'
                             ? (levelLabels[game.opponent_level] || `IA ${game.opponent_level || 'Normal'}`)
@@ -9738,30 +9760,30 @@
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 6px;">
                                         <span style="color: #888; font-size: 0.8em;">${dateStr} ${timeStr}</span>
-                                        <button onclick="showGameReport(${idx})" style="background: #10b981; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7em; color: white;">📊 Rapport</button>
-                                        ${hasPgn ? `<button onclick="downloadGamePGN(${idx})" style="background: #667eea; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7em; color: white;">📥 PGN</button>` : ''}
+                                            <button onclick="showGameReport(${idx})" style="background: #10b981; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7em; color: white;">📊 ${profileLabels.report}</button>
+                                            ${hasPgn ? `<button onclick="downloadGamePGN(${idx})" style="background: #667eea; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7em; color: white;">📥 ${profileLabels.download}</button>` : ''}
                                     </div>
                                 </div>
                                 <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; font-size: 0.85em;">
                                     <div style="text-align: center;">
                                         <div style="color: #00d9ff; font-weight: bold;">${game.moves_count || '?'}</div>
-                                        <div style="color: #666; font-size: 0.8em;">Coups</div>
+                                        <div style="color: #666; font-size: 0.8em;">${profileLabels.moves}</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="color: #4ade80; font-weight: bold;">${accuracy}</div>
-                                        <div style="color: #666; font-size: 0.8em;">Précision</div>
+                                        <div style="color: #666; font-size: 0.8em;">${profileLabels.accuracy}</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="color: #ffd700; font-weight: bold;">${brilliants}</div>
-                                        <div style="color: #666; font-size: 0.8em;">🌟 Brillants</div>
+                                        <div style="color: #666; font-size: 0.8em;">🌟 ${profileLabels.brilliant}</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="color: #ef4444; font-weight: bold;">${blunders}</div>
-                                        <div style="color: #666; font-size: 0.8em;">💥 Gaffes</div>
+                                        <div style="color: #666; font-size: 0.8em;">💥 ${profileLabels.blunders}</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="color: #888; font-weight: bold;">${duration}</div>
-                                        <div style="color: #666; font-size: 0.8em;">Durée</div>
+                                        <div style="color: #666; font-size: 0.8em;">${profileLabels.duration}</div>
                                     </div>
                                 </div>
                             </div>
@@ -9769,7 +9791,7 @@
                     });
                     html += '</div>';
                 } else {
-                    html += '<p style="color: #888; text-align: center;">Aucune partie enregistrée. Jouez des parties pour les voir ici!</p>';
+                    html += `<p style="color:#888;text-align:center">${profileLabels.noGames}</p>`;
                 }
 
                 content.innerHTML = html;
@@ -9781,7 +9803,7 @@
                 if (resumeMasteryLink) resumeMasteryLink.href = nextMastery.href;
             } catch (err) {
                 console.error('Profile error:', err);
-                content.innerHTML = '<p style="text-align: center; color: #ff6b6b; padding: 20px;">Erreur de chargement du profil</p>';
+                content.innerHTML = `<p style="text-align:center;color:#ff6b6b;padding:20px">${profileLabels.loadError}</p>`;
             }
         }
         function downloadGamePGN(idx) {

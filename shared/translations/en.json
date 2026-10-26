@@ -276,7 +276,7 @@
     "profile_resume_mastery": "Resume mastery training",
     "profile_accuracy_progress": "Recent game accuracy",
     "profile_accuracy_chart_alt": "Accuracy by recent game",
-    "profile_accuracy_empty": "Save two or more analyzed games to see your accuracy chart."
+    "profile_accuracy_empty": "Save two or more analyzed games to see your accuracy chart.",
     "action_tournament_stockfish": "Stockfish Tournament",
     "section_training": "Training Programs",
     "training_coach_title": "SupaChess AI Coach - Chess Trainer",
@@ -293,5 +293,5 @@
     "training_tactics_badge": "8 THEMES",
     "training_daily_title": "Daily Challenge",
     "training_daily_desc": "A new challenge every day! Keep your streak going and climb the levels.",
-    "training_daily_badge": "DAILY",
+    "training_daily_badge": "DAILY"
 }

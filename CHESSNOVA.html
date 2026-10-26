@@ -3911,6 +3911,16 @@
                 suggestionEvalDiff: foundMove ? foundMove.evalDiff : null
             });
             updateLiveMoveTally();
+            if (window.supaBubbles && typeof window.supaBubbles.showRatedMove === 'function') {
+                window.supaBubbles.showRatedMove({
+                    to: move.to,
+                    rating: rating,
+                    quality: quality,
+                    eval: afterEval,
+                    san: move.san,
+                    movePly: game.history().length
+                });
+            }
 
             // Affichage de l'analyse
             const analysisDiv = document.getElementById('move-analysis');

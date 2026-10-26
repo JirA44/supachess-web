@@ -1115,16 +1115,16 @@
         panel.id = 'cn-players-panel';
         panel.innerHTML =
             '<div class="cn-players-panel-header">' +
-                '<span style="color:#eee;font-size:13px;font-weight:600;">Joueurs en ligne</span>' +
+                '<span data-i18n="players_panel_title" style="color:#eee;font-size:13px;font-weight:600;">' + escapeHTML(t('players_panel_title')) + '</span>' +
                 '<span id="cn-players-count">—</span>' +
             '</div>' +
             '<div class="cn-status-btns" id="cn-status-btns">' +
-                '<button class="cn-status-btn cn-status-btn--active" data-status="dispo">&#x1F7E2; Dispo</button>' +
-                '<button class="cn-status-btn" data-status="occupe">&#x1F7E1; Occup&eacute;</button>' +
-                '<button class="cn-status-btn" data-status="invisible">&#x26AB; Invisible</button>' +
+                '<button class="cn-status-btn cn-status-btn--active" data-status="dispo" data-i18n="players_status_available">' + escapeHTML(t('players_status_available')) + '</button>' +
+                '<button class="cn-status-btn" data-status="occupe" data-i18n="players_status_busy">' + escapeHTML(t('players_status_busy')) + '</button>' +
+                '<button class="cn-status-btn" data-status="invisible" data-i18n="players_status_invisible">' + escapeHTML(t('players_status_invisible')) + '</button>' +
             '</div>' +
             '<div class="cn-players-list" id="cn-players-list">' +
-                '<div class="cn-players-empty">Chargement...</div>' +
+                '<div class="cn-players-empty" data-i18n="players_loading">' + escapeHTML(t('players_loading')) + '</div>' +
             '</div>';
 
         document.body.appendChild(panel);
@@ -1161,7 +1161,7 @@
                 loadOnlinePlayers(); // Refresh list
             } else {
                 var list = document.getElementById('cn-players-list');
-                if (list) list.innerHTML = '<div class="cn-players-empty">Mode invisible actif</div>';
+                if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="players_invisible_active">' + escapeHTML(t('players_invisible_active')) + '</div>';
             }
         });
     }
@@ -1186,8 +1186,10 @@
         if (window.SupaProfiles && typeof window.SupaProfiles.getProfile === 'function') {
             window.SupaProfiles.getProfile(currentUser.uid).then(function (profile) {
                 if (profile) window.SupaProfiles.renderProfileModal(profile);
-                else togglePlayersPanel();
-            }).catch(function () { togglePlayersPanel(); });
+                else window.SupaProfiles.renderOwnProfileFallback(currentUser);
+            }).catch(function () {
+                window.SupaProfiles.renderOwnProfileFallback(currentUser);
+            });
             return;
         }
         togglePlayersPanel();
@@ -1204,7 +1206,7 @@
         var countEl = document.getElementById('cn-players-count');
         if (!db) {
             if (countEl) countEl.textContent = '—';
-            if (list) list.innerHTML = '<div class="cn-players-empty">' + escapeHTML(t('players_unavailable')) + '</div>';
+            if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="players_unavailable">' + escapeHTML(t('players_unavailable')) + '</div>';
             return;
         }
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -1231,7 +1233,7 @@
                 if (countEl) countEl.textContent = players.length;
 
                 if (players.length === 0) {
-                    list.innerHTML = '<div class="cn-players-empty">Aucun joueur en ligne</div>';
+                    list.innerHTML = '<div class="cn-players-empty" data-i18n="players_none_online">' + escapeHTML(t('players_none_online')) + '</div>';
                     return;
                 }
 
@@ -1267,10 +1269,10 @@
                 var list = document.getElementById('cn-players-list');
                 var countEl = document.getElementById('cn-players-count');
                 if (countEl) countEl.textContent = '—';
-                var message = err && err.code === 'permission-denied'
-                    ? t('players_permission_denied')
-                    : t('players_unavailable');
-                if (list) list.innerHTML = '<div class="cn-players-empty">' + escapeHTML(message) + '</div>';
+                var messageKey = err && err.code === 'permission-denied'
+                    ? 'players_permission_denied'
+                    : 'players_unavailable';
+                if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="' + messageKey + '">' + escapeHTML(t(messageKey)) + '</div>';
             });
     }
 

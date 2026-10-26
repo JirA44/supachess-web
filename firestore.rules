@@ -48,13 +48,12 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
-    // Public presence is deliberately separated from private user documents:
-    // it contains no email, profile, or page field.
+    // Only sanitized, active-status records can be written here. The signed-in
+    // players panel may list at most 100 records; private fields stay elsewhere.
     match /presence_public/{uid} {
       allow list: if request.auth != null
         && request.query.limit != null
-        && request.query.limit <= 100
-        && resource.data.status in ['dispo', 'occupe'];
+        && request.query.limit <= 100;
       allow create, update: if isOwner(uid) && validPublicPresence(uid);
       allow delete: if isOwner(uid);
     }

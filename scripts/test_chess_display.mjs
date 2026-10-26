@@ -14,7 +14,7 @@ assert.match(chessnova, /frame-src 'self' https:\/\/chessnova\.firebaseapp\.com 
 assert.match(chessnova, /\$\{Number\(rating\)\.toFixed\(1\)\}/, 'move grades show one decimal and omit /10');
 assert.match(chessnova, /Évaluation : \$\{\(afterEval \/ 100\)\.toFixed\(2\)\}/, 'move analysis shows a two-decimal evaluation');
 assert.match(chessnova, /auth\/unauthorized-domain/, 'Google auth gives actionable domain guidance');
-assert.match(chessnova, /supa-move-bubbles\.js\?v=20261025b/, 'bubble script URL is cache-busted');
+assert.match(chessnova, /supa-move-bubbles\.js\?v=20261026a/, 'bubble script URL is cache-busted');
 assert.match(chessnova, /window\.gameHistory\.push\(/, 'analyzed game history remains stored');
 
 console.log('Chess display checks passed');

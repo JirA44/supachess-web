@@ -544,12 +544,6 @@ Exemple:
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 20px;">
-                <h3 class="card-title">📁 Parties récentes (analysées)</h3>
-                <div id="recent-games-list">
-                    <p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>
-                </div>
-            </div>
         </div>
 
         <!-- PANEL: ANALYSIS -->
@@ -605,6 +599,13 @@ Exemple:
 
                 <!-- Right: Analysis -->
                 <div>
+                    <div class="card">
+                        <h3 class="card-title">📁 Parties analysées</h3>
+                        <div id="recent-games-list" style="max-height: 280px; overflow-y: auto;">
+                            <p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <h3 class="card-title">🎯 Analyse du coup</h3>
                         <div id="move-analysis" class="analysis-box">

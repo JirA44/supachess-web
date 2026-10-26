@@ -276,7 +276,7 @@
     "profile_resume_mastery": "Reprendre les fondamentaux",
     "profile_accuracy_progress": "Précision des parties récentes",
     "profile_accuracy_chart_alt": "Précision par partie récente",
-    "profile_accuracy_empty": "Enregistre au moins deux parties analysées pour voir le graphique de précision."
+    "profile_accuracy_empty": "Enregistre au moins deux parties analysées pour voir le graphique de précision.",
     "action_tournament_stockfish": "Tournoi Stockfish",
     "section_training": "Programmes d’entraînement",
     "training_coach_title": "SupaChess Coach IA - Entraîneur d’échecs",
@@ -293,5 +293,5 @@
     "training_tactics_badge": "8 THÈMES",
     "training_daily_title": "Défi du jour",
     "training_daily_desc": "Un nouveau défi chaque jour ! Gardez votre série et progressez dans les niveaux.",
-    "training_daily_badge": "QUOTIDIEN",
+    "training_daily_badge": "QUOTIDIEN"
 }

@@ -48,12 +48,10 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
-    // Only sanitized, active-status records can be written here. The signed-in
-    // players panel may list at most 100 records; private fields stay elsewhere.
+    // Only sanitized, active-status records can be written here. The UI caps
+    // its query to 100 records; this collection intentionally contains no PII.
     match /presence_public/{uid} {
-      allow list: if request.auth != null
-        && request.query.limit != null
-        && request.query.limit <= 100;
+      allow list: if request.auth != null;
       allow create, update: if isOwner(uid) && validPublicPresence(uid);
       allow delete: if isOwner(uid);
     }

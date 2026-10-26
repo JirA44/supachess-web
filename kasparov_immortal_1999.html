@@ -203,6 +203,13 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        .move-error {
+            margin: -8px 0 16px;
+            color: #ffd1d1;
+            text-align: center;
+            font-weight: 600;
+        }
+
         .moves-section {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -357,7 +364,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">⚡ Nombre de coups</div>
-                <div class="stat-value">44</div>
+                <div class="stat-value">30</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">🌟 Résultat</div>
@@ -374,6 +381,7 @@
                 <div class="move-info" id="moveInfo">
                     Position initiale
                 </div>
+                <p class="move-error" id="moveError" role="alert" aria-live="assertive" hidden></p>
                 <div class="controls">
                     <button class="btn" onclick="goToStart()">⏮️ Début</button>
                     <button class="btn" onclick="previousMove()">◀️ Précédent</button>
@@ -566,6 +574,20 @@
 
         let currentMoveIndex = -1;
 
+        function showMoveError(index) {
+            const error = document.getElementById('moveError');
+            const moveNumber = Math.floor(index / 2) + 1;
+            const color = index % 2 === 0 ? 'Blancs' : 'Noirs';
+            error.textContent = `Replay arrêté : coup illégal ${moveNumber} (${color}) — ${gameMoves[index].move}.`;
+            error.hidden = false;
+        }
+
+        function clearMoveError() {
+            const error = document.getElementById('moveError');
+            error.textContent = '';
+            error.hidden = true;
+        }
+
         function initBoard() {
             const board = document.getElementById('chessboard');
             board.innerHTML = '';
@@ -653,19 +675,29 @@
 
         function playOneMove() {
             if (currentMoveIndex < gameMoves.length - 1) {
-                currentMoveIndex++;
-                const move = gameMoves[currentMoveIndex].move;
+                const nextIndex = currentMoveIndex + 1;
+                const move = gameMoves[nextIndex].move;
                 try {
-                    chess.move(move, { sloppy: true });
+                    const appliedMove = chess.move(move, { sloppy: true });
+                    if (!appliedMove) {
+                        showMoveError(nextIndex);
+                        return false;
+                    }
                 } catch (e) {
                     console.error('Erreur de coup:', move, e);
+                    showMoveError(nextIndex);
+                    return false;
                 }
+                currentMoveIndex = nextIndex;
+                clearMoveError();
+                return true;
             }
+            return false;
         }
 
         function nextMove() {
             if (currentMoveIndex < gameMoves.length - 1) {
-                playOneMove();
+                if (!playOneMove()) return;
                 initBoard();
                 updateMoveInfo();
             }
@@ -682,13 +714,14 @@
         function goToStart() {
             currentMoveIndex = -1;
             chess.reset();
+            clearMoveError();
             initBoard();
             updateMoveInfo();
         }
 
         function goToEnd() {
             while (currentMoveIndex < gameMoves.length - 1) {
-                playOneMove();
+                if (!playOneMove()) break;
             }
             initBoard();
             updateMoveInfo();
@@ -701,7 +734,7 @@
                 updateMoveInfo();
             } else {
                 while (currentMoveIndex < index) {
-                    playOneMove();
+                    if (!playOneMove()) break;
                 }
                 initBoard();
                 updateMoveInfo();
@@ -709,12 +742,22 @@
         }
 
         function rebuildGame() {
+            const targetIndex = currentMoveIndex;
             chess.reset();
-            for (let i = 0; i <= currentMoveIndex; i++) {
+            currentMoveIndex = -1;
+            clearMoveError();
+            for (let i = 0; i <= targetIndex; i++) {
                 try {
-                    chess.move(gameMoves[i].move, { sloppy: true });
+                    const appliedMove = chess.move(gameMoves[i].move, { sloppy: true });
+                    if (!appliedMove) {
+                        showMoveError(i);
+                        break;
+                    }
+                    currentMoveIndex = i;
                 } catch (e) {
                     console.error('Erreur de reconstruction:', gameMoves[i].move, e);
+                    showMoveError(i);
+                    break;
                 }
             }
             initBoard();

@@ -3,15 +3,15 @@ import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 const html = await readFile(new URL('../CHESS_COACH.html', import.meta.url), 'utf8');
-const style = html.match(/<style>([\\s\\S]*?)<\\/style>/i)?.[1];
+const style = html.match(/<style>([\s\S]*?)<\/style>/i)?.[1];
 assert.ok(style, 'Chess Coach stylesheet exists');
-assert.match(style, /\.analysis-status-running\\s*\\{/);
+assert.match(style, /\.analysis-status-running\s*\{/);
 assert.match(style, /stockfish-analysis-rainbow/);
 assert.match(style, /stockfish-analysis-glow/);
-assert.match(style, /prefers-reduced-motion:\\s*reduce/);
-assert.match(html, /statusEl\\.classList\\.add\\('analysis-status-running'\\)/);
-assert.match(html, /statusElDone\\.classList\\.remove\\('analysis-status-running'\\)/);
-assert.match(html, /statusEl\\.textContent = '⏹ Analyse annulée'/);
+assert.match(style, /prefers-reduced-motion:\s*reduce/);
+assert.match(html, /statusEl\.classList\.add\('analysis-status-running'\)/);
+assert.match(html, /statusElDone\.classList\.remove\('analysis-status-running'\)/);
+assert.match(html, /statusEl\.textContent = '⏹ Analyse annulée'/);
 
 const browser = await chromium.launch({ headless: true });
 try {

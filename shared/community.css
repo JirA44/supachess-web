@@ -1381,3 +1381,23 @@
 .profile-learning-list { margin-left: 20px; color: rgba(255,255,255,.86); }
 .profile-learning-chart { display: block; width: 100%; max-width: 420px; height: 96px; background: rgba(255,255,255,.04); border-radius: 8px; }
 @media (max-width: 480px) { .profile-learning-stats { grid-template-columns: 1fr 1fr; } .profile-learning-actions { display: grid; } .profile-learning-actions a { justify-content: center; } }
+
+.profile-learning{margin-top:18px;padding:16px;border:1px solid rgba(104,181,255,.25);border-radius:12px;background:rgba(0,0,0,.2);color:#f4f7fb}
+.profile-learning h3{margin:0 0 12px;color:#8bd6ff}.profile-learning h4{margin:16px 0 8px;color:#dbeafe}
+.profile-xp-card{padding:12px;border:1px solid rgba(168,85,247,.35);border-radius:10px;background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(236,72,153,.12))}
+.profile-xp-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:9px}.profile-xp-heading>div{display:grid;gap:3px}
+.profile-xp-heading span,.profile-xp-card small{color:#cbd5e1;font-size:.84em}.profile-xp-heading>strong{color:#fbbf24}
+.profile-xp-track{height:10px;border-radius:999px;background:rgba(0,0,0,.45);overflow:hidden}.profile-xp-track span{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:inherit}
+.profile-xp-card small{display:block;margin-top:6px}
+.profile-learning-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px;margin:12px 0}
+.profile-learning-stats>div{display:grid;gap:4px;padding:10px;border-radius:9px;background:rgba(255,255,255,.06)}
+.profile-learning-stats strong{color:#fff;font-size:1.15em}.profile-learning-stats span{color:#cbd5e1;font-size:.78em}
+.profile-mastery-list,.profile-learning-list{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.profile-mastery-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;background:rgba(255,255,255,.045);border-radius:8px;color:#e5e7eb}
+.profile-mastery-list a{color:#8bd6ff;text-decoration:none}.profile-mastery-list a:hover{text-decoration:underline}
+.profile-learning-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.profile-learning-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border-radius:8px;background:#087f8c;color:#fff;text-decoration:none;font-weight:700}
+.profile-learning-actions a:hover,.profile-learning-actions a:focus-visible{background:#0b9baa;outline:2px solid #b6f1ff;outline-offset:2px}
+.profile-learning-list li,.profile-learning-note{padding:8px 10px;border-left:3px solid #fbbf24;background:rgba(255,255,255,.045);color:#e5e7eb}
+.profile-learning-chart{display:block;width:100%;height:96px;padding:8px;border-radius:8px;background:rgba(255,255,255,.035)}
+@media(max-width:520px){#profile-box{padding:18px!important}.profile-learning-actions a{flex:1 1 100%}}

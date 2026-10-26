@@ -57,18 +57,37 @@ Object.defineProperty(window.document, 'readyState', { configurable: true, value
 window.setInterval = () => 0;
 window.clearInterval = () => {};
 window.firebase = firebase;
+const french = JSON.parse(readFileSync('shared/translations/fr.json', 'utf8'));
+let currentLang = 'en';
+const dictionaries = { en: english, fr: french };
 window.ChessNovaI18n = {
-  getLang: () => 'en',
-  t: (key) => english[key] || key
+  getLang: () => currentLang,
+  t: (key) => dictionaries[currentLang][key] || key,
+  applyTranslations() {
+    window.document.querySelectorAll('[data-i18n]').forEach((element) => {
+      const value = dictionaries[currentLang][element.getAttribute('data-i18n')];
+      if (value !== undefined) element.textContent = value;
+    });
+  }
 };
 window.eval(communitySource);
 window.document.querySelector('.cn-status-btn[data-status="dispo"]').click();
 await new Promise((resolve) => setTimeout(resolve, 0));
 
+assert.equal(window.document.querySelector('.cn-players-panel-header [data-i18n="players_panel_title"]').textContent, english.players_panel_title);
+assert.equal(window.document.querySelector('[data-i18n="players_status_available"]').textContent, english.players_status_available);
+assert.equal(window.document.querySelector('[data-i18n="players_status_busy"]').textContent, english.players_status_busy);
+assert.equal(window.document.querySelector('[data-i18n="players_status_invisible"]').textContent, english.players_status_invisible);
 assert.equal(window.document.getElementById('cn-players-count').textContent, '—');
 assert.equal(
   window.document.getElementById('cn-players-list').textContent,
   english.players_permission_denied
 );
-console.log('Presence permission errors show an unavailable state, never a false zero.');
+assert.equal(window.document.querySelector('#cn-players-list [data-i18n="players_permission_denied"]').textContent, english.players_permission_denied);
+currentLang = 'fr';
+window.ChessNovaI18n.applyTranslations();
+assert.equal(window.document.querySelector('.cn-players-panel-header [data-i18n="players_panel_title"]').textContent, french.players_panel_title);
+assert.equal(window.document.querySelector('[data-i18n="players_status_available"]').textContent, french.players_status_available);
+assert.equal(window.document.querySelector('#cn-players-list [data-i18n="players_permission_denied"]').textContent, french.players_permission_denied);
+console.log('Presence labels and permission errors follow the selected language; no false zero is shown.');
 dom.window.close();

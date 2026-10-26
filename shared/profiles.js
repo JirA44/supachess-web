@@ -129,7 +129,8 @@ function renderProfileModal(data){
     overlay=document.createElement('div');
     overlay.id='profile-modal';
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;overflow:auto;';
-    overlay.innerHTML='<div id="profile-box" style="background:#1a1f2e;border:1px solid #4facfe;border-radius:16px;padding:24px;width:min(680px,100%);max-height:90vh;overflow:auto;position:relative;"><button onclick="document.getElementById(\\'profile-modal\\').remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;" aria-label="Fermer">×</button><div id="profile-content"></div></div>';
+    overlay.innerHTML='<div id="profile-box" style="background:#1a1f2e;border:1px solid #4facfe;border-radius:16px;padding:24px;width:min(680px,100%);max-height:90vh;overflow:auto;position:relative;"><button id="profile-close" type="button" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;" aria-label="Close profile">×</button><div id="profile-content"></div></div>';
+    overlay.querySelector("#profile-close").addEventListener('click', function(){ overlay.remove(); });
     overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
     document.body.appendChild(overlay);
   }

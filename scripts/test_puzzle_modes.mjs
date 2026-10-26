@@ -21,9 +21,38 @@ try {
   const appHtml = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   await page.setContent(appHtml);
   await page.addScriptTag({ content: chessSource });
-  await page.addScriptTag({ content: `window.Chessboard = function () { return { position() {}, orientation() {} }; };` });
+  await page.addScriptTag({ content: `window.Chessboard = function (id) {
+    const element = document.getElementById(id);
+    for (let rank = 8; rank >= 1; rank--) {
+      for (const file of 'abcdefgh') {
+        const square = document.createElement('div');
+        square.dataset.square = file + rank;
+        element.appendChild(square);
+      }
+    }
+    return { position() {}, orientation() {} };
+  };` });
   await page.addScriptTag({ content: appScript });
   await page.evaluate(() => window.onload());
+
+  async function playSolutionMove(continuation = false) {
+    const move = await page.evaluate(continuation => {
+      const puzzle = PUZZLES[currentPuzzleIndex];
+      const position = new Chess(continuation ? game.fen() : puzzle.fen);
+      const san = continuation ? puzzle.continuation[0] : puzzle.solution[0];
+      const next = position.move(san, { sloppy: true });
+      return { from: next.from, to: next.to };
+    }, continuation);
+    await page.evaluate(async ({ from, to }) => {
+      for (const square of [from, to]) {
+        const piece = game.get(square);
+        if (piece) onDragStart(square, piece.color + piece.type.toUpperCase());
+        onDrop(square, square);
+        document.querySelector(`[data-square="${square}"]`).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }, move);
+  }
 
   const modes = page.locator('#exercise-mode-select option');
   assert.equal(await modes.count(), 4, 'one-move, hidden-brilliant, and both two-half-move modes are offered');
@@ -32,55 +61,40 @@ try {
   await page.locator('#exercise-mode-select').selectOption('hidden-brilliant');
   const brilliantIds = await page.evaluate(() => puzzleOrder.map(index => index + 1).sort((a, b) => a - b));
   assert.deepEqual(brilliantIds, [23, 32, 39], 'the hidden-brilliant mode contains only the three curated non-obvious positions');
-  const hiddenBrilliant = await page.evaluate(() => {
+  await page.evaluate(() => loadPuzzle(38)); // Exercise the curated capture on b5 through the board UI.
+  const captureMove = await page.evaluate(() => {
     const puzzle = PUZZLES[currentPuzzleIndex];
-    const probe = new Chess(puzzle.fen);
-    const move = probe.move(puzzle.solution[0], { sloppy: true });
-    onDrop(move.from, move.to);
-    return { feedback: document.getElementById('feedback').textContent, solved: puzzleSolved, moveCount: movesHistory.length };
+    const move = new Chess(puzzle.fen).move(puzzle.solution[0], { sloppy: true });
+    return { from: move.from, to: move.to, isCapture: !!game.get(move.to) };
   });
+  assert.equal(captureMove.isCapture, true, 'the hidden-brilliant UI regression uses a capture');
+  await playSolutionMove();
+  const hiddenBrilliant = await page.evaluate(() => ({
+    feedback: document.getElementById('feedback').textContent,
+    solved: puzzleSolved,
+    moveCount: movesHistory.length
+  }));
   assert.match(hiddenBrilliant.feedback, /coup brillant caché/i);
   assert.equal(hiddenBrilliant.solved, true, 'the curated hidden brilliant move solves in one half-move');
   assert.equal(hiddenBrilliant.moveCount, 1, 'the hidden-brilliant mode does not autoplay the continuation');
 
   await page.locator('#exercise-mode-select').selectOption('two-manual');
-  const firstManual = await page.evaluate(() => {
-    const puzzle = PUZZLES[currentPuzzleIndex];
-    const probe = new Chess(puzzle.fen);
-    const move = probe.move(puzzle.solution[0], { sloppy: true });
-    onDrop(move.from, move.to);
-    return { feedback: document.getElementById('feedback').textContent, solved: puzzleSolved, reply: puzzle.continuation[0] };
-  });
+  await playSolutionMove();
+  const firstManual = await page.evaluate(() => ({ feedback: document.getElementById('feedback').textContent, solved: puzzleSolved }));
   assert.match(firstManual.feedback, /Premier demi-coup correct/i);
   assert.equal(firstManual.solved, false, 'manual mode waits for the second half-move');
-  await page.evaluate(() => {
-    const puzzle = PUZZLES[currentPuzzleIndex];
-    const probe = new Chess(puzzle.fen);
-    probe.move(puzzle.solution[0], { sloppy: true });
-    const reply = probe.move(puzzle.continuation[0], { sloppy: true });
-    onDrop(reply.from, reply.to);
-  });
+  await playSolutionMove(true);
   assert.equal(await page.evaluate(() => puzzleSolved), true, 'manual mode completes after the expected reply');
   assert.equal(await page.evaluate(() => movesHistory.length), 2, 'manual mode records both half-moves');
 
   await page.locator('#exercise-mode-select').selectOption('two-auto');
-  await page.evaluate(() => {
-    const puzzle = PUZZLES[currentPuzzleIndex];
-    const probe = new Chess(puzzle.fen);
-    const move = probe.move(puzzle.solution[0], { sloppy: true });
-    onDrop(move.from, move.to);
-  });
+  await playSolutionMove();
   await page.waitForTimeout(800);
   assert.equal(await page.evaluate(() => puzzleSolved), true, 'automatic mode completes after the first move');
   assert.equal(await page.evaluate(() => movesHistory.length), 2, 'automatic mode plays exactly one opponent reply');
 
   await page.locator('#exercise-mode-select').selectOption('one');
-  await page.evaluate(() => {
-    const puzzle = PUZZLES[currentPuzzleIndex];
-    const probe = new Chess(puzzle.fen);
-    const move = probe.move(puzzle.solution[0], { sloppy: true });
-    onDrop(move.from, move.to);
-  });
+  await playSolutionMove();
   await page.waitForTimeout(800);
   assert.equal(await page.evaluate(() => puzzleSolved), true, 'one-half-move mode completes on the best move');
   assert.equal(await page.evaluate(() => movesHistory.length), 1, 'one-half-move mode does not autoplay a continuation');

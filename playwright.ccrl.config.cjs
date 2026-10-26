@@ -1,7 +1,7 @@
 const { defineConfig } = require('@playwright/test');
 module.exports = defineConfig({
   testDir: './tests/e2e',
-  testMatch: /ccrl-games\.spec\.cjs/,
+  testMatch: /ccrl-games\.spec\.cjs|tournament-stockfish\.spec\.cjs/,
   timeout: 30000,
   expect: { timeout: 10000 },
   retries: 0,

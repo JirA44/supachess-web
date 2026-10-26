@@ -28,6 +28,7 @@
         good:    '#22c55e',
         ok:      '#eab308',
         inaccu:  '#f97316',
+        mistake: '#fb7185',
         blunder: '#ef4444',
         legal:   'rgba(200,200,200,0.45)',
     };
@@ -107,6 +108,10 @@
     function showBubble(sq, payload) {
         const target = squareEl(sq);
         if (!target) return;
+        if (payload.moveKey) {
+            bubbles.filter(function (entry) { return entry.moveKey === payload.moveKey; })
+                .forEach(function (entry) { removeBubble(entry.el); });
+        }
         const rect = target.getBoundingClientRect();
         const layoutBubble = function (entry, index, count) {
             const cols = count === 1 ? 1 : 2;
@@ -175,7 +180,7 @@
         if (payload.symbol) el.appendChild(note);
         if (payload.eval) el.appendChild(evalLine);
         document.body.appendChild(el);
-        const entry = { el: el, timer: null, square: sq };
+        const entry = { el: el, timer: null, square: sq, moveKey: payload.moveKey || null };
         bubbles.push(entry);
         const squareEntries = bubbles.filter(function (b) { return b.square === sq; });
         squareEntries.forEach(function (bubble, index) { layoutBubble(bubble, index, squareEntries.length); });
@@ -432,7 +437,10 @@
         const symbol = annotationFor(score, enriched);
         const color = QCOLORS[info.quality] || QCOLORS.legal;
 
-        showBubble(mv.to, { score: scoreText(score), symbol: symbol, color: color, eval: evalText(info) });
+        showBubble(mv.to, {
+            score: scoreText(score), symbol: symbol, color: color, eval: evalText(info),
+            moveKey: nowCount + ':' + san,
+        });
 
         const record = {
             san: san,
@@ -469,6 +477,46 @@
         const taken = order[mv.captured] || 0;
         const played = order[mv.piece] || 0;
         return taken > played;
+    }
+
+    function showRatedMove(move) {
+        if (!enabled || !move || !move.to || !Number.isFinite(Number(move.rating))) return false;
+
+        const quality = String(move.quality || '').toLowerCase();
+        const rating = Number(move.rating);
+        let grade;
+        if (/brillant|brilliant/.test(quality)) grade = 'bril';
+        else if (/meilleur coup|best move/.test(quality)) grade = 'best';
+        else if (/excellent|tr[eè]s bon|very good/.test(quality)) grade = 'excel';
+        else if (/bon coup|\\bgood\\b/.test(quality)) grade = 'good';
+        else if (/acceptable|correct|coup ok|\\bok\\b/.test(quality)) grade = 'ok';
+        else if (/impr[eé]cision|inaccuracy/.test(quality)) grade = 'inaccu';
+        else if (/erreur|mistake/.test(quality)) grade = 'mistake';
+        else if (/gaffe|blunder/.test(quality)) grade = 'blunder';
+        else if (rating >= 9.5) grade = 'best';
+        else if (rating >= 8.5) grade = 'excel';
+        else if (rating >= 7) grade = 'good';
+        else if (rating >= 5) grade = 'ok';
+        else if (rating >= 4) grade = 'inaccu';
+        else if (rating >= 2) grade = 'mistake';
+        else grade = 'blunder';
+
+        const symbols = { bril: '!!', best: '★', excel: '!', good: '✓', ok: '=', inaccu: '?!', mistake: '?', blunder: '??' };
+        const evalScore = Number(move.eval);
+        const evalLabel = move.eval !== null && move.eval !== '' && Number.isFinite(evalScore)
+            ? (evalScore > 0 ? '+' : '') + (evalScore / 100).toFixed(2)
+            : '';
+        const ply = Number.isFinite(Number(move.movePly)) ? Number(move.movePly) : null;
+        const moveKey = ply === null ? null : ply + ':' + String(move.san || '');
+
+        showBubble(move.to, {
+            score: scoreText(rating),
+            symbol: symbols[grade],
+            color: QCOLORS[grade],
+            eval: evalLabel,
+            moveKey: moveKey,
+        });
+        return true;
     }
 
     // ── Watcher FEN (déclenche l'analyse après chaque coup) ──────────────────
@@ -536,6 +584,7 @@
         getSnapshot: function () { return lastSnap; },
         getPanelEl: function () { return panelEl; },
         renderPanel: function () { if (lastSnap) renderPanel(lastSnap); },
+        showRatedMove: showRatedMove,
     };
 
     // ── Init ─────────────────────────────────────────────────────────────────

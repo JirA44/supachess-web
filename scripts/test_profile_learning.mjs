@@ -35,9 +35,9 @@ assert.equal(progress.categoryCounts.inaccuracy, 1);
 assert.equal(progress.categoryCounts.blunder, 1);
 
 const html = profiles.renderLocalLearningPanel();
-assert.match(html, /profile_resume_exercises/);
+assert.match(html, /Reprendre mes exercices/);
 assert.match(html, /resume-exercises=latest-with-errors/);
-assert.match(html, /profile_resume_lessons/);
+assert.match(html, /Reprendre mes leçons/);
 assert.match(html, /À retravailler dans tes parties/);
 assert.match(html, /Progression des leçons/);
 console.log('Profile learning progress tests passed');

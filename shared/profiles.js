@@ -95,25 +95,29 @@ function readLocalLearningProgress(){
   });});
   return {completed:completed,games:games,moveExercises:moveExercises,latest:latest,categoryCounts:categoryCounts};
 }
+function profileText(key,fallback){
+  var value=window.ChessNovaI18n&&window.ChessNovaI18n.t?window.ChessNovaI18n.t(key):key;
+  return !value||value===key?fallback:value;
+}
 function renderLocalLearningPanel(data){
   var local=readLocalLearningProgress();
-  var labels={brilliant:'Brillants',best:'Meilleurs coups','very-good':'Très bons coups',good:'Bons coups',ok:'Coups OK',inaccuracy:'Imprécisions',mistake:'Erreurs',blunder:'Gaffes',unrated:'Non évalués'};
+  var labels={brilliant:profileText('profile_category_brilliant','Brillants'),best:profileText('profile_category_best','Meilleurs coups'),'very-good':profileText('profile_category_very_good','Très bons coups'),good:profileText('profile_category_good','Bons coups'),ok:profileText('profile_category_ok','Coups OK'),inaccuracy:profileText('profile_category_inaccuracy','Imprécisions'),mistake:profileText('profile_category_mistake','Erreurs'),blunder:profileText('profile_category_blunder','Gaffes'),unrated:profileText('profile_category_unrated','Non évalués')};
   var weaknesses=Object.keys(local.categoryCounts).filter(function(key){return key==='inaccuracy'||key==='mistake'||key==='blunder';}).sort(function(a,b){return local.categoryCounts[b]-local.categoryCounts[a];});
   var exercisesUrl=local.latest
     ? 'https://jira44.github.io/supachess/index.html?resume-exercises='+encodeURIComponent(local.latest.id)
     : 'https://jira44.github.io/supachess/index.html?open-review=1';
   var mastered=local.completed.length;
-  var html='<section class="profile-learning" aria-labelledby="profile-learning-title"><h3 id="profile-learning-title">Mon apprentissage</h3>'+
-    '<div class="profile-learning-stats"><div><strong>'+mastered+'</strong><span>leçon(s) maîtrisée(s)</span></div><div><strong>'+local.moveExercises+'</strong><span>demi-coups à retravailler</span></div></div>'+
-    '<div class="profile-learning-actions"><a href="'+exercisesUrl+'">Reprendre mes exercices</a><a href="https://jira44.github.io/supachess/book-lessons.html?next=1">Reprendre mes leçons</a></div>';
+  var html='<section class="profile-learning" aria-labelledby="profile-learning-title"><h3 id="profile-learning-title">'+profileText('profile_learning_title','Mon apprentissage')+'</h3>'+
+    '<div class="profile-learning-stats"><div><strong>'+mastered+'</strong><span>'+profileText('profile_mastered_lessons','leçon(s) maîtrisée(s)')+'</span></div><div><strong>'+local.moveExercises+'</strong><span>'+profileText('profile_correction_moves','demi-coups à retravailler')+'</span></div></div>'+
+    '<div class="profile-learning-actions"><a href="'+exercisesUrl+'">'+profileText('profile_resume_exercises','Reprendre mes exercices')+'</a><a href="https://jira44.github.io/supachess/book-lessons.html?next=1">'+profileText('profile_resume_lessons','Reprendre mes leçons')+'</a></div>';
   if(weaknesses.length){
-    html+='<h4>À retravailler dans tes parties</h4><ul class="profile-learning-list">'+weaknesses.slice(0,3).map(function(key){return '<li>'+escapeProfileText(labels[key]||key)+' : '+local.categoryCounts[key]+'</li>';}).join('')+'</ul>';
-  }else if(local.moveExercises){html+='<p class="profile-learning-note">Aucune imprécision, erreur ou gaffe enregistrée dans les exercices disponibles.</p>';}
+    html+='<h4>'+profileText('profile_work_on','À retravailler dans tes parties')+'</h4><ul class="profile-learning-list">'+weaknesses.slice(0,3).map(function(key){return '<li>'+escapeProfileText(labels[key]||key)+' : '+local.categoryCounts[key]+'</li>';}).join('')+'</ul>';
+  }else if(local.moveExercises){html+='<p class="profile-learning-note">'+profileText('profile_no_recorded_errors','Aucune imprécision, erreur ou gaffe enregistrée dans les exercices disponibles.')+'</p>';}
   var points=local.completed.map(function(item){return item.progress.completedAt?new Date(item.progress.completedAt).getTime():null;}).filter(function(time){return Number.isFinite(time);}).sort(function(a,b){return a-b;});
   if(points.length>1){
     var coords=points.map(function(_time,index){var x=8+index*164/(points.length-1);var y=54-(index+1)*44/points.length;return x.toFixed(1)+','+y.toFixed(1);}).join(' ');
-    html+='<h4>Progression des leçons</h4><svg class="profile-learning-chart" viewBox="0 0 180 64" role="img" aria-label="Progression cumulative des leçons maîtrisées"><polyline points="'+coords+'" fill="none" stroke="#65d6a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>';
-  }else{html+='<p class="profile-learning-note">Termine plusieurs leçons pour voir ton graphique de progression.</p>';}
+    html+='<h4>'+profileText('profile_lesson_progress','Progression des leçons')+'</h4><svg class="profile-learning-chart" viewBox="0 0 180 64" role="img" aria-label="'+profileText('profile_lesson_chart_alt','Progression cumulative des leçons maîtrisées')+'">'<polyline points="'+coords+'" fill="none" stroke="#65d6a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>';
+  }else{html+='<p class="profile-learning-note">'+profileText('profile_chart_empty','Termine plusieurs leçons pour voir ton graphique de progression.')+'</p>';}
   return html+'</section>';
 }
 function renderProfileModal(data){

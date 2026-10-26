@@ -38,6 +38,7 @@
     let analyzeTimer = null;
     let boardEl    = null;
     let currentSel = null;  // currently selected square
+    let observedFen = null;  // last position seen by the board DOM observer
 
     // ── Page object accessors ────────────────────────────────────────────────
     // Tries window properties first, then scans for any chess.js/chessboard.js instance
@@ -469,8 +470,13 @@
         });
 
         // Watch for board changes (opponent move, etc.)
+        observedFen = getGame()?.fen() || null;
         const obs = new MutationObserver(() => {
             if (!active) return;
+            const currentGame = getGame();
+            const nextFen = currentGame ? currentGame.fen() : null;
+            if (nextFen === observedFen) return;
+            observedFen = nextFen;
             clearHL();
             currentSel = null;
             analysis   = {};

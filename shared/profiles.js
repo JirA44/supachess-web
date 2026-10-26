@@ -77,25 +77,67 @@ function getProfile(uid){
   });
 }
 // UI helpers
+function escapeProfileText(value){
+  return String(value==null?'':value).replace(/[&<>\"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch];});
+}
+function readLocalLearningProgress(){
+  function read(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'');}catch(_e){return fallback;}}
+  var lessons=read('supachess-book-lessons-v1',{});
+  var games=read('supachess_reviewed_pgns',[]);
+  if(!lessons||typeof lessons!=='object'||Array.isArray(lessons))lessons={};
+  if(!Array.isArray(games))games=[];
+  var completed=Object.keys(lessons).map(function(id){return {id:id,progress:lessons[id]};}).filter(function(item){return item.progress&&item.progress.completed;});
+  var moveExercises=games.reduce(function(sum,game){return sum+(Array.isArray(game.correctionExercises)?game.correctionExercises.length:0);},0);
+  var latest=games.find(function(game){return Array.isArray(game.correctionExercises)&&game.correctionExercises.length;})||games[0]||null;
+  var categoryCounts={};
+  games.forEach(function(game){(Array.isArray(game.correctionExercises)?game.correctionExercises:[]).forEach(function(exercise){
+    var type=exercise.classification||'unrated';categoryCounts[type]=(categoryCounts[type]||0)+1;
+  });});
+  return {completed:completed,games:games,moveExercises:moveExercises,latest:latest,categoryCounts:categoryCounts};
+}
+function renderLocalLearningPanel(data){
+  var local=readLocalLearningProgress();
+  var labels={brilliant:'Brillants',best:'Meilleurs coups','very-good':'Très bons coups',good:'Bons coups',ok:'Coups OK',inaccuracy:'Imprécisions',mistake:'Erreurs',blunder:'Gaffes',unrated:'Non évalués'};
+  var weaknesses=Object.keys(local.categoryCounts).filter(function(key){return key==='inaccuracy'||key==='mistake'||key==='blunder';}).sort(function(a,b){return local.categoryCounts[b]-local.categoryCounts[a];});
+  var exercisesUrl=local.latest
+    ? 'https://jira44.github.io/supachess/index.html?resume-exercises='+encodeURIComponent(local.latest.id)
+    : 'https://jira44.github.io/supachess/index.html?open-review=1';
+  var mastered=local.completed.length;
+  var html='<section class="profile-learning" aria-labelledby="profile-learning-title"><h3 id="profile-learning-title">Mon apprentissage</h3>'+
+    '<div class="profile-learning-stats"><div><strong>'+mastered+'</strong><span>leçon(s) maîtrisée(s)</span></div><div><strong>'+local.moveExercises+'</strong><span>demi-coups à retravailler</span></div></div>'+
+    '<div class="profile-learning-actions"><a href="'+exercisesUrl+'">Reprendre mes exercices</a><a href="https://jira44.github.io/supachess/book-lessons.html?next=1">Reprendre mes leçons</a></div>';
+  if(weaknesses.length){
+    html+='<h4>À retravailler dans tes parties</h4><ul class="profile-learning-list">'+weaknesses.slice(0,3).map(function(key){return '<li>'+escapeProfileText(labels[key]||key)+' : '+local.categoryCounts[key]+'</li>';}).join('')+'</ul>';
+  }else if(local.moveExercises){html+='<p class="profile-learning-note">Aucune imprécision, erreur ou gaffe enregistrée dans les exercices disponibles.</p>';}
+  var points=local.completed.map(function(item){return item.progress.completedAt?new Date(item.progress.completedAt).getTime():null;}).filter(function(time){return Number.isFinite(time);}).sort(function(a,b){return a-b;});
+  if(points.length>1){
+    var coords=points.map(function(_time,index){var x=8+index*164/(points.length-1);var y=54-(index+1)*44/points.length;return x.toFixed(1)+','+y.toFixed(1);}).join(' ');
+    html+='<h4>Progression des leçons</h4><svg class="profile-learning-chart" viewBox="0 0 180 64" role="img" aria-label="Progression cumulative des leçons maîtrisées"><polyline points="'+coords+'" fill="none" stroke="#65d6a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>';
+  }else{html+='<p class="profile-learning-note">Termine plusieurs leçons pour voir ton graphique de progression.</p>';}
+  return html+'</section>';
+}
 function renderProfileModal(data){
   var overlay=document.getElementById('profile-modal');
   if(!overlay){
     overlay=document.createElement('div');
     overlay.id='profile-modal';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-    overlay.innerHTML='<div id="profile-box" style="background:#1a1f2e;border:1px solid #4facfe;border-radius:16px;padding:24px;min-width:340px;max-width:480px;position:relative;"><button onclick="document.getElementById(\'profile-modal\').remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;">×</button><div id="profile-content"></div></div>';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;overflow:auto;';
+    overlay.innerHTML='<div id="profile-box" style="background:#1a1f2e;border:1px solid #4facfe;border-radius:16px;padding:24px;width:min(680px,100%);max-height:90vh;overflow:auto;position:relative;"><button onclick="document.getElementById(\\'profile-modal\\').remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;" aria-label="Fermer">×</button><div id="profile-content"></div></div>';
     overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
     document.body.appendChild(overlay);
   }
   var box=document.getElementById('profile-content');
   if(!data){ box.innerHTML='<p style="color:#f66">Profil introuvable</p>'; return; }
-  var html='<div style="text-align:center"><img src="'+(data.photoURL||'https://ui-avatars.com/api/?name='+encodeURIComponent(data.displayName||'?'))+'" style="width:64px;height:64px;border-radius:50%"><h3 style="margin:8px 0 4px">'+(data.displayName||'Anon')+'</h3><p style="opacity:.6;font-size:.85em">'+(data.email||'')+'</p></div>';
+  var name=escapeProfileText(data.displayName||'Anon'), email=escapeProfileText(data.email||'');
+  var photo=escapeProfileText(data.photoURL||'https://ui-avatars.com/api/?name='+encodeURIComponent(data.displayName||'?'));
+  var html='<div style="text-align:center"><img src="'+photo+'" alt="" style="width:64px;height:64px;border-radius:50%"><h3 style="margin:8px 0 4px">'+name+'</h3><p style="opacity:.6;font-size:.85em">'+email+'</p></div>';
   html+='<div style="margin-top:16px;display:grid;gap:10px">';
   Object.keys(GAME_TYPES).forEach(function(k){
-    var s=data.stats&&data.stats[k]||{rating:1200,wins:0,losses:0,draws:0,played:0};
-    html+='<div style="background:rgba(255,255,255,.06);padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center"><span>'+GAME_TYPES[k].icon+' '+GAME_TYPES[k].label+'</span><span><b>'+s.rating+'</b> ELO · '+s.played+' parties ('+s.wins+'W/'+s.losses+'L/'+s.draws+'D)</span></div>';
+    var st=data.stats&&data.stats[k]||{rating:1200,wins:0,losses:0,draws:0,played:0};
+    html+='<div style="background:rgba(255,255,255,.06);padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>'+GAME_TYPES[k].icon+' '+escapeProfileText(GAME_TYPES[k].label)+'</span><span><b>'+Number(st.rating||1200)+'</b> ELO · '+Number(st.played||0)+' parties ('+Number(st.wins||0)+'W/'+Number(st.losses||0)+'L/'+Number(st.draws||0)+'D)</span></div>';
   });
   html+='</div>';
+  if(auth&&auth.currentUser&&auth.currentUser.uid===data.uid)html+=renderLocalLearningPanel(data);
   box.innerHTML=html;
 }
 function initSearchBar(){

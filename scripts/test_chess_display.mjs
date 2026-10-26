@@ -16,8 +16,8 @@ assert.match(chessnova, /Évaluation : \$\{\(afterEval \/ 100\)\.toFixed\(2\)\}/
 assert.match(chessnova, /auth\/unauthorized-domain/, 'Google auth gives actionable domain guidance');
 assert.match(chessnova, /supa-move-bubbles\.js\?v=20261026a/, 'bubble script URL is cache-busted');
 assert.match(chessnova, /window\.gameHistory\.push\(/, 'analyzed game history remains stored');
-assert.match(chessnova, /<strong id="eval-value" aria-live="polite"[^>]*>\\+0\\.0<\\/strong>/, 'evaluation starts visible beside the bar title');
-assert.match(chessnova, /const signedEvalDisplay = \\(evaluation >= 0 \\? '\\+' : ''\\) \\+ \\(evaluation \/ 100\\)\\.toFixed\\(1\\);/, 'the visible bar score updates continuously with a sign and one decimal');
-assert.match(chessnova, /evalValue\\.textContent = signedEvalDisplay;/, 'each evaluation refresh updates the persistent bar score');
+assert.match(chessnova, /<strong id="eval-value" aria-live="polite"[^>]*>\+0\.0<\/strong>/, 'evaluation starts visible beside the bar title');
+assert.match(chessnova, /const signedEvalDisplay = \(evaluation >= 0 \? '\+' : ''\) \+ \(evaluation \/ 100\)\.toFixed\(1\);/, 'the visible bar score updates continuously with a sign and one decimal');
+assert.match(chessnova, /evalValue\.textContent = signedEvalDisplay;/, 'each evaluation refresh updates the persistent bar score');
 
 console.log('Chess display checks passed');

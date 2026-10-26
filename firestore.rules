@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Private presence metadata: only the signed-in owner can access it.
+    // Fields: uid, displayName, status, lastSeen, optional legacy page.
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validPrivatePresence(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'status', 'lastSeen', 'page'
+        ])
+        && request.resource.data.keys().hasAll([
+          'uid', 'displayName', 'status', 'lastSeen'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.status in ['dispo', 'occupe', 'invisible', 'offline']
+        && request.resource.data.lastSeen == request.time
+        && (!('page' in request.resource.data)
+          || (request.resource.data.page is string
+            && request.resource.data.page.size() <= 200));
+    }
+
+    function validPublicPresence(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'status', 'lastSeen'
+        ])
+        && request.resource.data.keys().hasAll([
+          'uid', 'displayName', 'status', 'lastSeen'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 60
+        && !request.resource.data.displayName.matches('.*@.*')
+        && request.resource.data.status in ['dispo', 'occupe']
+        && request.resource.data.lastSeen == request.time;
+    }
+
+    match /presence/{uid} {
+      allow get, list: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validPrivatePresence(uid);
+      allow delete: if isOwner(uid);
+    }
+
+    // Only sanitized, active-status records can be written here. The UI caps
+    // its query to 100 records; this collection intentionally contains no PII.
+    match /presence_public/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if isOwner(uid) && validPublicPresence(uid);
+      allow delete: if isOwner(uid);
+    }
+
+    // All other collections remain denied until their access patterns are
+    // separately reviewed and given least-privilege rules.
+  }
+}

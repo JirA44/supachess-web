@@ -15,7 +15,7 @@ const db = {
       orderBy() { return query; },
       limit() { return query; },
       get() {
-        if (name === 'presence') return Promise.reject(permissionDenied);
+        if (name === 'presence_public') return Promise.reject(permissionDenied);
         if (name === 'visitors') return Promise.resolve({ exists: false });
         return Promise.resolve({ forEach() {} });
       },

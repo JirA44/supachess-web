@@ -408,6 +408,35 @@
             transition: color 0.3s;
         }
         .back-link:hover { color: var(--accent-primary); }
+            /* Make the PGN analysis state unmistakable while Stockfish is working. */
+        .analysis-status-running {
+            display: inline-block;
+            padding: 0.16em 0.58em;
+            border: 1px solid rgba(255,255,255,.48);
+            border-radius: 999px;
+            color: transparent !important;
+            font-size: 1.08em;
+            font-weight: 900;
+            line-height: 1.5;
+            background-image: linear-gradient(90deg, #ff4d6d, #ffb703, #80ed99, #4cc9f0, #9b5de5, #ff4d6d);
+            background-size: 300% 100%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 5px rgba(76, 201, 240, .8));
+            animation: stockfish-analysis-rainbow 1.8s linear infinite, stockfish-analysis-glow 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes stockfish-analysis-rainbow {
+            from { background-position: 0% 50%; }
+            to { background-position: 300% 50%; }
+        }
+        @keyframes stockfish-analysis-glow {
+            from { filter: drop-shadow(0 0 3px rgba(76, 201, 240, .65)); }
+            to { filter: drop-shadow(0 0 10px rgba(255, 77, 109, .95)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .analysis-status-running { animation: none; }
+        }
     </style>
 </head>
 <body>
@@ -588,7 +617,7 @@ Exemple:
 
                         <!-- Engine info -->
                         <div id="engine-info" style="font-size:0.78em; color: var(--text-secondary); margin-bottom: 10px;">
-                            ⏳ Chargement moteur... — <span id="analysis-status">en attente</span>
+                            ⏳ Chargement moteur... — <span id="analysis-status" role="status" aria-live="polite">en attente</span>
                         </div>
 
                         <!-- Eval bar vertical + score -->
@@ -2761,7 +2790,10 @@ Exemple:
             const history = game.history({ verbose: true });
             console.log('[Analysis] Starting analysis of', history.length, 'moves');
             const statusEl = document.getElementById('analysis-status');
-            if (statusEl) statusEl.textContent = 'analyse en cours…';
+            if (statusEl) {
+                statusEl.textContent = '🌈 Analyse Stockfish en cours…';
+                statusEl.classList.add('analysis-status-running');
+            }
 
             // Show initial loading with 0%
             showLoading('');
@@ -2946,7 +2978,10 @@ Exemple:
 
             hideLoading();
             const statusElDone = document.getElementById('analysis-status');
-            if (statusElDone) statusElDone.textContent = `✅ terminée — ${history.length} coups`;
+            if (statusElDone) {
+                statusElDone.classList.remove('analysis-status-running');
+                statusElDone.textContent = `✅ terminée — ${history.length} coups`;
+            }
             showToast('Analyse terminée et synchronisée!', 'success');
 
             // Go to first move
@@ -4398,6 +4433,11 @@ Exemple:
         function cancelAnalysis() {
             analysisCancelled = true;
             hideLoading();
+            const statusEl = document.getElementById('analysis-status');
+            if (statusEl) {
+                statusEl.classList.remove('analysis-status-running');
+                statusEl.textContent = '⏹ Analyse annulée';
+            }
             showToast('Analyse annulée', 'info');
         }
 

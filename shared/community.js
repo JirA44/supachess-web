@@ -83,15 +83,7 @@
                     catch (firestoreError) { console.warn('[Community] Firestore unavailable:', firestoreError.message); }
                 }
 
-                // Test Firestore connectivity
-                if (db) db.collection('community_chat').limit(1).get().then(function() {
-                    console.log('[Community] Firestore connected OK');
-                }).catch(function(err) {
-                    console.error('[Community] Firestore connection test FAILED:', err.code, err.message);
-                    if (err.code === 'permission-denied') {
-                        console.error('[Community] REGLES FIRESTORE: Les regles de securite bloquent l\'acces. Allez dans Firebase Console > Firestore > Rules et ajoutez des regles permettant la lecture/ecriture aux utilisateurs authentifies.');
-                    }
-                });
+                // Feature requests report their own failures; do not probe public chat while signed out.
 
                 // Force persistence locale (survit aux redémarrages navigateur)
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});
@@ -1039,9 +1031,12 @@
         if (presenceInterval) clearInterval(presenceInterval);
         presenceInterval = setInterval(function () {
             if (currentUser && myStatus !== 'invisible') {
-                db.collection('presence').doc(currentUser.uid).set({
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).catch(function () {});
+                Promise.all([
+                    db.collection('presence').doc(currentUser.uid).set({
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true }),
+                    syncPublicPresence(currentUser, myStatus)
+                ]).catch(function () {});
             }
         }, 60000);
 
@@ -1062,25 +1057,52 @@
         window.removeEventListener('beforeunload', handleBeforeUnload);
     }
 
+    function getPresenceDisplayName(user) {
+        var name = user && typeof user.displayName === 'string' ? user.displayName.trim() : '';
+        if (!name || name.indexOf('@') !== -1) {
+            name = 'Joueur ' + String(user && user.uid || '').slice(0, 6);
+        }
+        return name.slice(0, 60);
+    }
+
     function writePresence(user, status) {
-        if (!db || !user) return Promise.resolve();
+        if (!db || !user || !user.uid) return Promise.resolve();
         var data = {
             uid: user.uid,
-            displayName: user.displayName || user.email || 'User',
+            displayName: getPresenceDisplayName(user),
             status: status,
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-            page: window.location.pathname
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         };
-        return db.collection('presence').doc(user.uid).set(data, { merge: true }).catch(function () {});
+        return Promise.all([
+            db.collection('presence').doc(user.uid).set(data, { merge: true }),
+            syncPublicPresence(user, status)
+        ]).catch(function () {});
+    }
+
+    function syncPublicPresence(user, status) {
+        if (!db || !user || !user.uid) return Promise.resolve();
+        var ref = db.collection('presence_public').doc(user.uid);
+        if (status !== 'dispo' && status !== 'occupe') {
+            return ref.delete().catch(function () {});
+        }
+        return ref.set({
+            uid: user.uid,
+            displayName: getPresenceDisplayName(user),
+            status: status,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function () {});
     }
 
     function setPresenceStatus(status) {
         if (!db || !currentUser) return Promise.resolve();
         myStatus = status;
-        return db.collection('presence').doc(currentUser.uid).set({
-            status: status,
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(function () {});
+        return Promise.all([
+            db.collection('presence').doc(currentUser.uid).set({
+                status: status,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }),
+            syncPublicPresence(currentUser, status)
+        ]).catch(function () {});
     }
 
     // ============================================================
@@ -1186,8 +1208,10 @@
             return;
         }
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-        db.collection('presence')
+        db.collection('presence_public')
+            .where('status', 'in', ['dispo', 'occupe'])
             .where('lastSeen', '>', fiveMinAgo)
+            .limit(100)
             .get()
             .then(function (snapshot) {
                 var list = document.getElementById('cn-players-list');
@@ -1197,7 +1221,9 @@
                 var players = [];
                 snapshot.forEach(function (doc) {
                     var d = doc.data();
-                    if (d.status !== 'invisible') {
+                    if ((d.status === 'dispo' || d.status === 'occupe') &&
+                        d.lastSeen && typeof d.lastSeen.toDate === 'function' &&
+                        d.lastSeen.toDate() > fiveMinAgo) {
                         players.push(d);
                     }
                 });

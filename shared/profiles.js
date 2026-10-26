@@ -73,7 +73,10 @@ function getTopRanking(gameType, limit){
 function getProfile(uid){
   if(!db||!uid) return Promise.resolve(null);
   return db.collection('users').doc(uid).get().then(function(doc){
-    return doc.exists? doc.data(): null;
+    if(!doc.exists) return null;
+    var data=doc.data();
+    if(!data.uid) data.uid=uid;
+    return data;
   });
 }
 // UI helpers
@@ -201,5 +204,5 @@ function initRankingSection(){
   sec.querySelectorAll('.rank-tab').forEach(function(b){ b.addEventListener('click', function(){ load(b.getAttribute('data-type')); }); });
   load('puzzle');
 }
-window.SupaProfiles={init:init, ensureUserProfile:ensureUserProfile, updateStats:updateStats, searchUsers:searchUsers, getTopRanking:getTopRanking, getProfile:getProfile, renderProfileModal:renderProfileModal, initSearchBar:initSearchBar, initRankingSection:initRankingSection, GAME_TYPES:GAME_TYPES};
+window.SupaProfiles={init:init, ensureUserProfile:ensureUserProfile, updateStats:updateStats, searchUsers:searchUsers, getTopRanking:getTopRanking, getProfile:getProfile, renderProfileModal:renderProfileModal, readLocalLearningProgress:readLocalLearningProgress, initSearchBar:initSearchBar, initRankingSection:initRankingSection, GAME_TYPES:GAME_TYPES};
 })();

@@ -10280,28 +10280,28 @@
             } catch (err) { console.error('Erreur sauvegarde:', err); }
         }
         async function updateOnlinePlayers() {
+            const displayCount = value =>
+                typeof value === 'number' && Number.isFinite(value) && value >= 0
+                    ? String(value)
+                    : '—';
+            const renderUnavailable = () => {
+                document.getElementById('online-players').textContent = '—';
+                document.getElementById('real-players').textContent = '—';
+                document.getElementById('simulated-players').textContent = '—';
+                document.getElementById('visitors-count').textContent = '—';
+            };
+
             try {
                 const res = await fetch(`${API_URL}/api/online`);
+                if (!res.ok) throw new Error(`Online API returned HTTP ${res.status}`);
                 const data = await res.json();
-                const total = data.online || 0;
-                document.getElementById('online-players').textContent = total || '--';
-
-                // Répartition des compteurs
-                // Si l'API fournit les détails, les utiliser; sinon estimer
-                const realPlayers = data.realPlayers || Math.max(1, Math.floor(total * 0.3));
-                const simulatedPlayers = data.simulatedPlayers || Math.floor(total * 0.5);
-                const visitors = data.visitors || Math.max(total - realPlayers - simulatedPlayers, Math.floor(total * 0.2));
-
-                document.getElementById('real-players').textContent = realPlayers;
-                document.getElementById('simulated-players').textContent = simulatedPlayers;
-                document.getElementById('visitors-count').textContent = visitors;
+                document.getElementById('online-players').textContent = displayCount(data.online);
+                document.getElementById('real-players').textContent = displayCount(data.realPlayers);
+                document.getElementById('simulated-players').textContent = displayCount(data.simulatedPlayers);
+                document.getElementById('visitors-count').textContent = displayCount(data.visitors);
             } catch (err) {
-                document.getElementById('online-players').textContent = '--';
-                // Valeurs par défaut simulées pour l'affichage
-                const baseVisitors = Math.floor(Math.random() * 5) + 3;
-                document.getElementById('real-players').textContent = Math.floor(Math.random() * 3) + 1;
-                document.getElementById('simulated-players').textContent = Math.floor(Math.random() * 4) + 2;
-                document.getElementById('visitors-count').textContent = baseVisitors;
+                console.warn('Online player counts unavailable:', err);
+                renderUnavailable();
             }
         }
 

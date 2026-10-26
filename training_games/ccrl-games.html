@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SupaChess — Confrontations CCRL : Stockfish vs Reckless</title>
+<style>
+  :root { --bg:#10141c; --panel:#1a2130; --line:#2c3852; --txt:#e8edf7; --dim:#93a1bd; --ok:#7fd08f; --warn:#e5b567; --bad:#e57373; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--txt); }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:12px; align-items:baseline; }
+  h1 { font-size:18px; margin:0; }
+  header .meta { color:var(--dim); font-size:13px; }
+  main { display:flex; flex-wrap:wrap; gap:20px; padding:20px 24px; align-items:flex-start; }
+  .board-wrap { flex:0 0 auto; }
+  .board { display:grid; grid-template-columns:repeat(8,52px); grid-template-rows:repeat(8,52px); border:2px solid var(--line); user-select:none; }
+  .sq { display:flex; align-items:center; justify-content:center; font-size:36px; line-height:1; }
+  .sq.dark { background:#4a5570; }
+  .sq.light { background:#93a3c4; }
+  .sq.hl { outline:3px solid #f0c24b; outline-offset:-3px; }
+  .controls { margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  button { background:var(--panel); color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:8px 14px; cursor:pointer; font-size:15px; }
+  button:hover { border-color:#5b6c95; }
+  button:disabled { opacity:.4; cursor:default; }
+  .ply-label { color:var(--dim); font-size:13px; min-width:90px; }
+  .side { flex:1 1 320px; max-width:560px; display:flex; flex-direction:column; gap:14px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; }
+  select { width:100%; background:var(--bg); color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:8px; font-size:14px; }
+  .cp-box { font-size:14px; line-height:1.7; }
+  .cp-value { font-size:20px; font-weight:600; }
+  .cp-pos { color:var(--ok); } .cp-neg { color:var(--bad); } .cp-zero { color:var(--dim); }
+  .cp-delta { font-size:13px; color:var(--dim); }
+  .pgn-link { font-size:12px; color:var(--dim); margin-top:6px; word-break:break-all; }
+  .status { font-size:13px; color:var(--dim); }
+  .err { color:var(--bad); font-size:13px; }
+  a { color:#8fb8ff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Confrontations CCRL — Stockfish 19 vs Reckless 0.9.0</h1>
+  <span class="meta">victoires extraites des archives CCRL 40/15 · coups vérifiés · doublons éliminés</span>
+</header>
+<main>
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+    <div class="controls">
+      <button id="btn-start" title="Début">&#9198;</button>
+      <button id="btn-prev" title="Demi-coup précédent">&#9664;</button>
+      <span class="ply-label" id="ply-label">0 / 0</span>
+      <button id="btn-next" title="Demi-coup suivant">&#9654;</button>
+      <button id="btn-end" title="Fin">&#9197;</button>
+    </div>
+    <p class="status" id="status">Chargement des archives CCRL…</p>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h2>Partie</h2>
+      <select id="game-select" size="1"></select>
+      <div class="pgn-link" id="pgn-link"></div>
+    </div>
+    <div class="panel">
+      <h2>Explication en centipions</h2>
+      <div class="cp-box" id="cp-box">
+        <div class="cp-zero">Avancez dans la partie pour voir l'évaluation CCRL de chaque demi-coup.</div>
+        <div class="cp-delta" id="cp-delta"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="chess.0.10.3.js"></script>
+<script>
+const FILES = {
+  stockfish: { file: 'ccrl_stockfish19_wins.pgn', label: 'Victoires de Stockfish 19' },
+  reckless:  { file: 'ccrl_reckless090_wins.pgn', label: 'Victoires de Reckless 0.9.0' }
+};
+const GLYPHS = { p:'&#9823;', n:'&#9822;', b:'&#9821;', r:'&#9820;', q:'&#9819;', k:'&#9818;',
+                 P:'&#9817;', N:'&#9816;', B:'&#9815;', R:'&#9814;', Q:'&#9813;', K:'&#9812;' };
+let games = [], current = 0, ply = 0, boardEl = null;
+
+function fmtCp(cp) {
+  const v = (cp / 100).toFixed(2);
+  const cls = cp > 0 ? 'cp-pos' : (cp < 0 ? 'cp-neg' : 'cp-zero');
+  const sign = cp > 0 ? '+' : '';
+  return '<span class="' + cls + ' cp-value">' + sign + v + '</span><span class="cp-delta"> (perspective Blanc)</span>';
+}
+
+function evalFromComment(comment, moveIndex) {
+  if (!comment) return null;
+  const m = comment.replace(/[()]/g, ' ').match(/([+-]?\d+(?:\.\d+)?|#[+-]?\d+)\s*\/\s*\d+/);
+  if (!m) return null;
+  let cp;
+  const token = m[1];
+  if (token[0] === '#') {
+    const digits = token.slice(1).replace(/^[+-]/, '');
+    cp = digits ? Math.round(parseFloat(digits) * 100) : 0;
+    if (token[1] === '-') cp = -cp;
+  } else {
+    cp = Math.round(parseFloat(token) * 100);
+  }
+  return moveIndex % 2 === 0 ? cp : -cp;
+}
+
+function splitGames(text) {
+  return text.split(/\n\n(?=\[Event )/).filter(b => b.trim().length);
+}
+
+function parseFile(text) {
+  const out = [];
+  for (const block of splitGames(text)) {
+    const game = new Chess();
+    if (!game.load_pgn(block, { sloppy: true })) continue;
+    const headers = game.header();
+    const history = game.history({ verbose: true });
+    if (!history.length) continue;
+    out.push({
+      white: headers.White || '?', black: headers.Black || '?',
+      result: headers.Result || '*', eco: headers.ECO || '', opening: headers.Opening || '',
+      moves: history
+    });
+  }
+  return out;
+}
+
+function renderBoard(chess, hlIndex) {
+  const board = chess.board();
+  let html = '';
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const cell = board[r][f];
+      const dark = (r + f) % 2 === 1;
+      const isHl = cell && hlIndex !== null && cellSquare(r, f) === hlIndex;
+      html += '<div class="sq ' + (dark ? 'dark' : 'light') + (isHl ? ' hl' : '') + '">' + (cell ? (GLYPHS[cell.color === 'w' ? cell.type.toUpperCase() : cell.type]) : '') + '</div>';
+    }
+  }
+  boardEl.innerHTML = html;
+}
+
+function cellSquare(r, f) {
+  return 'abcdefgh'[f] + (8 - r);
+}
+
+function update() {
+  const g = games[current];
+  const chess = new Chess();
+  const hlSquare = ply > 0 ? g.moves[ply - 1].to : null;
+  for (let i = 0; i < ply; i++) chess.move(g.moves[i].san);
+  renderBoard(chess, hlSquare);
+  document.getElementById('ply-label').textContent = ply + ' / ' + g.moves.length;
+  document.getElementById('btn-prev').disabled = ply === 0;
+  document.getElementById('btn-next').disabled = ply >= g.moves.length;
+  document.getElementById('btn-start').disabled = ply === 0;
+  document.getElementById('btn-end').disabled = ply >= g.moves.length;
+
+  const cpBox = document.getElementById('cp-box');
+  const deltaEl = document.getElementById('cp-delta');
+  if (ply === 0) {
+    cpBox.innerHTML = '<div class="cp-zero">Avancez dans la partie pour voir l\'évaluation CCRL de chaque demi-coup.</div>';
+  } else {
+    const mv = g.moves[ply - 1];
+    const cp = evalFromComment(mv.comment, ply - 1);
+    if (cp === null) {
+      cpBox.innerHTML = '<div class="cp-zero">Pas d\'évaluation CCRL sur ce demi-coup.</div>';
+    } else {
+      let deltaTxt = '';
+      const prev = ply >= 2 ? evalFromComment(g.moves[ply - 2].comment, ply - 2) : 0;
+      if (prev !== null) {
+        const d = cp - prev;
+        const sign = d > 0 ? '+' : '';
+        const tone = d <= -150 ? ' (grosse variation)' : (d >= 150 ? ' (grosse variation)' : '');
+        deltaTxt = 'Variation depuis le demi-coup précédent : ' + sign + d + ' cp' + tone;
+      }
+      cpBox.innerHTML = '<div>Demi-coup ' + Math.floor((ply + 1) / 2) + (ply % 2 ? '' : '…') + ' <b>' + mv.san + '</b> par ' +
+        (ply % 2 ? g.white : g.black) + '</div><div>' + fmtCp(cp) + '</div><div class="cp-delta">' + deltaTxt + '</div>';
+    }
+  }
+}
+
+function loadGame(idx) {
+  current = idx;
+  ply = 0;
+  const g = games[current];
+  document.getElementById('pgn-link').innerHTML = g.white + ' — ' + g.black + ' · ' + g.result +
+    (g.opening ? ' · ' + g.opening : '');
+  update();
+}
+
+async function loadEngine(key) {
+  document.getElementById('status').textContent = 'Chargement de ' + FILES[key].file + '…';
+  try {
+    const resp = await fetch(FILES[key].file);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    games = parseFile(text);
+    const sel = document.getElementById('game-select');
+    sel.innerHTML = '';
+    games.forEach((g, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = (i + 1) + '. ' + g.white + ' — ' + g.black + ' (' + g.result + ')';
+      sel.appendChild(opt);
+    });
+    document.getElementById('status').textContent = games.length + ' parties chargées depuis ' + FILES[key].file + '.';
+    if (games.length) loadGame(0);
+  } catch (e) {
+    document.getElementById('status').innerHTML = '<span class="err">Erreur de chargement : ' + e.message +
+      ' — ouvrir la page via un serveur local (serve.bat ou py -m http.server).</span>';
+  }
+}
+
+document.getElementById('btn-prev').onclick = () => { if (ply > 0) { ply--; update(); } };
+document.getElementById('btn-next').onclick = () => { const g = games[current]; if (ply < g.moves.length) { ply++; update(); } };
+document.getElementById('btn-start').onclick = () => { ply = 0; update(); };
+document.getElementById('btn-end').onclick = () => { ply = games[current].moves.length; update(); };
+document.getElementById('game-select').onchange = (e) => loadGame(Number(e.target.value));
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();
+  if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
+});
+
+boardEl = document.getElementById('board');
+renderBoard(new Chess(), null);
+
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const engine = params.get('engine') === 'reckless' ? 'reckless' : 'stockfish';
+  await loadEngine(engine);
+})();
+</script>
+</body>
+</html>

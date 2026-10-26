@@ -38,6 +38,6 @@ const html = profiles.renderLocalLearningPanel();
 assert.match(html, /profile_resume_exercises/);
 assert.match(html, /resume-exercises=latest-with-errors/);
 assert.match(html, /profile_resume_lessons/);
-assert.match(html, /profile_work_on/);
-assert.match(html, /profile_lesson_progress/);
+assert.match(html, /À retravailler dans tes parties/);
+assert.match(html, /Progression des leçons/);
 console.log('Profile learning progress tests passed');

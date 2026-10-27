@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="shared/progress.js"></script>
+    <link rel="stylesheet" href="shared/community.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -509,7 +510,7 @@ function closeDetail() {
     currentOpening = null;
 }
 
-// Keyboard navigation (this page does not load shared/community.js)
+// Keyboard navigation for the opening trainer.
 document.addEventListener('keydown', function (e) {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     var tag = e.target && e.target.tagName;
@@ -527,6 +528,7 @@ document.addEventListener('keydown', function (e) {
 updateProgress();
 renderGrid();
 </script>
+<script src="shared/i18n.js"></script>
 <script src="shared/community.js"></script>
 
 <script defer src="shared/site-global.js"></script>

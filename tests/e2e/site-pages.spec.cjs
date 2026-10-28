@@ -88,7 +88,7 @@ test('every HTML route loads from the local site build', async ({ page }) => {
     const bodyText = await page.locator('body').innerText().catch(() => '');
     if (!bodyText.trim()) failures.push(`${file}: empty body`);
   }
-  expect(pages.length).toBeGreaterThanOrEqual(94);
+  expect(pages.length).toBeGreaterThanOrEqual(95);
   expect(failures).toEqual([]);
   expect(browserErrors).toEqual([]);
 });

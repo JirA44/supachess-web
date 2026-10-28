@@ -20,7 +20,7 @@ test('catalog contains 40 unique, complete tactical exercises', () => {
   assert.equal(new Set(puzzles.map(puzzle => puzzle.id)).size, 40);
   for (const puzzle of puzzles) {
     assert.equal(puzzle.board.split('/').length, 8, puzzle.id);
-    assert.ok(puzzle.board.split('/').every(rank => rank.length === 8), puzzle.id);
+    assert.ok(puzzle.board.split('/').every(rank => rank.replace(/[1-8]/g, digit => '.'.repeat(Number(digit))).length === 8), puzzle.id);
     assert.ok(puzzle.answer && /^[a-h][1-8][a-h][1-8]$/.test(puzzle.answer), puzzle.id);
     assert.equal(puzzle.choices.filter(choice => choice.correct).length, 1, puzzle.id);
     assert.ok(puzzle.question && puzzle.explain && puzzle.desc, puzzle.id);

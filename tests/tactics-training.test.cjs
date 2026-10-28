@@ -7,7 +7,7 @@ const { JSDOM } = require('jsdom');
 const { Chess } = require('chess.js');
 
 const html = fs.readFileSync(path.join(__dirname, '../TRAINING_TACTICS.html'), 'utf8');
-const match = html.match(/const PUZZLES = (\[[\s\S]*?\n\]);/);
+const match = html.match(/const PUZZLES = (\[[\s\S]*?\n\]);?/);
 assert.ok(match, 'the tactical catalog is a JSON-like data array');
 const puzzles = JSON.parse(match[1]);
 

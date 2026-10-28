@@ -128,9 +128,19 @@
             border: 3px solid rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;
         }
         .big-cell {
-            width: 58px; height: 58px;
-            display: flex; align-items: center; justify-content: center; font-size: 2.1rem;
+            width: 58px; height: 58px; padding: 0; border: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 2.1rem; cursor: pointer;
         }
+        .big-cell:focus-visible, .big-cell.selected-square { outline: 3px solid #facc15; outline-offset: -3px; z-index: 1; }
+        .big-cell:disabled { cursor: default; }
+        .tactic-feedback { min-height: 1.5em; margin-top: 14px; font-weight: 700; }
+        .tactic-knowledge { margin-top: 14px; padding: 14px; border-radius: 10px; background: rgba(255,255,255,.1); }
+        .tactic-knowledge h3 { margin-bottom: 10px; font-size: 1rem; }
+        .tactic-choice-list { display: grid; gap: 8px; }
+        .tactic-choice { padding: 10px 12px; text-align: left; color: #fff; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.28); border-radius: 8px; cursor: pointer; }
+        .tactic-choice:hover, .tactic-choice:focus-visible { border-color: #86efac; }
+        .tactic-choice:disabled { cursor: default; opacity: .75; }
+        .tactic-explanation { margin-top: 10px; padding: 12px; border-left: 3px solid #22c55e; background: rgba(34,197,94,.12); border-radius: 8px; }
         .big-cell.light { background: #f0d9b5; }
         .big-cell.dark  { background: #b58863; }
         .big-cell.hl    { background: rgba(239,68,68,0.55) !important; }
@@ -223,75 +233,1220 @@
 <script>
 const THEMES = [
     { id:'all', name:'🎯 Tous', color:'#ef4444' },
-    { id:'fork', name:'⚔️ Fourchette', color:'#f97316' },
-    { id:'pin', name:'📌 Clouage', color:'#8b5cf6' },
-    { id:'skewer', name:'🏹 Enfilade', color:'#0ea5e9' },
-    { id:'discovered', name:'💥 Attaque Découverte', color:'#22c55e' },
-    { id:'backrank', name:'🚪 Rangée du Roi', color:'#ef4444' },
-    { id:'smothered', name:'🥊 Mat Étouffé', color:'#f59e0b' },
-    { id:'overload', name:'⚖️ Surcharge', color:'#ec4899' },
+    { id:'fork', name:'⚔️ Fourchettes', color:'#f97316' },
+    { id:'pin', name:'📌 Clouages', color:'#8b5cf6' },
+    { id:'skewer', name:'🏹 Enfilades', color:'#0ea5e9' },
+    { id:'discovered', name:'💥 Attaques découvertes', color:'#22c55e' },
+    { id:'backrank', name:'🚪 Dernière rangée', color:'#ef4444' },
+    { id:'smothered', name:'🥊 Mat étouffé', color:'#f59e0b' },
+    { id:'doublecheck', name:'♟️ Double échec', color:'#ec4899' },
     { id:'xray', name:'🔮 Rayon X', color:'#14b8a6' },
-];
+]
 
 const PUZZLES = [
-    // FOURCHETTES
-    { id:'f1', theme:'fork', title:'Fourchette de Cavalier #1', rating:1150, turn:'w', desc:'Le cavalier blanc peut attaquer simultanément le roi et la dame noire.', board:'....k.../....p.../.....n../r....N../......../......../......../....K...',  hl:[27,4], solution:['Ne7+!','1.Ne7+! Le roi doit bouger, puis 2.Nxr — fourchette roi+tour, gain de la tour!'] },
-    { id:'f2', theme:'fork', title:'Fourchette de Pion #1', rating:900, turn:'w', desc:'Un coup de pion simple attaque deux pièces noires en même temps.', board:'..r.k..r/ppp..ppp/..n.bn../....p.../...P..../......../PPP..PPP/RNBQKBNR', hl:[35,26], solution:['d5!','1.d5 — Le pion attaque simultanément le cavalier en c6 et le fou en e6. Gain d\'une pièce!'] },
-    { id:'f3', theme:'fork', title:'Fourchette de Cavalier #2', rating:1200, turn:'b', desc:'Le cavalier noir peut créer une fourchette royale dévastatrice.', board:'r..qk..r/ppp..ppp/..n....n/....N.../......../....B.../PPPP.PPP/R..QK..R', hl:[20,4], solution:['Nxe5!','1...Nxe5! Capture le cavalier en e5, et si 2.Bxe5 Nc4 — fourchette sur la dame et le roi blanc!'] },
-    { id:'f4', theme:'fork', title:'Fourchette de Dame #1', rating:1300, turn:'w', desc:'La dame blanche peut créer une fourchette en attaquant roi et tour simultanément.', board:'....k..r/ppp..ppp/......../..Q....../......../......../PPP..PPP/....K..R', hl:[35,7], solution:['Qd8+!','1.Qd8+! Le roi doit aller en f7, puis 2.Qxh8 — la dame prend la tour. Gain matériel!'] },
-    { id:'f5', theme:'fork', title:'Fourchette de Cavalier #3', rating:1450, turn:'w', desc:'Fourchette à trois pièces — le coup de cavalier idéal.', board:'r..qk.nr/ppp..ppp/....b.../....p.../...N...B/......../PPP..PPP/R..QK..R', hl:[27,4], solution:['Nf5!','1.Nf5! Attaque simultanément la dame en d6, le roi en e8, et menace Nxg7. Position gagnante!'] },
+    {
+        "id": "knight-fork-A",
+        "theme": "fork",
+        "title": "Fourchette de cavalier · A",
+        "rating": 1150,
+        "turn": "w",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce importante.",
+        "explain": "Le cavalier donne échec tout en attaquant la tour : le roi doit répondre, puis la tour devient prenable.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la tour",
+                "correct": true
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            },
+            {
+                "text": "Deux cavaliers",
+                "correct": false
+            }
+        ],
+        "board": "r3k3/8/8/1N6/8/8/8/4K3",
+        "answer": "b5c7",
+        "hl": [
+            41,
+            58
+        ]
+    },
+    {
+        "id": "knight-fork-B",
+        "theme": "fork",
+        "title": "Fourchette de cavalier · B",
+        "rating": 1150,
+        "turn": "w",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce importante.",
+        "explain": "Le cavalier donne échec tout en attaquant la tour : le roi doit répondre, puis la tour devient prenable.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la tour",
+                "correct": true
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            },
+            {
+                "text": "Deux cavaliers",
+                "correct": false
+            }
+        ],
+        "board": "3k3r/8/8/6N1/8/8/8/3K4",
+        "answer": "g5f7",
+        "hl": [
+            46,
+            61
+        ]
+    },
+    {
+        "id": "knight-fork-C",
+        "theme": "fork",
+        "title": "Fourchette de cavalier · C",
+        "rating": 1150,
+        "turn": "b",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce importante.",
+        "explain": "Le cavalier donne échec tout en attaquant la tour : le roi doit répondre, puis la tour devient prenable.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la tour",
+                "correct": true
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            },
+            {
+                "text": "Deux cavaliers",
+                "correct": false
+            }
+        ],
+        "board": "4k3/8/8/8/1n6/8/8/R3K3",
+        "answer": "b4c2",
+        "hl": [
+            33,
+            18
+        ]
+    },
+    {
+        "id": "knight-fork-D",
+        "theme": "fork",
+        "title": "Fourchette de cavalier · D",
+        "rating": 1150,
+        "turn": "b",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce importante.",
+        "explain": "Le cavalier donne échec tout en attaquant la tour : le roi doit répondre, puis la tour devient prenable.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la tour",
+                "correct": true
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            },
+            {
+                "text": "Deux cavaliers",
+                "correct": false
+            }
+        ],
+        "board": "3k4/8/8/8/6n1/8/8/3K3R",
+        "answer": "g4f2",
+        "hl": [
+            38,
+            21
+        ]
+    },
+    {
+        "id": "pawn-fork-A",
+        "theme": "fork",
+        "title": "Fourchette de pion · A",
+        "rating": 950,
+        "turn": "w",
+        "desc": "Cherche le coup de pion qui menace deux pièces adverses à la fois.",
+        "explain": "Le pion avancé attaque simultanément deux pièces mineures : le camp adverse ne peut pas sauver les deux avec un seul coup.",
+        "question": "Quelles pièces le pion attaque-t-il ?",
+        "choices": [
+            {
+                "text": "Un cavalier et un fou",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            }
+        ],
+        "board": "2r1k2r/ppp2ppp/2n1bn2/4p3/3P4/8/PPP2PPP/RNBQKBNR",
+        "answer": "d4d5",
+        "hl": [
+            35,
+            43
+        ]
+    },
+    {
+        "id": "pawn-fork-B",
+        "theme": "fork",
+        "title": "Fourchette de pion · B",
+        "rating": 950,
+        "turn": "w",
+        "desc": "Cherche le coup de pion qui menace deux pièces adverses à la fois.",
+        "explain": "Le pion avancé attaque simultanément deux pièces mineures : le camp adverse ne peut pas sauver les deux avec un seul coup.",
+        "question": "Quelles pièces le pion attaque-t-il ?",
+        "choices": [
+            {
+                "text": "Un cavalier et un fou",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            }
+        ],
+        "board": "r2k1r2/ppp2ppp/2nb1n2/3p4/4P3/8/PPP2PPP/RNBKQBNR",
+        "answer": "e4e5",
+        "hl": [
+            36,
+            44
+        ]
+    },
+    {
+        "id": "pawn-fork-C",
+        "theme": "fork",
+        "title": "Fourchette de pion · C",
+        "rating": 950,
+        "turn": "b",
+        "desc": "Cherche le coup de pion qui menace deux pièces adverses à la fois.",
+        "explain": "Le pion avancé attaque simultanément deux pièces mineures : le camp adverse ne peut pas sauver les deux avec un seul coup.",
+        "question": "Quelles pièces le pion attaque-t-il ?",
+        "choices": [
+            {
+                "text": "Un cavalier et un fou",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            }
+        ],
+        "board": "rnbqkbnr/ppp2ppp/8/3p4/4P3/2N1BN2/PPP2PPP/2R1K2R",
+        "answer": "d5d4",
+        "hl": [
+            43,
+            35
+        ]
+    },
+    {
+        "id": "pawn-fork-D",
+        "theme": "fork",
+        "title": "Fourchette de pion · D",
+        "rating": 950,
+        "turn": "b",
+        "desc": "Cherche le coup de pion qui menace deux pièces adverses à la fois.",
+        "explain": "Le pion avancé attaque simultanément deux pièces mineures : le camp adverse ne peut pas sauver les deux avec un seul coup.",
+        "question": "Quelles pièces le pion attaque-t-il ?",
+        "choices": [
+            {
+                "text": "Un cavalier et un fou",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le roi et la dame",
+                "correct": false
+            }
+        ],
+        "board": "rnbkqbnr/ppp2ppp/8/4p3/3P4/2NB1N2/PPP2PPP/R2K1R2",
+        "answer": "e5e4",
+        "hl": [
+            44,
+            36
+        ]
+    },
+    {
+        "id": "absolute-pin-A",
+        "theme": "pin",
+        "title": "Clouage absolu · A",
+        "rating": 1050,
+        "turn": "w",
+        "desc": "Trouve le coup qui immobilise le cavalier devant le roi adverse.",
+        "explain": "Le fou place le cavalier entre lui et le roi. Si le cavalier s’écarte, son roi serait exposé à l’échec.",
+        "question": "Pourquoi le cavalier ne peut-il pas quitter la diagonale ?",
+        "choices": [
+            {
+                "text": "Il découvrirait son roi à l’échec",
+                "correct": true
+            },
+            {
+                "text": "Il perdrait immédiatement sa dame",
+                "correct": false
+            },
+            {
+                "text": "Il serait cloué à sa tour",
+                "correct": false
+            }
+        ],
+        "board": "4k3/8/2n5/8/2B5/8/8/4K3",
+        "answer": "c4b5",
+        "hl": [
+            34,
+            41
+        ]
+    },
+    {
+        "id": "absolute-pin-B",
+        "theme": "pin",
+        "title": "Clouage absolu · B",
+        "rating": 1050,
+        "turn": "w",
+        "desc": "Trouve le coup qui immobilise le cavalier devant le roi adverse.",
+        "explain": "Le fou place le cavalier entre lui et le roi. Si le cavalier s’écarte, son roi serait exposé à l’échec.",
+        "question": "Pourquoi le cavalier ne peut-il pas quitter la diagonale ?",
+        "choices": [
+            {
+                "text": "Il découvrirait son roi à l’échec",
+                "correct": true
+            },
+            {
+                "text": "Il perdrait immédiatement sa dame",
+                "correct": false
+            },
+            {
+                "text": "Il serait cloué à sa tour",
+                "correct": false
+            }
+        ],
+        "board": "3k4/8/5n2/8/5B2/8/8/3K4",
+        "answer": "f4g5",
+        "hl": [
+            37,
+            46
+        ]
+    },
+    {
+        "id": "absolute-pin-C",
+        "theme": "pin",
+        "title": "Clouage absolu · C",
+        "rating": 1050,
+        "turn": "b",
+        "desc": "Trouve le coup qui immobilise le cavalier devant le roi adverse.",
+        "explain": "Le fou place le cavalier entre lui et le roi. Si le cavalier s’écarte, son roi serait exposé à l’échec.",
+        "question": "Pourquoi le cavalier ne peut-il pas quitter la diagonale ?",
+        "choices": [
+            {
+                "text": "Il découvrirait son roi à l’échec",
+                "correct": true
+            },
+            {
+                "text": "Il perdrait immédiatement sa dame",
+                "correct": false
+            },
+            {
+                "text": "Il serait cloué à sa tour",
+                "correct": false
+            }
+        ],
+        "board": "4k3/8/8/2b5/8/2N5/8/4K3",
+        "answer": "c5b4",
+        "hl": [
+            42,
+            33
+        ]
+    },
+    {
+        "id": "absolute-pin-D",
+        "theme": "pin",
+        "title": "Clouage absolu · D",
+        "rating": 1050,
+        "turn": "b",
+        "desc": "Trouve le coup qui immobilise le cavalier devant le roi adverse.",
+        "explain": "Le fou place le cavalier entre lui et le roi. Si le cavalier s’écarte, son roi serait exposé à l’échec.",
+        "question": "Pourquoi le cavalier ne peut-il pas quitter la diagonale ?",
+        "choices": [
+            {
+                "text": "Il découvrirait son roi à l’échec",
+                "correct": true
+            },
+            {
+                "text": "Il perdrait immédiatement sa dame",
+                "correct": false
+            },
+            {
+                "text": "Il serait cloué à sa tour",
+                "correct": false
+            }
+        ],
+        "board": "3k4/8/8/5b2/8/5N2/8/3K4",
+        "answer": "f5g4",
+        "hl": [
+            45,
+            38
+        ]
+    },
+    {
+        "id": "rook-skewer-A",
+        "theme": "skewer",
+        "title": "Enfilade de tour · A",
+        "rating": 1200,
+        "turn": "w",
+        "desc": "Cherche l’échec qui place une pièce de grande valeur derrière le roi.",
+        "explain": "La tour donne échec sur la rangée. Une fois le roi déplacé, la dame qui se trouve derrière lui peut être capturée.",
+        "question": "Quel matériel est visé derrière le roi ?",
+        "choices": [
+            {
+                "text": "La dame",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Un pion",
+                "correct": false
+            }
+        ],
+        "board": "8/8/3k3q/8/8/8/8/1R2K3",
+        "answer": "b1b6",
+        "hl": [
+            9,
+            49
+        ]
+    },
+    {
+        "id": "rook-skewer-B",
+        "theme": "skewer",
+        "title": "Enfilade de tour · B",
+        "rating": 1200,
+        "turn": "w",
+        "desc": "Cherche l’échec qui place une pièce de grande valeur derrière le roi.",
+        "explain": "La tour donne échec sur la rangée. Une fois le roi déplacé, la dame qui se trouve derrière lui peut être capturée.",
+        "question": "Quel matériel est visé derrière le roi ?",
+        "choices": [
+            {
+                "text": "La dame",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Un pion",
+                "correct": false
+            }
+        ],
+        "board": "8/8/q3k3/8/8/8/8/3K2R1",
+        "answer": "g1g6",
+        "hl": [
+            14,
+            54
+        ]
+    },
+    {
+        "id": "rook-skewer-C",
+        "theme": "skewer",
+        "title": "Enfilade de tour · C",
+        "rating": 1200,
+        "turn": "b",
+        "desc": "Cherche l’échec qui place une pièce de grande valeur derrière le roi.",
+        "explain": "La tour donne échec sur la rangée. Une fois le roi déplacé, la dame qui se trouve derrière lui peut être capturée.",
+        "question": "Quel matériel est visé derrière le roi ?",
+        "choices": [
+            {
+                "text": "La dame",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Un pion",
+                "correct": false
+            }
+        ],
+        "board": "1r2k3/8/8/8/8/3K3Q/8/8",
+        "answer": "b8b3",
+        "hl": [
+            65,
+            25
+        ]
+    },
+    {
+        "id": "rook-skewer-D",
+        "theme": "skewer",
+        "title": "Enfilade de tour · D",
+        "rating": 1200,
+        "turn": "b",
+        "desc": "Cherche l’échec qui place une pièce de grande valeur derrière le roi.",
+        "explain": "La tour donne échec sur la rangée. Une fois le roi déplacé, la dame qui se trouve derrière lui peut être capturée.",
+        "question": "Quel matériel est visé derrière le roi ?",
+        "choices": [
+            {
+                "text": "La dame",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Un pion",
+                "correct": false
+            }
+        ],
+        "board": "3k2r1/8/8/8/8/Q3K3/8/8",
+        "answer": "g8g3",
+        "hl": [
+            70,
+            30
+        ]
+    },
+    {
+        "id": "discovered-A",
+        "theme": "discovered",
+        "title": "Échec découvert · A",
+        "rating": 1250,
+        "turn": "w",
+        "desc": "Déplace la pièce qui bloque la ligne de la tour et observe l’échec révélé.",
+        "explain": "Le cavalier quitte la colonne a : la tour révèle alors une attaque contre le roi.",
+        "question": "Quelle pièce donne l’échec révélé ?",
+        "choices": [
+            {
+                "text": "La tour",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Le roi",
+                "correct": false
+            }
+        ],
+        "board": "k7/8/8/8/N7/8/8/R6K",
+        "answer": "a4c5",
+        "hl": [
+            32,
+            42
+        ]
+    },
+    {
+        "id": "discovered-B",
+        "theme": "discovered",
+        "title": "Échec découvert · B",
+        "rating": 1250,
+        "turn": "w",
+        "desc": "Déplace la pièce qui bloque la ligne de la tour et observe l’échec révélé.",
+        "explain": "Le cavalier quitte la colonne a : la tour révèle alors une attaque contre le roi.",
+        "question": "Quelle pièce donne l’échec révélé ?",
+        "choices": [
+            {
+                "text": "La tour",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Le roi",
+                "correct": false
+            }
+        ],
+        "board": "7k/8/8/8/7N/8/8/K6R",
+        "answer": "h4f5",
+        "hl": [
+            39,
+            45
+        ]
+    },
+    {
+        "id": "discovered-C",
+        "theme": "discovered",
+        "title": "Échec découvert · C",
+        "rating": 1250,
+        "turn": "b",
+        "desc": "Déplace la pièce qui bloque la ligne de la tour et observe l’échec révélé.",
+        "explain": "Le cavalier quitte la colonne a : la tour révèle alors une attaque contre le roi.",
+        "question": "Quelle pièce donne l’échec révélé ?",
+        "choices": [
+            {
+                "text": "La tour",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Le roi",
+                "correct": false
+            }
+        ],
+        "board": "r6k/8/8/n7/8/8/8/K7",
+        "answer": "a5c4",
+        "hl": [
+            40,
+            34
+        ]
+    },
+    {
+        "id": "discovered-D",
+        "theme": "discovered",
+        "title": "Échec découvert · D",
+        "rating": 1250,
+        "turn": "b",
+        "desc": "Déplace la pièce qui bloque la ligne de la tour et observe l’échec révélé.",
+        "explain": "Le cavalier quitte la colonne a : la tour révèle alors une attaque contre le roi.",
+        "question": "Quelle pièce donne l’échec révélé ?",
+        "choices": [
+            {
+                "text": "La tour",
+                "correct": true
+            },
+            {
+                "text": "Le cavalier",
+                "correct": false
+            },
+            {
+                "text": "Le roi",
+                "correct": false
+            }
+        ],
+        "board": "k6r/8/8/7n/8/8/8/7K",
+        "answer": "h5f4",
+        "hl": [
+            47,
+            37
+        ]
+    },
+    {
+        "id": "backrank-A",
+        "theme": "backrank",
+        "title": "Mat de la dernière rangée · A",
+        "rating": 1150,
+        "turn": "w",
+        "desc": "Le roi adverse manque de cases de fuite : trouve le mat immédiat.",
+        "explain": "La tour capture la tour adverse et donne mat. Les pions du roi bloquent ses sorties et la tour contrôle la rangée.",
+        "question": "Pourquoi le roi ne peut-il pas s’échapper ?",
+        "choices": [
+            {
+                "text": "Ses propres pions bloquent ses cases et la tour contrôle la rangée",
+                "correct": true
+            },
+            {
+                "text": "Le roi est trop loin de la tour",
+                "correct": false
+            },
+            {
+                "text": "Le fou contrôle la diagonale",
+                "correct": false
+            }
+        ],
+        "board": "4r1k1/5ppp/8/8/8/8/8/4R1K1",
+        "answer": "e1e8",
+        "hl": [
+            12,
+            68
+        ]
+    },
+    {
+        "id": "backrank-B",
+        "theme": "backrank",
+        "title": "Mat de la dernière rangée · B",
+        "rating": 1150,
+        "turn": "w",
+        "desc": "Le roi adverse manque de cases de fuite : trouve le mat immédiat.",
+        "explain": "La tour capture la tour adverse et donne mat. Les pions du roi bloquent ses sorties et la tour contrôle la rangée.",
+        "question": "Pourquoi le roi ne peut-il pas s’échapper ?",
+        "choices": [
+            {
+                "text": "Ses propres pions bloquent ses cases et la tour contrôle la rangée",
+                "correct": true
+            },
+            {
+                "text": "Le roi est trop loin de la tour",
+                "correct": false
+            },
+            {
+                "text": "Le fou contrôle la diagonale",
+                "correct": false
+            }
+        ],
+        "board": "1k1r4/ppp5/8/8/8/8/8/1K1R4",
+        "answer": "d1d8",
+        "hl": [
+            11,
+            67
+        ]
+    },
+    {
+        "id": "backrank-C",
+        "theme": "backrank",
+        "title": "Mat de la dernière rangée · C",
+        "rating": 1150,
+        "turn": "b",
+        "desc": "Le roi adverse manque de cases de fuite : trouve le mat immédiat.",
+        "explain": "La tour capture la tour adverse et donne mat. Les pions du roi bloquent ses sorties et la tour contrôle la rangée.",
+        "question": "Pourquoi le roi ne peut-il pas s’échapper ?",
+        "choices": [
+            {
+                "text": "Ses propres pions bloquent ses cases et la tour contrôle la rangée",
+                "correct": true
+            },
+            {
+                "text": "Le roi est trop loin de la tour",
+                "correct": false
+            },
+            {
+                "text": "Le fou contrôle la diagonale",
+                "correct": false
+            }
+        ],
+        "board": "4r1k1/8/8/8/8/8/5PPP/4R1K1",
+        "answer": "e8e1",
+        "hl": [
+            68,
+            12
+        ]
+    },
+    {
+        "id": "backrank-D",
+        "theme": "backrank",
+        "title": "Mat de la dernière rangée · D",
+        "rating": 1150,
+        "turn": "b",
+        "desc": "Le roi adverse manque de cases de fuite : trouve le mat immédiat.",
+        "explain": "La tour capture la tour adverse et donne mat. Les pions du roi bloquent ses sorties et la tour contrôle la rangée.",
+        "question": "Pourquoi le roi ne peut-il pas s’échapper ?",
+        "choices": [
+            {
+                "text": "Ses propres pions bloquent ses cases et la tour contrôle la rangée",
+                "correct": true
+            },
+            {
+                "text": "Le roi est trop loin de la tour",
+                "correct": false
+            },
+            {
+                "text": "Le fou contrôle la diagonale",
+                "correct": false
+            }
+        ],
+        "board": "1k1r4/8/8/8/8/8/PPP5/1K1R4",
+        "answer": "d8d1",
+        "hl": [
+            67,
+            11
+        ]
+    },
+    {
+        "id": "smothered-A",
+        "theme": "smothered",
+        "title": "Mat étouffé · A",
+        "rating": 1450,
+        "turn": "w",
+        "desc": "Trouve le mat donné par le cavalier contre un roi enfermé.",
+        "explain": "Le cavalier donne mat. Les propres pièces et pions du roi lui retirent ses cases de fuite.",
+        "question": "Quelle pièce donne le mat ?",
+        "choices": [
+            {
+                "text": "Le cavalier",
+                "correct": true
+            },
+            {
+                "text": "La tour",
+                "correct": false
+            },
+            {
+                "text": "Le pion",
+                "correct": false
+            }
+        ],
+        "board": "6rk/6pp/6p1/6N1/8/8/8/6K1",
+        "answer": "g5f7",
+        "hl": [
+            46,
+            61
+        ]
+    },
+    {
+        "id": "smothered-B",
+        "theme": "smothered",
+        "title": "Mat étouffé · B",
+        "rating": 1450,
+        "turn": "w",
+        "desc": "Trouve le mat donné par le cavalier contre un roi enfermé.",
+        "explain": "Le cavalier donne mat. Les propres pièces et pions du roi lui retirent ses cases de fuite.",
+        "question": "Quelle pièce donne le mat ?",
+        "choices": [
+            {
+                "text": "Le cavalier",
+                "correct": true
+            },
+            {
+                "text": "La tour",
+                "correct": false
+            },
+            {
+                "text": "Le pion",
+                "correct": false
+            }
+        ],
+        "board": "kr6/pp6/1p6/1N6/8/8/8/1K6",
+        "answer": "b5c7",
+        "hl": [
+            41,
+            58
+        ]
+    },
+    {
+        "id": "smothered-C",
+        "theme": "smothered",
+        "title": "Mat étouffé · C",
+        "rating": 1450,
+        "turn": "b",
+        "desc": "Trouve le mat donné par le cavalier contre un roi enfermé.",
+        "explain": "Le cavalier donne mat. Les propres pièces et pions du roi lui retirent ses cases de fuite.",
+        "question": "Quelle pièce donne le mat ?",
+        "choices": [
+            {
+                "text": "Le cavalier",
+                "correct": true
+            },
+            {
+                "text": "La tour",
+                "correct": false
+            },
+            {
+                "text": "Le pion",
+                "correct": false
+            }
+        ],
+        "board": "6k1/8/8/8/6n1/6P1/6PP/6RK",
+        "answer": "g4f2",
+        "hl": [
+            38,
+            21
+        ]
+    },
+    {
+        "id": "smothered-D",
+        "theme": "smothered",
+        "title": "Mat étouffé · D",
+        "rating": 1450,
+        "turn": "b",
+        "desc": "Trouve le mat donné par le cavalier contre un roi enfermé.",
+        "explain": "Le cavalier donne mat. Les propres pièces et pions du roi lui retirent ses cases de fuite.",
+        "question": "Quelle pièce donne le mat ?",
+        "choices": [
+            {
+                "text": "Le cavalier",
+                "correct": true
+            },
+            {
+                "text": "La tour",
+                "correct": false
+            },
+            {
+                "text": "Le pion",
+                "correct": false
+            }
+        ],
+        "board": "1k6/8/8/8/1n6/1P6/PP6/KR6",
+        "answer": "b4c2",
+        "hl": [
+            33,
+            18
+        ]
+    },
+    {
+        "id": "double-check-A",
+        "theme": "doublecheck",
+        "title": "Double échec · A",
+        "rating": 1500,
+        "turn": "w",
+        "desc": "Déplace le cavalier de façon à ce qu’il donne échec et libère la ligne de la tour.",
+        "explain": "Le cavalier attaque le roi tandis que la tour découvre simultanément son échec. Face au double échec, le roi doit bouger.",
+        "question": "Quelles pièces donnent échec en même temps ?",
+        "choices": [
+            {
+                "text": "Le cavalier et la tour",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le cavalier et le fou",
+                "correct": false
+            }
+        ],
+        "board": "4k3/8/8/8/4N3/8/8/4R2K",
+        "answer": "e4f6",
+        "hl": [
+            36,
+            53
+        ]
+    },
+    {
+        "id": "double-check-B",
+        "theme": "doublecheck",
+        "title": "Double échec · B",
+        "rating": 1500,
+        "turn": "w",
+        "desc": "Déplace le cavalier de façon à ce qu’il donne échec et libère la ligne de la tour.",
+        "explain": "Le cavalier attaque le roi tandis que la tour découvre simultanément son échec. Face au double échec, le roi doit bouger.",
+        "question": "Quelles pièces donnent échec en même temps ?",
+        "choices": [
+            {
+                "text": "Le cavalier et la tour",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le cavalier et le fou",
+                "correct": false
+            }
+        ],
+        "board": "3k4/8/8/8/3N4/8/8/K2R4",
+        "answer": "d4c6",
+        "hl": [
+            35,
+            50
+        ]
+    },
+    {
+        "id": "double-check-C",
+        "theme": "doublecheck",
+        "title": "Double échec · C",
+        "rating": 1500,
+        "turn": "b",
+        "desc": "Déplace le cavalier de façon à ce qu’il donne échec et libère la ligne de la tour.",
+        "explain": "Le cavalier attaque le roi tandis que la tour découvre simultanément son échec. Face au double échec, le roi doit bouger.",
+        "question": "Quelles pièces donnent échec en même temps ?",
+        "choices": [
+            {
+                "text": "Le cavalier et la tour",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le cavalier et le fou",
+                "correct": false
+            }
+        ],
+        "board": "4r2k/8/8/4n3/8/8/8/4K3",
+        "answer": "e5f3",
+        "hl": [
+            44,
+            29
+        ]
+    },
+    {
+        "id": "double-check-D",
+        "theme": "doublecheck",
+        "title": "Double échec · D",
+        "rating": 1500,
+        "turn": "b",
+        "desc": "Déplace le cavalier de façon à ce qu’il donne échec et libère la ligne de la tour.",
+        "explain": "Le cavalier attaque le roi tandis que la tour découvre simultanément son échec. Face au double échec, le roi doit bouger.",
+        "question": "Quelles pièces donnent échec en même temps ?",
+        "choices": [
+            {
+                "text": "Le cavalier et la tour",
+                "correct": true
+            },
+            {
+                "text": "Deux tours",
+                "correct": false
+            },
+            {
+                "text": "Le cavalier et le fou",
+                "correct": false
+            }
+        ],
+        "board": "k2r4/8/8/3n4/8/8/8/3K4",
+        "answer": "d5c3",
+        "hl": [
+            43,
+            26
+        ]
+    },
+    {
+        "id": "bishop-fork-A",
+        "theme": "fork",
+        "title": "Fourchette de fou · A",
+        "rating": 1500,
+        "turn": "w",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce de valeur.",
+        "explain": "Le fou donne échec et vise aussi la dame sur la même diagonale. La tour blanche protège le fou contre une capture immédiate.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la dame",
+                "correct": true
+            },
+            {
+                "text": "Le roi et un pion",
+                "correct": false
+            },
+            {
+                "text": "La tour et le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "7k/8/8/8/8/2B5/7K/q5R1",
+        "answer": "c3g7",
+        "hl": [
+            26,
+            62
+        ]
+    },
+    {
+        "id": "bishop-fork-B",
+        "theme": "fork",
+        "title": "Fourchette de fou · B",
+        "rating": 1500,
+        "turn": "w",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce de valeur.",
+        "explain": "Le fou donne échec et vise aussi la dame sur la même diagonale. La tour blanche protège le fou contre une capture immédiate.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la dame",
+                "correct": true
+            },
+            {
+                "text": "Le roi et un pion",
+                "correct": false
+            },
+            {
+                "text": "La tour et le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "k7/8/8/8/8/5B2/K7/1R5q",
+        "answer": "f3b7",
+        "hl": [
+            29,
+            57
+        ]
+    },
+    {
+        "id": "bishop-fork-C",
+        "theme": "fork",
+        "title": "Fourchette de fou · C",
+        "rating": 1500,
+        "turn": "b",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce de valeur.",
+        "explain": "Le fou donne échec et vise aussi la dame sur la même diagonale. La tour blanche protège le fou contre une capture immédiate.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la dame",
+                "correct": true
+            },
+            {
+                "text": "Le roi et un pion",
+                "correct": false
+            },
+            {
+                "text": "La tour et le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "Q5r1/7k/2b5/8/8/8/8/7K",
+        "answer": "c6g2",
+        "hl": [
+            50,
+            22
+        ]
+    },
+    {
+        "id": "bishop-fork-D",
+        "theme": "fork",
+        "title": "Fourchette de fou · D",
+        "rating": 1500,
+        "turn": "b",
+        "desc": "Trouve le coup qui met le roi en échec et attaque une seconde pièce de valeur.",
+        "explain": "Le fou donne échec et vise aussi la dame sur la même diagonale. La tour blanche protège le fou contre une capture immédiate.",
+        "question": "Quelles sont les deux cibles de cette fourchette ?",
+        "choices": [
+            {
+                "text": "Le roi et la dame",
+                "correct": true
+            },
+            {
+                "text": "Le roi et un pion",
+                "correct": false
+            },
+            {
+                "text": "La tour et le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "1r5Q/k7/5b2/8/8/8/8/K7",
+        "answer": "f6b2",
+        "hl": [
+            53,
+            17
+        ]
+    },
+    {
+        "id": "xray-A",
+        "theme": "xray",
+        "title": "Attaque à travers la ligne · A",
+        "rating": 1300,
+        "turn": "w",
+        "desc": "Repère l’échec de tour et la pièce de valeur qui se trouve derrière le roi.",
+        "explain": "La tour utilise la ligne ouverte : une fois le roi déplacé, la dame placée derrière lui est exposée.",
+        "question": "Quel motif décrit le mieux cette attaque ?",
+        "choices": [
+            {
+                "text": "Une attaque en enfilade sur la même ligne",
+                "correct": true
+            },
+            {
+                "text": "Un clouage absolu",
+                "correct": false
+            },
+            {
+                "text": "Une attaque découverte par le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "8/8/3k3q/8/8/8/1R6/4K3",
+        "answer": "b2b6",
+        "hl": [
+            17,
+            49
+        ]
+    },
+    {
+        "id": "xray-B",
+        "theme": "xray",
+        "title": "Attaque à travers la ligne · B",
+        "rating": 1300,
+        "turn": "w",
+        "desc": "Repère l’échec de tour et la pièce de valeur qui se trouve derrière le roi.",
+        "explain": "La tour utilise la ligne ouverte : une fois le roi déplacé, la dame placée derrière lui est exposée.",
+        "question": "Quel motif décrit le mieux cette attaque ?",
+        "choices": [
+            {
+                "text": "Une attaque en enfilade sur la même ligne",
+                "correct": true
+            },
+            {
+                "text": "Un clouage absolu",
+                "correct": false
+            },
+            {
+                "text": "Une attaque découverte par le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "8/8/q3k3/8/8/8/6R1/3K4",
+        "answer": "g2g6",
+        "hl": [
+            22,
+            54
+        ]
+    },
+    {
+        "id": "xray-C",
+        "theme": "xray",
+        "title": "Attaque à travers la ligne · C",
+        "rating": 1300,
+        "turn": "b",
+        "desc": "Repère l’échec de tour et la pièce de valeur qui se trouve derrière le roi.",
+        "explain": "La tour utilise la ligne ouverte : une fois le roi déplacé, la dame placée derrière lui est exposée.",
+        "question": "Quel motif décrit le mieux cette attaque ?",
+        "choices": [
+            {
+                "text": "Une attaque en enfilade sur la même ligne",
+                "correct": true
+            },
+            {
+                "text": "Un clouage absolu",
+                "correct": false
+            },
+            {
+                "text": "Une attaque découverte par le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "4k3/1r6/8/8/8/3K3Q/8/8",
+        "answer": "b7b3",
+        "hl": [
+            57,
+            25
+        ]
+    },
+    {
+        "id": "xray-D",
+        "theme": "xray",
+        "title": "Attaque à travers la ligne · D",
+        "rating": 1300,
+        "turn": "b",
+        "desc": "Repère l’échec de tour et la pièce de valeur qui se trouve derrière le roi.",
+        "explain": "La tour utilise la ligne ouverte : une fois le roi déplacé, la dame placée derrière lui est exposée.",
+        "question": "Quel motif décrit le mieux cette attaque ?",
+        "choices": [
+            {
+                "text": "Une attaque en enfilade sur la même ligne",
+                "correct": true
+            },
+            {
+                "text": "Un clouage absolu",
+                "correct": false
+            },
+            {
+                "text": "Une attaque découverte par le cavalier",
+                "correct": false
+            }
+        ],
+        "board": "3k4/6r1/8/8/8/Q3K3/8/8",
+        "answer": "g7g3",
+        "hl": [
+            62,
+            30
+        ]
+    }
+]
 
-    // CLOUAGES
-    { id:'p1', theme:'pin', title:'Clouage Absolu #1', rating:1000, turn:'w', desc:'Un coup de tour crée un clouage absolu sur un cavalier noir important.', board:'r.b.k..r/ppp..ppp/..n.pn../....p.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[22,4], solution:['Bb5!','1.Bb5! Cloue le cavalier en c6 sur le roi en e8. Le cavalier ne peut plus se déplacer!'] },
-    { id:'p2', theme:'pin', title:'Exploitation du Clouage #1', rating:1200, turn:'w', desc:'Le cavalier noir est cloué. Trouvez comment en profiter immédiatement.', board:'r..qk..r/ppp..ppp/..n..n.b/....p.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[22,18], solution:['d5!','1.d5! Le pion attaque le cavalier cloué en c6 qui ne peut pas se déplacer. Gain d\'une pièce!'] },
-    { id:'p3', theme:'pin', title:'Clouage de Fou #1', rating:1100, turn:'b', desc:'Le fou noir peut créer un clouage dévastateur sur la ligne du roi blanc.', board:'r..qkb.r/ppp..ppp/..n..n../....p.../...P..../..N..N../PPP..PPP/R..QKB.R', hl:[60,61], solution:['Bb4!','1...Bb4! Cloue le cavalier en c3 sur le roi en e1. Gagne au moins un pion!'] },
-    { id:'p4', theme:'pin', title:'Clouage de Tour #1', rating:1350, turn:'w', desc:'La tour blanche peut créer un clouage sur la colonne e.', board:'r...k..r/ppp..ppp/..n.qn../...pp.../...P..../..N..N../PPP.RPPP/R..QKB.R', hl:[52,60], solution:['Re1!','1.Re1 Cloue la dame noire en e6 sur le roi en e8. Gain de la dame!'] },
-    { id:'p5', theme:'pin', title:'Rupture du Clouage #1', rating:1500, turn:'w', desc:'La pièce clouante peut être attaquée pour rompre la défense.', board:'r..qkb.r/ppp..ppp/..n..n../...Bb.B./...P..../..N..N../PPP..PPP/R..QK..R', hl:[27,20], solution:['Bxf6!','1.Bxf6! Bxf6 2.d5 — Capture la pièce clouée, puis le pion attaque le résultat. Gain d\'un fou!'] },
-
-    // ENFILADES
-    { id:'s1', theme:'skewer', title:'Enfilade de Tour #1', rating:1050, turn:'w', desc:'La tour blanche peut créer une enfilade dévastatrice.', board:'....k.../....q.../......../......../......../......../......../R...K...', hl:[60,4], solution:['Ra8+!','1.Ra8+! Le roi doit fuir, laissant la dame en e7 sans défense. La tour prend la dame!'] },
-    { id:'s2', theme:'skewer', title:'Enfilade de Fou #1', rating:1150, turn:'w', desc:'Le fou blanc peut créer une enfilade entre le roi et la dame noire.', board:'....k.../...q..../......../..B....../......../......../......../....K...', hl:[34,4], solution:['Ba3!','1.Ba3+ Le roi doit bouger, exposant la dame en d7. Le fou prend la dame!'] },
-    { id:'s3', theme:'skewer', title:'Enfilade de Dame #1', rating:1300, turn:'w', desc:'La dame peut créer une enfilade mortelle sur la diagonale.', board:'.....k../....r.../......../...Q..../......../......../......../....K...', hl:[35,5], solution:['Qd8+!','1.Qd8+! Le roi en f8 doit fuir, exposant la tour en e7. Gain de la tour!'] },
-    { id:'s4', theme:'skewer', title:'Enfilade de Tour #2', rating:1200, turn:'b', desc:'La tour noire peut créer une enfilade sur la rangée du roi.', board:'....K..R/......../......../......../......../......../......../....k..r', hl:[4,7], solution:['Rh1+!','1...Rh1+! Enfilade! Le roi blanc doit bouger, laissant la tour en h8 sans défense!'] },
-    { id:'s5', theme:'skewer', title:'Double Enfilade #1', rating:1550, turn:'w', desc:'La tour peut créer une enfilade sur deux pièces noires importantes.', board:'...rk..r/......../......../...R..../......../......../......../....K...', hl:[35,3], solution:['Rd8+!','1.Rd8+! Rxd8 2.Rxd8# — La tour enfile le roi et la dame, forçant la recapture pour un mat!'] },
-
-    // ATTAQUE DÉCOUVERTE
-    { id:'d1', theme:'discovered', title:'Attaque Découverte #1', rating:1200, turn:'w', desc:'En bougeant le cavalier blanc, vous dévoilez une attaque dévastatrice.', board:'r.bqk.nr/ppp..ppp/..np..../....p.../..B.P..Q/......../PPPP.PPP/RNB.K.NR', hl:[30,4], solution:['Ng5!','1.Ng5! Attaque découverte — le cavalier s\'en va, dévoilant une attaque de la dame sur f7. Menace Qxf7#!'] },
-    { id:'d2', theme:'discovered', title:'Échec Découvert #1', rating:1300, turn:'w', desc:'Déplacez le cavalier pour donner un échec découvert et gagner du matériel.', board:'r..qkb.r/ppp..ppp/..n..n../....p.../...PP.B./..N..N../PPP....P/R..QKB.R', hl:[30,60], solution:['Ne5!','1.Ne5! Échec découvert du fou en g4 sur le roi. Si le roi bouge, Nxd7 gagne la dame!'] },
-    { id:'d3', theme:'discovered', title:'Double Échec #1', rating:1500, turn:'w', desc:'Un double échec — deux pièces donnent échec simultanément. Le roi doit fuir.', board:'r..qkb.r/ppp..ppp/..n..n../....p.B./...PP..Q/..N....../PPP....P/R...KB.R', hl:[30,23], solution:['Bxf6+!','1.Bxf6+ Double échec (Bf6 et Qh4 via découverte). Le roi doit bouger — on capture ensuite la dame!'] },
-    { id:'d4', theme:'discovered', title:'Tour Découverte #1', rating:1400, turn:'w', desc:'La tour blanche va être débloquée pour une attaque dévastatrice.', board:'r...k..r/ppp..ppp/..n..n../....p.../...P..../..N.BN../PPP....P/R...K.RR', hl:[52,4], solution:['Bd5+!','1.Bd5+! Le roi est en échec, et la tour en h1 devient active. Double menace irrésistible!'] },
-    { id:'d5', theme:'discovered', title:'Gambit Découvert #1', rating:1600, turn:'w', desc:'Sacrifice de pièce pour une attaque découverte gagnante.', board:'r..qkb.r/ppp..ppp/..n....n/....p.B./...P...Q/..N..N../PPP....P/R...KB.R', hl:[30,23], solution:['Bxh7+!','1.Bxh7+! Kxh7 2.Qh4+ — Sacrifice pour exposer le roi. La dame entre en jeu avec check!'] },
-
-    // RANGÉE DU ROI
-    { id:'b1', theme:'backrank', title:'Mat de Rangée #1', rating:1100, turn:'w', desc:'La rangée arrière du roi noir est faible. Trouvez le mat en 1.', board:'......./ppp..ppp/....k.../......../......../......../PPP..PPP/....R..K', hl:[60,36], solution:['Re8#','1.Re8# — Mat! La tour prend la rangée du roi, et le roi en e6... wait, mat direct sur la 8e rangée!'] },
-    { id:'b2', theme:'backrank', title:'Combinaison Rangée #1', rating:1250, turn:'w', desc:'Le mat de rangée nécessite d\'abord un sacrifice pour ouvrir la colonne.', board:'rr...rk./ppp..ppp/......../......../......../......../PPP..PPP/...R.R.K', hl:[6,59], solution:['Rd8+!','1.Rd8+! Rxd8 2.Rxd8+ Rxd8 3.Rxd8# — Double échange de tours suivi du mat de rangée!'] },
-    { id:'b3', theme:'backrank', title:'Rangée Faible #1', rating:1350, turn:'b', desc:'Le roi blanc n\'a pas pioché — sa rangée est vulnérable. Exploitez-la!', board:'....r.k./ppp..ppp/......../......../......../......../PPP..PPP/....RK..', hl:[4,60], solution:['Re1+!','1...Re1+! 2.Rxe1 (forcé) — Échange puis mat ou gain de matériel sur la rangée!'] },
-    { id:'b4', theme:'backrank', title:'Sacrifice Rangée #1', rating:1450, turn:'w', desc:'Sacrifice la dame pour forcer un mat de rangée irrésistible.', board:'r.....k./ppp..ppp/......../..Q....../......../......../PPP..PPP/....R..K', hl:[34,6], solution:['Qc8+!','1.Qc8+! Rxc8 2.Re8# — Sacrifice de dame! La tour remate sur e8 après la recapture. MAT!'] },
-    { id:'b5', theme:'backrank', title:'Rangée du Roi Blanc #1', rating:1500, turn:'b', desc:'Le roi blanc est vulnérable sur sa rangée. Trouvez le mat forcé.', board:'....r.k./ppp..ppp/......../......../......../......../PPP..PPP/RNBQKB.R', hl:[4,60], solution:['Re1+!','1...Re1+! 2.Rxe1 Rxe1# — Le sacrifice de tour force un mat de rangée. Victoire noire!'] },
-
-    // MAT ÉTOUFFÉ
-    { id:'sm1', theme:'smothered', title:'Mat Étouffé Classique #1', rating:1300, turn:'w', desc:'Le roi noir est entouré de ses propres pièces. Le cavalier peut délivrer le mat.', board:'r.bqk.nr/pppp.ppp/..n....b/....p..Q/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[31,4], solution:['Qd8+!','1.Qd8+! Rxd8 2.Nf7# — Le sacrifice de dame force la tour à se placer, puis le cavalier mate!'] },
-    { id:'sm2', theme:'smothered', title:'Parcours du Cavalier #1', rating:1400, turn:'w', desc:'Séquence de sacrifices pour amener le cavalier sur la case de mat.', board:'r.bqkb.r/ppp..ppp/..n..n.P/....p..Q/..B.P..N/......../PPPP.PPP/RNB.K..R', hl:[23,4], solution:['Ng6+!','1.Ng6+! hxg6 2.Qh8+! Rxh8 3.Rxh8# — Séquence d\'échecs forçants. Mat étouffé! '] },
-    { id:'sm3', theme:'smothered', title:'Mat Étouffé Classique #2', rating:1500, turn:'w', desc:'Le roi adverse ne peut pas fuir à cause de ses propres pièces. Trouvez la séquence.', board:'r.bqk..r/pppp.ppp/..n..n.b/....p..Q/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[23,4], solution:['Nf5!','1.Nf5! Menace Nxe7# et Nxg7#. Si Nxf5, alors 2.Qd5 mat étouffé forcé en quelques coups!'] },
-    { id:'sm4', theme:'smothered', title:'Double Cavalier #1', rating:1600, turn:'w', desc:'Deux cavaliers coordonnés pour le mat étouffé — problème classique.', board:'r.b.k..r/ppp..ppp/..q..n.b/....p..N/....P..N/......../PPPP.PPP/RNB.KB.R', hl:[31,4], solution:['Ng6+!','1.Ng6+! hxg6 2.Qd8+! Rxd8 3.Nf7# — Séquence parfaite de mat étouffé avec deux cavaliers!'] },
-    { id:'sm5', theme:'smothered', title:'Philidor Héritage #1', rating:1700, turn:'w', desc:'Le mat étouffé le plus long — 4 coups de cavalier et sacrifice de dame.', board:'rn.qkb.r/pppp.ppp/......nb/....p.N./....P..N/......../PPPP.PPP/RNBQKB.R', hl:[30,4], solution:['Nf7!','1.Nf7! Rxf7 2.Ng6+! hxg6 3.Qd8+! Rxd8 4.Nf7# — Le mat étouffé le plus beau!'] },
-
-    // SURCHARGE
-    { id:'o1', theme:'overload', title:'Surcharge de Pièce #1', rating:1200, turn:'w', desc:'La dame noire défend à la fois c6 et f8. Elle est surchargée!', board:'...qkb.r/ppp..ppp/..n..n../....p.../...P...Q/..N..N../PPP....P/R..BKB.R', hl:[22,29], solution:['Nxe5!','1.Nxe5! Si Qxe5, Qxf8# — La dame est surchargée, elle ne peut pas défendre les deux menaces!'] },
-    { id:'o2', theme:'overload', title:'Tour Surchargée #1', rating:1350, turn:'w', desc:'La tour noire défend deux pièces critiques. Exploitez cette surcharge!', board:'r...k.nr/pp...ppp/..p..n../....r.../...P...R/..N....R/PPP..PPP/R..BK...', hl:[36,3], solution:['Rxh7+!','1.Rxh7+! Rxh7 2.Rxh7+ Kxh7 3.Rxh8# — La tour était surchargée à défendre h7 et h8!'] },
-    { id:'o3', theme:'overload', title:'Cavalier Surchargé #1', rating:1400, turn:'w', desc:'Le cavalier noir défend deux cases critiques. Forcez-le à en abandonner une.', board:'r.bqk..r/ppp..ppp/..n.bn../....p.../...PP.../..N..N../PPP....P/R..QKB.R', hl:[20,26], solution:['d5!','1.d5! Le cavalier en c6 doit soit défendre e4, soit défendre la dame. Gain de matériel!'] },
-    { id:'o4', theme:'overload', title:'Roi Surchargé #1', rating:1500, turn:'w', desc:'Le roi noir est surchargé — il doit à la fois défendre contre le mat et couvrir les pièces.', board:'......../ppp...kp/....r..n/....p.../..R...R./......../PPP..P../......K.', hl:[14,22], solution:['Rxg7+!','1.Rxg7+! Kxg7 2.Rxe6+ — Le roi ne peut défendre les deux. Gain de matériel!'] },
-    { id:'o5', theme:'overload', title:'Double Surcharge #1', rating:1650, turn:'w', desc:'Deux pièces noires surchargées — attaquez-les simultanément!', board:'r.bqk..r/ppp..ppp/..n.bn../...pp.../...PP.../..N..N../PPP....P/R..QKB.R', hl:[20,19], solution:['Nd5!','1.Nd5! Attaque simultanément dame, fou en e6 et cavalier en f6 — toutes surchargées!'] },
-
-    // RAYON X
-    { id:'x1', theme:'xray', title:'Attaque Rayon X #1', rating:1300, turn:'w', desc:'La tour blanche attaque à travers une pièce interposée pour menacer le roi.', board:'....k..r/ppp..ppp/....q.../..R....R/......../......../PPP..PPP/....K...', hl:[34,4], solution:['Rxh8+!','1.Rxh8+! Rxh8 2.Rxh8# — Rayon X! La tour en c5 et h5 coordonnent. La 8e rangée est mortelle!'] },
-    { id:'x2', theme:'xray', title:'Défense Rayon X #1', rating:1400, turn:'w', desc:'Utilisez la défense en rayon X de la tour pour sauver la position.', board:'r......./...R..k./......../......../......../......../......../....K...', hl:[6,3], solution:['Rd7!','1.Rd7! La tour défend en rayon X — garde la 7e rangée tout en attaquant. Position solide!'] },
-    { id:'x3', theme:'xray', title:'Rayon X de Dame #1', rating:1500, turn:'w', desc:'La dame blanche, en rayon X, menace le roi à travers une pièce.', board:'....k.r./..q..ppp/......../...Q..../......../......../PPP..PPP/....K...', hl:[35,4], solution:['Qd8+!','1.Qd8+! Rxd8 2.Rxd8# — La dame opère en rayon X à travers la tour noire pour forcer le mat!'] },
-    { id:'x4', theme:'xray', title:'Rayon X de Tour #1', rating:1450, turn:'b', desc:'La tour noire peut utiliser le rayon X pour gagner du matériel.', board:'....K..R/......../......../......../......../......../......../r...k...', hl:[7,0], solution:['Rxa1!','1...Rxa1! En rayon X — prend la tour. Si 2.Rxa1, Ra8+ gagne la qualité. Gain de matériel!'] },
-    { id:'x5', theme:'xray', title:'Combinaison Rayon X #1', rating:1700, turn:'w', desc:'Combinaison complexe utilisant le rayon X pour forcer un gain décisif.', board:'r.....k./p..q.rpp/....Q.../....R.R./......../......../PPP..PPP/....K...', hl:[14,6], solution:['Rxg7+!','1.Rxg7+! Kxg7 2.Rg5+ Kh8 3.Qxf7 — Rayon X combiné avec l\'attaque sur l\'axe g pour forcer la victoire!'] },
-];
-
-const SK = 'supachess_tactics_v1';
+const SK = 'supachess_tactics_v2';
 function getSolved() {
     try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; }
 }
@@ -329,23 +1484,28 @@ function renderMiniBoard(boardStr, hl=[]) {
     return h + '</div>';
 }
 
-function renderBigBoard(boardStr, hl=[]) {
+function renderBigBoard(boardStr, hl=[], turn='w') {
     const cells = parseBoard(boardStr);
     let h = '<div class="big-board">';
     for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
-        const i=r*8+c, isLight=(r+c)%2===0, isHl=hl.includes(i);
+        const displayIndex=r*8+c;
+        const i=turn==='b'?(7-r)*8+(7-c):displayIndex;
+        const file=String.fromCharCode(97+(i%8)), rank=8-Math.floor(i/8), square=file+rank;
+        const isLight=((i%8)+Math.floor(i/8))%2===0, isHl=hl.includes(i);
         const p = cells[i]!=='.' ? (PIECES[cells[i]]||'') : '';
-        h += `<div class="big-cell ${isLight?'light':'dark'}${isHl?' hl':''}"><span style="color:#1a1a2e">${p}</span></div>`;
+        h += '<button type="button" class="big-cell '+(isLight?'light':'dark')+(isHl?' hl':'')+'" data-square="'+square+'" aria-label="'+square+(p?' '+p:'')+'"><span style="color:#1a1a2e">'+p+'</span></button>';
     }
     return h + '</div>';
 }
 
 function updateStats() {
-    const s = solved.length;
+    const s = PUZZLES.filter(p => solved.includes(p.id)).length;
+    const total = PUZZLES.length;
     document.getElementById('stat-solved').textContent = s;
-    document.getElementById('stat-pct').textContent = Math.round(s/40*100)+'%';
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pct').textContent = Math.round(total ? s/total*100 : 0)+'%';
     document.getElementById('stat-streak').textContent = streak;
-    document.getElementById('prog-bar').style.width = (s/40*100)+'%';
+    document.getElementById('prog-bar').style.width = (total ? s/total*100 : 0)+'%';
 }
 
 function renderTabs() {
@@ -392,50 +1552,92 @@ function renderGrid() {
 function openPuzzle(id) {
     currentPuzzle = PUZZLES.find(p=>p.id===id);
     if (!currentPuzzle) return;
-    const isSolved = solved.includes(id);
+    currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null };
+    const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
     document.getElementById('modal-inner').innerHTML = `
         <h2>${currentPuzzle.title}</h2>
-        <div class="modal-sub">Rating: ⭐ ${currentPuzzle.rating} | ${THEMES.find(t=>t.id===currentPuzzle.theme)?.name||''}</div>
-        <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl)}</div>
+        <div class="modal-sub">Difficulté indicative : ⭐ ${currentPuzzle.rating}</div>
+        <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl, currentPuzzle.turn)}</div>
         <div class="modal-desc">
-            <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">
-                ${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}
-            </span><br>
+            <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span><br>
             ${currentPuzzle.desc}
         </div>
+        <p id="tactic-feedback" class="tactic-feedback" role="status" aria-live="polite">Clique d’abord la pièce que tu veux déplacer, puis sa case d’arrivée. La solution reste cachée.</p>
+        <section id="tactic-knowledge" class="tactic-knowledge" hidden>
+            <h3>${currentPuzzle.question}</h3>
+            <div class="tactic-choice-list">${currentPuzzle.choices.map((choice,index)=>'<button type="button" class="tactic-choice" onclick="answerConcept('+index+')">'+choice.text+'</button>').join('')}</div>
+        </section>
+        <p id="tactic-explanation" class="tactic-explanation" hidden></p>
         <div class="modal-btn-row">
-            <button class="m-btn m-btn-reveal" id="btn-reveal" onclick="revealSol()" ${isSolved?'style="display:none"':''}>
-                💡 Révéler la solution
-            </button>
-            <button class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" ${isSolved?'style="display:inline-flex"':''}>
-                ✅ Compris! → Suivant
-            </button>
+            <button class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" disabled>✅ Valider ma compréhension</button>
             <button class="m-btn m-btn-close" onclick="closeModal()">✕ Fermer</button>
-        </div>
-        <div class="sol-box ${isSolved?'show':''}" id="sol-box">
-            <h4>✅ Solution</h4>
-            <div class="sol-moves">
-                <span class="sol-chip">${currentPuzzle.solution[0]}</span>
-            </div>
-            <p style="margin-top:10px;line-height:1.6;opacity:0.9;">${currentPuzzle.solution[1]}</p>
         </div>
     `;
     document.getElementById('modal-bg').classList.add('open');
+    document.querySelectorAll('.big-cell').forEach(cell=>cell.addEventListener('click',function(){selectTacticSquare(this.dataset.square);}));
 }
 
-function revealSol() {
-    document.getElementById('sol-box').classList.add('show');
-    document.getElementById('btn-reveal').style.display = 'none';
-    document.getElementById('btn-done').style.display = 'inline-flex';
+function selectTacticSquare(square) {
+    if (!currentPuzzle || !currentPuzzle.session || currentPuzzle.session.moveCorrect) return;
+    const index=(8-Number(square[1]))*8+(square.charCodeAt(0)-97);
+    const piece=parseBoard(currentPuzzle.board)[index];
+    const ownPiece=currentPuzzle.turn==='w'?/[A-Z]/.test(piece):/[a-z]/.test(piece);
+    const feedback=document.getElementById('tactic-feedback');
+    if (!currentPuzzle.session.selected) {
+        if (!piece||piece==='.'||!ownPiece) { feedback.textContent='Choisis une de tes pièces à déplacer.'; return; }
+        currentPuzzle.session.selected=square;
+        document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.toggle('selected-square',cell.dataset.square===square));
+        feedback.textContent='Pièce sélectionnée. Clique maintenant sa case d’arrivée.';
+        return;
+    }
+    const from=currentPuzzle.session.selected;
+    if (from===square) {
+        currentPuzzle.session.selected=null;
+        document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.remove('selected-square'));
+        feedback.textContent='Sélection annulée. Choisis une pièce à déplacer.';
+        return;
+    }
+    currentPuzzle.session.selected=null;
+    document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.remove('selected-square'));
+    if (from+square===currentPuzzle.answer) {
+        currentPuzzle.session.moveCorrect=true;
+        feedback.textContent='Coup correct. À présent, explique pourquoi il fonctionne.';
+        document.getElementById('tactic-knowledge').hidden=false;
+        document.querySelectorAll('.big-cell').forEach(cell=>cell.disabled=true);
+    } else if (piece&&piece!=='.'&&ownPiece) {
+        currentPuzzle.session.selected=square;
+        document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.toggle('selected-square',cell.dataset.square===square));
+        feedback.textContent='Essaie un autre coup : sélectionne une pièce puis sa destination.';
+    } else {
+        feedback.textContent='Ce déplacement ne résout pas le problème. Repère les menaces et la réponse adverse.';
+    }
 }
 
+function answerConcept(index) {
+    if (!currentPuzzle || !currentPuzzle.session || !currentPuzzle.session.moveCorrect) return;
+    const choice=currentPuzzle.choices[index];
+    const feedback=document.getElementById('tactic-feedback');
+    if (!choice || !choice.correct) {
+        feedback.textContent='Pas encore. Reprends le motif créé par ton coup et essaie une autre explication.';
+        return;
+    }
+    currentPuzzle.session.conceptCorrect=true;
+    feedback.textContent='Bonne explication : tu as identifié le mécanisme.';
+    const explanation=document.getElementById('tactic-explanation');
+    explanation.textContent=currentPuzzle.explain;
+    explanation.hidden=false;
+    document.getElementById('btn-done').disabled=false;
+    document.querySelectorAll('.tactic-choice').forEach(button=>button.disabled=true);
+}
 function markSolved(id) {
+    const session=currentPuzzle&&currentPuzzle.id===id?currentPuzzle.session:null;
+    if (!session || !session.moveCorrect || !session.conceptCorrect) return;
     if (!solved.includes(id)) {
         solved.push(id);
         saveSolved(solved);
         streak++;
         if (window.ChessNovaProgress) {
-            ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique résolue');
+            ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique maîtrisée');
             ChessNovaProgress.checkTrainingBadges();
         }
     }

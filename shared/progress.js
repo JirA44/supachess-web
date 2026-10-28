@@ -80,7 +80,6 @@
         var level = 10;
         while (getPrestigeXP(level + 1) <= xp) {
             level++;
-            if (level > 100) break; // safety cap
         }
         // Check base levels
         if (xp < 5000) {

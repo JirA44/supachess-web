@@ -1,5 +1,8 @@
 'use strict';
 const test = require('node:test');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 const assert = require('node:assert');
 const enc = require('../js/error-encyclopedia.cjs');
 const carlsen = require('../js/carlsen-methods.cjs');
@@ -80,4 +83,16 @@ test('dashboard: tendance mesurée sur semaines réelles', () => {
   ]);
   assert.equal(dash.trend, 'en progression');
   assert.equal(dash.weekly.length, 3);
+});
+
+
+test('progression XP sans plafond: niveaux au-delà de 100', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../shared/progress.js'), 'utf8');
+  const sandbox = { window: { addEventListener() {} } };
+  vm.runInNewContext(source, sandbox);
+  const progress = sandbox.window.ChessNovaProgress;
+  const xpAt102 = progress.getPrestigeXP(102);
+  assert.equal(progress.getLevelForXP(xpAt102), 102);
+  assert.equal(progress.getLevelForXP(xpAt102 - 1), 101);
+  assert.ok(progress.getPrestigeXP(103) > xpAt102);
 });

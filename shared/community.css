@@ -1394,7 +1394,7 @@
 .profile-learning-stats strong{color:#fff;font-size:1.15em}.profile-learning-stats span{color:#cbd5e1;font-size:.78em}
 .profile-mastery-list,.profile-learning-list{display:grid;gap:7px;margin:0;padding:0;list-style:none}
 .profile-mastery-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;background:rgba(255,255,255,.045);border-radius:8px;color:#e5e7eb}
-.profile-mastery-list a{color:#8bd6ff;text-decoration:none}.profile-mastery-list a:hover{text-decoration:underline}
+.profile-mastery-list li>a{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:40px;color:#8bd6ff;text-decoration:none}.profile-mastery-list li>a:hover{text-decoration:underline}.profile-mastery-list li>a:focus-visible{outline:2px solid #b6f1ff;outline-offset:2px;border-radius:5px}.profile-mastery-list li>a strong{color:#fff}
 .profile-learning-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 .profile-learning-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 12px;border-radius:8px;background:#087f8c;color:#fff;text-decoration:none;font-weight:700}
 .profile-learning-actions a:hover,.profile-learning-actions a:focus-visible{background:#0b9baa;outline:2px solid #b6f1ff;outline-offset:2px}

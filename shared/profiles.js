@@ -161,18 +161,18 @@ function renderLocalLearningPanel(data){
   var nextXP=xpApi&&typeof xpApi.getPrestigeXP==='function'?xpApi.getPrestigeXP(local.level+1):null;
   var xpPercent=profileXPProgress(local.xp,local.level);
   var training=[
-    {label:profileText('profile_mastered_lessons','Lessons mastered'),value:mastered},
+    {label:profileText('profile_mastered_lessons','Lessons mastered'),value:mastered,href:'https://jira44.github.io/supachess/book-lessons.html'},
     {label:profileText('profile_openings_mastered','Opening fundamentals'),value:local.openingMastered,href:'https://jira44.github.io/supachess-web/TRAINING_OPENINGS.html'},
     {label:profileText('profile_endgames_mastered','Endgame fundamentals'),value:local.endgameMastered,href:'https://jira44.github.io/supachess-web/TRAINING_ENDGAMES.html'},
     {label:profileText('profile_tactics_mastered','Tactical themes mastered'),value:local.tacticMastered,href:'https://jira44.github.io/supachess-web/TRAINING_TACTICS.html'},
-    {label:profileText('profile_puzzles_solved','Puzzles solved'),value:local.puzzlesSolved}
+    {label:profileText('profile_puzzles_solved','Puzzles solved'),value:local.puzzlesSolved,href:'https://jira44.github.io/supachess-web/TRAINING_TACTICS.html'}
   ];
   var html='<section class="profile-learning" aria-labelledby="profile-learning-title"><h3 id="profile-learning-title">'+profileText('profile_learning_title','My learning')+'</h3>'+
     '<div class="profile-xp-card"><div class="profile-xp-heading"><div><strong>'+profileText('profile_level','Level')+' '+local.level+'</strong><span>'+escapeProfileText(profileRankName(local.level))+'</span></div><strong>'+local.xp+' '+profileText('profile_xp','XP')+'</strong></div>'+
     '<div class="profile-xp-track" role="progressbar" aria-label="'+profileText('profile_xp_progress','XP progress')+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(xpPercent)+'"><span style="width:'+xpPercent.toFixed(1)+'%"></span></div>'+
     '<small>'+escapeProfileText(profileText('profile_xp_to_next','Progress to next level'))+': '+Math.round(xpPercent)+'%'+(nextXP!==null?' · '+profileText('profile_next_level_at','next level at')+' '+nextXP+' XP':'')+'</small></div>'+
     '<div class="profile-learning-stats"><div><strong>'+local.completed.length+' / '+local.attempted.length+'</strong><span>'+profileText('profile_lessons_mastered_attempted','lessons mastered / attempted')+'</span></div><div><strong>'+local.moveExercises+'</strong><span>'+profileText('profile_correction_moves','half-moves to review')+'</span></div><div><strong>'+local.puzzlesSolved+'</strong><span>'+profileText('profile_puzzles_solved','puzzles solved')+'</span></div><div><strong>'+local.practiceSessions+'</strong><span>'+profileText('profile_practice_sessions','practice sessions')+'</span></div></div>'+
-    '<h4>'+profileText('profile_mastery_title','Mastery and progress')+'</h4><ul class="profile-mastery-list">'+training.map(function(item){return '<li>'+(item.href?'<a href="'+item.href+'">':'<span>')+escapeProfileText(item.label)+(item.href?'</a>':'</span>')+'<strong>'+item.value+'</strong></li>';}).join('')+'</ul>'+
+    '<h4>'+profileText('profile_mastery_title','Mastery and progress')+'</h4><ul class="profile-mastery-list">'+training.map(function(item){return '<li><a href="'+item.href+'" aria-label="'+escapeProfileText(item.label+': '+item.value)+'"><span>'+escapeProfileText(item.label)+'</span><strong>'+item.value+'</strong></a></li>';}).join('')+'</ul>'+
     '<div class="profile-learning-actions"><a href="'+exercisesUrl+'">'+profileText('profile_resume_exercises','Resume my exercises')+'</a><a href="https://jira44.github.io/supachess/book-lessons.html?next=1">'+profileText('profile_resume_lessons','Resume my lessons')+'</a><a href="https://jira44.github.io/supachess-web/TRAINING_OPENINGS.html">'+profileText('profile_resume_mastery','Resume mastery training')+'</a></div>';
   if(weaknesses.length){
     html+='<h4>'+profileText('profile_work_on','Work on in your games')+'</h4><ul class="profile-learning-list">'+weaknesses.slice(0,3).map(function(key){return '<li>'+escapeProfileText(labels[key]||key)+' : '+local.categoryCounts[key]+'</li>';}).join('')+'</ul>';

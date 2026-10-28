@@ -1,11 +1,19 @@
 {
-  "version": "1.12",
+  "version": "1.11",
+  "scripts": {
+    "test:keys": "node scripts/test_keyboard_nav.mjs",
+    "test:site": "node test_site_coherence.js",
+    "test:syntax": "node scripts/test_script_syntax.mjs .",
+    "test:periods": "node scripts/test_period_stats.mjs",
+    "test:links": "npm run test:site",
+    "test:unit": "node scripts/test_profile_learning.mjs && npm run test:keys && node scripts/test_i18n.mjs && node scripts/test_presence_unavailable.mjs && node scripts/test_online_count_integrity.mjs && node scripts/test_presence_data_contract.mjs && npm run test:syntax && npm run test:periods && node scripts/test_chess_display.mjs",
+    "test:e2e": "node scripts/test_chess_ui.mjs && node scripts/test_puzzle_modes.mjs && node scripts/test_live_move_categories.mjs && node scripts/test_rated_move_bubbles.mjs && node scripts/test_dots_observer.mjs && node scripts/test_analysis_status.mjs && node scripts/test_recent_analyzed_games.mjs"
+  },
   "dependencies": {
     "chess.js": "^0.10.3"
   },
-  "scripts": {
-    "test:links": "node --test tests/site-links.test.cjs",
-    "test:e2e": "playwright test --config=playwright.config.cjs",
-    "test:unit": "node --test tests/tournament-model.test.cjs"
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "jsdom": "^29.1.1"
   }
 }

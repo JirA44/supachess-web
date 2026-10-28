@@ -408,6 +408,35 @@
             transition: color 0.3s;
         }
         .back-link:hover { color: var(--accent-primary); }
+            /* Make the PGN analysis state unmistakable while Stockfish is working. */
+        .analysis-status-running {
+            display: inline-block;
+            padding: 0.16em 0.58em;
+            border: 1px solid rgba(255,255,255,.48);
+            border-radius: 999px;
+            color: transparent !important;
+            font-size: 1.08em;
+            font-weight: 900;
+            line-height: 1.5;
+            background-image: linear-gradient(90deg, #ff4d6d, #ffb703, #80ed99, #4cc9f0, #9b5de5, #ff4d6d);
+            background-size: 300% 100%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 5px rgba(76, 201, 240, .8));
+            animation: stockfish-analysis-rainbow 1.8s linear infinite, stockfish-analysis-glow 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes stockfish-analysis-rainbow {
+            from { background-position: 0% 50%; }
+            to { background-position: 300% 50%; }
+        }
+        @keyframes stockfish-analysis-glow {
+            from { filter: drop-shadow(0 0 3px rgba(76, 201, 240, .65)); }
+            to { filter: drop-shadow(0 0 10px rgba(255, 77, 109, .95)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .analysis-status-running { animation: none; }
+        }
     </style>
 </head>
 <body>
@@ -458,6 +487,28 @@ Exemple:
                     </div>
                     <div id="lichess-games-list" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
                 </div>
+
+                <div class="card">
+                    <h3 class="card-title">♟️ Import Chess.com</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Entrez votre pseudo Chess.com pour importer vos archives publiques,
+                        ou collez directement l'URL d'une partie.
+                    </p>
+                    <input type="text" id="chesscom-username" placeholder="Votre pseudo Chess.com">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-primary" onclick="fetchChessComGames()">Chercher les parties</button>
+                        <select id="chesscom-game-count" style="padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                            <option value="5">5 parties</option>
+                            <option value="10">10 parties</option>
+                            <option value="20" selected>20 parties</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <input type="text" id="chesscom-game-url" placeholder="https://www.chess.com/game/live/12345678901">
+                        <button class="btn-primary" style="margin-top: 10px;" onclick="importChessComGameUrl()">Importer cette partie</button>
+                    </div>
+                    <div id="chesscom-games-list" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+                </div>
             </div>
 
             <div class="card" style="margin-top: 20px; border: 2px solid rgba(255,215,0,0.5); background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,152,0,0.05));">
@@ -493,12 +544,6 @@ Exemple:
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 20px;">
-                <h3 class="card-title">📁 Parties récentes (analysées)</h3>
-                <div id="recent-games-list">
-                    <p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>
-                </div>
-            </div>
         </div>
 
         <!-- PANEL: ANALYSIS -->
@@ -555,6 +600,13 @@ Exemple:
                 <!-- Right: Analysis -->
                 <div>
                     <div class="card">
+                        <h3 class="card-title">📁 Parties analysées</h3>
+                        <div id="recent-games-list" style="max-height: 280px; overflow-y: auto;">
+                            <p style="color: var(--text-secondary);">Aucune partie analysée récemment.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
                         <h3 class="card-title">🎯 Analyse du coup</h3>
                         <div id="move-analysis" class="analysis-box">
                             <p style="color: var(--text-secondary);">Sélectionnez un coup pour voir l'analyse détaillée.</p>
@@ -566,7 +618,7 @@ Exemple:
 
                         <!-- Engine info -->
                         <div id="engine-info" style="font-size:0.78em; color: var(--text-secondary); margin-bottom: 10px;">
-                            ⏳ Chargement moteur... — <span id="analysis-status">en attente</span>
+                            ⏳ Chargement moteur... — <span id="analysis-status" role="status" aria-live="polite">en attente</span>
                         </div>
 
                         <!-- Eval bar vertical + score -->
@@ -737,6 +789,44 @@ Exemple:
                 </div>
 
                 <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
+                        <h3 class="card-title" style="margin:0;">📊 Analyse par période</h3>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="color:var(--text-secondary);font-size:0.9em;">
+                                <strong id="period-games-count">0</strong> partie(s)
+                            </span>
+                            <select id="period-select" onchange="updatePeriodCharts()"
+                                    style="padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);">
+                                <option value="week">7 derniers jours</option>
+                                <option value="month" selected>30 derniers jours</option>
+                                <option value="year">Cette année</option>
+                                <option value="all">Tout l'historique</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="accuracy-trend-chart"></canvas>
+                    </div>
+
+                    <h4 style="margin:25px 0 10px;color:var(--accent-secondary);">Qualité des coups joués</h4>
+                    <div class="chart-container" style="height: 220px;">
+                        <canvas id="move-quality-chart"></canvas>
+                    </div>
+
+                    <table style="width:100%;border-collapse:collapse;margin-top:15px;font-size:0.95em;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--border-color);color:var(--text-secondary);">Symbole</th>
+                                <th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--border-color);color:var(--text-secondary);">Qualité</th>
+                                <th style="text-align:right;padding:6px 10px;border-bottom:1px solid var(--border-color);color:var(--text-secondary);">Coups</th>
+                            </tr>
+                        </thead>
+                        <tbody id="period-quality-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="card">
                     <h3 class="card-title">🎯 Vue d'ensemble</h3>
                     <div class="stats-grid">
                         <div class="stat-card" style="border-left: 3px solid var(--accent-primary);">
@@ -805,6 +895,8 @@ Exemple:
         let analyzedMoves = [];
         let evalChart = null;
         let accuracyChart = null;
+        let accuracyTrendChart = null;
+        let moveQualityChart = null;
 
         // Puzzle state
         let currentPuzzle = null;
@@ -2282,6 +2374,166 @@ Exemple:
             }
         }
 
+        // --- Chess.com ---
+        // Public API, no auth needed. Archives are month buckets; the most
+        // recent one usually holds the games the user wants.
+        async function fetchChessComGames() {
+            const username = document.getElementById('chesscom-username').value.trim();
+            if (!username) {
+                showToast('Entrez un pseudo Chess.com', 'error');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
+                showToast('Pseudo Chess.com invalide', 'error');
+                return;
+            }
+
+            const count = parseInt(document.getElementById('chesscom-game-count').value, 10);
+            showLoading('Récupération des archives de ' + username + '...');
+
+            try {
+                const headers = { 'Accept': 'application/json' };
+                const res = await fetch(
+                    `https://api.chess.com/pub/player/${username}/games/archives`,
+                    { headers }
+                );
+
+                if (res.status === 404) {
+                    throw new Error('Pseudo introuvable ou archives privées');
+                }
+                if (!res.ok) {
+                    throw new Error('Chess.com a répondu ' + res.status);
+                }
+
+                const { archives } = await res.json();
+                if (!archives || archives.length === 0) {
+                    showToast('Aucune archive publique pour ce pseudo', 'error');
+                    hideLoading();
+                    return;
+                }
+
+                // Walk buckets from newest to oldest until we have enough games.
+                const buckets = archives.slice(0, 6);
+                const collected = [];
+                for (const url of buckets) {
+                    if (collected.length >= count) break;
+                    const bucketRes = await fetch(url, { headers });
+                    if (!bucketRes.ok) continue;
+                    const games = await bucketRes.json();
+                    for (const g of games) {
+                        if (collected.length >= count) break;
+                        if (g.pgn) collected.push(g);
+                    }
+                }
+
+                collected.sort((a, b) => b.end_time - a.end_time);
+                displayChessComGames(collected);
+                hideLoading();
+            } catch (e) {
+                hideLoading();
+                showToast('Erreur: ' + e.message, 'error');
+            }
+        }
+
+        function displayChessComGames(games) {
+            const container = document.getElementById('chesscom-games-list');
+            if (games.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">Aucune partie avec PGN trouvée.</p>';
+                return;
+            }
+
+            container.innerHTML = games.map((g, i) => {
+                const white = g.white?.username || 'Anonymous';
+                const black = g.black?.username || 'Anonymous';
+                const result = g.white?.result && g.black?.result
+                    ? (g.white.result === 'win' ? '1-0' : g.black.result === 'win' ? '0-1' : '½-½')
+                    : '*';
+                const date = new Date(g.end_time * 1000).toLocaleDateString();
+                const speed = ({
+                    bullet: 'Bullet', blitz: 'Blitz', rapid: 'Rapid',
+                    daily: 'Daily', classical: 'Classical'
+                })[g.speed] || g.time_class || 'Standard';
+
+                return `
+                    <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                         onclick="loadChessComGame(${i})"
+                         onmouseover="this.style.background='rgba(255,107,107,0.1)'"
+                         onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span><b>${escapeHtml(white)}</b> vs <b>${escapeHtml(black)}</b></span>
+                            <span style="color: var(--accent-yellow);">${result}</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
+                            ${speed} • ${date}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            window.chessComGames = games;
+        }
+
+        function loadChessComGame(index) {
+            const g = window.chessComGames?.[index];
+            if (!g || !g.pgn) {
+                showToast('Partie sans PGN', 'error');
+                return;
+            }
+            loadExternalPGN(g.pgn);
+        }
+
+        // Chess.com game URLs look like /game/daily/12345678901 or
+        // /game/live/12345678901. Only the numeric id is needed.
+        async function importChessComGameUrl() {
+            const raw = document.getElementById('chesscom-game-url').value.trim();
+            const match = raw.match(/chess\.com\/(?:game|analysis)\/(?:board|live|daily)\/(\d+)/i)
+                      || raw.match(/\/game\/(?:live|daily)\/(\d+)/i);
+
+            if (!match) {
+                showToast('URL Chess.com non reconnue', 'error');
+                return;
+            }
+
+            const id = match[1];
+            showLoading('Récupération de la partie ' + id + '...');
+
+            try {
+                // The live endpoint serves JSON only while the game is recent;
+                // /games/ returns the PGN for archived games.
+                const candidates = [
+                    `https://api.chess.com/pub/game/${id}`,
+                    `https://api.chess.com/import/${id}`
+                ];
+
+                let pgn = null;
+                let lastError = null;
+
+                for (const url of candidates) {
+                    try {
+                        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        if (!res.ok) { lastError = 'HTTP ' + res.status; continue; }
+                        const data = await res.json();
+                        if (data.pgn) { pgn = data.pgn; break; }
+                        lastError = 'PGN absent de la réponse';
+                    } catch (e) {
+                        lastError = e.message;
+                    }
+                }
+
+                hideLoading();
+
+                if (!pgn) {
+                    showToast('Partie introuvable ou encore en cours (' + (lastError || 'raison inconnue') + ')', 'error');
+                    return;
+                }
+
+                loadExternalPGN(pgn);
+            } catch (e) {
+                hideLoading();
+                showToast('Erreur: ' + e.message, 'error');
+            }
+        }
+
         function displayLichessGames(games) {
             const container = document.getElementById('lichess-games-list');
             if (games.length === 0) {
@@ -2322,14 +2574,57 @@ Exemple:
                 return;
             }
 
-            game = new Chess();
-            const cleaned = cleanPGN(g.pgn);
-            const ok = game.load_pgn(cleaned);
-            if (!ok || game.history().length === 0) {
-                showToast('PGN Lichess invalide ou non supporté', 'error');
-                return;
+            loadExternalPGN(g.pgn, 'Lichess');
+        }
+
+        /**
+         * Shared PGN loader for external sources.
+         * Falls back to replaying the move list when the headers alone are
+         * enough to make chess.js reject an otherwise valid game.
+         */
+        function loadExternalPGN(rawPgn, source) {
+            const label = source || 'Externe';
+            const attempt = new Chess();
+            let ok = attempt.load_pgn(cleanPGN(rawPgn));
+
+            if (!ok || attempt.history().length === 0) {
+                const movesOnly = cleanPGN(rawPgn)
+                    .replace(/\[.*?\]/g, '')
+                    .replace(/\{[^}]*\}/g, '')
+                    .replace(/;[^\n]*/g, '')
+                    .replace(/\([^)]*\)/g, '')
+                    .replace(/\$\d+/g, '')
+                    .replace(/\d+\.{1,3}/g, ' ')
+                    .trim();
+
+                attempt.reset();
+                ok = attempt.load_pgn(movesOnly);
+
+                if (!ok || attempt.history().length === 0) {
+                    const tokens = movesOnly.split(/\s+/);
+                    attempt.reset();
+                    let played = 0;
+                    for (const token of tokens) {
+                        if (!token || /^(1-0|0-1|1\/2-1\/2|\*)$/.test(token)) continue;
+                        if (!attempt.move(token, { sloppy: true })) break;
+                        played++;
+                    }
+                    if (played === 0) {
+                        showToast(`PGN ${label} invalide ou aucun coup trouvé`, 'error');
+                        return;
+                    }
+                }
             }
+
+            game = attempt;
+            console.log(`[Coach] ${label} PGN chargé:`, game.history().length, 'coups');
             startAnalysis();
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
         }
 
         // ========================================
@@ -2496,7 +2791,10 @@ Exemple:
             const history = game.history({ verbose: true });
             console.log('[Analysis] Starting analysis of', history.length, 'moves');
             const statusEl = document.getElementById('analysis-status');
-            if (statusEl) statusEl.textContent = 'analyse en cours…';
+            if (statusEl) {
+                statusEl.textContent = '🌈 Analyse Stockfish en cours…';
+                statusEl.classList.add('analysis-status-running');
+            }
 
             // Show initial loading with 0%
             showLoading('');
@@ -2681,7 +2979,10 @@ Exemple:
 
             hideLoading();
             const statusElDone = document.getElementById('analysis-status');
-            if (statusElDone) statusElDone.textContent = `✅ terminée — ${history.length} coups`;
+            if (statusElDone) {
+                statusElDone.classList.remove('analysis-status-running');
+                statusElDone.textContent = `✅ terminée — ${history.length} coups`;
+            }
             showToast('Analyse terminée et synchronisée!', 'success');
 
             // Go to first move
@@ -2903,6 +3204,17 @@ Exemple:
             container.innerHTML = html || '<span style="color: var(--text-secondary);">Aucun coup analysé.</span>';
         }
 
+        // Order used by the report table: best moves first, mistakes last.
+        const COUNTABLE_MOVES = [
+            { type: 'brilliant',   icon: '🌟', label: 'Brillant',    symbol: '!!',  tint: 'rgba(255,215,0,0.08)' },
+            { type: 'best',       icon: '💎', label: 'Meilleur',    symbol: '!',   tint: 'rgba(100,181,246,0.08)' },
+            { type: 'excellent',  icon: '✅', label: 'Excellent',   symbol: '!',   tint: 'rgba(34,197,94,0.06)' },
+            { type: 'good',       icon: '👍', label: 'Bon',         symbol: '!?',  tint: 'rgba(34,197,94,0.04)' },
+            { type: 'inaccuracy', icon: '⚠️', label: 'Imprécision', symbol: '?!',  tint: 'rgba(250,204,21,0.08)' },
+            { type: 'mistake',    icon: '❌', label: 'Erreur',      symbol: '?',   tint: 'rgba(249,115,22,0.10)' },
+            { type: 'blunder',    icon: '💥', label: 'Gaffe',       symbol: '??',  tint: 'rgba(239,68,68,0.12)' }
+        ];
+
         function buildGameReport() {
             const card = document.getElementById('game-report-card');
             const container = document.getElementById('game-report');
@@ -2935,28 +3247,32 @@ Exemple:
                 <div style="color:var(--text-secondary);">${headers.Event || ''} ${headers.Date || ''} — Résultat: <strong style="color:#fff;">${result}</strong></div>
             </div>`;
 
-            // Stats summary
-            html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-                <div style="padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;">
-                    <div style="font-weight:bold;margin-bottom:5px;">⬜ ${whiteName}</div>
-                    ${stats.white.brilliant ? '<div>🌟 Brillants: ' + stats.white.brilliant + '</div>' : ''}
-                    ${stats.white.best ? '<div>💎 Meilleurs coups: ' + stats.white.best + '</div>' : ''}
-                    <div>✅ Excellents: ${stats.white.excellent || 0}</div>
-                    <div>👍 Bons: ${stats.white.good || 0}</div>
-                    ${stats.white.inaccuracy ? '<div>⚠️ Imprécisions: ' + stats.white.inaccuracy + '</div>' : ''}
-                    ${stats.white.mistake ? '<div>❌ Erreurs: ' + stats.white.mistake + '</div>' : ''}
-                    ${stats.white.blunder ? '<div>💥 Gaffes: ' + stats.white.blunder + '</div>' : ''}
-                </div>
-                <div style="padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;">
-                    <div style="font-weight:bold;margin-bottom:5px;">⬛ ${blackName}</div>
-                    ${stats.black.brilliant ? '<div>🌟 Brillants: ' + stats.black.brilliant + '</div>' : ''}
-                    ${stats.black.best ? '<div>💎 Meilleurs coups: ' + stats.black.best + '</div>' : ''}
-                    <div>✅ Excellents: ${stats.black.excellent || 0}</div>
-                    <div>👍 Bons: ${stats.black.good || 0}</div>
-                    ${stats.black.inaccuracy ? '<div>⚠️ Imprécisions: ' + stats.black.inaccuracy + '</div>' : ''}
-                    ${stats.black.mistake ? '<div>❌ Erreurs: ' + stats.black.mistake + '</div>' : ''}
-                    ${stats.black.blunder ? '<div>💥 Gaffes: ' + stats.black.blunder + '</div>' : ''}
-                </div>
+            // Stats summary — one row per annotation, both sides side by side
+            html += `<div style="overflow-x:auto;margin-bottom:15px;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.95em;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.2);color:var(--text-secondary);">Annotation</th>
+                            <th style="text-align:center;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.2);color:var(--text-secondary);">Symbole</th>
+                            <th style="text-align:right;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.2);">⬜ ${whiteName}</th>
+                            <th style="text-align:right;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.2);">⬛ ${blackName}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${COUNTABLE_MOVES.map(row => {
+                            const w = stats.white[row.type] || 0;
+                            const b = stats.black[row.type] || 0;
+                            const total = w + b;
+                            if (!total) return '';
+                            return `<tr style="background:${row.tint};">
+                                <td style="padding:5px 8px;">${row.icon} ${row.label}</td>
+                                <td style="padding:5px 8px;text-align:center;font-family:'Courier New',monospace;font-weight:bold;">${row.symbol}</td>
+                                <td style="padding:5px 8px;text-align:right;font-weight:bold;">${w}</td>
+                                <td style="padding:5px 8px;text-align:right;font-weight:bold;">${b}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>`;
 
             // Full commentary - ALL moves
@@ -3557,6 +3873,117 @@ Exemple:
                     }
                 }
             });
+
+            // Per-game accuracy, one dataset per side, over real dates.
+            const trendCtx = document.getElementById('accuracy-trend-chart').getContext('2d');
+            accuracyTrendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Blancs', data: [], borderColor: '#00d9ff', backgroundColor: 'rgba(0,217,255,0.08)', fill: false, tension: 0.3, pointRadius: 2 },
+                        { label: 'Noirs',  data: [], borderColor: '#ff6b6b', backgroundColor: 'rgba(255,107,107,0.08)', fill: false, tension: 0.3, pointRadius: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, labels: { color: '#ccc' } } },
+                    scales: {
+                        y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#888', callback: v => v + '%' } },
+                        x: { grid: { display: false }, ticks: { color: '#888', maxTicksLimit: 8 } }
+                    }
+                }
+            });
+
+            // Move-quality distribution across the selected period.
+            const qualityCtx = document.getElementById('move-quality-chart').getContext('2d');
+            moveQualityChart = new Chart(qualityCtx, {
+                type: 'bar',
+                data: {
+                    labels: MOVE_QUALITY_BUCKETS.map(b => b.symbol),
+                    datasets: [{
+                        label: 'Coups',
+                        data: [],
+                        backgroundColor: ['#ffd700', '#64b5f6', '#22c55e', '#7cbf6b', '#facc15', '#f97316', '#ef4444'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#888', precision: 0 } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+        }
+
+        // ========================================
+        // PERIOD STATISTICS
+        // ========================================
+
+        const STAT_PERIODS = {
+            week: 7 * 24 * 3600 * 1000,
+            month: 30 * 24 * 3600 * 1000,
+            year: 365 * 24 * 3600 * 1000
+        };
+
+        function periodGames(period) {
+            const span = STAT_PERIODS[period];
+            const log = progress.gameStatsLog || [];
+            if (!span) return log.slice();
+            const since = Date.now() - span;
+            return log.filter(g => (g.at || 0) >= since);
+        }
+
+        function updatePeriodCharts() {
+            const period = document.getElementById('period-select')?.value || 'month';
+            const games = periodGames(period);
+            const countEl = document.getElementById('period-games-count');
+            if (countEl) countEl.textContent = games.length;
+
+            // Accuracy trend, oldest first.
+            const ordered = games.slice().sort((a, b) => (a.at || 0) - (b.at || 0));
+            if (accuracyTrendChart) {
+                accuracyTrendChart.data.labels = ordered.map(g => {
+                    const d = new Date(g.at);
+                    return period === 'year'
+                        ? d.toLocaleDateString(undefined, { month: 'short' })
+                        : d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
+                });
+                accuracyTrendChart.data.datasets[0].data = ordered.map(g => g.whiteAcc);
+                accuracyTrendChart.data.datasets[1].data = ordered.map(g => g.blackAcc);
+                accuracyTrendChart.update();
+            }
+
+            // Move-quality totals for the period.
+            const totals = {};
+            for (const bucket of MOVE_QUALITY_BUCKETS) totals[bucket.type] = 0;
+            for (const g of games) {
+                for (const bucket of MOVE_QUALITY_BUCKETS) {
+                    totals[bucket.type] += (g.counts && g.counts[bucket.type]) || 0;
+                }
+            }
+            if (moveQualityChart) {
+                moveQualityChart.data.datasets[0].data = MOVE_QUALITY_BUCKETS.map(b => totals[b.type]);
+                moveQualityChart.update();
+            }
+
+            // Summary table with the same symbols as the game report.
+            const tbody = document.getElementById('period-quality-tbody');
+            if (tbody) {
+                tbody.innerHTML = MOVE_QUALITY_BUCKETS.map(b => {
+                    const n = totals[b.type];
+                    return `<tr${n ? '' : ' style="opacity:0.35;"'}>
+                        <td style="padding:6px 10px;">${b.symbol}</td>
+                        <td style="padding:6px 10px;">${b.type}</td>
+                        <td style="padding:6px 10px;text-align:right;font-weight:bold;">${n}</td>
+                    </tr>`;
+                }).join('');
+            }
         }
 
         function updateEvalChart(evalHistory) {
@@ -3761,6 +4188,9 @@ Exemple:
                 gamesAnalyzed: 0,
                 totalAccuracy: 0,
                 accuracyHistory: [],
+                // Per-game dated record. accuracyHistory alone cannot answer
+                // "last 7 days" because it keeps only 20 entries and no dates.
+                gameStatsLog: [],
                 weaknesses: {
                     hanging: 0,
                     tactics: 0,
@@ -3782,6 +4212,17 @@ Exemple:
             localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
         }
 
+        // Move quality buckets, best first. Symbols match the game report table.
+        const MOVE_QUALITY_BUCKETS = [
+            { type: 'brilliant',   symbol: '!!' },
+            { type: 'best',       symbol: '!'  },
+            { type: 'excellent',  symbol: '!'  },
+            { type: 'good',       symbol: 'ok' },
+            { type: 'inaccuracy', symbol: '?!' },
+            { type: 'mistake',    symbol: '?'  },
+            { type: 'blunder',    symbol: '??' }
+        ];
+
         function updateProgressFromAnalysis(whiteAcc, blackAcc, errors) {
             const avgAcc = (whiteAcc + blackAcc) / 2;
 
@@ -3789,6 +4230,31 @@ Exemple:
             progress.totalAccuracy = ((progress.totalAccuracy * (progress.gamesAnalyzed - 1)) + avgAcc) / progress.gamesAnalyzed;
             progress.accuracyHistory.push(avgAcc);
             if (progress.accuracyHistory.length > 20) progress.accuracyHistory.shift();
+
+            // Dated per-game record for the period charts.
+            const headers = game.header();
+            const counts = {};
+            for (const bucket of MOVE_QUALITY_BUCKETS) counts[bucket.type] = 0;
+            for (const m of analyzedMoves) {
+                const t = m.classification.type;
+                if (counts[t] !== undefined) counts[t]++;
+            }
+
+            progress.gameStatsLog = progress.gameStatsLog || [];
+            progress.gameStatsLog.push({
+                at: Date.now(),
+                white: headers.White || 'Blancs',
+                black: headers.Black || 'Noirs',
+                result: headers.Result || '?',
+                whiteAcc,
+                blackAcc,
+                avgAcc: Math.round(avgAcc * 10) / 10,
+                moves: analyzedMoves.length,
+                counts
+            });
+            // 24 months is enough for the yearly view without bloating localStorage.
+            const twoYearsAgo = Date.now() - 730 * 24 * 3600 * 1000;
+            progress.gameStatsLog = progress.gameStatsLog.filter(g => (g.at || 0) >= twoYearsAgo);
 
             // Update weaknesses
             for (const m of analyzedMoves) {
@@ -3822,6 +4288,8 @@ Exemple:
                 accuracyChart.data.datasets[0].data = progress.accuracyHistory;
                 accuracyChart.update();
             }
+
+            updatePeriodCharts();
 
             // Stats
             document.getElementById('dash-elo').textContent = progress.estimatedElo || 1200;
@@ -3966,6 +4434,11 @@ Exemple:
         function cancelAnalysis() {
             analysisCancelled = true;
             hideLoading();
+            const statusEl = document.getElementById('analysis-status');
+            if (statusEl) {
+                statusEl.classList.remove('analysis-status-running');
+                statusEl.textContent = '⏹ Analyse annulée';
+            }
             showToast('Analyse annulée', 'info');
         }
 

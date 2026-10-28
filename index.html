@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- Deploy: 20260208-HUB-AUTH-STATS -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupaChess - Hub Central</title>
+    <title>SupaChess — Académie des erreurs</title>
     <style>
         * {
             margin: 0;
@@ -241,63 +241,83 @@
         .action-btn.danger {
             background: linear-gradient(90deg, #f44336, #da190b);
         }
-
-        .theme-nav {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 0 auto 35px;
+    
+        .purpose-panel {
+            background: rgba(8, 16, 38, 0.78);
+            border: 1px solid rgba(120, 180, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 0 0 28px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
         }
-
-        .theme-nav a {
-            color: #dcecff;
-            text-decoration: none;
-            border: 1px solid rgba(0, 217, 255, 0.4);
-            border-radius: 999px;
-            padding: 9px 14px;
-            font-weight: 600;
-            background: rgba(0, 217, 255, 0.08);
+        .purpose-panel h2 {
+            font-size: clamp(1.5rem, 3vw, 2.1rem);
+            margin-bottom: 10px;
+            text-align: center;
         }
+        .purpose-lead, .purpose-note {
+            max-width: 900px;
+            margin: 0 auto 20px;
+            text-align: center;
+            color: rgba(255,255,255,.82);
+        }
+        .purpose-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .purpose-card {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 14px;
+            padding: 18px;
+        }
+        .purpose-card h3 { margin-bottom: 8px; color: #8ddcff; }
+        .purpose-card p { line-height: 1.55; color: rgba(255,255,255,.84); }
+        .purpose-card a { display: inline-block; margin-top: 12px; color: #9ce7ff; font-weight: 700; }
+        .purpose-note { margin: 18px auto 0; font-size: .9rem; }
+        @media (max-width: 640px) { .purpose-panel { padding: 20px 16px; } }
 
-        .theme-nav a:hover { background: rgba(0, 217, 255, 0.2); }
-
-        .theme-group { margin: 42px 0; }
-        .theme-group h2 { text-align: center; margin-bottom: 10px; font-size: 1.65rem; }
-        .theme-group > p { text-align: center; opacity: .85; margin: 0 auto 22px; max-width: 720px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 data-i18n="header_title">ChessNova Chess Engine</h1>
-            <p class="subtitle" data-i18n="header_subtitle">Hybrid Intelligence System - Training Dashboard</p>
-            <p style="margin-top: 10px; opacity: 0.8;" data-i18n="header_elo_info">5 AI Components | ELO actuel : ~3150 | Objectif : 3600+</p>
-            <p style="margin-top: 5px; opacity: 0.9; color: #4CAF50; font-weight: bold;" data-i18n="header_improvement">+13.9% Amelioration en 2 parties !</p>
+            <h1 data-i18n="header_title">SupaChess — Académie des erreurs</h1>
+            <p class="subtitle" data-i18n="header_subtitle">Comprendre ses parties, apprendre de ses erreurs et savoir quoi travailler.</p>
         </div>
 
-        <div class="status-bar">
-            <div class="status-card">
-                <div class="icon">&#x1F3AE;</div>
-                <div class="label" data-i18n="status_session">Session Active</div>
-                <div class="value" data-i18n="status_session_value">EN COURS</div>
+        
+        <section class="purpose-panel" aria-labelledby="purpose-title">
+            <h2 id="purpose-title" data-i18n="purpose_title">SupaChess : comprendre ses parties pour progresser</h2>
+            <p class="purpose-lead" data-i18n="purpose_lead">Une académie d’échecs qui transforme les erreurs et les bons coups en leçons concrètes.</p>
+            <div class="purpose-grid">
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_what_title">À quoi ça sert ?</h3>
+                    <p data-i18n="purpose_what_text">Revoir une partie, repérer les moments décisifs et comprendre ce qu’un demi-coup change dans la position.</p>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_why_title">Pourquoi l’utiliser ?</h3>
+                    <p data-i18n="purpose_why_text">Connaître le meilleur coup ne suffit pas : il faut comprendre pourquoi un coup fonctionne, où l’on s’est trompé et quel thème travailler ensuite.</p>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example1_title">Exemple : étudier une partie</h3>
+                    <p data-i18n="purpose_example1_text">Suivre les demi-coups sur l’échiquier, s’arrêter à un moment critique et comparer les choix possibles.</p>
+                    <a href="kasparov_immortal_1999.html" data-i18n="purpose_example1_link">Ouvrir une partie commentée →</a>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example2_title">Exemple : cibler une difficulté</h3>
+                    <p data-i18n="purpose_example2_text">Revoir une position où une pièce était en prise ou une tactique a été manquée, puis travailler ce thème.</p>
+                    <a href="CHESS_COACH.html" data-i18n="purpose_example2_link">Ouvrir Chess Coach →</a>
+                </article>
+                <article class="purpose-card">
+                    <h3 data-i18n="purpose_example3_title">Exemple : apprendre un principe</h3>
+                    <p data-i18n="purpose_example3_text">Relier une erreur observée à une explication et à un exercice pour éviter de la répéter.</p>
+                    <a href="ENSEIGNEMENTS_ECHECS.html" data-i18n="purpose_example3_link">Voir les enseignements →</a>
+                </article>
             </div>
-            <div class="status-card">
-                <div class="icon">&#x1F4CA;</div>
-                <div class="label" data-i18n="status_elo">ELO Actuel</div>
-                <div class="value">~3150</div>
-            </div>
-            <div class="status-card">
-                <div class="icon">&#x1F525;</div>
-                <div class="label" data-i18n="status_improvement">Amelioration</div>
-                <div class="value">+13.9%</div>
-            </div>
-            <div class="status-card">
-                <div class="icon">&#x23F1;</div>
-                <div class="label" data-i18n="status_time">Temps Total</div>
-                <div class="value">20h+</div>
-            </div>
-        </div>
+            <p class="purpose-note" data-i18n="purpose_note">Les évaluations automatiques dépendent du moteur et de la profondeur de recherche. Elles doivent être accompagnées d’une explication et ne constituent pas, seules, une preuve de niveau ou de progrès.</p>
+        </section>
 
         <div class="quick-actions">
             <button class="action-btn" data-section="fischer-academy" onclick="window.location.href='FISCHER_ACADEMY.html'" style="background: linear-gradient(90deg, #f4c95d, #d08c22);">♟️ Méthode Fischer</button>
@@ -309,6 +329,9 @@
             </button>
             <button class="action-btn" data-section="tournament-sim" onclick="window.location.href='TOURNAMENT_SIMULATOR.html'" style="background: linear-gradient(90deg, #ffd700, #ff8c00);">
                 &#x1F3C6; <span data-i18n="action_tournament">Tournoi Simule</span>
+            </button>
+            <button class="action-btn" data-section="tournament-stockfish" onclick="window.location.href='TOURNAMENT_STOCKFISH.html'" style="background: linear-gradient(90deg, #4facfe, #00f2fe);">
+                &#x1F41F; <span data-i18n="action_tournament_stockfish">Tournoi Stockfish</span>
             </button>
             <button class="action-btn danger" data-section="live-game" onclick="window.location.href='SUIVI_PARTIES_LIVE.html'">
                 &#x1F3AE; <span data-i18n="action_live_game">Partie EN COURS</span>
@@ -327,16 +350,9 @@
             </button>
         </div>
 
-        <h2 style="text-align: center; margin: 40px 0 16px; font-size: 2rem;" data-i18n="section_hub">Hub de Visualisation</h2>
-        <nav class="theme-nav" aria-label="Explorer SupaChess par thème">
-            <a href="#theme-play">Jouer & Coach</a>
-            <a href="#training">Entraînement</a>
-            <a href="#theme-analysis">Analyses</a>
-            <a href="#theme-tracking">Suivi & stats</a>
-            <a href="#games">Parties</a>
-        </nav>
+        <h2 style="text-align: center; margin: 40px 0 30px; font-size: 2rem;" data-i18n="section_hub">Hub de Visualisation</h2>
 
-        <h2 id="games" style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;" data-i18n="section_legendary">
+        <h2 style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;" data-i18n="section_legendary">
             Bibliotheque des Parties Legendaires
         </h2>
         <p style="text-align: center; margin-bottom: 30px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;" data-i18n="section_legendary_desc">
@@ -469,65 +485,57 @@
             </div>
         </div>
 
-        <h2 id="training" style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">Programmes d'Entrainement</h2>
+        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_training">Programmes d'Entrainement</h2>
 
         <div class="menu-grid">
             <a href="https://jira44.github.io/supachess/" target="_blank" rel="noopener">
                 <div class="menu-card" data-section="supachess-trainer" style="border: 2px solid #4ade80; box-shadow: 0 0 25px rgba(74, 222, 128, 0.3);">
                     <span class="icon">&#x1F9D9;</span>
-                    <h3>SupaChess Coach IA - Entraineur d'echecs</h3>
-                    <p>Jouez contre Stockfish avec un coach IA pedagogique : suggestions, interceptions, analyse PGN et statistiques.</p>
-                    <span class="badge new" style="background: rgba(74, 222, 128, 0.3); border-color: rgba(74, 222, 128, 0.5);">&#x1F525; COACH IA</span>
-                </div>
-            </a>
-                        <a href="MAGNUS_PRINCIPLES.html">
-                <div class="menu-card" data-section="magnus-principles">
-                    <span class="icon">♔</span>
-                    <h3>Repères Magnus</h3>
-                    <p>Améliorer les pièces, limiter le contre-jeu, choisir les échanges et préparer les finales. Une routine à pratiquer dans le coach.</p>
-                    <span class="badge new">8 PRINCIPES</span>
+                    <h3 data-i18n="training_coach_title">SupaChess Coach IA - Entraineur d'echecs</h3>
+                    <p data-i18n="training_coach_desc">Jouez contre Stockfish avec un coach IA pedagogique : suggestions, interceptions, analyse PGN et statistiques.</p>
+                    <span class="badge new" style="background: rgba(74, 222, 128, 0.3); border-color: rgba(74, 222, 128, 0.5);">&#x1F525; <span data-i18n="training_coach_badge">COACH IA</span></span>
                 </div>
             </a>
             <a href="TRAINING_OPENINGS.html">
                 <div class="menu-card" data-section="training-openings" style="border: 2px solid #4facfe; box-shadow: 0 0 20px rgba(79, 172, 254, 0.2);">
                     <span class="icon">&#x1F4D6;</span>
-                    <h3>Entrainement Ouvertures</h3>
-                    <p>Apprenez 8 ouvertures essentielles coup par coup. Sicilienne, Ruy Lopez, Gambit Dame et plus!</p>
-                    <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x1F4D6; INTERACTIF</span>
+                    <h3 data-i18n="training_openings_title">Entrainement Ouvertures</h3>
+                    <p data-i18n="training_openings_desc">Apprenez 8 ouvertures essentielles coup par coup. Sicilienne, Ruy Lopez, Gambit Dame et plus!</p>
+                    <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x1F4D6; <span data-i18n="training_openings_badge">INTERACTIF</span></span>
                 </div>
             </a>
 
             <a href="TRAINING_ENDGAMES.html">
                 <div class="menu-card" data-section="training-endgames" style="border: 2px solid #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);">
                     <span class="icon">&#x265A;</span>
-                    <h3>Drills de Finales</h3>
-                    <p>10 positions essentielles: Lucena, Philidor, mat tour+roi, finales de pions et plus.</p>
-                    <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x265A; PRATIQUE</span>
+                    <h3 data-i18n="training_endgames_title">Drills de Finales</h3>
+                    <p data-i18n="training_endgames_desc">10 positions essentielles: Lucena, Philidor, mat tour+roi, finales de pions et plus.</p>
+                    <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x265A; <span data-i18n="training_endgames_badge">PRATIQUE</span></span>
                 </div>
             </a>
 
             <a href="TRAINING_TACTICS.html">
                 <div class="menu-card" data-section="training-tactics" style="border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
                     <span class="icon">&#x1F3AF;</span>
-                    <h3>Patterns Tactiques</h3>
-                    <p>40 puzzles organises par theme: fourchettes, clouages, enfilades, sacrifices et plus!</p>
-                    <span class="badge new" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);">&#x1F3AF; 8 THEMES</span>
+                    <h3 data-i18n="training_tactics_title">Patterns Tactiques</h3>
+                    <p data-i18n="training_tactics_desc">40 puzzles organises par theme: fourchettes, clouages, enfilades, sacrifices et plus!</p>
+                    <span class="badge new" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);">&#x1F3AF; <span data-i18n="training_tactics_badge">8 THEMES</span></span>
                 </div>
             </a>
 
             <a href="DAILY_CHALLENGE.html">
                 <div class="menu-card" data-section="daily-challenge" style="border: 2px solid #f97316; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);">
                     <span class="icon">&#x1F525;</span>
-                    <h3>Defi du Jour</h3>
-                    <p>Un nouveau defi chaque jour! Maintenez votre streak et grimpez les niveaux.</p>
-                    <span class="badge new" style="background: rgba(249, 115, 22, 0.3); border-color: rgba(249, 115, 22, 0.5); animation: pulse 1.5s infinite;">&#x1F525; QUOTIDIEN</span>
+                    <h3 data-i18n="training_daily_title">Defi du Jour</h3>
+                    <p data-i18n="training_daily_desc">Un nouveau defi chaque jour! Maintenez votre streak et grimpez les niveaux.</p>
+                    <span class="badge new" style="background: rgba(249, 115, 22, 0.3); border-color: rgba(249, 115, 22, 0.5); animation: pulse 1.5s infinite;">&#x1F525; <span data-i18n="training_daily_badge">QUOTIDIEN</span></span>
                 </div>
             </a>
         </div>
 
-        <h2 id="analysis" style="text-align: center; margin: 60px 0 30px; font-size: 2rem;">Outils, analyses et suivi</h2>
+        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_dashboards">Dashboards & Analytics</h2>
 
-        <div class="menu-grid" id="thematic-tools-grid">
+        <div class="menu-grid">
             <a href="CHESS_COACH.html">
                 <div class="menu-card" data-section="chess-coach" style="border: 2px solid #00d9ff; box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);">
                     <span class="icon">&#x1F393;</span>
@@ -772,10 +780,8 @@
 
         <div class="footer">
             <p><strong data-i18n="footer_engine_name">ChessNova Chess Engine</strong> - <span data-i18n="footer_engine_desc">Hybrid Intelligence System</span></p>
-            <p data-i18n="footer_tech">Minimax + Alpha-Beta Pruning + Stockfish 17.1 FULL</p>
-            <p style="margin-top: 15px; font-size: 0.9rem;">
-                Session ID: 20251024_161849 | Auto-Learning Pipeline Active
-            </p>
+            <p data-i18n="footer_tech">Parties commentées, entraînement et explications</p>
+            
             <p style="margin-top: 10px; opacity: 0.6; font-size: 0.85rem;">
                 <span data-i18n="footer_last_update">Derniere mise a jour :</span> <span id="lastUpdate"></span>
             </p>
@@ -783,55 +789,6 @@
     </div>
 
     <script>
-        (function organizeThematicHub() {
-            const sourceGrid = document.getElementById('thematic-tools-grid');
-            if (!sourceGrid) return;
-
-            const themes = [
-                {
-                    id: 'play', title: '♟️ Jouer & coach',
-                    description: 'Jouez contre l’IA et obtenez des conseils pendant votre partie.',
-                    sections: ['chess-coach', 'chessnova-teacher', 'ai-coach', 'standalone-training']
-                },
-                {
-                    id: 'analysis', title: '🔎 Analyses & progression',
-                    description: 'Analysez votre style, vos parties et les leçons à retenir.',
-                    sections: ['puzzles', 'style-chessnova', 'radar', 'lessons-v2', 'lessons-v1', 'learning-report', 'architecture', 'archives']
-                },
-                {
-                    id: 'tracking', title: '📈 Suivi & statistiques',
-                    description: 'Suivez votre entraînement, votre ELO, les tournois et les résultats.',
-                    sections: ['training-dashboard', 'live-tracking', 'stats-session', 'victories-tracker', 'elo-evolution', 'live-counters', 'tournament-dashboard', 'elo-progress']
-                },
-                {
-                    id: 'games', title: '🎬 Parties à explorer',
-                    description: 'Retrouvez les replays, analyses détaillées et parties créatives.',
-                    sections: ['creative-games', 'victory-sf20', 'partie-1', 'partie-2', 'partie-3', 'zup-celebration']
-                }
-            ];
-            const cards = Array.from(sourceGrid.children);
-            const groups = new Map(themes.map(theme => [theme.id, []]));
-
-            cards.forEach(card => {
-                const section = card.querySelector('[data-section]')?.dataset.section;
-                const theme = themes.find(item => item.sections.includes(section));
-                groups.get(theme?.id || 'analysis').push(card);
-            });
-
-            const hub = document.createDocumentFragment();
-            themes.forEach(theme => {
-                const group = document.createElement('section');
-                group.id = `theme-${theme.id}`;
-                group.className = 'theme-group';
-                group.innerHTML = `<h2>${theme.title}</h2><p>${theme.description}</p>`;
-                const grid = document.createElement('div');
-                grid.className = 'menu-grid';
-                groups.get(theme.id).forEach(card => grid.appendChild(card));
-                group.appendChild(grid);
-                hub.appendChild(group);
-            });
-            sourceGrid.replaceWith(hub);
-        })();
         document.getElementById('lastUpdate').textContent = new Date().toLocaleString('fr-FR');
     </script>
 
@@ -839,12 +796,16 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<link rel="stylesheet" href="shared/community.css">
-<script src="shared/i18n.js"></script>
-<script src="shared/community.js"></script>
+<link rel="stylesheet" href="shared/community.css?v=profile-dashboard-20261026">
+<script src="shared/i18n.js?v=profile-dashboard-20261026"></script>
+<script src="shared/community.js?v=profile-dashboard-20261026"></script>
+<script src="shared/profiles.js?v=profile-dashboard-20261026"></script>
+<script>document.addEventListener('DOMContentLoaded', function(){ if(window.SupaProfiles&&firebase){ var a=firebase.auth(), d=firebase.firestore(); SupaProfiles.init(a,d); SupaProfiles.initSearchBar(); SupaProfiles.initRankingSection(); a.onAuthStateChanged(function(u){ if(u) SupaProfiles.ensureUserProfile(u); }); if(new URLSearchParams(location.search).get('openProfile')==='1'){a.onAuthStateChanged(function(u){history.replaceState(null,'',location.pathname+location.hash);if(!u){var login=document.getElementById('cn-auth-bar-login');if(login)login.click();return;}SupaProfiles.getProfile(u.uid).then(function(profile){if(profile)SupaProfiles.renderProfileModal(profile);else SupaProfiles.renderOwnProfileFallback(u);}).catch(function(){SupaProfiles.renderOwnProfileFallback(u);});});} }});</script>
 <!-- /ChessNova Community -->
-<script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
+    <script src="supa-dots-widget.js?v=20261025b"></script>
+<script src="supa-move-bubbles.js?v=20261025b"></script>
+<script src="supa-style-engine.js"></script>
+<script src="supa-quick-solve.js"></script>
+    <script src="js/decision_audit.js"></script>
 </body>
 </html>

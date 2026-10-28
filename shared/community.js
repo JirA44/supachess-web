@@ -83,18 +83,15 @@
                     catch (firestoreError) { console.warn('[Community] Firestore unavailable:', firestoreError.message); }
                 }
 
-                // Test Firestore connectivity
-                if (db) db.collection('community_chat').limit(1).get().then(function() {
-                    console.log('[Community] Firestore connected OK');
-                }).catch(function(err) {
-                    console.error('[Community] Firestore connection test FAILED:', err.code, err.message);
-                    if (err.code === 'permission-denied') {
-                        console.error('[Community] REGLES FIRESTORE: Les regles de securite bloquent l\'acces. Allez dans Firebase Console > Firestore > Rules et ajoutez des regles permettant la lecture/ecriture aux utilisateurs authentifies.');
-                    }
-                });
+                // Feature requests report their own failures; do not probe public chat while signed out.
 
                 // Force persistence locale (survit aux redémarrages navigateur)
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function () {});
+
+                // Compléter un flux signInWithRedirect (fallback si popup bloquée)
+                auth.getRedirectResult().catch(function (err) {
+                    console.warn('[auth] redirect result error', err && err.code, err && err.message);
+                });
 
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
@@ -159,7 +156,16 @@
                 '<div class="cn-auth-bar-avatar">' + escapeHTML(initials) + '</div>' +
                 '<span class="cn-auth-bar-name">' + escapeHTML(name) + '</span>' +
                 badgeHtml +
+                '<button class="cn-auth-bar-btn" id="cn-auth-bar-players" type="button" aria-label="Joueurs en ligne" title="Joueurs en ligne">👥</button>' +
                 '<button class="cn-auth-bar-btn cn-auth-bar-btn--logout" id="cn-auth-bar-logout" data-i18n="auth_logout">' + t('auth_logout') + '</button>';
+
+            var playersBtn = document.getElementById('cn-auth-bar-players');
+            if (playersBtn) {
+                playersBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    togglePlayersPanel();
+                });
+            }
 
             var logoutBtn = document.getElementById('cn-auth-bar-logout');
             if (logoutBtn) {
@@ -173,10 +179,10 @@
                 });
             }
 
-            // Bar click → open players panel
+            // Account click opens the profile; the dedicated people button opens presence.
             bar.onclick = function (e) {
-                if (e.target.id === 'cn-auth-bar-logout') return;
-                togglePlayersPanel();
+                if (e.target.closest('button')) return;
+                openMyProfile();
             };
 
         } else {
@@ -213,6 +219,7 @@
                     '<input type="password" class="cn-auth-input" id="cn-login-password" data-i18n="auth_password" data-i18n-attr="placeholder" placeholder="' + t('auth_password') + '">' +
                     '<div class="cn-auth-error" id="cn-login-error"></div>' +
                     '<button class="cn-auth-btn-primary" id="cn-login-submit" data-i18n="auth_btn_login">' + t('auth_btn_login') + '</button>' +
+                    '<a href="#" id="cn-forgot-password" style="display:block;text-align:center;margin:8px 0 0;font-size:.85em;color:#8fb6d9;cursor:pointer;" data-i18n="auth_forgot">Mot de passe oublié ? Renvoyer le mot de passe</a>' +
                     '<div class="cn-auth-divider"><span data-i18n="auth_or">' + t('auth_or') + '</span></div>' +
                     '<button class="cn-google-btn" id="cn-google-login">' +
                         '<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>' +
@@ -257,6 +264,8 @@
         document.getElementById('cn-login-password').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') handleEmailLogin();
         });
+        var forgotLink = document.getElementById('cn-forgot-password');
+        if (forgotLink) forgotLink.addEventListener('click', function (e) { e.preventDefault(); handlePasswordReset(); });
 
         // Email signup
         document.getElementById('cn-signup-submit').addEventListener('click', handleEmailSignup);
@@ -357,9 +366,27 @@
         });
     }
 
+    function handlePasswordReset() {
+        if (!auth) return;
+        var email = document.getElementById('cn-login-email').value.trim();
+        var errorEl = document.getElementById('cn-login-error');
+        if (!email) { errorEl.textContent = t('auth_error_invalid_email'); return; }
+        errorEl.textContent = '';
+        auth.sendPasswordResetEmail(email).then(function () {
+            showToast(t('auth_reset_sent') || 'Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.', false);
+            errorEl.style.color = '#4CAF50';
+            errorEl.textContent = t('auth_reset_sent') || 'Email envoyé !';
+        }).catch(function (err) {
+            var msg = t('auth_error_generic');
+            if (err.code === 'auth/user-not-found') msg = t('auth_error_wrong_password');
+            else if (err.code === 'auth/invalid-email') msg = t('auth_error_invalid_email');
+            errorEl.style.color = '';
+            errorEl.textContent = msg;
+        });
+    }
     function handleGoogleLogin() {
         if (!auth) {
-            showToast('Connexion Google indisponible : Firebase Auth n’a pas démarré. Recharge la page.', true);
+            showToast(t('auth_google_not_ready'), true);
             return;
         }
         var provider = new firebase.auth.GoogleAuthProvider();
@@ -375,16 +402,24 @@
             showToast(t('auth_success_login'), false);
             closeAuthModal();
         }).catch(function (err) {
-            if (err.code !== 'auth/popup-closed-by-user') {
+            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                 var messages = {
-                    'auth/unauthorized-domain': 'Domaine non autorisé par Firebase. Autorise jira44.github.io dans Authentication > Settings > Authorized domains.',
-                    'auth/operation-not-allowed': 'La connexion Google n’est pas activée dans Firebase Authentication.',
-                    'auth/popup-blocked': 'La fenêtre Google a été bloquée. Autorise les popups pour ce site et réessaie.',
-                    'auth/network-request-failed': 'Connexion réseau impossible pendant la connexion Google. Réessaie.',
-                    'auth/too-many-requests': 'Trop de tentatives. Réessaie un peu plus tard.'
+                    'auth/unauthorized-domain': t('auth_google_unauthorized_domain'),
+                    'auth/operation-not-allowed': t('auth_google_disabled'),
+                    'auth/popup-blocked': t('auth_google_popup_blocked'),
+                    'auth/network-request-failed': t('auth_google_network_error'),
+                    'auth/too-many-requests': t('auth_google_too_many_requests')
                 };
                 console.error('[Community] Google sign-in failed:', err.code, err.message);
+                if (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment') {
+                    showToast(t('auth_google_popup_fallback'), true);
+                    auth.signInWithRedirect(provider).catch(function (e2) {
+                        showToast('Redirection impossible: ' + (e2.code || e2.message), true);
+                    });
+                    return;
+                }
                 showToast(messages[err.code] || (t('auth_error_generic') + ' (' + (err.code || 'auth/error') + ')'), true);
+                return;
             }
         });
     }
@@ -996,9 +1031,12 @@
         if (presenceInterval) clearInterval(presenceInterval);
         presenceInterval = setInterval(function () {
             if (currentUser && myStatus !== 'invisible') {
-                db.collection('presence').doc(currentUser.uid).set({
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).catch(function () {});
+                Promise.all([
+                    db.collection('presence').doc(currentUser.uid).set({
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true }),
+                    syncPublicPresence(currentUser, myStatus)
+                ]).catch(function () {});
             }
         }, 60000);
 
@@ -1019,25 +1057,52 @@
         window.removeEventListener('beforeunload', handleBeforeUnload);
     }
 
+    function getPresenceDisplayName(user) {
+        var name = user && typeof user.displayName === 'string' ? user.displayName.trim() : '';
+        if (!name || name.indexOf('@') !== -1) {
+            name = 'Joueur ' + String(user && user.uid || '').slice(0, 6);
+        }
+        return name.slice(0, 60);
+    }
+
     function writePresence(user, status) {
-        if (!db || !user) return Promise.resolve();
+        if (!db || !user || !user.uid) return Promise.resolve();
         var data = {
             uid: user.uid,
-            displayName: user.displayName || user.email || 'User',
+            displayName: getPresenceDisplayName(user),
             status: status,
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-            page: window.location.pathname
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
         };
-        return db.collection('presence').doc(user.uid).set(data, { merge: true }).catch(function () {});
+        return Promise.all([
+            db.collection('presence').doc(user.uid).set(data, { merge: true }),
+            syncPublicPresence(user, status)
+        ]).catch(function () {});
+    }
+
+    function syncPublicPresence(user, status) {
+        if (!db || !user || !user.uid) return Promise.resolve();
+        var ref = db.collection('presence_public').doc(user.uid);
+        if (status !== 'dispo' && status !== 'occupe') {
+            return ref.delete().catch(function () {});
+        }
+        return ref.set({
+            uid: user.uid,
+            displayName: getPresenceDisplayName(user),
+            status: status,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function () {});
     }
 
     function setPresenceStatus(status) {
         if (!db || !currentUser) return Promise.resolve();
         myStatus = status;
-        return db.collection('presence').doc(currentUser.uid).set({
-            status: status,
-            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(function () {});
+        return Promise.all([
+            db.collection('presence').doc(currentUser.uid).set({
+                status: status,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }),
+            syncPublicPresence(currentUser, status)
+        ]).catch(function () {});
     }
 
     // ============================================================
@@ -1050,16 +1115,16 @@
         panel.id = 'cn-players-panel';
         panel.innerHTML =
             '<div class="cn-players-panel-header">' +
-                '<span style="color:#eee;font-size:13px;font-weight:600;">Joueurs en ligne</span>' +
-                '<span id="cn-players-count">0</span>' +
+                '<span data-i18n="players_panel_title" style="color:#eee;font-size:13px;font-weight:600;">' + escapeHTML(t('players_panel_title')) + '</span>' +
+                '<span id="cn-players-count">—</span>' +
             '</div>' +
             '<div class="cn-status-btns" id="cn-status-btns">' +
-                '<button class="cn-status-btn cn-status-btn--active" data-status="dispo">&#x1F7E2; Dispo</button>' +
-                '<button class="cn-status-btn" data-status="occupe">&#x1F7E1; Occup&eacute;</button>' +
-                '<button class="cn-status-btn" data-status="invisible">&#x26AB; Invisible</button>' +
+                '<button class="cn-status-btn cn-status-btn--active" data-status="dispo" data-i18n="players_status_available">' + escapeHTML(t('players_status_available')) + '</button>' +
+                '<button class="cn-status-btn" data-status="occupe" data-i18n="players_status_busy">' + escapeHTML(t('players_status_busy')) + '</button>' +
+                '<button class="cn-status-btn" data-status="invisible" data-i18n="players_status_invisible">' + escapeHTML(t('players_status_invisible')) + '</button>' +
             '</div>' +
             '<div class="cn-players-list" id="cn-players-list">' +
-                '<div class="cn-players-empty">Chargement...</div>' +
+                '<div class="cn-players-empty" data-i18n="players_loading">' + escapeHTML(t('players_loading')) + '</div>' +
             '</div>';
 
         document.body.appendChild(panel);
@@ -1096,7 +1161,7 @@
                 loadOnlinePlayers(); // Refresh list
             } else {
                 var list = document.getElementById('cn-players-list');
-                if (list) list.innerHTML = '<div class="cn-players-empty">Mode invisible actif</div>';
+                if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="players_invisible_active">' + escapeHTML(t('players_invisible_active')) + '</div>';
             }
         });
     }
@@ -1108,6 +1173,28 @@
         if (playersOpen) loadOnlinePlayers();
     }
 
+    function openMyProfile() {
+        closePlayersPanel();
+        if (!currentUser) {
+            openAuthModal();
+            return;
+        }
+        if (typeof window.openProfileModal === 'function') {
+            window.openProfileModal();
+            return;
+        }
+        if (window.SupaProfiles && typeof window.SupaProfiles.getProfile === 'function') {
+            window.SupaProfiles.getProfile(currentUser.uid).then(function (profile) {
+                if (profile) window.SupaProfiles.renderProfileModal(profile);
+                else window.SupaProfiles.renderOwnProfileFallback(currentUser);
+            }).catch(function () {
+                window.SupaProfiles.renderOwnProfileFallback(currentUser);
+            });
+            return;
+        }
+        togglePlayersPanel();
+    }
+
     function closePlayersPanel() {
         playersOpen = false;
         var panel = document.getElementById('cn-players-panel');
@@ -1115,10 +1202,18 @@
     }
 
     function loadOnlinePlayers() {
-        if (!db) return;
+        var list = document.getElementById('cn-players-list');
+        var countEl = document.getElementById('cn-players-count');
+        if (!db) {
+            if (countEl) countEl.textContent = '—';
+            if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="players_unavailable">' + escapeHTML(t('players_unavailable')) + '</div>';
+            return;
+        }
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-        db.collection('presence')
+        db.collection('presence_public')
+            .where('status', 'in', ['dispo', 'occupe'])
             .where('lastSeen', '>', fiveMinAgo)
+            .limit(100)
             .get()
             .then(function (snapshot) {
                 var list = document.getElementById('cn-players-list');
@@ -1128,7 +1223,9 @@
                 var players = [];
                 snapshot.forEach(function (doc) {
                     var d = doc.data();
-                    if (d.status !== 'invisible') {
+                    if ((d.status === 'dispo' || d.status === 'occupe') &&
+                        d.lastSeen && typeof d.lastSeen.toDate === 'function' &&
+                        d.lastSeen.toDate() > fiveMinAgo) {
                         players.push(d);
                     }
                 });
@@ -1136,7 +1233,7 @@
                 if (countEl) countEl.textContent = players.length;
 
                 if (players.length === 0) {
-                    list.innerHTML = '<div class="cn-players-empty">Aucun joueur en ligne</div>';
+                    list.innerHTML = '<div class="cn-players-empty" data-i18n="players_none_online">' + escapeHTML(t('players_none_online')) + '</div>';
                     return;
                 }
 
@@ -1170,7 +1267,12 @@
             }).catch(function (err) {
                 console.warn('[Community] loadOnlinePlayers error:', err);
                 var list = document.getElementById('cn-players-list');
-                if (list) list.innerHTML = '<div class="cn-players-empty">Erreur de chargement</div>';
+                var countEl = document.getElementById('cn-players-count');
+                if (countEl) countEl.textContent = '—';
+                var messageKey = err && err.code === 'permission-denied'
+                    ? 'players_permission_denied'
+                    : 'players_unavailable';
+                if (list) list.innerHTML = '<div class="cn-players-empty" data-i18n="' + messageKey + '">' + escapeHTML(t(messageKey)) + '</div>';
             });
     }
 
@@ -1335,6 +1437,59 @@
         }
     }
 
+    // --- Keyboard move navigation ---
+    // Every page spells its move functions differently (nextMove/goForward,
+    // previousMove/goBack/prevMove), and several had no handler at all. This
+    // resolves whichever name the page exposes so the arrows work everywhere.
+    // Flag lives on window because the IIFE can be evaluated more than once
+    // (duplicate script tags, hot reload), and each run would rebind.
+    var KEY_NAV_FLAG = '__cnKeyboardNavBound';
+
+    var KEY_NAV_MAP = [
+        { keys: ['ArrowLeft'], names: ['previousMove', 'goBack', 'prevMove', 'movePrev'] },
+        { keys: ['ArrowRight'], names: ['nextMove', 'goForward', 'next_pl', 'moveNext'] },
+        { keys: ['Home'], names: ['goToStart', 'goToBeginning', 'firstMove'] },
+        { keys: ['End'], names: ['goToEnd', 'lastMove'] }
+    ];
+
+    function resolveNavHandler(names) {
+        for (var i = 0; i < names.length; i++) {
+            if (typeof window[names[i]] === 'function') return window[names[i]];
+        }
+        return null;
+    }
+
+    function isTypingTarget(target) {
+        if (!target) return false;
+        var tag = target.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+
+    function initKeyboardNav() {
+        if (window[KEY_NAV_FLAG]) return;
+        window[KEY_NAV_FLAG] = true;
+
+        // The page's own globals are usually declared after this bundle, and
+        // on some pages in a later script tag entirely, so the handler lookup
+        // happens per keystroke rather than being cached here.
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+            if (isTypingTarget(e.target)) return;
+
+            for (var i = 0; i < KEY_NAV_MAP.length; i++) {
+                var entry = KEY_NAV_MAP[i];
+                if (entry.keys.indexOf(e.key) === -1) continue;
+
+                var handler = resolveNavHandler(entry.names);
+                if (!handler) continue;
+
+                e.preventDefault();
+                handler();
+                return;
+            }
+        });
+    }
+
     // --- Init ---
     function init() {
         // The shared tracker is loaded after community.js on some legacy pages.
@@ -1347,6 +1502,7 @@
             progressScript.dataset.chessnovaProgress = 'true';
             document.body.appendChild(progressScript);
         }
+        initKeyboardNav();
         var firebaseReady = initFirebase();
         if (firebaseReady) {
             trackVisit();
@@ -1367,3 +1523,4 @@
         init();
     }
 })();
+

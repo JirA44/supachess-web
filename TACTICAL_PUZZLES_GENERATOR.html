@@ -172,6 +172,29 @@
             margin-top: 20px;
         }
 
+        .exercise-mode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 18px 0 8px;
+            color: var(--text-secondary);
+        }
+
+        .exercise-mode select {
+            background: #111827;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 215, 0, 0.55);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font: inherit;
+        }
+
+        #board .square-55d63.click-selected {
+            box-shadow: inset 0 0 0 4px rgba(250, 204, 21, .9);
+        }
+
         button {
             background: linear-gradient(135deg, var(--accent-blue), #8b5cf6);
             color: white;
@@ -476,6 +499,16 @@
                 <div class="timer" id="timer">&#x23F1; 00:00</div>
 
                 <div id="board"></div>
+
+                <label class="exercise-mode" for="exercise-mode-select">
+                    <span data-i18n="exercise_mode_label">Mode d’exercice</span>
+                    <select id="exercise-mode-select" data-i18n="exercise_mode_label" data-i18n-attr="aria-label" aria-label="Mode d’exercice">
+                        <option value="one" data-i18n="exercise_mode_one">Trouver le meilleur demi-coup</option>
+                        <option value="hidden-brilliant" data-i18n="exercise_mode_hidden_brilliant">Trouver le coup brillant caché (pas évident)</option>
+                        <option value="two-auto" data-i18n="exercise_mode_auto">Trouver le meilleur coup — réponse adverse automatique</option>
+                        <option value="two-manual" data-i18n="exercise_mode_manual">Trouver les deux demi-coups</option>
+                    </select>
+                </label>
 
                 <div class="controls">
                     <button onclick="giveHint()" class="warning">Indice</button>
@@ -811,6 +844,8 @@
                 themes: ["Coup tranquille", "Menace de mat"],
                 difficulty: "expert",
                 rating: 2600,
+                // Quiet queen reroute creating a subtle mating threat.
+                hiddenBrilliant: true,
                 description: "Coup tranquille devastateur! La dame se place en d5 pour menacer Df7+ suivi de Fg7 mat.",
                 hint: "La dame doit se repositionner pour creer une menace de mat imparable avec le fou h6."
             },
@@ -908,6 +943,8 @@
                 themes: ["Percee de pions", "Sacrifice"],
                 difficulty: "expert",
                 rating: 2700,
+                // Counterintuitive pawn sacrifice that creates an unstoppable passer.
+                hiddenBrilliant: true,
                 description: "La percee de pions! Sacrifiez un pion pour creer un pion passe imparable. Peu importe comment les noirs capturent, un pion blanc passe a la promotion.",
                 hint: "Poussez le pion central en sacrifice. Apres la capture, un des deux pions restants est libre."
             },
@@ -983,6 +1020,8 @@
                 themes: ["Sacrifice positionnel", "Gain de pion"],
                 difficulty: "hard",
                 rating: 1850,
+                // Positional knight sacrifice whose compensation is long-term.
+                hiddenBrilliant: true,
                 description: "Sacrifice de cavalier pour demolir la structure de pions et envahir avec la dame.",
                 hint: "Un des cavaliers peut capturer un pion qui semble protege. Calculez les consequences!"
             },
@@ -1323,6 +1362,25 @@
         var movesHistory = [];
         var hintsUsed = 0;
         var puzzleSolved = false;
+        var exerciseMode = 'one';
+        var awaitingSecondHalfMove = false;
+        var autoReplyTimer = null;
+        var clickMoveSource = null;
+
+        function puzzleText(key, fallback) {
+            return window.ChessNovaI18n ? window.ChessNovaI18n.t(key) : fallback;
+        }
+
+        function getPuzzleOrderForMode() {
+            var ordered = getSortedPuzzleOrder();
+            if (exerciseMode === 'one') return ordered;
+            if (exerciseMode === 'hidden-brilliant') return ordered.filter(function (puzzleIndex) {
+                return PUZZLES[puzzleIndex].hiddenBrilliant === true;
+            });
+            return ordered.filter(function (puzzleIndex) {
+                return hasPlayableTwoMoveLine(PUZZLES[puzzleIndex]);
+            });
+        }
 
         // Load stats from localStorage
         if (localStorage.getItem('puzzle_stats')) {
@@ -1346,6 +1404,26 @@
                 pieceTheme: 'assets/chess-pieces/{piece}.svg'
             };
             board = Chessboard('board', config);
+            window.addEventListener('mouseup', function (event) {
+                window.setTimeout(function () { handlePuzzleSquareClick(event); }, 0);
+            });
+
+            var modeSelect = document.getElementById('exercise-mode-select');
+            modeSelect.addEventListener('change', function () {
+                exerciseMode = modeSelect.value;
+                var ordered = getPuzzleOrderForMode();
+                if (ordered.length === 0) {
+                    exerciseMode = 'one';
+                    modeSelect.value = 'one';
+                    document.getElementById('feedback').className = 'feedback error';
+                    document.getElementById('feedback').textContent = puzzleText('exercise_no_two_move_puzzle', 'Aucun puzzle avec une suite légale de deux demi-coups n’est disponible.');
+                    document.getElementById('feedback').style.display = 'block';
+                    return;
+                }
+                puzzleOrder = ordered;
+                puzzleOrderPosition = 0;
+                loadPuzzle(puzzleOrder[0]);
+            });
 
             // Sort puzzles by ELO proximity and start with closest
             puzzleOrder = getSortedPuzzleOrder();
@@ -1354,9 +1432,15 @@
         }
 
         function loadPuzzle(index) {
+            clearClickMoveSource();
+            if (autoReplyTimer) {
+                clearTimeout(autoReplyTimer);
+                autoReplyTimer = null;
+            }
             currentPuzzleIndex = index;
             var puzzle = PUZZLES[index];
             puzzleSolved = false;
+            awaitingSecondHalfMove = false;
 
             game = new Chess(puzzle.fen);
             board.position(puzzle.fen);
@@ -1365,8 +1449,9 @@
             board.orientation(game.turn() === 'w' ? 'white' : 'black');
 
             document.getElementById('puzzle-title').textContent = 'Puzzle Tactique #' + (index + 1);
-            document.getElementById('puzzle-objective').textContent =
-                (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' au trait - Trouvez le meilleur coup!';
+            document.getElementById('puzzle-objective').textContent = exerciseMode === 'hidden-brilliant'
+                ? puzzleText('exercise_hidden_brilliant_objective', 'Trouvez le coup brillant qui ne saute pas aux yeux.')
+                : (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' au trait - Trouvez le meilleur coup!';
 
             // Difficulty badge with ELO
             var difficultyBadge = document.getElementById('difficulty-badge');
@@ -1406,15 +1491,18 @@
             if (game.game_over() || puzzleSolved) return false;
 
             var puzzle = PUZZLES[currentPuzzleIndex];
+            if (exerciseMode === 'two-manual' && awaitingSecondHalfMove && movesHistory.length === 1) return;
             var playerColor = puzzle.fen.includes(' w ') ? 'w' : 'b';
 
             if ((playerColor === 'w' && piece.search(/^b/) !== -1) ||
                 (playerColor === 'b' && piece.search(/^w/) !== -1)) {
                 return false;
             }
+            clearClickMoveSource();
         }
 
         function onDrop(source, target) {
+            if (source !== target) clearClickMoveSource();
             var move = game.move({
                 from: source,
                 to: target,
@@ -1426,6 +1514,53 @@
             movesHistory.push(move);
             updateMoveList();
             checkSolution();
+        }
+
+        function clearClickMoveSource() {
+            if (!clickMoveSource) return;
+            var selected = document.querySelector('#board [data-square="' + clickMoveSource + '"]');
+            if (selected) selected.classList.remove('click-selected');
+            clickMoveSource = null;
+        }
+
+        function handlePuzzleSquareClick(event) {
+            var square = event.target.closest('[data-square]');
+            if (!square && typeof document.elementFromPoint === 'function') {
+                var hit = document.elementFromPoint(event.clientX, event.clientY);
+                square = hit && hit.closest('[data-square]');
+            }
+            if (!square) {
+                square = Array.from(document.querySelectorAll('#board [data-square]')).find(function (cell) {
+                    var rect = cell.getBoundingClientRect();
+                    return event.clientX >= rect.left && event.clientX <= rect.right &&
+                        event.clientY >= rect.top && event.clientY <= rect.bottom;
+                });
+            }
+            if (!square || puzzleSolved || game.game_over()) return;
+            var target = square.getAttribute('data-square');
+            var piece = game.get(target);
+
+            if (!clickMoveSource) {
+                if (piece && piece.color === game.turn()) {
+                    clickMoveSource = target;
+                    square.classList.add('click-selected');
+                }
+                return;
+            }
+
+            var source = clickMoveSource;
+            clearClickMoveSource();
+            var result = onDrop(source, target);
+            if (result === 'snapback') {
+                if (piece && piece.color === game.turn()) {
+                    clickMoveSource = target;
+                    square.classList.add('click-selected');
+                } else {
+                    board.position(game.fen());
+                }
+                return;
+            }
+            board.position(game.fen());
         }
 
         function onSnapEnd() {
@@ -1440,15 +1575,28 @@
             // v3.1 FIX: Strip check/mate symbols for comparison
             // chess.js adds + and # but puzzle solutions may not include them
             var sanClean = lastMoveSAN.replace(/[+#]/g, '');
-            var solutionClean = puzzle.solution.map(function(s) { return s.replace(/[+#]/g, ''); });
+            var expectedMoves = exerciseMode === 'one' ? (puzzle.solution || []) : (puzzle.solution || []).slice(0, 1);
+            if (exerciseMode === 'two-manual' && movesHistory.length === 2) {
+                expectedMoves = (puzzle.continuation || []).slice(0, 1);
+            }
+            var solutionClean = expectedMoves.map(function(s) { return s.replace(/[+#]/g, ''); });
 
             var feedback = document.getElementById('feedback');
 
             if (solutionClean.includes(sanClean)) {
+                if (exerciseMode === 'two-manual' && movesHistory.length === 1) {
+                    awaitingSecondHalfMove = true;
+                    feedback.className = 'feedback success';
+                    feedback.textContent = puzzleText('exercise_first_move_correct', 'Premier demi-coup correct. À toi de jouer la réponse !');
+                    feedback.style.display = 'block';
+                    return;
+                }
                 // Correct!
                 puzzleSolved = true;
                 feedback.className = 'feedback success';
-                feedback.innerHTML = '<strong>Excellent!</strong> Vous avez trouve la solution!';
+                feedback.textContent = exerciseMode === 'hidden-brilliant'
+                    ? puzzleText('exercise_hidden_brilliant_success', 'Excellent ! Vous avez trouvé le coup brillant caché !')
+                    : 'Excellent! Vous avez trouve la solution!';
                 feedback.style.display = 'block';
 
                 stopTimer();
@@ -1499,18 +1647,18 @@
                 }, 2000);
 
                 // Play continuation moves
-                if (puzzle.continuation && puzzle.continuation.length > 0) {
+                if (exerciseMode === 'two-auto' && puzzle.continuation && puzzle.continuation.length > 0) {
                     feedback.innerHTML += '<br><em>Suite de la partie...</em>';
-                    puzzle.continuation.forEach(function(moveStr, index) {
-                        setTimeout(function() {
-                            var move = game.move(moveStr, {sloppy: true});
-                            if (move) {
-                                board.position(game.fen());
-                                movesHistory.push(move);
-                                updateMoveList();
-                            }
-                        }, (index + 1) * 700);
-                    });
+                    autoReplyTimer = setTimeout(function() {
+                        autoReplyTimer = null;
+                        var response = game.move(puzzle.continuation[0], {sloppy: true});
+                        if (response) {
+                            board.position(game.fen());
+                            movesHistory.push(response);
+                            updateMoveList();
+                            feedback.textContent = puzzleText('exercise_auto_reply_done', 'Excellent ! Coup juste, puis meilleure réponse adverse :') + ' ' + response.san;
+                        }
+                    }, 700);
                 }
             } else {
                 // Incorrect — show what was expected
@@ -1590,16 +1738,25 @@
                 game.undo();
                 board.position(game.fen());
                 movesHistory.pop();
+                awaitingSecondHalfMove = exerciseMode === 'two-manual' && movesHistory.length === 1;
                 updateMoveList();
                 document.getElementById('feedback').style.display = 'none';
             }
+        }
+
+        function hasPlayableTwoMoveLine(puzzle) {
+            if (!puzzle || !puzzle.solution || !puzzle.solution.length || !puzzle.continuation || !puzzle.continuation.length) return false;
+            var position = new Chess(puzzle.fen);
+            var first = position.move(puzzle.solution[0], {sloppy: true});
+            if (!first) return false;
+            return !!position.move(puzzle.continuation[0], {sloppy: true});
         }
 
         function nextPuzzle() {
             puzzleOrderPosition++;
             if (puzzleOrderPosition >= puzzleOrder.length) {
                 // Re-sort based on updated ELO
-                puzzleOrder = getSortedPuzzleOrder();
+                puzzleOrder = getPuzzleOrderForMode();
                 puzzleOrderPosition = 0;
             }
             loadPuzzle(puzzleOrder[puzzleOrderPosition]);

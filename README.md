@@ -1,8 +1,49 @@
-# SupaChess - Hub Central
+# SupaChess — apprendre et progresser aux échecs
 
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange)](https://pages.cloudflare.com/)
 [![Version](https://img.shields.io/badge/version-2.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
+
+SupaChess est un site d’apprentissage des échecs : il aide à jouer, revoir des parties et comprendre les décisions prises sur l’échiquier. L’objectif est de transformer une partie en entraînement utile : repérer les moments importants, comprendre les erreurs et choisir quoi travailler ensuite.
+
+
+
+## À quoi sert SupaChess ?
+
+Le site donne un espace pour jouer et étudier les échecs. Il vise à aider les joueurs à comprendre leurs décisions et à transformer les erreurs récurrentes en thèmes d’entraînement.
+
+## Pourquoi l’utiliser ?
+
+Connaître une bonne réponse ne suffit pas toujours pour progresser. Il faut pouvoir revenir à la position, comparer les choix possibles et comprendre ce qui a changé. SupaChess rassemble des parties, des exercices et des outils d’analyse dans un parcours accessible depuis le navigateur.
+
+## Exemples d’utilisation
+
+- **Jouer pour s’entraîner** : ouvrir le site, choisir une difficulté disponible et jouer une partie ; après la partie, relever les coups signalés comme erreurs ou imprécisions.
+- **Étudier une partie** : ouvrir une partie commentée disponible, suivre les demi-coups sur l’échiquier et s’arrêter aux positions qui posent question.
+- **Travailler une faiblesse** : après plusieurs parties, choisir un thème récurrent — par exemple les pièces en prise ou les tactiques manquées — puis refaire des exercices sur ce thème.
+
+Les évaluations automatiques sont des aides à l’analyse. Elles dépendent du moteur, de sa profondeur et de la position ; elles ne remplacent pas une explication compréhensible ni une revue humaine.
+
+
+
+## English
+
+### What is SupaChess for?
+
+SupaChess is a browser-based chess learning project. It aims to help players review decisions, understand recurring mistakes, and turn them into focused practice.
+
+### Why use it?
+
+Progress requires more than knowing the best move: players need to revisit the position, compare choices, and understand what changed. SupaChess brings play and study tools together in one learning space.
+
+### Examples
+
+- Play a game at an available difficulty, then review moves marked as inaccuracies or mistakes.
+- Follow an annotated game on the board and pause at positions that are hard to understand.
+- Use recurring themes—such as leaving pieces en prise or missing tactics—to choose what to practice next.
+
+Engine evaluations depend on the engine and search depth. Treat them as analysis aids, not as explanations by themselves.
+
 
 ## 🚀 Améliorations Version 2.0
 
@@ -94,7 +135,7 @@ git add .
 git commit -m "feat: AIMix Pro v2.0 avec IA minimax avancée"
 
 # 2. Poussez vers GitHub/GitLab
-git remote add origin <votre-repo-url>
+git remote add origin https://github.com/JirA44/supachess-web.git
 git push -u origin main
 
 # 3. Sur Cloudflare Pages, connectez votre repo
@@ -192,8 +233,8 @@ MIT License - Voir le fichier LICENSE pour plus de détails
 ## 📞 Support
 
 Pour toute question ou problème :
-- 📧 Email : support@aimix.chess
-- 🐛 Issues : [GitHub Issues](https://github.com/votre-repo/issues)
+- Questions et problèmes : ouvrir une issue sur GitHub.
+- 🐛 Issues : [GitHub Issues](https://github.com/JirA44/supachess-web/issues)
 
 ---
 

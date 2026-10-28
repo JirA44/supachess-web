@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournoi Stockfish SF16→SF19 — SupaChess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 20px; border-radius: 10px;
+            cursor: pointer; font-size: 1rem; margin-bottom: 25px;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.25); transform: translateX(-3px); }
+        .header {
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 30px 40px; border-radius: 20px; margin-bottom: 30px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.4rem; margin-bottom: 10px; }
+        .notice {
+            background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px; padding: 12px 18px; margin-bottom: 25px;
+            font-size: 0.88rem; opacity: 0.85;
+        }
+        .section-card {
+            background: rgba(0,0,0,0.35); border-radius: 18px; padding: 26px;
+            border: 1px solid rgba(255,215,0,0.3); margin-bottom: 25px;
+        }
+        .section-card h2 { color: #ffd700; margin-bottom: 18px; font-size: 1.4rem; }
+        .play-btn {
+            padding: 14px 34px; border: none; border-radius: 12px;
+            background: linear-gradient(90deg, #ffd700, #f97316);
+            color: #1a1a2e; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .play-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,215,0,0.4); }
+        .play-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .bracket { display: grid; grid-template-columns: 1.2fr 1.2fr 0.9fr; gap: 18px; margin-top: 20px; }
+        .bracket-col { display: flex; flex-direction: column; justify-content: space-around; gap: 16px; }
+        .match-card {
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 12px; padding: 12px 14px;
+        }
+        .match-card.live { border-color: #ffd700; }
+        .match-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; margin-bottom: 8px; }
+        .match-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 7px 6px; border-radius: 8px; font-size: 0.95rem;
+        }
+        .match-row.winner { background: rgba(34,197,94,0.18); color: #22c55e; font-weight: bold; }
+        .match-row .score { font-weight: bold; min-width: 52px; text-align: right; }
+        .match-status { margin-top: 8px; font-size: 0.78rem; opacity: 0.65; }
+        .champ-card {
+            background: linear-gradient(135deg, rgba(255,215,0,0.16), rgba(249,115,22,0.12));
+            border: 1px solid rgba(255,215,0,0.5); border-radius: 14px;
+            padding: 20px 14px; text-align: center;
+        }
+        .champ-card .trophy { font-size: 2.6rem; }
+        .champ-card .champ-name { font-weight: bold; font-size: 1.05rem; margin-top: 6px; }
+        .vote-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+        .vote-card {
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .vote-card:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+        .vote-card.mine { border-color: #ffd700; background: rgba(255,215,0,0.12); }
+        .vote-card .engine-name { font-weight: bold; font-size: 1rem; }
+        .vote-card .elo-tag { font-size: 0.72rem; opacity: 0.65; display: block; margin: 4px 0 10px; }
+        .vote-bar-wrap { background: rgba(0,0,0,0.35); border-radius: 8px; height: 12px; overflow: hidden; }
+        .vote-bar { height: 100%; background: linear-gradient(90deg, #4facfe, #00f2fe); width: 0%; transition: width 0.5s; }
+        .vote-card.mine .vote-bar { background: linear-gradient(90deg, #ffd700, #f97316); }
+        .vote-count { font-size: 0.82rem; margin-top: 8px; opacity: 0.85; }
+        .vote-count b { color: #4facfe; font-size: 1rem; }
+        .vote-card.mine .vote-count b { color: #ffd700; }
+        .vote-note { font-size: 0.8rem; opacity: 0.7; margin-top: 14px; }
+        .vote-note.warn { color: #fde68a; }
+        .spinner { display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn 0.25s ease-out; }
+        .reset-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 22px; border-radius: 10px; cursor: pointer;
+            font-size: 0.95rem; transition: all 0.2s; margin-left: 12px;
+        }
+        .reset-btn:hover { background: rgba(255,255,255,0.2); }
+        @media (max-width: 760px) { .bracket { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-btn" href="index.html">← Retour au Hub</a>
+
+    <div class="header">
+        <h1>🐟 Tournoi Stockfish — SF16 → SF19</h1>
+        <p style="opacity:0.8; margin-top:8px;">Quatre générations de Stockfish s'affrontent. Vote pour ta favorite !</p>
+    </div>
+
+    <div class="notice">
+        ⚠️ Les résultats du tableau sont <b>simulés</b> (ELO fictifs, aucune partie moteur calculée) — indicatifs, sans valeur de performance. Les votes sont comptés côté communauté quand Firebase est disponible, sinon localement.
+    </div>
+
+    <div class="section-card" id="bracket-section">
+        <h2>🎯 Tableau à élimination directe</h2>
+        <button class="play-btn" id="play-btn" onclick="playBracket()">▶ Lancer le tableau</button>
+        <button class="reset-btn" onclick="resetBracket()">↺ Rejouer</button>
+        <div class="bracket" id="bracket" style="margin-top:20px;">
+            <div class="bracket-col" id="col-semis">
+                <div class="match-card" id="match-sf1"></div>
+                <div class="match-card" id="match-sf2"></div>
+            </div>
+            <div class="bracket-col" id="col-final">
+                <div class="match-card" id="match-final"></div>
+                <div class="match-card" id="match-third"></div>
+            </div>
+            <div class="bracket-col">
+                <div class="champ-card" id="champ-card">
+                    <div class="trophy">🏆</div>
+                    <div class="champ-name" id="champ-name">En attente…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-card" id="votes-section">
+        <h2>🗳️ Votes de la communauté</h2>
+        <div class="vote-grid" id="vote-grid"></div>
+        <div class="vote-note" id="vote-note"></div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script>
+const ENGINES = [
+    { id:'sf16', name:'Stockfish 16', elo:3600, icon:'🐟' },
+    { id:'sf17', name:'Stockfish 17', elo:3650, icon:'🐟' },
+    { id:'sf18', name:'Stockfish 18', elo:3700, icon:'🐟' },
+    { id:'sf19', name:'Stockfish 19', elo:3750, icon:'🐟' },
+];
+const BRACKET_SEED = 20261026;
+const byId = id => ENGINES.find(e => e.id === id);
+
+function makeRandom(seed) {
+    let value = seed >>> 0;
+    return () => { value = (value * 1664525 + 1013904223) >>> 0; return value / 4294967296; };
+}
+function expectedScore(eloA, eloB) {
+    return 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+}
+function playMatch(a, b, random, games) {
+    let sa = 0, sb = 0;
+    for (let g = 0; g < games; g++) {
+        const exp = expectedScore(a.elo, b.elo);
+        const diff = Math.abs(a.elo - b.elo);
+        const drawProb = Math.max(0.12, 0.42 - diff * 0.0004);
+        const r = random();
+        if (r < drawProb) { sa += 0.5; sb += 0.5; }
+        else if (r < drawProb + exp * (1 - drawProb)) sa += 1;
+        else sb += 1;
+    }
+    if (sa === sb) {
+        const exp = expectedScore(a.elo, b.elo);
+        if (random() < exp) sa += 0.5; else sb += 0.5;
+    }
+    return [sa, sb];
+}
+
+const MATCHES = [
+    { key:'sf1',  title:'Demi-finale 1', a:'sf19', b:'sf16', games:4 },
+    { key:'sf2',  title:'Demi-finale 2', a:'sf18', b:'sf17', games:4 },
+    { key:'third',title:'Match pour la 3ᵉ place', a:null, b:null, games:4 },
+    { key:'final',title:'Finale', a:null, b:null, games:6 },
+];
+const matchResults = {};
+
+function fmtScore(sa, sb) {
+    const f = v => v % 1 === 0 ? String(v) : v.toFixed(1);
+    return f(sa) + ' - ' + f(sb);
+}
+function renderMatchCard(m, res, status) {
+    const card = document.getElementById('match-' + m.key);
+    if (!card) return;
+    const a = byId(m.a), b = byId(m.b);
+    const aw = res && res.sa > res.sb, bw = res && res.sb > res.sa;
+    card.className = 'match-card fade-in' + (status === 'live' ? ' live' : '');
+    card.innerHTML = `
+        <div class="match-title">${m.title}</div>
+        <div class="match-row ${aw ? 'winner' : ''}">${a.icon} <span>${a.name}</span> <span class="score">${res ? fmtScore(res.sa, res.sb) : '—'}</span></div>
+        <div class="match-row ${bw ? 'winner' : ''}">${b.icon} <span>${b.name}</span> <span class="score">${res ? fmtScore(res.sb, res.sa) : '—'}</span></div>
+        <div class="match-status">${status || ''}</div>`;
+}
+function renderPlaceholder(m) {
+    const card = document.getElementById('match-' + m.key);
+    if (!card) return;
+    card.className = 'match-card';
+    card.innerHTML = `<div class="match-title">${m.title}</div><div class="match-status">En attente des demi-finales…</div>`;
+}
+
+function playBracket() {
+    const btn = document.getElementById('play-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner">⚙️</span> Simulation…';
+    const random = makeRandom(BRACKET_SEED);
+    const semis = MATCHES.filter(m => m.key.startsWith('sf'));
+    semis.forEach(m => renderPlaceholder(m));
+    ['final','third'].forEach(k => {
+        const m = MATCHES.find(x => x.key === k);
+        document.getElementById('match-' + k).className = 'match-card';
+        document.getElementById('match-' + k).innerHTML = `<div class="match-title">${m.title}</div><div class="match-status">En attente des demi-finales…</div>`;
+    });
+    document.getElementById('champ-name').textContent = 'En attente…';
+    document.getElementById('champ-card').querySelector('.trophy').textContent = '🏆';
+
+    const steps = [];
+    semis.forEach(m => steps.push(() => renderMatchCard(m, null, 'live')));
+    semis.forEach(m => steps.push(() => {
+        const [sa, sb] = playMatch(byId(m.a), byId(m.b), random, m.games);
+        matchResults[m.key] = { sa, sb, winner: sa > sb ? m.a : m.b, loser: sa > sb ? m.b : m.a };
+        renderMatchCard(m, matchResults[m.key]);
+    }));
+    steps.push(() => {
+        const m = MATCHES.find(x => x.key === 'third');
+        m.a = matchResults['sf1'].loser; m.b = matchResults['sf2'].loser;
+        renderMatchCard(m, null, 'live');
+    });
+    steps.push(() => {
+        const m = MATCHES.find(x => x.key === 'final');
+        m.a = matchResults['sf1'].winner; m.b = matchResults['sf2'].winner;
+        renderMatchCard(m, null, 'live');
+    });
+    steps.push(() => {
+        const m = MATCHES.find(x => x.key === 'third');
+        const [sa, sb] = playMatch(byId(m.a), byId(m.b), random, m.games);
+        matchResults[m.key] = { sa, sb };
+        renderMatchCard(m, matchResults[m.key]);
+    });
+    steps.push(() => {
+        const m = MATCHES.find(x => x.key === 'final');
+        const [sa, sb] = playMatch(byId(m.a), byId(m.b), random, m.games);
+        matchResults[m.key] = { sa, sb, winner: sa > sb ? m.a : m.b };
+        renderMatchCard(m, matchResults[m.key]);
+        const champ = byId(matchResults['final'].winner);
+        document.getElementById('champ-card').querySelector('.trophy').textContent = '🏆';
+        document.getElementById('champ-name').innerHTML = champ.icon + ' ' + champ.name;
+    });
+    steps.push(() => {
+        btn.disabled = false;
+        btn.textContent = '🔄 Rejouer';
+    });
+
+    let i = 0;
+    const timer = setInterval(() => {
+        if (i >= steps.length) { clearInterval(timer); return; }
+        steps[i++]();
+    }, 700);
+}
+
+function resetBracket() {
+    document.getElementById('play-btn').disabled = false;
+    document.getElementById('play-btn').textContent = '▶ Lancer le tableau';
+    MATCHES.filter(m => m.key.startsWith('sf')).forEach(m => {
+        document.getElementById('match-' + m.key).className = 'match-card';
+        document.getElementById('match-' + m.key).innerHTML = `<div class="match-title">${m.title}</div><div class="match-status">En attente…</div>`;
+    });
+    ['final','third'].forEach(k => {
+        const m = MATCHES.find(x => x.key === k);
+        document.getElementById('match-' + k).className = 'match-card';
+        document.getElementById('match-' + k).innerHTML = `<div class="match-title">${m.title}</div><div class="match-status">En attente des demi-finales…</div>`;
+    });
+    document.getElementById('champ-name').textContent = 'En attente…';
+    document.getElementById('champ-card').querySelector('.trophy').textContent = '🏆';
+}
+
+let myVote = null;
+const VOTE_KEY = 'sf_tournament_vote';
+let db = null;
+let voteSource = 'local';
+const localCounts = {};
+
+function renderVotes(counts) {
+    const grid = document.getElementById('vote-grid');
+    const total = ENGINES.reduce((s, e) => s + (counts[e.id] || 0), 0) || (myVote ? 1 : 0);
+    grid.innerHTML = ENGINES.map(e => {
+        const c = counts[e.id] || 0;
+        const pct = total ? Math.round(c / total * 100) : 0;
+        const mine = myVote === e.id ? ' mine' : '';
+        return `<div class="vote-card fade-in${mine}" data-engine="${e.id}" role="button" tabindex="0" aria-pressed="${mine ? 'true' : 'false'}">
+            <div class="engine-name">${e.icon} ${e.name}</div>
+            <span class="elo-tag">${e.elo} ELO fictif</span>
+            <div class="vote-bar-wrap"><div class="vote-bar" style="width:${pct}%"></div></div>
+            <div class="vote-count"><b>${pct}%</b> · ${c} vote${c > 1 ? 's' : ''}</div>
+        </div>`;
+    }).join('');
+    grid.querySelectorAll('.vote-card').forEach(card => {
+        card.addEventListener('click', () => vote(card.dataset.engine));
+        card.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); vote(card.dataset.engine); } });
+    });
+    const note = document.getElementById('vote-note');
+    if (myVote) {
+        note.className = 'vote-note';
+        note.textContent = 'Ton vote : ' + byId(myVote).name + (voteSource === 'shared' ? ' — compté dans les votes de la communauté. Clique sur un autre moteur pour changer.' : ' — compté uniquement sur cet appareil.');
+    } else {
+        note.className = 'vote-note';
+        note.textContent = 'Clique sur un moteur pour voter.' + (voteSource === 'shared' ? ' Ton vote rejoint la communauté.' : '');
+    }
+}
+
+function vote(engineId) {
+    const previous = myVote;
+    if (previous === engineId) return;
+    myVote = engineId;
+    try { localStorage.setItem(VOTE_KEY, engineId); } catch (e) {}
+    if (voteSource === 'shared' && db) {
+        const col = db.collection('sf_tournament_votes');
+        const bump = (id, delta) => col.doc(id).set({ votes: firebase.firestore.FieldValue.increment(delta), name: byId(id).name }, { merge: true }).catch(() => {});
+        if (previous) bump(previous, -1);
+        bump(engineId, 1);
+    }
+    applyCounts();
+}
+
+function applyCounts() {
+    if (voteSource === 'shared' && db) {
+        let settled = false;
+        const fromServer = db.collection('sf_tournament_votes').get().then(snap => {
+            settled = true;
+            const counts = {};
+            snap.forEach(doc => { const d = doc.data(); if (typeof d.votes === 'number') counts[doc.id] = d.votes; });
+            renderVotes(counts);
+        });
+        Promise.race([
+            fromServer.catch(() => useLocalCounts()),
+            new Promise(res => setTimeout(() => { if (!settled) useLocalCounts(); }, 4000))
+        ]);
+    } else {
+        useLocalCounts();
+    }
+}
+function useLocalCounts() {
+    if (voteSource !== 'local') {
+        voteSource = 'local';
+        const note = document.getElementById('vote-note');
+        note.className = 'vote-note warn';
+        note.textContent = '⚠️ Votes indisponibles côté serveur : ton vote est compté uniquement sur cet appareil.';
+    }
+    renderVotes(localCounts);
+}
+
+(function initVotes() {
+    try { myVote = localStorage.getItem(VOTE_KEY); } catch (e) { myVote = null; }
+    if (myVote && !byId(myVote)) myVote = null;
+    try {
+        if (typeof firebase !== 'undefined') {
+            try { firebase.app(); } catch (e) {
+                firebase.initializeApp({ apiKey: 'AIzaSyA8duVGo5Vgzn7VXyDTJcdkvThVElYmTss', authDomain: 'chessnova.firebaseapp.com', projectId: 'chessnova', storageBucket: 'chessnova.firebasestorage.app', messagingSenderId: '260734552934', appId: '1:260734552934:web:c2bf0995c1dd72d87896a7' });
+            }
+            db = firebase.firestore();
+            voteSource = 'shared';
+        }
+    } catch (e) { db = null; voteSource = 'local'; }
+    renderVotes(localCounts);
+    if (voteSource === 'shared' && db) {
+        db.collection('sf_tournament_votes').onSnapshot(snap => {
+            const counts = {};
+            snap.forEach(doc => { const d = doc.data(); if (typeof d.votes === 'number') counts[doc.id] = d.votes; });
+            renderVotes(counts);
+        }, () => useLocalCounts());
+    }
+    applyCounts();
+})();
+
+MATCHES.filter(m => m.key.startsWith('sf')).forEach(renderPlaceholder);
+renderPlaceholder(MATCHES.find(m => m.key === 'final'));
+renderPlaceholder(MATCHES.find(m => m.key === 'third'));
+</script>
+</body>
+</html>

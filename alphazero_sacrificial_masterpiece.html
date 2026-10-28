@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -370,6 +370,7 @@
                     <button class="btn" onclick="previousMove()">◀ Précédent</button>
                     <button class="btn" onclick="nextMove()">Suivant ▶</button>
                     <button class="btn" onclick="goToEnd()">Fin ⏭</button>
+                    <a class="btn" href="data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn" download style="text-decoration:none;">📥 Télécharger le PGN</a>
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
@@ -389,7 +390,9 @@
     </div>
 
     <!-- Bibliothèque chess.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js">
+document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previousMove(); if(e.key==='ArrowRight') nextMove(); });
+</script>
 
     <script>
         // Initialisation du moteur chess.js
@@ -480,6 +483,7 @@
             { move: 'Rxa6', comment: '⚡ ENCORE UN PION! La tour ramasse tout!' },
             { move: 'Rxd5', comment: 'La tour noire prend le pion d5 - dernier espoir.' },
             { move: 'Ra7', comment: '🔥 LA TOUR DOMINE LA 7EME! Position completement gagnante!' },
+            { move: '1-0', comment: '🏆🏆🏆 STOCKFISH ABANDONNE! VICTOIRE MAGISTRALE D\'ALPHAZERO! Le sacrifice de fou suivi de la promotion du pion h en dame restera dans l\'histoire comme un chef-d\'oeuvre positionnel et tactique! UN TRIOMPHE ABSOLU!' }
         ];
 
         // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)
@@ -639,6 +643,19 @@
         updateMoveInfo();
     </script>
 
+<section class="supachess-pgn-export" aria-label="Export PGN" style="max-width:1100px;margin:18px auto;padding:14px;background:#18212b;border:1px solid #52616f;border-radius:10px;color:#fff">
+    <h2 style="margin:0 0 8px">PGN complet</h2>
+    <textarea aria-label="PGN" readonly style="width:100%;min-height:100px;box-sizing:border-box"></textarea>
+    <button type="button" onclick="copyExportPgn()">Copier le PGN</button>
+    <button type="button" onclick="downloadExportPgn()">Télécharger le fichier .pgn</button>
+    <span role="status" aria-live="polite" style="margin-left:8px"></span>
+</section>
+<script>
+fetch('data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn').then(response => { if (!response.ok) throw new Error('PGN unavailable'); return response.text(); }).then(pgn => { document.querySelector('.supachess-pgn-export textarea').value = pgn; }).catch(() => { document.querySelector('.supachess-pgn-export [role="status"]').textContent = 'PGN indisponible'; });
+function copyExportPgn() { const panel=document.querySelector('.supachess-pgn-export'); const field=panel.querySelector('textarea'); const status=panel.querySelector('[role="status"]'); if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(field.value).then(()=>status.textContent='PGN copié.').catch(()=>{ field.select(); status.textContent=document.execCommand('copy')?'PGN copié.':'Copie indisponible'; }); } else { field.select(); status.textContent=document.execCommand('copy')?'PGN copié.':'Copie indisponible'; } }
+function downloadExportPgn() { const panel=document.querySelector('.supachess-pgn-export'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([panel.querySelector('textarea').value],{type:'application/x-chess-pgn'})); a.download='alphazero_sacrificial_masterpiece.pgn'; a.click(); URL.revokeObjectURL(a.href); }
+</script>
+
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
@@ -648,8 +665,6 @@
 <script src="shared/community.js"></script>
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget.js"></script>
-
-<script defer src="shared/site-global.js"></script>
-<script src="web/legendary-games/pgn-export.js"></script>
 </body>
 </html>
+

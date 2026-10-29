@@ -357,6 +357,12 @@
         .move-item.brilliant .move-comment, .move-card.brilliant .move-comment, .timeline-move.brilliant .move-comment {
             color: #ffd700 !important;
         }
+
+        /* Keep selected half-move text dark on the light active-card background,
+           even when the move also has a brilliant-move highlight. */
+        .move-card.active .move-number { color: #4338ca !important; }
+        .move-card.active .move-notation { color: #1f2937 !important; }
+        .move-card.active .move-comment { color: #334155 !important; }
     </style>
 </head>
 <body>

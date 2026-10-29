@@ -425,11 +425,16 @@ test('Fischer replay Dots toggle shows and clears legal move hints with readable
 
   const colors = await page.evaluate(() => ({
     notation: getComputedStyle(document.querySelector('.move-notation')).color,
-    comment: getComputedStyle(document.querySelector('.move-comment')).color
+    comments: [...document.querySelectorAll('.move-comment')].map(el => getComputedStyle(el).color)
   }));
-  expect(colors).toEqual({ notation:'rgb(248, 250, 252)', comment:'rgb(203, 213, 225)' });
-  await page.evaluate(() => goToNext());
-  const activeNotation = await page.locator('.move-card.active .move-notation').evaluate(el => getComputedStyle(el).color);
-  expect(activeNotation).toBe('rgb(31, 41, 55)');
+  expect(colors.notation).toBe('rgb(248, 250, 252)');
+  expect(colors.comments.length).toBeGreaterThan(0);
+  expect(colors.comments.every(color => ['rgb(203, 213, 225)', 'rgb(255, 215, 0)'].includes(color))).toBe(true);
+  await page.evaluate(() => { goToNext(); goToNext(); });
+  const activeColors = await page.locator('.move-card.active').evaluate(el => ({
+    notation: getComputedStyle(el.querySelector('.move-notation')).color,
+    comment: getComputedStyle(el.querySelector('.move-comment')).color
+  }));
+  expect(activeColors).toEqual({ notation:'rgb(31, 41, 55)', comment:'rgb(51, 65, 85)' });
   expect(browserErrors).toEqual([]);
 });

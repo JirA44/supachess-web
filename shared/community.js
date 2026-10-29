@@ -596,12 +596,12 @@
         footer.innerHTML =
             '<span class="cn-footer-stat">' +
                 '<span class="cn-stat-icon">\uD83D\uDC41</span> ' +
-                '<span data-i18n="footer_visitors">' + t('footer_visitors') + '</span>: ' +
+                '<span data-i18n="stats_unique_visitors">' + t('stats_unique_visitors') + '</span>: ' +
                 '<span class="cn-stat-value" id="cn-visitors-count">-</span>' +
             '</span>' +
             '<span class="cn-footer-stat">' +
                 '<span class="cn-stat-icon">\uD83D\uDC65</span> ' +
-                '<span data-i18n="footer_members">' + t('footer_members') + '</span>: ' +
+                '<span data-i18n="stats_registered_users">' + t('stats_registered_users') + '</span>: ' +
                 '<span class="cn-stat-value" id="cn-members-count">-</span>' +
             '</span>' +
             '<span class="cn-footer-brand" data-i18n="footer_brand">' + t('footer_brand') + '</span>' +
@@ -614,8 +614,8 @@
                     var data = doc.data();
                     var visitors = document.getElementById('cn-visitors-count');
                     var members = document.getElementById('cn-members-count');
-                    if (visitors) visitors.textContent = formatNumber(data.total_visits || 0);
-                    if (members) members.textContent = formatNumber(data.registered_users || 0);
+                    if (visitors) visitors.textContent = formatExactCount(data.unique_visitors);
+                    if (members) members.textContent = formatExactCount(data.registered_users);
                 }
             }, function () { });
         }
@@ -625,6 +625,12 @@
         if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
         if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
         return String(n);
+    }
+
+    function formatExactCount(value) {
+        if (!Number.isSafeInteger(value) || value < 0) return '—';
+        var locale = document.documentElement.lang === 'en' ? 'en-US' : 'fr-FR';
+        return new Intl.NumberFormat(locale).format(value);
     }
 
     // --- Toast ---

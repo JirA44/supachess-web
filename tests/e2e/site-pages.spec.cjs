@@ -365,3 +365,71 @@ test('the Stockfish report renders complete chessboard diagrams', async ({ page 
   }
 });
 
+
+test('Fischer replay Dots toggle shows and clears legal move hints with readable move text', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.addInitScript(() => {
+    window.Worker = class {
+      constructor() { this.onmessage = null; }
+      postMessage(command) {
+        if (command === 'uci') queueMicrotask(() => this.onmessage?.({ data: 'uciok' }));
+        else if (command === 'isready') queueMicrotask(() => this.onmessage?.({ data: 'readyok' }));
+        else if (command.startsWith('go ')) queueMicrotask(() => this.onmessage?.({ data: 'bestmove g1f3' }));
+      }
+      terminate() {}
+    };
+  });
+  await page.route(/unpkg\.com\/@chrisoakman\/chessboardjs.*\.js(?:\?.*)?$/i, route => route.fulfill({
+    status: 200,
+    contentType: 'application/javascript',
+    body: `window.Chessboard = function(id) {
+      const host = document.getElementById(id);
+      const board = document.createElement('div');
+      board.className = 'board-fixture';
+      Object.assign(board.style, { display:'grid', gridTemplateColumns:'repeat(8, 1fr)', width:'100%', aspectRatio:'1 / 1' });
+      for (let rank = 8; rank >= 1; rank--) {
+        for (const file of 'abcdefgh') {
+          const square = document.createElement('div');
+          square.dataset.square = file + rank;
+          Object.assign(square.style, { minWidth:'20px', minHeight:'20px', aspectRatio:'1 / 1' });
+          board.appendChild(square);
+        }
+      }
+      host.replaceChildren(board);
+      return { position:function(){}, orientation:function(){ return 'white'; }, flip:function(){}, resize:function(){} };
+    };`
+  }));
+  const browserErrors = [];
+  page.on('pageerror', error => browserErrors.push(error.message));
+  await page.goto('/fischer_game_of_century_interactive_v2.html', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#supa-dots-btn')).toBeVisible();
+  await expect(page.locator('#supa-dots-lbl')).toHaveText('ON');
+  const references = await page.evaluate(() => ({
+    game: window.supaDots.getGame() === window.game,
+    board: window.supaDots.getBoard() === window.board
+  }));
+  expect(references).toEqual({ game:true, board:true });
+
+  await page.locator('[data-square="g1"]').click();
+  const overlay = page.locator('#supa-dots-overlay > div');
+  await expect(overlay).toHaveCount(2);
+  await page.locator('#supa-dots-btn').click();
+  await expect(page.locator('#supa-dots-lbl')).toHaveText('OFF');
+  await expect(overlay).toHaveCount(0);
+  await page.locator('[data-square="g1"]').click();
+  await expect(overlay).toHaveCount(0);
+  await page.locator('#supa-dots-btn').click();
+  await expect(page.locator('#supa-dots-lbl')).toHaveText('ON');
+  await page.locator('[data-square="g1"]').click();
+  await expect(overlay).toHaveCount(2);
+
+  const colors = await page.evaluate(() => ({
+    notation: getComputedStyle(document.querySelector('.move-notation')).color,
+    comment: getComputedStyle(document.querySelector('.move-comment')).color
+  }));
+  expect(colors).toEqual({ notation:'rgb(248, 250, 252)', comment:'rgb(203, 213, 225)' });
+  await page.evaluate(() => goToNext());
+  const activeNotation = await page.locator('.move-card.active .move-notation').evaluate(el => getComputedStyle(el).color);
+  expect(activeNotation).toBe('rgb(31, 41, 55)');
+  expect(browserErrors).toEqual([]);
+});

@@ -207,10 +207,14 @@
             background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
         }
 
+        .move-card.active .move-number { color: #4338ca; }
+        .move-card.active .move-notation { color: #1f2937; }
+        .move-card.active .move-comment { color: #334155 !important; }
+
         .move-number {
             font-size: 28px;
             font-weight: bold;
-            color: #667eea;
+            color: #a5b4fc;
             margin-bottom: 10px;
         }
 
@@ -218,14 +222,14 @@
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 15px;
-            color: #333;
+            color: #f8fafc;
             font-family: monospace;
         }
 
         .move-comment {
             font-size: 16px;
             line-height: 1.8;
-            color: #555;
+            color: #cbd5e1;
             margin-top: 10px;
         }
 
@@ -528,12 +532,14 @@
         function init() {
             parsePGN();
             game.reset();
+            window.game = game;
 
             board = Chessboard('board', {
                 draggable: false,
                 position: 'start',
                 pieceTheme: 'assets/chess-pieces/{piece}.svg'
             });
+            window.board = board;
 
             drawMovesList();
             updateMoveInfo();

@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="shared/progress.js"></script>
+    <script src="../supachess/vendor/chess.js"></script>
     <link rel="stylesheet" href="shared/community.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -145,6 +146,22 @@
             transition: width 0.5s;
         }
         .prog-lbl { font-size: 1rem; font-weight: bold; white-space: nowrap; }
+    .card { appearance:none; color:#fff; text-align:left; font:inherit; width:100%; }
+    .card:focus-visible,.move-item:focus-visible,.nav-btn:focus-visible,.close-btn:focus-visible,.quiz-option:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }
+    .board { width:min(100%,440px); aspect-ratio:1; height:auto; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); }
+    .cell { width:auto; height:auto; min-width:0; aspect-ratio:1; font-size:clamp(1.25rem,7vw,2.45rem); }
+    .coord-row { width:min(100%,440px); }
+    .coord-lbl { width:auto; flex:1; }
+    .detail-panel { padding:clamp(14px,4vw,35px); }
+    .two-col { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .move-item { width:100%; color:#fff; font:inherit; text-align:left; }
+    .quiz-option { display:block; width:100%; margin:8px 0; padding:12px 14px; border:1px solid rgba(255,255,255,.25); border-radius:10px; background:rgba(255,255,255,.08); color:#fff; text-align:left; font:inherit; cursor:pointer; }
+    .quiz-option:hover { background:rgba(79,172,254,.22); }
+    .quiz-feedback { margin-top:10px; min-height:1.5em; }
+    .quiz-feedback.error { color:#fecaca; }
+    .quiz-feedback.success { color:#bbf7d0; }
+    @media(max-width:700px) { .two-col { grid-template-columns:minmax(0,1fr); } .board-wrap { width:100%; } .nav-btn { padding:10px 14px; } }
+    @media(max-width:380px) { body { padding:12px; } .detail-panel { padding:12px; } .header { padding:22px 16px; } .header h1 { font-size:1.8rem; } }
     </style>
 </head>
 <body>
@@ -153,7 +170,7 @@
 
     <div class="header">
         <h1>📖 Entrainement Ouvertures</h1>
-        <p style="opacity:0.8; margin-top:8px;">Apprenez 8 ouvertures essentielles coup par coup</p>
+        <p style="opacity:0.8; margin-top:8px;">8 lignes repères pour découvrir les idées d’ouverture. Chaque parcours se termine par deux questions de compréhension.</p>
     </div>
 
     <div class="overall-progress">
@@ -173,10 +190,10 @@ const OPENINGS = [
     {
         id: 'sicilian',
         name: 'Défense Sicilienne',
-        sub: 'Najdorf — la plus jouée au monde',
+        sub: 'Variante Najdorf · 5...a6',
         icon: '🔥',
         tags: ['Agressif','Complexe','Top GM'],
-        theory: `La Sicilienne est l'ouverture la plus populaire aux échecs. Après 1.e4 c5, les Noirs refusent de donner le centre symétrique et créent immédiatement un déséquilibre. La variante Najdorf (5...a6) est la préférée de Fischer et Kasparov. Les Noirs préparent ...e5 ou ...e6 selon la variante blanche.`,
+        theory: `La Sicilienne est l'ouverture la plus populaire aux échecs. Après 1.e4 c5, les Noirs refusent de donner le centre symétrique et créent immédiatement un déséquilibre. La Najdorf (5...a6) est une variante très étudiée, notamment par Fischer et Kasparov. Les Noirs préparent ...e5 ou ...e6 selon la variante blanche.`,
         moves: [
             { san:'e4', color:'w', desc:'Contrôle du centre — coup le plus direct' },
             { san:'c5', color:'b', desc:'Défense Sicilienne! Attaque le centre sans le donner' },
@@ -187,7 +204,7 @@ const OPENINGS = [
             { san:'Nxd4', color:'w', desc:'Le cavalier reprend, dominant le centre' },
             { san:'Nf6', color:'b', desc:'Développement actif, attaque e4' },
             { san:'Nc3', color:'w', desc:'Défend e4, développe le cavalier' },
-            { san:'a6', color:'b', desc:'Najdorf! Empêche Bb5+, prépare ...b5' },
+            { san:'a6', color:'b', desc:'Contrôle b5 et prépare ...b5; ne rend pas Bb5+ impossible' },
         ]
     },
     {
@@ -196,9 +213,9 @@ const OPENINGS = [
         sub: 'Ouverture classique 1.e4 e5',
         icon: '🏰',
         tags: ['Positionnel','Classique','Universel'],
-        theory: `Le Ruy Lopez est l'une des ouvertures les plus anciennement analysées aux échecs. Le fou en b5 presse le cavalier qui défend e5, cherchant à gagner l'avantage du bishop pair ou à dominer le centre. L'Espagnole mène souvent à des positions riches en stratégie.`,
+        theory: `Le Ruy Lopez est l'une des ouvertures les plus anciennement analysées aux échecs. Le fou en b5 presse le cavalier qui défend e5, cherchant à obtenir la paire de fous ou à dominer le centre. L'Espagnole mène souvent à des positions riches en stratégie.`,
         moves: [
-            { san:'e4', color:'w', desc:'Coup roi — contrôle du centre' },
+            { san:'e4', color:'w', desc:'Pion du roi — contrôle du centre' },
             { san:'e5', color:'b', desc:'Réponse symétrique classique' },
             { san:'Nf3', color:'w', desc:'Attaque le pion e5, développement optimal' },
             { san:'Nc6', color:'b', desc:'Défend e5 naturellement' },
@@ -216,15 +233,15 @@ const OPENINGS = [
         sub: 'Ouverture de pions dame 1.d4',
         icon: '♟',
         tags: ['Positionnel','Solide','Classique'],
-        theory: `Le Gambit Dame (1.d4 d5 2.c4) est l'une des ouvertures les plus jouées à haut niveau. Les Blancs offrent un pion pour obtenir un centre puissant. Si les Noirs acceptent (2...dxc4), les Blancs récupèrent le pion facilement. La variante refusée (2...e6) est très solide.`,
+        theory: `Le Gambit Dame (1.d4 d5 2.c4) est l'une des ouvertures les plus jouées à haut niveau. Les Blancs offrent temporairement le pion c4 pour contester le centre. Si les Noirs l’acceptent (2...dxc4), les Blancs cherchent à le récupérer ou à profiter de leur espace; ce n’est pas automatique. La variante refusée (2...e6) est très solide.`,
         moves: [
             { san:'d4', color:'w', desc:'Ouverture de pion dame — contrôle du centre' },
             { san:'d5', color:'b', desc:'Répond au centre, lutte pour l\'espace' },
             { san:'c4', color:'w', desc:'Gambit Dame — offre un pion pour le centre' },
             { san:'e6', color:'b', desc:'Gambit Dame Refusé (GDR) — solide et défensif' },
-            { san:'Nc3', color:'w', desc:'Développement naturel, soutient d4' },
+            { san:'Nc3', color:'w', desc:'Développement naturel, augmente la pression sur d5' },
             { san:'Nf6', color:'b', desc:'Développe le cavalier, attaque e4' },
-            { san:'Bg5', color:'w', desc:'Variante classique — cloud le cavalier f6' },
+            { san:'Bg5', color:'w', desc:'Variante classique — cloue le cavalier f6 au roi e8' },
             { san:'Be7', color:'b', desc:'Développe le fou, prépare le roque' },
             { san:'e3', color:'w', desc:'Ouvre la diagonale pour le fou f1' },
             { san:'O-O', color:'b', desc:'Roque — mise en sécurité du roi' },
@@ -236,7 +253,7 @@ const OPENINGS = [
         sub: 'Système hypermoderne 1.d4 Nf6 2.c4 g6',
         icon: '⚡',
         tags: ['Dynamique','Contre-Jeu','Kasparov'],
-        theory: `La Défense Est-Indienne est l'arme préférée de Kasparov et Fischer dans les positions 1.d4. Les Noirs laissent les Blancs construire un grand centre pour l'attaquer ensuite. Le fianchetto du fou (g7) crée un puissant évêque pouvant dominer la longue diagonale.`,
+        theory: `Dans la Défense Est-Indienne, les Noirs laissent souvent les Blancs occuper le centre, puis cherchent à le contester par ...e5 ou ...c5. Le fianchetto du fou en g7 exerce une pression sur la grande diagonale. Kasparov et Fischer ont tous deux employé cette défense.`,
         moves: [
             { san:'d4', color:'w', desc:'Ouverture de pion dame' },
             { san:'Nf6', color:'b', desc:'Développement hypermoderne — contrôle e4 de loin' },
@@ -255,17 +272,17 @@ const OPENINGS = [
         name: 'Défense Française',
         sub: 'Solide et contre-attaquant 1.e4 e6',
         icon: '🛡',
-        tags: ['Solide','Contre-Jeu','Endgame'],
-        theory: `La Défense Française est réputée pour sa solidité. Les Noirs construisent une forteresse pionnière en e6-d5, puis cherchent à contrer avec ...c5. La structure typique donne aux Noirs un bon endgame mais une case passive pour le fou en c8 (le "mauvais fou").`,
+        tags: ['Solide','Contre-jeu','Finales'],
+        theory: `La Défense Française est réputée pour sa solidité. Les Noirs construisent une forteresse pionnière en e6-d5, puis cherchent à contrer avec ...c5. La structure typique peut limiter le fou c8; les Noirs cherchent du contre-jeu, souvent par ...c5.`,
         moves: [
-            { san:'e4', color:'w', desc:'Coup roi ouverture' },
+            { san:'e4', color:'w', desc:'Pion du roi — ouverture directe' },
             { san:'e6', color:'b', desc:'Défense Française — prépare d5' },
             { san:'d4', color:'w', desc:'Occupe le centre avec deux pions' },
             { san:'d5', color:'b', desc:'Contre le centre blanc — tension centrale' },
             { san:'Nc3', color:'w', desc:'Variante Classique — soutient e4' },
             { san:'Nf6', color:'b', desc:'Développe, attaque e4' },
             { san:'Bg5', color:'w', desc:'Variante Classique — cloud le cavalier' },
-            { san:'Be7', color:'b', desc:'Débloque le cloud, se prépare à roquer' },
+            { san:'Be7', color:'b', desc:'Rompt le clouage du cavalier f6 et prépare le roque' },
             { san:'e5', color:'w', desc:'Espace! Pousse le cavalier f6' },
             { san:'Nfd7', color:'b', desc:'Recule le cavalier, prépare ...c5' },
         ]
@@ -278,7 +295,7 @@ const OPENINGS = [
         tags: ['Solide','Stratégique','Carlsen'],
         theory: `La Caro-Kann est appréciée pour sa solidité structurelle. Contrairement à la Française, le fou dame noir n'est pas enfermé. Après 1.e4 c6 2.d4 d5, les Noirs ont une structure saine et cherchent l'endgame. Petrossian et Karpov étaient des maîtres de cette ouverture.`,
         moves: [
-            { san:'e4', color:'w', desc:'Coup roi ouverture' },
+            { san:'e4', color:'w', desc:'Pion du roi — ouverture directe' },
             { san:'c6', color:'b', desc:'Caro-Kann — prépare d5 sans bloquer le fou dame' },
             { san:'d4', color:'w', desc:'Centre pions — plan classique' },
             { san:'d5', color:'b', desc:'Attaque le centre blanc' },
@@ -299,7 +316,7 @@ const OPENINGS = [
         theory: `La Partie Anglaise (1.c4) est une ouverture hypermoderne où les Blancs contrôlent le centre de loin. Elle conduit souvent à des transpositions avec les ouvertures de pion dame. Kasparov et Botvinnik étaient des experts de cette ouverture. Flexible et riche en plans.`,
         moves: [
             { san:'c4', color:'w', desc:'Partie Anglaise — contrôle d5 de loin' },
-            { san:'e5', color:'b', desc:'Réponse symétrique — prend de l\'espace' },
+            { san:'e5', color:'b', desc:'Contre-attaque centrale dans la variante inversée de la Sicilienne' },
             { san:'Nc3', color:'w', desc:'Développement, soutient d5 et e4' },
             { san:'Nf6', color:'b', desc:'Développement actif' },
             { san:'g3', color:'w', desc:'Prépare le fianchetto du fou' },
@@ -332,9 +349,58 @@ const OPENINGS = [
     },
 ];
 
+const OPENING_QUIZZES = {
+    sicilian: [
+        { question:'Que prépare principalement 5...a6 dans la Najdorf ?', choices:['...b5 et le contrôle de b5','Le roque côté dame immédiatement','Une prise forcée en e4'], answer:0, hints:['Observe la poussée possible du pion b noir.','La case b5 devient un point important.'], explanation:'...a6 prépare souvent ...b5 et contrôle b5; cela ne rend pas Bb5+ illégal.' },
+        { question:'Quelle idée décrit le mieux la structure sicilienne ?', choices:['Les Noirs contestent le centre depuis le flanc et créent une structure asymétrique','Les Noirs gagnent immédiatement un pion','Les deux camps échangent tous leurs pions centraux'], answer:0, hints:['Compare le pion blanc e4 au pion noir c5.','Les deux camps ne placent pas leurs pions centraux sur les mêmes colonnes.'], explanation:'La Sicilienne crée une lutte asymétrique: les Noirs contestent le centre depuis le flanc.' }
+    ],
+    ruy: [
+        { question:'Après 3.Bb5, quelle pièce blanche met la pression sur le cavalier ?', choices:['Le fou','La dame','La tour'], answer:0, hints:['Regarde le trajet de la pièce depuis f1.','La pièce vient de f1 et se place en b5.'], explanation:'Le fou b5 met la pression sur le cavalier c6, qui défend le pion e5.' },
+        { question:'Dans la ligne étudiée, pourquoi 5.O-O ?', choices:['Mettre le roi à l’abri et préparer la coordination des tours','Gagner immédiatement le pion e5','Empêcher le cavalier noir de bouger'], answer:0, hints:['Pense à la sécurité du roi et à la tour h1.','Le roque déplace le roi et active la tour.'], explanation:'Le roque sécurise le roi et rapproche la tour du centre.' }
+    ],
+    'gambit-dame': [
+        { question:'Que signifie 2.c4 dans le Gambit Dame ?', choices:['Un pion est offert temporairement pour contester le centre','Les Blancs gagnent forcément un pion','Les Blancs abandonnent le centre'], answer:0, hints:['Le pion c4 peut être capturé par le pion d5.','Le but est lié à la lutte pour le centre, pas à un gain matériel garanti.'], explanation:'Le pion c4 peut être pris, mais les Blancs obtiennent de l’espace et des possibilités de reprise.' },
+        { question:'Après 2...e6, quel plan noir décrit le Gambit Dame Refusé ?', choices:['Maintenir d5 et préparer un développement solide','Accepter le pion c4','Lancer immédiatement une attaque de mat'], answer:0, hints:['Le pion noir e6 soutient quel pion ?','Il renforce le pion d5.'], explanation:'...e6 soutient d5 et conduit à un développement solide.' }
+    ],
+    'king-indian': [
+        { question:'Quel est le plan noir typique de l’Est-Indienne ?', choices:['Laisser souvent les Blancs occuper le centre puis le contester','Échanger automatiquement tous les pions centraux','Jouer sans développer les pièces'], answer:0, hints:['Le système est hypermoderne: le centre peut être contrôlé à distance.','Les ruptures ...e5 et ...c5 sont des idées fréquentes.'], explanation:'Les Noirs laissent souvent se former un centre blanc avant de l’attaquer par des ruptures.' },
+        { question:'À quoi sert le fianchetto ...Bg7 dans cette ligne ?', choices:['Exercer une pression sur la grande diagonale','Défendre directement le pion c4','Empêcher le roque blanc'], answer:0, hints:['Trace la diagonale depuis g7.','Le fou vise vers le centre et l’aile dame.'], explanation:'Le fou g7 contrôle une longue diagonale et contribue à la pression sur le centre.' }
+    ],
+    french: [
+        { question:'Quelle structure de pions caractérise la Défense Française dans cette ligne ?', choices:['e6 et d5','c6 et e5','a6 et b5'], answer:0, hints:['Rappelle les deux premiers coups noirs.','Le pion e avance d’abord en e6, puis le pion d en d5.'], explanation:'Les pions e6 et d5 forment la structure de base de cette ligne française.' },
+        { question:'Pourquoi les Noirs préparent-ils souvent ...c5 ?', choices:['Pour contester le centre blanc','Pour protéger le roi en roquant','Pour enfermer le fou blanc'], answer:0, hints:['Quelle pièce blanche occupe le centre après e5 ?','...c5 attaque la base de la chaîne centrale.'], explanation:'...c5 est une rupture centrale qui attaque la base de la chaîne de pions blanche.' }
+    ],
+    'caro-kann': [
+        { question:'Quel est l’intérêt de 1...c6 par rapport à ...e6 ?', choices:['Préparer ...d5 sans enfermer le fou c8 derrière un pion e6','Gagner un tempo sur la dame','Empêcher 2.d4'], answer:0, hints:['Observe la diagonale du fou c8 après ...d5.','Le pion c ne bloque pas cette diagonale.'], explanation:'...c6 prépare ...d5 tout en laissant le fou c8 plus libre que dans la Française.' },
+        { question:'Dans la ligne, que fait 3...dxe4 ?', choices:['Échange le pion d contre le pion e4 et ouvre une ligne de jeu','Donne échec au roi blanc','Gagne une pièce'], answer:0, hints:['Le pion part de d5 et capture sur e4.','Ce coup est une prise de pion, pas un gain forcé de pièce.'], explanation:'Les Noirs échangent leur pion d contre le pion e4; la suite doit être calculée.' }
+    ],
+    english: [
+        { question:'Que contrôle principalement 1.c4 ?', choices:['La case d5 depuis le flanc','La case e5 avec échec','La colonne f'], answer:0, hints:['Le pion c avance d’une case et attaque quelles cases ?','Depuis c4, le pion blanc contrôle d5.'], explanation:'1.c4 contrôle d5 depuis le flanc et prépare une lutte centrale flexible.' },
+        { question:'Dans cette ligne, que cherche 3...d5 ?', choices:['Contester immédiatement le centre','Préparer le roque côté dame','Attaquer le cavalier c3'], answer:0, hints:['Le pion noir va de d7 à d5.','Il avance au centre face au pion c4.'], explanation:'...d5 est une rupture centrale qui conteste l’espace blanc.' }
+    ],
+    italian: [
+        { question:'Pourquoi le fou blanc se place-t-il en c4 ?', choices:['Il vise notamment f7 et participe au contrôle du centre','Il protège le roi noir','Il attaque la tour a8'], answer:0, hints:['f7 est le point de départ du roi noir et n’est défendu que par le roi.','Le fou c4 regarde la diagonale vers f7.'], explanation:'Bc4 vise f7, une case sensible près du roi noir, et contribue au contrôle central.' },
+        { question:'Que prépare 4.c3 dans le Giuoco Piano ?', choices:['La poussée centrale d4','Le roque côté dame','La prise en passant en f6'], answer:0, hints:['Le pion c3 soutient une avancée de quel pion ?','Le plan est de pousser le pion d vers d4.'], explanation:'c3 soutient l’idée d4; les Blancs doivent toutefois calculer les échanges au centre.' }
+    ]
+};
+
+// Vary the correct answer's position so the knowledge check is not a "choose the first" pattern.
+let quizQuestionNumber = 0;
+Object.values(OPENING_QUIZZES).flat().forEach(question => {
+    const correct = question.choices[question.answer];
+    const distractors = question.choices.filter((_, index) => index !== question.answer);
+    const correctSlot = quizQuestionNumber++ % question.choices.length;
+    question.choices = distractors.slice();
+    question.choices.splice(correctSlot, 0, correct);
+    question.answer = correctSlot;
+});
+
 const DONE_KEY = 'supachess_openings_v1';
 function getDone() {
-    try { return JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); } catch(e) { return []; }
+    try {
+        const saved = JSON.parse(localStorage.getItem(DONE_KEY) || '[]');
+        return Array.isArray(saved) ? saved.filter(id => OPENINGS.some(opening => opening.id === id)) : [];
+    } catch(e) { return []; }
 }
 function saveDone(arr) {
     try { localStorage.setItem(DONE_KEY, JSON.stringify(arr)); } catch(e) {}
@@ -343,8 +409,12 @@ function saveDone(arr) {
 let done = getDone();
 let currentOpening = null;
 let currentMoveIdx = -1;
+let game = null;
+let quizIndex = 0;
+let quizMistakes = 0;
+let quizNotice = '';
 
-// Minimal FEN → board position (just for initial position, we'll animate moves conceptually)
+// Convert the current legal FEN into board cells for the lesson display.
 const START_BOARD = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 const PIECES = {
     'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙',
@@ -371,8 +441,10 @@ function renderBoard(cells, lastMoves=[]) {
             const isLight = (r+c)%2===0;
             const isLast = lastMoves.includes(idx);
             const piece = cells[idx] !== '.' ? (PIECES[cells[idx]] || '') : '';
-            const col = piece && cells[idx]===cells[idx].toUpperCase() ? '#1a1a2e' : '#1a1a2e';
-            html += `<div class="cell ${isLight?'light':'dark'}${isLast?' last':''}"><span style="color:${col}">${piece}</span></div>`;
+            const isWhite = piece && cells[idx]===cells[idx].toUpperCase();
+            const col = isWhite ? '#fff' : '#171717';
+            const shadow = isWhite ? '0 1px 2px #000, 0 0 2px #000' : '0 1px 1px #fff8';
+            html += `<div class="cell ${isLight?'light':'dark'}${isLast?' last':''}"><span style="color:${col};text-shadow:${shadow}">${piece}</span></div>`;
         }
     }
     html += '</div>';
@@ -392,7 +464,7 @@ function renderGrid() {
     const grid = document.getElementById('opening-grid');
     grid.innerHTML = OPENINGS.map((o,i) => {
         const isDone = done.includes(o.id);
-        return `<div class="card ${isDone?'done':''}" onclick="openDetail(${i})">
+        return `<button type="button" class="card ${isDone?'done':''}" onclick="openDetail(${i})" aria-pressed="${isDone}">
             <h3>${o.icon} ${o.name}</h3>
             <div class="sub">${o.sub}</div>
             <div class="moves">${o.moves.slice(0,6).map((m,j)=>{
@@ -403,13 +475,21 @@ function renderGrid() {
                 ${o.tags.map(t=>`<span class="badge${isDone?' done-badge':''}">${t}</span>`).join('')}
                 ${isDone ? '<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ Maîtrisée</span>' : ''}
             </div>
-        </div>`;
+        </button>`;
     }).join('');
 }
 
 function openDetail(idx) {
+    if (typeof Chess !== 'function') {
+        document.getElementById('prog-lbl').textContent = 'Échiquier indisponible : recharge la page.';
+        return;
+    }
     currentOpening = OPENINGS[idx];
     currentMoveIdx = -1;
+    game = new Chess();
+    quizIndex = 0;
+    quizMistakes = 0;
+    quizNotice = '';
     document.getElementById('detail-panel').classList.add('visible');
     document.getElementById('detail-panel').scrollIntoView({behavior:'smooth'});
     renderDetail();
@@ -418,7 +498,7 @@ function openDetail(idx) {
 function renderDetail() {
     const o = currentOpening;
     const isDone = done.includes(o.id);
-    const cells = parseFen(START_BOARD);
+    const cells = parseFen(game ? game.fen() : START_BOARD);
 
     const panel = document.getElementById('detail-panel');
     panel.innerHTML = `
@@ -432,24 +512,25 @@ function renderDetail() {
                     ${renderBoard(cells)}
                 </div>
                 <div class="nav-row">
-                    <button class="nav-btn prev" onclick="prevMove()">← Précédent</button>
-                    <button class="nav-btn next" onclick="nextMove()">Suivant →</button>
-                    ${isDone ? '' : `<button class="nav-btn done-btn" onclick="markDone('${o.id}')">✅ Maîtrisée!</button>`}
+                    <button class="nav-btn prev" type="button" onclick="prevMove()">← Précédent</button>
+                    <button class="nav-btn next" type="button" onclick="nextMove()">Suivant →</button>
+                    ${isDone ? '<span class="badge done-badge" aria-label="Ouverture maîtrisée">✅ Maîtrisée</span>' : ''}
                 </div>
-                <div style="text-align:center; margin-top:10px; font-size:0.85rem; opacity:0.6;" id="move-counter">
-                    Coup 0 / ${o.moves.length}
+                <div style="text-align:center; margin-top:10px; font-size:0.85rem; opacity:0.85;" id="move-counter" aria-live="polite">
+                    Position initiale · 0 / ${o.moves.length} demi-coups
                 </div>
+                <p id="opening-feedback" role="status" aria-live="polite" style="margin-top:8px;min-height:1.5em;"></p>
             </div>
             <div>
                 <div class="moves-wrap" id="moves-wrap">
                     ${o.moves.map((m,i) => {
                         const num = Math.floor(i/2)+1;
-                        return `<div class="move-item" id="mi-${i}" onclick="goToMove(${i})">
+                        return `<button type="button" class="move-item" id="mi-${i}" onclick="goToMove(${i})" aria-label="Afficher la position après ${m.san}">
                             <span class="move-num">${i%2===0 ? num+'.' : ''}</span>
                             <div class="move-color ${m.color}"></div>
                             <span class="move-san">${m.san}</span>
                             <span class="move-desc">${m.desc}</span>
-                        </div>`;
+                        </button>`;
                     }).join('')}
                 </div>
                 <div class="theory-box">
@@ -458,26 +539,52 @@ function renderDetail() {
                 </div>
             </div>
         </div>
+        <div id="opening-quiz" class="theory-box" hidden></div>
     `;
+    updatePosition();
+}
+
+function squareIndex(square) {
+    return (8 - Number(square[1])) * 8 + (square.charCodeAt(0) - 97);
+}
+
+function updatePosition() {
+    if (!currentOpening || !game) return;
+    game = new Chess();
+    let lastMove = null;
+    try {
+        for (let i = 0; i <= currentMoveIdx; i++) {
+            lastMove = game.move(currentOpening.moves[i].san);
+            if (!lastMove) throw new Error('Coup illégal : ' + currentOpening.moves[i].san);
+        }
+    } catch (error) {
+        const feedback = document.getElementById('opening-feedback');
+        if (feedback) feedback.textContent = 'Ligne invalide : ' + error.message;
+        return;
+    }
+    const squares = lastMove ? [squareIndex(lastMove.from), squareIndex(lastMove.to)] : [];
+    document.getElementById('board-wrap').innerHTML = renderBoard(parseFen(game.fen()), squares);
+    highlightMove();
+    const counter = document.getElementById('move-counter');
+    counter.textContent = currentMoveIdx < 0
+        ? `Position initiale · 0 / ${currentOpening.moves.length} demi-coups`
+        : `Après ${currentOpening.moves[currentMoveIdx].color === 'w' ? Math.floor(currentMoveIdx/2)+1+'.' : Math.floor(currentMoveIdx/2)+1+'...'} ${currentOpening.moves[currentMoveIdx].san} · ${currentMoveIdx+1} / ${currentOpening.moves.length} demi-coups`;
+    const feedback = document.getElementById('opening-feedback');
+    feedback.textContent = currentMoveIdx < 0 ? 'Utilise Suivant ou sélectionne un demi-coup pour suivre la ligne.' : currentOpening.moves[currentMoveIdx].desc;
+    renderQuiz();
 }
 
 function goToMove(idx) {
-    currentMoveIdx = idx;
-    highlightMove();
+    currentMoveIdx = Math.max(-1, Math.min(idx, currentOpening.moves.length - 1));
+    updatePosition();
 }
 
 function nextMove() {
-    if (currentMoveIdx < currentOpening.moves.length - 1) {
-        currentMoveIdx++;
-        highlightMove();
-    }
+    if (currentMoveIdx < currentOpening.moves.length - 1) goToMove(currentMoveIdx + 1);
 }
 
 function prevMove() {
-    if (currentMoveIdx >= 0) {
-        currentMoveIdx--;
-        highlightMove();
-    }
+    if (currentMoveIdx >= 0) goToMove(currentMoveIdx - 1);
 }
 
 function highlightMove() {
@@ -488,10 +595,52 @@ function highlightMove() {
         else if (i < currentMoveIdx) el.classList.add('played');
     });
     document.getElementById('move-counter').textContent =
-        `Coup ${currentMoveIdx+1} / ${currentOpening.moves.length}`;
+        currentMoveIdx < 0 ? `Position initiale · 0 / ${currentOpening.moves.length} demi-coups` : `Position ${currentMoveIdx+1} / ${currentOpening.moves.length} demi-coups`;
+}
+
+function renderQuiz() {
+    const panel = document.getElementById('opening-quiz');
+    if (!panel || !currentOpening) return;
+    const questions = OPENING_QUIZZES[currentOpening.id] || [];
+    if (currentMoveIdx < currentOpening.moves.length - 1 || done.includes(currentOpening.id)) {
+        panel.hidden = true;
+        panel.innerHTML = '';
+        return;
+    }
+    panel.hidden = false;
+    if (quizIndex >= questions.length) {
+        panel.innerHTML = `<h3>✅ Vérification acquise · ${questions.length}/${questions.length}</h3><p>Tu as parcouru la ligne et répondu correctement aux deux questions.</p><button type="button" class="nav-btn done-btn" onclick="markDone('${currentOpening.id}')">Valider la maîtrise</button>`;
+        return;
+    }
+    const question = questions[quizIndex];
+    const options = question.choices.map((choice, i) => `<button type="button" class="quiz-option" onclick="answerOpeningQuiz(${i})">${choice}</button>`).join('');
+    const notice = quizNotice ? `<p class="quiz-feedback ${quizNotice.startsWith('Pas encore')?'error':'success'}" role="status" aria-live="polite">${quizNotice}</p>` : '';
+    panel.innerHTML = `<h3>🧠 Vérifie ta compréhension · ${quizIndex+1}/${questions.length}</h3><p>${question.question}</p>${options}${notice}`;
+}
+
+function answerOpeningQuiz(choiceIndex) {
+    const questions = OPENING_QUIZZES[currentOpening.id] || [];
+    const question = questions[quizIndex];
+    if (!question) return;
+    if (choiceIndex === question.answer) {
+        quizNotice = question.explanation;
+        quizIndex++;
+        quizMistakes = 0;
+    } else {
+        quizMistakes++;
+        const hint = question.hints[Math.min(quizMistakes - 1, question.hints.length - 1)];
+        quizNotice = `Pas encore. Indice ${quizMistakes} : ${hint}`;
+    }
+    renderQuiz();
 }
 
 function markDone(id) {
+    const questions = OPENING_QUIZZES[id] || [];
+    if (!currentOpening || currentOpening.id !== id || currentMoveIdx !== currentOpening.moves.length - 1 || quizIndex < questions.length) {
+        const feedback = document.getElementById('opening-feedback');
+        if (feedback) feedback.textContent = 'Parcours la ligne et réussis les deux questions avant de valider la maîtrise.';
+        return;
+    }
     if (!done.includes(id)) {
         done.push(id);
         saveDone(done);
@@ -508,6 +657,7 @@ function markDone(id) {
 function closeDetail() {
     document.getElementById('detail-panel').classList.remove('visible');
     currentOpening = null;
+    game = null;
 }
 
 // Keyboard navigation for the opening trainer.
@@ -519,7 +669,7 @@ document.addEventListener('keydown', function (e) {
 
     if (e.key === 'ArrowLeft') { e.preventDefault(); prevMove(); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); nextMove(); }
-    else if (e.key === 'Home') { e.preventDefault(); goToMove(0); }
+    else if (e.key === 'Home') { e.preventDefault(); goToMove(-1); }
     else if (e.key === 'End') { e.preventDefault(); goToMove(currentOpening.moves.length - 1); }
     else if (e.key === 'Escape') { closeDetail(); }
 });

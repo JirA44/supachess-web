@@ -46,6 +46,10 @@ window.$ = window.jQuery = window.$ || function(selector){
       const chartFixture = 'window.Chart = function(){ this.data={labels:[],datasets:[{data:[]},{data:[]}]}; this.destroy=function(){}; this.update=function(){}; }; window.Chart.defaults={}; window.Chart.getChart=function(){ return null; };';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chartFixture });
     }
+    if (/\/supachess\/vendor\/chess\.js(?:$|\?)/i.test(url)) {
+      // isolateExternalServices exposes the local chess runtime before page scripts run.
+      return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
+    }
     if (/cdnjs\.cloudflare\.com\/ajax\/libs\/chess\.js/i.test(url)) {
       const chess = fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') + '\nwindow.Chess = Chess;';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chess });
@@ -205,16 +209,38 @@ test('a local training game accepts a legal user move and reset restores the sta
   expect(browserErrors).toEqual([]);
 });
 
-test('opening training advances, persists mastery, and restores clean state after reset', async ({ page }) => {
+test('opening training replays the legal line and requires the knowledge check before mastery', async ({ page }) => {
   await isolateExternalServices(page);
   const browserErrors=[]; page.on('pageerror', error => browserErrors.push(error.message));
   await page.goto('/TRAINING_OPENINGS.html', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  const legalLineLengths = await page.evaluate(() => OPENINGS.map(opening => {
+    const line = new Chess();
+    for (const move of opening.moves) {
+      if (!line.move(move.san)) throw new Error(opening.id + ': coup illégal ' + move.san);
+    }
+    return line.history().length;
+  }));
+  expect(legalLineLengths).toEqual([10, 10, 10, 10, 10, 10, 10, 10]);
   await page.locator('#opening-grid .card').first().click();
+  const initialFen = await page.evaluate(() => game.fen());
   await page.getByRole('button', { name: /Suivant/i }).click();
-  await expect(page.locator('#move-counter')).toContainText('Coup 1');
-  await page.getByRole('button', { name: /Maîtrisée/i }).click();
+  await expect(page.locator('#move-counter')).toContainText('Après 1.');
+  expect(await page.evaluate(() => game.fen())).not.toBe(initialFen);
+  await page.getByRole('button', { name: /Début/i }).click();
+  expect(await page.evaluate(() => game.fen())).toBe(initialFen);
+  for (let move = 0; move < 10; move++) await page.getByRole('button', { name: /Suivant/i }).click();
+  await expect(page.locator('#opening-quiz')).toBeVisible();
+  await expect(page.locator('#prog-lbl')).toContainText('0/8');
+  const firstAnswer = page.getByRole('button', { name: '...b5 et le contrôle de b5' });
+  const wrongChoice = (await page.locator('#opening-quiz .quiz-option').allTextContents()).findIndex(text => !text.includes('...b5 et le contrôle de b5'));
+  await page.locator('#opening-quiz .quiz-option').nth(wrongChoice).click();
+  await expect(page.locator('#opening-quiz')).toContainText('Indice 1');
+  await firstAnswer.click();
+  await page.getByRole('button', { name: /structure asymétrique/i }).click();
+  await expect(page.locator('#opening-quiz')).toContainText('2/2');
+  await page.getByRole('button', { name: /Valider la maîtrise/i }).click();
   await expect(page.locator('#prog-lbl')).toContainText('1/8');
   const key = 'supachess_openings_v1';
   expect(JSON.parse(await page.evaluate((storageKey) => localStorage.getItem(storageKey), key))).toHaveLength(1);

@@ -35,3 +35,14 @@ window.document.querySelector('.cn-lang-toggle').click();
 assert.equal(window.document.documentElement.lang, 'fr', 'the language toggle updates the document language');
 assert.equal(window.document.querySelector('label').textContent, 'Mode d’exercice', 'French text is restored after toggling');
 console.log('i18n locale and translated-attribute checks passed');
+
+const tacticsHtml = readFileSync('TRAINING_TACTICS.html', 'utf8');
+const communitySource = readFileSync('shared/community.js', 'utf8');
+const pageScripts = [...tacticsHtml.matchAll(/<script\b[^>]+src=["']([^"']+)/g)].map((match) => match[1]);
+const i18nIndex = pageScripts.findIndex((src) => src.includes('shared/i18n.js'));
+const communityIndex = pageScripts.findIndex((src) => src.includes('shared/community.js'));
+assert.ok(i18nIndex >= 0 && communityIndex > i18nIndex, 'tactics page loads translations before injecting community UI');
+for (const key of ["auth_login","auth_logout","auth_tab_login","auth_tab_signup","players_panel_title","players_status_available","players_status_busy","players_status_invisible","players_loading","stats_unique_visitors","stats_registered_users","footer_brand","panel_title","tab_chat","tab_suggestions","tab_faq","chat_empty","suggest_category_label","suggest_category_bug","suggest_category_feature","suggest_category_ui","suggest_category_content","suggest_category_other","suggest_rating_label","suggest_message_label","suggest_submit","faq_empty"]) {
+  assert.ok(french[key] !== undefined && english[key] !== undefined, key + ' exists in both dictionaries');
+  assert.ok(communitySource.includes(key), key + ' is used by the shared community UI');
+}

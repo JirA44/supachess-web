@@ -219,8 +219,17 @@ test('opening training replays the legal line and requires the knowledge check b
     return line.history().length;
   }));
   expect(legalLineLengths).toEqual([10, 10, 10, 10, 10, 10, 10, 10]);
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.locator('#opening-grid .card').first().click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   const initialFen = await page.evaluate(() => game.fen());
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#move-counter')).toContainText('Après 1.');
+  expect(await page.evaluate(() => game.fen())).not.toBe(initialFen);
+  await page.keyboard.press('ArrowLeft');
+  expect(await page.evaluate(() => game.fen())).toBe(initialFen);
+  await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole('button', { name: /Suivant/i }).click();
   await expect(page.locator('#move-counter')).toContainText('Après 1.');
   expect(await page.evaluate(() => game.fen())).not.toBe(initialFen);

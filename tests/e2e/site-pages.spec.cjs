@@ -46,10 +46,6 @@ window.$ = window.jQuery = window.$ || function(selector){
       const chartFixture = 'window.Chart = function(){ this.data={labels:[],datasets:[{data:[]},{data:[]}]}; this.destroy=function(){}; this.update=function(){}; }; window.Chart.defaults={}; window.Chart.getChart=function(){ return null; };';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chartFixture });
     }
-    if (/\/supachess\/vendor\/chess\.js(?:$|\?)/i.test(url)) {
-      // isolateExternalServices exposes the local chess runtime before page scripts run.
-      return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
-    }
     if (/cdnjs\.cloudflare\.com\/ajax\/libs\/chess\.js/i.test(url)) {
       const chess = fs.readFileSync(path.join(ROOT, 'node_modules/chess.js/chess.js'), 'utf8') + '\nwindow.Chess = Chess;';
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: chess });

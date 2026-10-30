@@ -76,7 +76,9 @@ function testDotsWidget() {
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
-        if (!hasBoard(content)) continue;
+        // Candidate dots require an interactive chessboard; static lesson diagrams use
+        // chess.js only to replay legal SAN moves and should not receive a useless widget.
+        if (!hasInteractiveBoard(content)) continue;
 
         const hasDots = /supa-dots-widget/.test(content);
         if (!hasDots) fail(`${page} — supa-dots-widget.js manquant`);

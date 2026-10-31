@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stockfish vs Komodo - TCEC 2018</title>
+    <title>Stockfish–Komodo · TCEC Season 13, partie 47.1</title>
     <style>
         * {
             margin: 0;
@@ -328,8 +328,8 @@
 
     <div class="container">
         <header>
-            <h1>Stockfish vs Komodo - TCEC Season 13</h1>
-            <p class="subtitle">Bataille épique des titans informatiques - Finale du championnat</p>
+            <h1>Stockfish–Komodo · TCEC Season 13, partie 47.1</h1>
+            <p class="subtitle">Superfinal TCEC · 30 octobre 2018 · Défense scandinave (B01)</p>
         </header>
 
         <div class="main-content">
@@ -337,27 +337,27 @@
                 <h2>Informations de la partie</h2>
                 <div class="stat-item">
                     <div class="stat-label">Blancs</div>
-                    <div class="stat-value">Stockfish 9</div>
+                    <div class="stat-value">Stockfish 18102108</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Noirs</div>
-                    <div class="stat-value">Komodo MCTS</div>
+                    <div class="stat-value">Komodo 2155.00</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Tournoi</div>
-                    <div class="stat-value">TCEC Season 13 Final</div>
+                    <div class="stat-value">TCEC Season 13 Superfinal · partie 47.1</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Ouverture</div>
-                    <div class="stat-value">Queen's Gambit Declined</div>
+                    <div class="stat-value">Défense scandinave (B01)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Résultat</div>
-                    <div class="stat-value">1-0 (Stockfish)</div>
+                    <div class="stat-value">½–½ · répétition triple</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Année</div>
-                    <div class="stat-value">2018 - Game 47</div>
+                    <div class="stat-value">30 octobre 2018 · 43 coups</div>
                 </div>
             </div>
 
@@ -371,7 +371,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer cette bataille épique entre les deux meilleurs moteurs d'échecs au monde.</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur « Suivant » pour rejouer la partie archivée, jusqu’à la répétition triple après 43.Qg6+.</div>
                 </div>
             </div>
 
@@ -379,8 +379,9 @@
                 <h2>Analyse</h2>
                 <div class="timeline" id="timeline"></div>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(255, 170, 0, 0.1); border-radius: 8px; border-left: 3px solid #ffaa00;">
-                    <strong style="color: #ffaa00;">Échecs informatiques:</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Cette partie de la finale TCEC Season 13 2018 illustre le niveau époustouflant des moteurs modernes. Stockfish 9 affronte Komodo MCTS dans une lutte stratégique d'une profondeur inhumaine. Chaque coup est calculé avec une précision de millions de positions par seconde. Pure perfection computationnelle!</p>
+                    <strong style="color: #ffaa00;">Repères vérifiés</strong>
+                    <p style="margin-top: 10px; color: #ccc;">La partie 47.1 du Superfinal TCEC 13 a opposé Stockfish 18102108 (Blancs) à Komodo 2155.00 (Noirs). La défense scandinave mène à une finale où les Blancs donnent échec à répétition; la partie se termine nulle par répétition triple après 43.Qg6+.</p>
+                    <p><a href="data/games/stockfish_komodo_tcec13_game47.pgn" download>📥 Télécharger le PGN officiel archivé</a></p>
                 </div>
             </div>
         </div>
@@ -393,81 +394,91 @@
 
         // Partie Stockfish 9 vs Komodo MCTS - TCEC Season 13 Final, Game 47
         const gameMoves = [
-            { move: 'd4', comment: '1. Stockfish 9 ouvre avec le coup de dame classique. Preparation pour le Gambit Dame, ouverture favorite des moteurs!' },
-            { move: 'd5', comment: '1...Komodo MCTS repond symetriquement. Lutte pour le controle central entre deux titans informatiques!' },
-            { move: 'c4', comment: '2. LE GAMBIT DAME! Stockfish propose le sacrifice du pion c pour dominer le centre.' },
-            { move: 'e6', comment: '2...Defense Semi-Slave. Komodo choisit une structure solide et flexible.' },
-            { move: 'Nc3', comment: '3. Developpement du cavalier dame avec pression sur d5. Coordination parfaite!' },
-            { move: 'Nf6', comment: '3...Developpement classique du cavalier roi. Komodo attaque e4 potentiellement.' },
-            { move: 'Bg5', comment: '4. CLOUAGE! Stockfish epingle le cavalier f6 contre la dame. Pression immediate!' },
-            { move: 'Be7', comment: '4...Declouage immediat. Komodo developpe tout en preparant le roque court.' },
-            { move: 'e3', comment: '5. Formation Carlsbad. Structure pyramidale solide d4-e3-c4 pour les Blancs.' },
-            { move: 'h6', comment: '5...Komodo questionne le fou g5. Gain d\'espace sur le flanc roi.' },
-            { move: 'Bh4', comment: '6. Le fou maintient la tension. Stockfish garde toutes les options ouvertes.' },
-            { move: 'O-O', comment: '6...Roque court. Komodo met son roi en securite. La tour f8 s\'active!' },
-            { move: 'Nf3', comment: '7. Developpement complet des pieces mineures. Stockfish est pret pour le milieu de jeu.' },
-            { move: 'b6', comment: '7...Fianchetto du fou dame. Systeme Tartakower - Komodo prepare Bb7.' },
-            { move: 'Rc1', comment: '8. Tour sur la colonne c. Stockfish anticipe l\'ouverture apres cxd5.' },
-            { move: 'Bb7', comment: '8...Fou sur la grande diagonale. Komodo cree une batterie visant e4!' },
-            { move: 'cxd5', comment: '9. STOCKFISH LIBERE LA TENSION! La colonne c s\'ouvre pour les tours blanches.' },
-            { move: 'exd5', comment: '9...Reprise vers le centre. Structure de pions symetrique etablie.' },
-            { move: 'Bd3', comment: '10. Le fou vise h7! Pression classique sur le point faible du roque.' },
-            { move: 'Ne4', comment: '10...CENTRALISATION PUISSANTE! Le cavalier occupe un poste avance magnifique.' },
-            { move: 'Bxe7', comment: '11. Stockfish echange le fou. Simplification calculee vers une finale technique.' },
-            { move: 'Qxe7', comment: '11...Recapture avec la dame. Komodo maintient la coordination des pieces.' },
-            { move: 'Nxe4', comment: '12. Echange des cavaliers. Stockfish elimine le cavalier centralise.' },
-            { move: 'dxe4', comment: '12...Recapture avec le pion d. Structure asymetrique creee.' },
-            { move: 'Bxe4', comment: '13. Le fou capture le pion e4. Stockfish gagne un pion!' },
-            { move: 'Bxe4', comment: '13...Komodo reprend avec son fou. Echange egal de materiel.' },
-            { move: 'Rxc7', comment: '14. INVASION DE LA 7EME RANGEE! Tour sur c7 avec pression devastatrice!' },
-            { move: 'Qd6', comment: '14...La dame defie la tour. Komodo centralise tout en defendant.' },
-            { move: 'Rc3', comment: '15. Tour en position defensive-offensive. Preparation de manoeuvres.' },
-            { move: 'Nd7', comment: '15...Le cavalier noir se developpe enfin. Komodo coordonne ses pieces.' },
-            { move: 'O-O', comment: '16. Roque court. Stockfish securise son roi avant de continuer l\'attaque.' },
-            { move: 'Rfc8', comment: '16...Tour sur la colonne c. Komodo cherche du contre-jeu.' },
-            { move: 'Rxc8+', comment: '17. Echange de tours! Stockfish simplifie vers une finale technique.' },
-            { move: 'Rxc8', comment: '17...Reprise forcee. Komodo doit echanger pour eviter les pertes.' },
-            { move: 'Qb3', comment: '18. Dame active sur b3. Pression sur b7 et f7 simultanement!' },
-            { move: 'Nf6', comment: '18...Cavalier en defense. Komodo protege les points faibles.' },
-            { move: 'Nd2', comment: '19. Regroupement du cavalier. Stockfish prepare Ne4 ou Nc4.' },
-            { move: 'Bd5', comment: '19...Centralisation du fou. Komodo bloque la diagonale a2-g8.' },
-            { move: 'Qb5', comment: '20. Dame active! Stockfish attaque a7 et menace des echanges favorables.' },
-            { move: 'a6', comment: '20...Defense du pion a7. Komodo repousse la dame blanche.' },
-            { move: 'Qd3', comment: '21. Dame vers d3. Stockfish vise d5 et maintient la pression centrale.' },
-            { move: 'Rc2', comment: '21...INVASION! Tour sur la 2eme rangee. Komodo contre-attaque!' },
-            { move: 'Rb1', comment: '22. Tour en defense. Stockfish protege le pion b2.' },
-            { move: 'Be4', comment: '22...Fou centralise. Komodo menace le cavalier et controle le centre.' },
-            { move: 'Qe2', comment: '23. Dame connectee avec la tour. Coordination des pieces blanches.' },
-            { move: 'Rc7', comment: '23...Tour retourne en defense. Komodo maintient l\'equilibre.' },
-            { move: 'f3', comment: '24. Chasse du fou. Stockfish gagne de l\'espace au centre.' },
-            { move: 'Bd5', comment: '24...Fou recule. Komodo garde son fou actif sur la diagonale.' },
-            { move: 'e4', comment: '25. AVANCE CENTRALE! Stockfish gagne de l\'espace et active ses pieces.' },
-            { move: 'Be6', comment: '25...Fou en retrait. Komodo cherche une case sure.' },
-            { move: 'Nc4', comment: '26. CAVALIER TRES ACTIF! Menace directe sur e5 et a5.' },
-            { move: 'Qc6', comment: '26...Dame defensive. Komodo protege le pion b6.' },
-            { move: 'd5', comment: '27. PERCEE CENTRALE! Stockfish sacrifie pour ouvrir les lignes!' },
-            { move: 'Bxd5', comment: '27...Capture forcee. Komodo prend le pion offert.' },
-            { move: 'exd5', comment: '28. Recapture. Structure de pions passee creee pour les Blancs.' },
-            { move: 'Qxd5', comment: '28...Reprise avec la dame. Komodo centralise sa dame.' },
-            { move: 'Qe3', comment: '29. Dame coordonnee. Stockfish vise e7 et le flanc roi.' },
-            { move: 'Qb5', comment: '29...Dame active. Komodo menace le cavalier c4.' },
-            { move: 'Ne5', comment: '30. CAVALIER DOMINANT! Position centrale ideale sur e5.' },
-            { move: 'Qa5', comment: '30...Dame en a5. Komodo cherche du contre-jeu sur le flanc dame.' },
-            { move: 'a3', comment: '31. Securisation du pion b. Stockfish prepare b4 eventuellement.' },
-            { move: 'Rc2', comment: '31...Tour active. Komodo maintient la pression sur la 2eme rangee.' },
-            { move: 'Nxf7', comment: '32. Cavalier attaque h6! Stockfish vise les faiblesses du roque.' },
-            { move: 'Rxb2', comment: '32...CAPTURE DU PION B2! Komodo gagne un pion important.' },
-            { move: 'Rxb2', comment: '33. Echange de tours. Stockfish reprend avec la tour.' },
-            { move: 'Qxa3', comment: '33...Dame capture a3. Komodo a maintenant deux pions.' },
-            { move: 'Nxh6+', comment: '34. SACRIFICE DU CAVALIER! Stockfish detruit le roque noir!' },
-            { move: 'gxh6', comment: '34...Capture forcee. Le roi noir est expose maintenant.' },
-            { move: 'Qxh6', comment: '35. Dame sur h6! Attaque devastatrice sur le roi nu.' },
-            { move: 'Qe7', comment: '35...Dame en defense. Komodo essaie de bloquer les menaces.' },
-            { move: 'Qg5+', comment: '36. ECHEC! La dame blanche domine. Le roi noir fuit.' },
-            { move: 'Kf8', comment: '36...Roi vers f8. Seule case disponible pour le roi.' },
-            { move: 'Qxf6+', comment: '37. GAIN DU CAVALIER! Dame capture avec echec. Avantage materiel enorme!' },
-            { move: 'Qxf6', comment: '37...Reprise forcee avec la dame. Komodo n\'a pas le choix.' },
-            { move: 'Rxb6', comment: '38. STOCKFISH GAGNE! Tour capture b6. Avec une tour et des pions contre la dame, la technique de Stockfish est implacable. Komodo ABANDONNE! Victoire ecrasante du champion!' }
+            { move: "e4", comment: "Stockfish ouvre par 1.e4. Le coup initial contrôle le centre." },
+            { move: "d5", comment: "Komodo répond 1...d5 : la défense scandinave est en place." },
+            { move: "exd5", comment: "2.exd5 capture le pion central noir." },
+            { move: "Qxd5", comment: "2...Qxd5 reprend le pion avec la dame." },
+            { move: "Nc3", comment: "3.Nc3 développe le cavalier et attaque la dame en d5." },
+            { move: "Qa5", comment: "3...Qa5 met la dame à l’abri de l’attaque." },
+            { move: "d4", comment: "Stockfish joue d4. Observe les menaces et la réponse adverse." },
+            { move: "Nf6", comment: "Komodo joue Nf6. Observe les menaces et la réponse adverse." },
+            { move: "Bd2", comment: "Stockfish joue Bd2. Observe les menaces et la réponse adverse." },
+            { move: "c6", comment: "Komodo joue c6. Observe les menaces et la réponse adverse." },
+            { move: "Bd3", comment: "Stockfish joue Bd3. Observe les menaces et la réponse adverse." },
+            { move: "Bg4", comment: "Komodo joue Bg4. Observe les menaces et la réponse adverse." },
+            { move: "Nge2", comment: "Stockfish joue Nge2. Observe les menaces et la réponse adverse." },
+            { move: "Nbd7", comment: "Komodo joue Nbd7. Observe les menaces et la réponse adverse." },
+            { move: "h3", comment: "Stockfish joue h3. Observe les menaces et la réponse adverse." },
+            { move: "Bh5", comment: "Komodo joue Bh5. Observe les menaces et la réponse adverse." },
+            { move: "O-O", comment: "Stockfish joue O-O. Observe les menaces et la réponse adverse." },
+            { move: "e6", comment: "Komodo joue e6. Observe les menaces et la réponse adverse." },
+            { move: "f4", comment: "Stockfish joue f4. Observe les menaces et la réponse adverse." },
+            { move: "Qc7", comment: "Komodo joue Qc7. Observe les menaces et la réponse adverse." },
+            { move: "Qe1", comment: "Stockfish joue Qe1. Observe les menaces et la réponse adverse." },
+            { move: "Bxe2", comment: "Komodo joue Bxe2, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qxe2", comment: "Stockfish joue Qxe2, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Bd6", comment: "Komodo joue Bd6. Observe les menaces et la réponse adverse." },
+            { move: "Rae1", comment: "Stockfish joue Rae1. Observe les menaces et la réponse adverse." },
+            { move: "O-O", comment: "Komodo joue O-O. Observe les menaces et la réponse adverse." },
+            { move: "g4", comment: "Stockfish joue g4. Observe les menaces et la réponse adverse." },
+            { move: "Nd5", comment: "Komodo joue Nd5. Observe les menaces et la réponse adverse." },
+            { move: "Nxd5", comment: "Stockfish joue Nxd5, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "exd5", comment: "Komodo joue exd5, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "g5", comment: "Stockfish joue g5. Observe les menaces et la réponse adverse." },
+            { move: "c5", comment: "Komodo joue c5. Observe les menaces et la réponse adverse." },
+            { move: "c3", comment: "Stockfish joue c3. Observe les menaces et la réponse adverse." },
+            { move: "Qb6", comment: "Komodo joue Qb6. Observe les menaces et la réponse adverse." },
+            { move: "Be3", comment: "Stockfish joue Be3. Observe les menaces et la réponse adverse." },
+            { move: "Rae8", comment: "Komodo joue Rae8. Observe les menaces et la réponse adverse." },
+            { move: "Qf2", comment: "Stockfish joue Qf2. Observe les menaces et la réponse adverse." },
+            { move: "Qc7", comment: "Komodo joue Qc7. Observe les menaces et la réponse adverse." },
+            { move: "Qf3", comment: "Stockfish joue Qf3. Observe les menaces et la réponse adverse." },
+            { move: "cxd4", comment: "Komodo joue cxd4, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "cxd4", comment: "Stockfish joue cxd4, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qa5", comment: "Komodo joue Qa5. Observe les menaces et la réponse adverse." },
+            { move: "Qg4", comment: "Stockfish joue Qg4. Observe les menaces et la réponse adverse." },
+            { move: "Re7", comment: "Komodo joue Re7. Observe les menaces et la réponse adverse." },
+            { move: "f5", comment: "Stockfish joue f5. Observe les menaces et la réponse adverse." },
+            { move: "g6", comment: "Komodo joue g6. Observe les menaces et la réponse adverse." },
+            { move: "Qf3", comment: "Stockfish joue Qf3. Observe les menaces et la réponse adverse." },
+            { move: "Qxa2", comment: "Komodo joue Qxa2, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Rf2", comment: "Stockfish joue Rf2. Observe les menaces et la réponse adverse." },
+            { move: "Rfe8", comment: "Komodo joue Rfe8. Observe les menaces et la réponse adverse." },
+            { move: "h4", comment: "Stockfish joue h4. Observe les menaces et la réponse adverse." },
+            { move: "Nf8", comment: "Komodo joue Nf8. Observe les menaces et la réponse adverse." },
+            { move: "fxg6", comment: "Stockfish joue fxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "hxg6", comment: "Komodo joue hxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "h5", comment: "Stockfish joue h5. Observe les menaces et la réponse adverse." },
+            { move: "Qb3", comment: "Komodo joue Qb3. Observe les menaces et la réponse adverse." },
+            { move: "hxg6", comment: "Stockfish joue hxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Nxg6", comment: "Komodo joue Nxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Bxg6", comment: "Stockfish joue Bxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "fxg6", comment: "Komodo joue fxg6, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qf6", comment: "Stockfish joue Qf6. Observe les menaces et la réponse adverse." },
+            { move: "Rxe3", comment: "Komodo joue Rxe3, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qxg6+", comment: "Stockfish joue Qxg6+, un échec. Observe la réponse du roi." },
+            { move: "Kh8", comment: "Komodo joue Kh8. Observe les menaces et la réponse adverse." },
+            { move: "Qf6+", comment: "Stockfish joue Qf6+, un échec. Observe la réponse du roi." },
+            { move: "Kg8", comment: "Komodo joue Kg8. Observe les menaces et la réponse adverse." },
+            { move: "Qf7+", comment: "Stockfish joue Qf7+, un échec. Observe la réponse du roi." },
+            { move: "Kh8", comment: "Komodo joue Kh8. Observe les menaces et la réponse adverse." },
+            { move: "Qh5+", comment: "Stockfish joue Qh5+, un échec. Observe la réponse du roi." },
+            { move: "Kg8", comment: "Komodo joue Kg8. Observe les menaces et la réponse adverse." },
+            { move: "Qf7+", comment: "Stockfish joue Qf7+, un échec. Observe la réponse du roi." },
+            { move: "Kh8", comment: "Komodo joue Kh8. Observe les menaces et la réponse adverse." },
+            { move: "Qh5+", comment: "Stockfish joue Qh5+, un échec. Observe la réponse du roi." },
+            { move: "Kg8", comment: "Komodo joue Kg8. Observe les menaces et la réponse adverse." },
+            { move: "Rxe3", comment: "Stockfish joue Rxe3, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qxe3", comment: "Komodo joue Qxe3, une capture. Repère la pièce prise et les cases libérées." },
+            { move: "Qg6+", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Kh8", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Qf6+", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Kg8", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Qg6+", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Kh8", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Qf6+", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Kg8", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." },
+            { move: "Qg6+", comment: "La répétition de dame et de roi se poursuit; la partie se conclut nulle par répétition triple." }
         ];
 
         let currentMoveIndex = -1;

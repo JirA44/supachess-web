@@ -669,6 +669,7 @@ test('all legendary game main lines are legal and advance one half-move at a tim
 test('published PGN source lines match their replay pages', async ({ page }) => {
   await isolateExternalServices(page);
   const sources = [
+    { page: '/alphazero_vs_stockfish.html', pgn: '/data/games/alphazero_stockfish_game10.pgn', expectedPlies: 111, heading: '🤖 AlphaZero vs Stockfish · replay d’un PGN public', expectedText: 'PGN public · E17 · 1–0', forbiddenText: 'Game 10' },
     { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn' },
     { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn' },
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },

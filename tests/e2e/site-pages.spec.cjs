@@ -565,3 +565,99 @@ test('legendary games advance one half-move per arrow key press', async ({ page 
     await page.keyboard.up('ArrowRight');
   }
 });
+
+test('all legendary game main lines are legal and advance one half-move at a time', async ({ page }) => {
+  test.setTimeout(120000);
+  await isolateExternalServices(page);
+  const paths = [
+    '/alphazero_sacrificial_masterpiece.html',
+    '/alphazero_vs_stockfish.html',
+    '/alphazero_vs_stockfish_game2.html',
+    '/carlsen_brilliancy_2013.html',
+    '/carlsen_perfect_2004.html',
+    '/deep_blue_kasparov_1997.html',
+    '/deep_blue_vs_kasparov.html',
+    '/fischer_game_of_century_interactive_v2.html',
+    '/kasparov_immortal_1999.html',
+    '/scc_carlsen_vs_lazavik.html',
+    '/web/legendary-games/anand_vs_kasparov.html',
+    '/web/legendary-games/carlsen_modern.html',
+    '/web/legendary-games/carlsen_vs_kasparov.html',
+    '/web/legendary-games/deep_blue_vs_kasparov.html',
+    '/web/legendary-games/fischer_game_of_century.html',
+    '/web/legendary-games/karpov_positional.html',
+    '/web/legendary-games/kasparov_immortal.html',
+    '/web/legendary-games/kasparov_vs_karpov.html',
+    '/web/legendary-games/tal_masterpiece.html',
+    '/karpov_positional_1978.html',
+    '/tal_masterpiece_1958.html',
+    '/tcec_s28_best_game.html'
+  ];
+
+  for (const path of paths) {
+    await page.goto(path);
+    const audit = await page.evaluate(() => {
+      const list = typeof gameMoves !== 'undefined' && Array.isArray(gameMoves) ? gameMoves
+        : typeof moveHistory !== 'undefined' && Array.isArray(moveHistory) ? moveHistory
+        : typeof moves !== 'undefined' && Array.isArray(moves) ? moves
+        : typeof gameHistory !== 'undefined' && Array.isArray(gameHistory) ? gameHistory
+        : [];
+      const mainLine = list.map((item) => typeof item === 'string' ? item
+        : item && (item.san || item.move || item.notation)).filter(Boolean)
+        .map((move) => String(move).trim())
+        .filter((move) => !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(move));
+      const replay = new Chess();
+      let illegalMove = null;
+      for (let i = 0; i < mainLine.length; i++) {
+        try {
+          if (!replay.move(mainLine[i], { sloppy: true })) {
+            illegalMove = { index: i, move: mainLine[i] };
+            break;
+          }
+        } catch (_) {
+          illegalMove = { index: i, move: mainLine[i] };
+          break;
+        }
+      }
+      const currentIndex = () => typeof currentMoveIndex === 'number' ? currentMoveIndex
+        : typeof currentMove === 'number' ? currentMove : null;
+      const position = typeof chess !== 'undefined' ? chess
+        : typeof game !== 'undefined' ? game : null;
+      return {
+        count: mainLine.length,
+        illegalMove,
+        index: currentIndex(),
+        fen: position && typeof position.fen === 'function' ? position.fen() : null
+      };
+    });
+    expect(audit.count, path + ' exposes its complete main line').toBeGreaterThan(0);
+    expect(audit.illegalMove, path + ' contains only legal consecutive moves').toBeNull();
+    expect(audit.index, path + ' exposes its replay position').not.toBeNull();
+    expect(audit.fen, path + ' exposes its current board position').toBeTruthy();
+
+    const replay = await page.evaluate((moveCount) => {
+      const nextButton = [...document.querySelectorAll('button')]
+        .find((button) => /suiv|next/i.test(button.textContent || ''));
+      if (!nextButton) return { error: 'next button not found' };
+      const currentIndex = () => typeof currentMoveIndex === 'number' ? currentMoveIndex
+        : typeof currentMove === 'number' ? currentMove : null;
+      const position = typeof chess !== 'undefined' ? chess
+        : typeof game !== 'undefined' ? game : null;
+      const errors = [];
+      for (let i = 0; i < moveCount; i++) {
+        const beforeIndex = currentIndex();
+        const beforeFen = position.fen();
+        nextButton.click();
+        const afterIndex = currentIndex();
+        const afterFen = position.fen();
+        if (afterIndex !== beforeIndex + 1) errors.push({ index: i, kind: 'index', beforeIndex, afterIndex });
+        if (afterFen === beforeFen) errors.push({ index: i, kind: 'position', fen: afterFen });
+        if (errors.length) break;
+      }
+      return { errors, steps: moveCount };
+    }, audit.count);
+    expect(replay.error, path + ' has a working next button').toBeUndefined();
+    expect(replay.errors, path + ' advances every move exactly once').toEqual([]);
+    expect(replay.steps, path + ' replays its entire main line').toBe(audit.count);
+  }
+});

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% Accuracy - Nakamura vs Van Wely 2010</title>
+    <title>Hikaru Nakamura–Loek van Wely · Corus 2010</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -130,8 +130,8 @@
     <div class="container">
         <header>
             <h1>Nakamura vs Van Wely</h1>
-            <p class="subtitle">Tata Steel 2010 - Precision brutale dans la Najdorf</p>
-            <div class="accuracy-badge">NAKAMURA : 100% ACCURACY</div>
+            <p class="subtitle">Corus · Wijk aan Zee · 17 janvier 2010 · Sicilienne Najdorf B96</p>
+            <div class="accuracy-badge">Nakamura gagne · 1–0</div>
         </header>
         <div class="main-content">
             <div class="info-panel">
@@ -161,12 +161,12 @@
                     <div class="stat-value">1-0 (Nakamura)</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">Precision</div>
-                    <div class="stat-value" style="color:#ffd700">Nakamura: 100%</div>
+                    <div class="stat-label">Résultat</div>
+                    <div class="stat-value" style="color:#ffd700">1–0</div>
                 </div>
                 <div class="highlight-box">
                     <strong>La performance :</strong>
-                    <p>39 coups de precision parfaite dans la Najdorf, l'une des ouvertures les plus complexes des echecs. Nakamura a joue chaque coup comme un engine contre un GM a 2641 ELO.</p>
+                    <p>Partie du groupe A de Corus, remportée par Nakamura après 39.Qb3. La ligne est rejouable demi-coup par demi-coup.</p>
                 </div>
             </div>
 
@@ -181,7 +181,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Nakamura demontre une precision inhumaine dans la Najdorf. Cliquez sur "Suivant" pour decouvrir cette masterclass.</div>
+                    <div class="move-comment" id="moveComment">Parcourez cette partie de Corus 2010. Aucun score de précision moteur vérifiable n’est fourni sur cette page.</div>
                 </div>
             </div>
 
@@ -190,7 +190,7 @@
                 <div class="timeline" id="timeline"></div>
                 <div class="highlight-box">
                     <strong>Contexte :</strong>
-                    <p>La Sicilienne Najdorf est consideree comme l'ouverture la plus complexe des echecs. Jouer 39 coups a 100% de precision dans cette jungle theorique est un exploit quasiment surhumain. Nakamura a joue comme une machine.</p>
+                    <p>La partie se joue dans une Sicilienne Najdorf (B96) et se termine par 39.Qb3 1–0.</p>
                 </div>
             </div>
         </div>
@@ -276,7 +276,7 @@
             { move: 'Bf3', comment: '37...Ff3 - Dernier espoir de Van Wely.' },
             { move: 'Qb5+', comment: '38.Db5+! - Echec! Le roi est repousse et le pion b ne peut etre arrete.' },
             { move: 'Rd5', comment: '38...Td5 - Interposition forcee.' },
-            { move: 'Qb3', comment: '39.Db3! - ABANDON! Van Wely abandonne. Le pion b7 va promouvoir et la position est completement perdue. 39 coups de precision parfaite de Nakamura dans la Najdorf!' }
+            { move: 'Qb3', comment: '39.Db3 : dernier coup de la partie; Van Wely abandonne (1–0).' }
         ];
 
         let currentMoveIndex = -1;
@@ -310,7 +310,7 @@
             const mc = document.getElementById('moveComment');
             if (currentMoveIndex === -1) {
                 mn.textContent = 'Position initiale';
-                mc.textContent = 'Nakamura demontre une precision inhumaine dans la Najdorf. Cliquez sur "Suivant".';
+                mc.textContent = 'Partie Corus 2010 : Nakamura–Van Wely, 1–0. Parcourez la ligne sans note de précision moteur.';
             } else {
                 const num = Math.floor(currentMoveIndex / 2) + 1;
                 const col = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';

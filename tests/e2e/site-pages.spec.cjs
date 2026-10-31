@@ -549,12 +549,19 @@ test('legendary games advance one half-move per arrow key press', async ({ page 
     ));
     expect(before, path + ' exposes its current half-move').not.toBeNull();
     await page.keyboard.down('ArrowRight');
-    await page.keyboard.down('ArrowRight');
-    await page.keyboard.up('ArrowRight');
-    const after = await page.evaluate(() => (
+    const afterPress = await page.evaluate(() => (
       typeof currentMoveIndex === 'number' ? currentMoveIndex :
       typeof currentMove === 'number' ? currentMove : null
     ));
-    expect(after, path + ' advances exactly once while the key is held').toBe(before + 1);
+    expect(afterPress, path + ' advances once for one arrow press').toBe(before + 1);
+    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'ArrowRight', bubbles: true, cancelable: true, repeat: true
+    })));
+    const afterRepeat = await page.evaluate(() => (
+      typeof currentMoveIndex === 'number' ? currentMoveIndex :
+      typeof currentMove === 'number' ? currentMove : null
+    ));
+    expect(afterRepeat, path + ' ignores a repeated arrow event').toBe(before + 1);
+    await page.keyboard.up('ArrowRight');
   }
 });

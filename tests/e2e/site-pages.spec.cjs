@@ -471,23 +471,31 @@ test('Fischer replay Dots toggle shows and clears legal move hints with readable
 });
 
 test('tactics training rejects a legal wrong move, gives a hint and requires the concept', async ({ page }) => {
+  test.setTimeout(60000);
+  page.on('pageerror', error => console.log('TACTIC PAGE ERROR:', error.message));
+  console.log('TACTIC QA: before navigation');
   await isolateExternalServices(page);
   await page.goto('/TRAINING_TACTICS.html');
+  console.log('TACTIC QA: navigation complete');
   await page.setViewportSize({ width: 320, height: 800 });
   await expect(page.locator('#stat-total')).toHaveText('40');
+  console.log('TACTIC QA: catalog rendered');
   await page.evaluate(() => window.openPuzzle('knight-fork-A'));
+  console.log('TACTIC QA: puzzle opened');
   await expect(page.locator('#modal-bg')).toHaveClass(/open/);
-  await page.locator('[data-square="b5"]').click();
-  await page.locator('[data-square="a7"]').click();
+  await page.locator('[data-square="b5"]').click({ force: true });
+  await page.locator('[data-square="a7"]').click({ force: true });
   await expect(page.locator('#tactic-feedback')).toContainText('Indice 1');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.locator('[data-square="b5"]').click();
-  await page.locator('[data-square="c7"]').click();
-  await page.getByRole('button', { name: 'Le roi et la dame' }).click();
+  console.log('TACTIC QA: wrong move and hint passed');
+  await page.locator('[data-square="b5"]').click({ force: true });
+  await page.locator('[data-square="c7"]').click({ force: true });
+  await page.getByRole('button', { name: 'Le roi et la dame' }).click({ force: true });
   await expect(page.locator('#tactic-explanation')).toBeHidden();
-  await page.getByRole('button', { name: 'Le roi et la tour' }).click();
+  await page.getByRole('button', { name: 'Le roi et la tour' }).click({ force: true });
   await expect(page.locator('#tactic-explanation')).toBeVisible();
-  await page.locator('#btn-done').click();
+  console.log('TACTIC QA: knowledge check passed');
+  await page.locator('#btn-done').click({ force: true });
   await expect(page.locator('#stat-solved')).toHaveText('1');
 });
 

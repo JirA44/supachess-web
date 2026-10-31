@@ -605,8 +605,8 @@ test('all legendary game main lines are legal and advance one half-move at a tim
       const listedMoves = list.map((item) => typeof item === 'string' ? item
         : item && (item.san || item.move || item.notation)).filter(Boolean)
         .map((move) => String(move).trim());
-      const hasEmbeddedResult = listedMoves.some((move) => /^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(move));
-      const mainLine = listedMoves.filter((move) => !/^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(move));
+      const hasEmbeddedResult = listedMoves.some((move) => /^(1-0|0-1|1\/2-1\/2|\*)$/.test(move));
+      const mainLine = listedMoves.filter((move) => !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(move));
       const replay = new Chess();
       let illegalMove = null;
       for (let i = 0; i < mainLine.length; i++) {
@@ -692,7 +692,7 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
       const pageMoves = [];
       for (const entry of entries) {
         const san = String(typeof entry === 'string' ? entry : entry && (entry.san || entry.move || entry.notation) || '').trim();
-        if (!san || /^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(san)) return { error: 'Result marker or empty move found in page line' };
+        if (!san || /^(1-0|0-1|1\/2-1\/2|\*)$/.test(san)) return { error: 'Result marker or empty move found in page line' };
         const played = replay.move(san, { sloppy: true });
         if (!played) return { error: 'Page line contains an illegal move: ' + san };
         pageMoves.push(played.san);

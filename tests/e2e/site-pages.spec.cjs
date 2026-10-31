@@ -580,6 +580,21 @@ test('legendary games advance one half-move per arrow key press', async ({ page 
     ));
     expect(afterRepeat, path + ' ignores a repeated arrow event').toBe(before + 1);
     await page.keyboard.up('ArrowRight');
+    await page.keyboard.down('ArrowLeft');
+    const afterLeft = await page.evaluate(() => (
+      typeof currentMoveIndex === 'number' ? currentMoveIndex :
+      typeof currentMove === 'number' ? currentMove : null
+    ));
+    expect(afterLeft, path + ' returns exactly one half-move for one left arrow press').toBe(before);
+    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'ArrowLeft', bubbles: true, cancelable: true, repeat: true
+    })));
+    const afterLeftRepeat = await page.evaluate(() => (
+      typeof currentMoveIndex === 'number' ? currentMoveIndex :
+      typeof currentMove === 'number' ? currentMove : null
+    ));
+    expect(afterLeftRepeat, path + ' ignores a repeated left arrow event').toBe(before);
+    await page.keyboard.up('ArrowLeft');
   }
 });
 

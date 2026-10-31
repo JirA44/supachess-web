@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 Carlsen vs Kasparov 2004 - Young Lion vs Legend</title>
+    <title>Carlsen–Kasparov · Reykjavik Rapid 2004 · D52</title>
 
     <!-- Chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -131,6 +131,24 @@
             font-size: 0.95em;
             opacity: 0.8;
             margin-top: 5px;
+        }
+
+        .source-links {
+            margin-top: 16px;
+            line-height: 1.8;
+        }
+
+        .source-links a { color: #a8e6ff; }
+
+        @media (max-width: 1050px) {
+            body { padding: 14px; }
+            .main-content { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+            .board-section { position: static; padding: 18px; }
+            #board { width: min(100%, 590px); }
+            .controls { flex-wrap: wrap; }
+            .btn { padding: 11px 16px; }
+            header { margin-bottom: 22px; }
+            h1 { font-size: clamp(1.8em, 7vw, 2.8em); }
         }
 
         .controls {
@@ -307,38 +325,38 @@
             <h1>🏆 Carlsen vs Kasparov - Reykjavik Rapid 2004</h1>
             <div class="subtitle">Magnus Carlsen (13 ans!) vs Garry Kasparov - Le Jeune Lion défie la Légende</div>
             <div>
-                <span class="badge">🔥 Sicilienne Sveshnikov</span>
+                <span class="badge">Gambit dame · D52</span>
                 <span class="badge">⚡ Partie Rapide</span>
-                <span class="badge">½-½ NULLE (Exploit pour Carlsen!)</span>
+                <span class="badge">½–½ · Nulle</span>
             </div>
             <a href="../../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
         </header>
 
         <div class="game-info-box">
             <h3>📖 À Propos de Cette Partie Historique</h3>
-            <p><strong>Contexte:</strong> Magnus Carlsen, prodige norvégien de 13 ans, affronte le Champion du Monde Garry Kasparov lors d'une simultanée rapide à Reykjavik.</p>
-            <p><strong>Importance:</strong> Carlsen obtient la nulle contre le plus fort joueur du monde! Kasparov dira plus tard : "J'ai vu le futur champion du monde."</p>
-            <p><strong>Tactique:</strong> Défense acharnée de Carlsen dans une position difficile. Technique impressionnante pour son âge.</p>
-            <p><strong>Legacy:</strong> Cette partie annonce l'arrivée du futur roi des échecs. Carlsen deviendra Champion du Monde en 2013 à 22 ans.</p>
+            <p><strong>Contexte :</strong> au premier tour du tournoi à élimination directe Reykjavik Rapid, Carlsen, âgé de 13 ans, affronte Kasparov dans la première des deux parties rapides. Cette partie se termine par la nulle.</p>
+            <p><strong>Ouverture :</strong> défense semi-slave, classée D52 dans la base de parties. La partie commence par 1.d4 d5 2.c4 c6.</p>
+            <p><strong>Étude :</strong> les cartes mettent en avant quelques moments de la partie. Elles ne donnent pas de notes d’évaluation calculées par moteur.</p>
+            <p class="source-links"><a href="../../data/games/carlsen_vs_kasparov_2004.pgn" download>Télécharger le PGN complet</a> · <a href="https://en.chessbase.com/portals/4/files/games/2004/reyjkavik1g0.htm" target="_blank" rel="noopener noreferrer">Fiche de partie et PGN (ChessBase)</a> · <a href="https://theweekinchess.com/malcolmpein/13-year-old-magnus-carlsen-close-to-beating-kasparov" target="_blank" rel="noopener noreferrer">Compte rendu d’époque (The Week in Chess)</a></p>
         </div>
 
         <div class="main-content">
             <div class="board-section">
-                <div class="player-info black">
+                <div class="player-info">
                     <div>
-                        <div class="player-name">♚ Magnus Carlsen</div>
-                        <div class="player-rating">ELO: 2484 | Âge: 13 ans | Futur Champion du Monde</div>
+                        <div class="player-name">♔ Magnus Carlsen · Blancs</div>
+                        <div class="player-rating">Classement indiqué dans la base : 2484 · 13 ans</div>
                     </div>
-                    <div style="font-size: 3em;">♚</div>
+                    <div style="font-size: 3em;">♔</div>
                 </div>
 
                 <div id="board"></div>
 
                 <div class="player-info">
-                    <div style="font-size: 3em;">♔</div>
+                    <div style="font-size: 3em;">♚</div>
                     <div style="text-align: right;">
-                        <div class="player-name">♔ Garry Kasparov</div>
-                        <div class="player-rating">ELO: 2831 | Champion du Monde 1985-2000</div>
+                        <div class="player-name">♚ Garry Kasparov · Noirs</div>
+                        <div class="player-rating">Classement indiqué dans la base : 2831 · champion du monde de 1985 à 2000</div>
                     </div>
                 </div>
 
@@ -374,19 +392,24 @@
 
         // Annotations détaillées avec analyse
         const moveAnnotations = {
-            1: { rating: 7.5, comment: "Ouverture classique e4 - Kasparov joue son répertoire habituel.", advantages: ["✓ Contrôle du centre"], benefits: ["✓ Développement harmonieux"], weaknesses: [] },
-            2: { rating: 8.0, comment: "Sicilienne! Carlsen choisit l'ouverture la plus combative.", advantages: ["✓ Contre-attaque immédiate"], benefits: ["✓ Crée déséquilibre"], weaknesses: [] },
-            3: { rating: 7.5, comment: "Système ouvert - parties vives garanties.", advantages: ["✓ Développement rapide"], benefits: ["✓ Initiative blanche"], weaknesses: [] },
-            4: { rating: 8.0, comment: "Échange au centre - Carlsen accepte le défi.", advantages: ["✓ Simplifie la position"], benefits: ["✓ Développement aisé"], weaknesses: [] },
-            5: { rating: 7.5, comment: "Variante Sveshnikov! Théorie de haut niveau.", advantages: ["✓ Structure solide"], benefits: ["✓ Jeu actif"], weaknesses: [] },
-            6: { rating: 8.5, comment: "e5! Coup thématique de la Sveshnikov. Carlsen connaît sa théorie!", advantages: ["✓ Contrôle d5", "✓ Libère les pièces"], benefits: ["✓ Position active"], weaknesses: ["✗ Affaiblit d6 et d5"] },
-            10: { rating: 7.0, comment: "Échange de fous - simplifie légèrement.", advantages: ["✓ Élimine défenseur"], benefits: ["✓ Pression sur e5"], weaknesses: [] },
-            15: { rating: 7.5, comment: "g6 - Carlsen fianchette et prépare la défense du roi.", advantages: ["✓ Roi plus sûr"], benefits: ["✓ Contrôle diagonale"], weaknesses: ["✗ Affaiblit f6"] },
-            16: { rating: 8.0, comment: "Nxd5 - Échange de cavaliers, Carlsen cherche la simplification.", advantages: ["✓ Réduit pression"], benefits: ["✓ Finale jouable"], weaknesses: [] },
-            20: { rating: 7.5, comment: "Rhd8 - activation des tours, préparant la défense.", advantages: ["✓ Tours actives"], benefits: ["✓ Pression sur colonne d"], weaknesses: [] },
-            25: { rating: 8.0, comment: "Rc5! Tour active au 5ème rang. Bonne défense de Carlsen.", advantages: ["✓ Tour très active", "✓ Contrôle c5"], benefits: ["✓ Contre-jeu"], weaknesses: [] },
-            28: { rating: 8.5, comment: "Rxd5! Échange de tours - Carlsen obtient une finale de tours nulle.", advantages: ["✓ Finale simple", "✓ Neutralise avantage blanc"], benefits: ["✓ Nulle assurée"], weaknesses: [] },
-            29: { rating: 9.0, comment: "Ke6! Le roi noir se centralise. Technique parfaite! NULLE.", advantages: ["✓ Roi actif", "✓ Position égale"], benefits: ["✓ Exploit contre Kasparov!"], weaknesses: [] }
+            1: { comment: "...d5 répond à 1.d4 et conteste le centre." },
+            2: { comment: "...c6 soutient le pion d5 : la partie entre dans une structure de défense semi-slave." },
+            6: { comment: "...Da5 attaque directement le cavalier c3 sur la diagonale a5–b4–c3." },
+            7: { comment: "...Fb4 ajoute une seconde attaque sur le cavalier c3 : vérifie les possibilités de défense et de chasse." },
+            8: { comment: "...O-O met le roi noir à l’abri et active la tour." },
+            9: { comment: "...e5 est la rupture centrale noire : calcule les échanges possibles au centre." },
+            12: { comment: "...dxc4 capture le pion blanc de c4. Compte les reprises disponibles avant de juger la prise." },
+            18: { comment: "...Nxc4 reprend le fou blanc qui venait de capturer en f6 : suis le bilan de l’échange." },
+            19: { comment: "...Bh2+ donne échec : cherche d’abord les réponses légales du roi blanc." },
+            21: { comment: "...Nxe4+ capture le cavalier e4 et met le roi h2 en échec." },
+            26: { comment: "...bxc6 reprend le cavalier blanc arrivé en c6. Observe la structure de pions qui en résulte." },
+            31: { comment: "...Qg6 place la dame noire sur la colonne g ; observe la réponse blanche avant de conclure à un échange." },
+            35: { comment: "...Rxe1 échange une paire de tours ; la partie se dirige vers une finale de tours." },
+            37: { comment: "...Kf7 active le roi noir dans la finale." },
+            43: { comment: "...h5 lance le pion h ; évalue les cases de pénétration des tours avant d’échanger des pions." },
+            46: { comment: "...Rb2 place la tour noire sur la deuxième rangée et cherche du contre-jeu." },
+            49: { comment: "...g5 avance le pion g et modifie les points d’entrée sur l’aile roi." },
+            51: { comment: "...Bf1 place le fou noir sur une diagonale active ; examine les cases qu’il contrôle et la réponse blanche." }
         };
 
         let game = new Chess();
@@ -408,6 +431,7 @@
                 position: 'start',
                 pieceTheme: '../../assets/chess-pieces/{piece}.svg'
             });
+            window.addEventListener('resize', () => board && board.resize());
 
             drawMovesList();
             updateMoveInfo();
@@ -422,19 +446,15 @@
                 const color = index % 2 === 0 ? '⚪' : '⚫';
                 const isBlackMove = index % 2 === 1;
 
-                const annotation = moveAnnotations[moveNum] || {
-                    rating: 7.0,
-                    comment: "Coup standard."
-                };
+                const annotation = moveAnnotations[moveNum];
 
                 let cardHTML = `
                     <div class="move-card" data-move="${index + 1}">
                         <div class="move-header">
                             <div class="move-number">${color} ${moveNum}.</div>
-                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
-                        </div>
+                         </div>
                         <div class="move-notation">${move.san}</div>
-                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                        ${isBlackMove && annotation ? `<div class="move-comment"><strong>À observer :</strong> ${annotation.comment}</div>` : ''}
                     </div>
                 `;
 

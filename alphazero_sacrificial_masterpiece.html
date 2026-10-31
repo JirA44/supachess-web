@@ -391,14 +391,7 @@
 
     <!-- Bibliothèque chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js">
-var __supaMoveKeysDown = new Set();
-        document.addEventListener('keyup', function(e) { __supaMoveKeysDown.delete(e.key); });
-        window.addEventListener('blur', function() { __supaMoveKeysDown.clear(); });
-        document.addEventListener('keydown', function(e){
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.repeat || __supaMoveKeysDown.has(e.key)) return;
-                __supaMoveKeysDown.add(e.key);
-            } if(e.key==='ArrowLeft') previousMove(); if(e.key==='ArrowRight') nextMove(); });
+document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previousMove(); if(e.key==='ArrowRight') nextMove(); });
 </script>
 
     <script>

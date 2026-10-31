@@ -185,10 +185,12 @@
         document.addEventListener('keyup', function(e) { __supaMoveKeysDown.delete(e.key); });
         window.addEventListener('blur', function() { __supaMoveKeysDown.clear(); });
         document.addEventListener('keydown',function(e){
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                if (e.repeat || __supaMoveKeysDown.has(e.key)) return;
+            if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+                if(e.repeat||__supaMoveKeysDown.has(e.key))return;
                 __supaMoveKeysDown.add(e.key);
-            }if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();});
+            }
+            if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();
+        });
         renderBoard(); updateMoveInfo();
     </script>
 <script src="supa-dots-widget.js"></script>

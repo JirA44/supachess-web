@@ -1450,6 +1450,7 @@
     // Flag lives on window because the IIFE can be evaluated more than once
     // (duplicate script tags, hot reload), and each run would rebind.
     var KEY_NAV_FLAG = '__cnKeyboardNavBound';
+    var KEY_NAV_HELD = Object.create(null);
 
     var KEY_NAV_MAP = [
         { keys: ['ArrowLeft'], names: ['previousMove', 'goBack', 'prevMove', 'movePrev'] },
@@ -1478,6 +1479,12 @@
         // The page's own globals are usually declared after this bundle, and
         // on some pages in a later script tag entirely, so the handler lookup
         // happens per keystroke rather than being cached here.
+        document.addEventListener('keyup', function (e) {
+            delete KEY_NAV_HELD[e.key];
+        });
+        window.addEventListener('blur', function () {
+            KEY_NAV_HELD = Object.create(null);
+        });
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey || e.altKey || e.metaKey) return;
             if (isTypingTarget(e.target)) return;
@@ -1489,11 +1496,18 @@
                 var handler = resolveNavHandler(entry.names);
                 if (!handler) continue;
 
+                if (e.repeat || KEY_NAV_HELD[e.key]) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return;
+                }
+                KEY_NAV_HELD[e.key] = true;
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 handler();
                 return;
             }
-        });
+        }, true);
     }
 
     // --- Init ---

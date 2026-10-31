@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 Anand vs Kasparov 1995 - The Tiger Strikes</title>
+    <title>Anand–Kasparov · PCA/Intel Grand Prix 1995 · Moscou</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -274,6 +274,9 @@
             backdrop-filter: blur(10px);
         }
 
+        .source-links { margin-top: 16px; line-height: 1.8; }
+        .source-links a { color: #a8e6ff; }
+
         .game-info-box h3 {
             color: #ffd700;
             margin-bottom: 18px;
@@ -305,30 +308,29 @@
 <body>
     <div class="container">
         <header>
-            <h1>🐅 Anand vs Kasparov - PCA/Intel Rapid 1995</h1>
+            <h1>🐅 Anand–Kasparov · PCA/Intel Grand Prix 1995</h1>
             <div class="subtitle">Viswanathan Anand vs Garry Kasparov - Le Tigre de Madras rugit!</div>
             <div>
-                <span class="badge">🔥 Nimzo-Indienne</span>
+                <span class="badge">Sicilienne Chekhover · B53</span>
                 <span class="badge">⚡ Partie Rapide</span>
-                <span class="badge">1-0 Victoire Anand!</span>
+                <span class="badge">1–0 · Anand gagne</span>
             </div>
             <a href="../../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
         </header>
 
         <div class="game-info-box">
             <h3>📖 À Propos de Cette Partie Légendaire</h3>
-            <p><strong>Contexte:</strong> Lors du championnat rapide PCA/Intel à New York 1995, Anand affronte le champion du monde Kasparov en finale.</p>
-            <p><strong>Importance:</strong> Une des rares victoires d'Anand contre Kasparov dans une partie de haut niveau. Démonstration du style rapide et tactique d'Anand.</p>
-            <p><strong>Brillance:</strong> Anand sacrifie un pion pour obtenir une initiative dévastatrice. Combinaison tactique magnifique au milieu de jeu.</p>
-            <p><strong>Legacy:</strong> Cette victoire confirme Anand comme l'un des meilleurs joueurs rapides de tous les temps. Il deviendra Champion du Monde en 2007.</p>
-        </div>
+            <p><strong>Contexte :</strong> cette partie rapide du PCA/Intel Grand Prix s’est jouée à Moscou le 30 avril 1995. Anand a les Blancs ; Kasparov, les Noirs. Les bases de parties la répertorient comme le deuxième affrontement de leur demi-finale.</p>
+            <p><strong>Ouverture :</strong> défense sicilienne, variante Chekhover (B53), conformément aux coups 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Qxd4.</p>
+            <p><strong>À observer :</strong> à partir de 24.a3, suis les échanges centraux jusqu’à 28.Rxd5, puis vérifie ce qui a été capturé et quelle position reste à Kasparov.</p>
+            <p class="source-links"><a href="../../data/games/anand_vs_kasparov_moscow_1995.pgn" download>Télécharger le PGN vérifié</a> · <a href="https://www.365chess.com/game.php?gid=1522536" target="_blank" rel="noopener noreferrer">Fiche de partie (365Chess)</a> · <a href="https://www.latimes.com/archives/la-xpm-1995-05-07-mn-63441-story.html" target="_blank" rel="noopener noreferrer">Compte rendu du tournoi à Moscou (Los Angeles Times)</a></p>
 
         <div class="main-content">
             <div class="board-section">
                 <div class="player-info black">
                     <div>
-                        <div class="player-name">♚ Garry Kasparov</div>
-                        <div class="player-rating">ELO: 2804 | Champion du Monde</div>
+                        <div class="player-name">♚ Garry Kasparov · Noirs</div>
+                        <div class="player-rating">Elo indiqué dans le PGN : 2805 · champion du monde en titre</div>
                     </div>
                     <div style="font-size: 3.5em;">♚</div>
                 </div>
@@ -338,8 +340,8 @@
                 <div class="player-info">
                     <div style="font-size: 3.5em;">♔</div>
                     <div style="text-align: right;">
-                        <div class="player-name">♔ Viswanathan Anand</div>
-                        <div class="player-rating">ELO: 2725 | Tiger of Madras</div>
+                        <div class="player-name">♔ Viswanathan Anand · Blancs</div>
+                        <div class="player-rating">Elo indiqué dans le PGN : 2715 · Inde</div>
                     </div>
                 </div>
 
@@ -360,31 +362,33 @@
     <script>
         const gamePGN = `[Event "PCA/Intel-GP"]
 [Site "Moscow"]
-[Date "1995.??.??"]
-[Round "?"]
+[Date "1995.04.30"]
+[Round "3.2"]
 [White "Anand, Viswanathan"]
 [Black "Kasparov, Gary"]
 [Result "1-0"]
 [WhiteElo "2715"]
 [BlackElo "2805"]
 [ECO "B53"]
-[Source "ChessBox.in"]
+[PlyCount "55"]
+[Source "365Chess, PCA/Intel-GP 1995"]
 
 1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Qxd4 Bd7 5. c4 Nc6 6. Qd2 g6 7. Be2 Bg7 8. O-O Nf6 9. Nc3 O-O 10. Rb1 a6 11. b3 Qa5 12. Bb2 Rfc8 13. Rfd1 Bg4 14. Qe3 Nd7 15. Nd5 Bxb2 16. Rxb2 Bxf3 17. Bxf3 e6 18. Nc3 Rd8 19. Rbd2 Nde5 20. Be2 Nb4 21. h4 b5 22. cxb5 axb5 23. Nxb5 Nbc6 24. a3 d5 25. exd5 Rxd5 26. Rxd5 exd5 27. b4 Qa4 28. Rxd5 1-0`;
 
         const moveAnnotations = {
-            1: { rating: 7.5, comment: "d4 - Anand ouvre de manière classique.", advantages: ["✓ Contrôle centre"], benefits: ["✓ Répertoire solide"], weaknesses: [] },
-            3: { rating: 8.0, comment: "Nimzo-Indienne! Kasparov choisit sa défense favorite.", advantages: ["✓ Cloue cavalier", "✓ Contrôle e4"], benefits: ["✓ Système solide"], weaknesses: [] },
-            7: { rating: 7.5, comment: "Bg2 fianchetto - système flexible d'Anand.", advantages: ["✓ Fou actif"], benefits: ["✓ Roi en sécurité"], weaknesses: [] },
-            9: { rating: 7.0, comment: "Qa5 - Kasparov met pression sur les blancs.", advantages: ["✓ Dame active"], benefits: ["✓ Cible c3"], weaknesses: [] },
-            13: { rating: 8.0, comment: "bxc3 - Anand accepte la structure de pions doublés.", advantages: ["✓ Colonne b ouverte"], benefits: ["✓ Initiative"], weaknesses: ["✗ Pions doublés"] },
-            15: { rating: 8.5, comment: "e4! Anand pousse au centre avec tempo!", advantages: ["✓ Gain d'espace", "✓ Attaque Bc4"], benefits: ["✓ Initiative centrale"], weaknesses: [] },
-            18: { rating: 8.0, comment: "Rab1 - Anand double sur la colonne b, pression!", advantages: ["✓ Tours doublées"], benefits: ["✓ Menaces concrètes"], weaknesses: [] },
-            23: { rating: 8.5, comment: "Échange de Dames - Anand va chercher la finale!", advantages: ["✓ Finale meilleure"], benefits: ["✓ Paire de fous"], weaknesses: [] },
-            28: { rating: 9.0, comment: "f4! Poussée agressive, les pions blancs avancent!", advantages: ["✓ Gain d'espace", "✓ Menace e5"], benefits: ["✓ Avantage clair"], weaknesses: [] },
-            30: { rating: 9.5, comment: "e5+! BRILLANT! Sacrifice de pion pour activer les pièces!", advantages: ["✓ Roi blanc actif", "✓ Pièces dominantes"], benefits: ["✓ Avantage décisif"], weaknesses: [] },
-            32: { rating: 9.0, comment: "Bxc6! Anand gagne le fou, l'avantage matériel!", advantages: ["✓ Gagne pièce"], benefits: ["✓ Position gagnante"], weaknesses: [] },
-            40: { rating: 10.0, comment: "Kxe6!! Le roi marche! Domination totale! 1-0", advantages: ["✓ Roi centralisé", "✓ Pion e passé"], benefits: ["✓ Victoire assurée"], weaknesses: [] }
+            3: { comment: "...cxd4 capture le pion blanc d4. Vérifie la reprise avant d’évaluer l’échange." },
+            5: { comment: "...Cc6 développe une pièce et attaque directement la dame blanche en d4." },
+            7: { comment: "...Fg7 complète le fianchetto commencé par ...g6." },
+            9: { comment: "...O-O met le roi noir à l’abri et active la tour." },
+            11: { comment: "...Da5 attaque le cavalier c3 sur la diagonale a5–b4–c3." },
+            12: { comment: "...Rfc8 place une tour sur la colonne c semi-ouverte." },
+            13: { comment: "...Fg4 attaque le cavalier blanc f3." },
+            15: { comment: "...Fxb2 profite de la diagonale libérée par le départ du cavalier c3." },
+            16: { comment: "...Fxf3 échange le fou contre le cavalier blanc f3." },
+            24: { comment: "...d5 rompt au centre après l’échange de plusieurs pièces." },
+            25: { comment: "...Rxd5 reprend au centre ; suis la réponse blanche avant de juger l’équilibre." },
+            26: { comment: "...exd5 reprend la tour blanche sur d5." },
+            27: { comment: "...Da4 donne une case active à la dame et vise le flanc dame." }
         };
 
         let game = new Chess();
@@ -420,19 +424,15 @@
                 const color = index % 2 === 0 ? '⚪' : '⚫';
                 const isBlackMove = index % 2 === 1;
 
-                const annotation = moveAnnotations[moveNum] || {
-                    rating: 7.0,
-                    comment: "Coup standard."
-                };
+                const annotation = moveAnnotations[moveNum];
 
                 let cardHTML = `
                     <div class="move-card" data-move="${index + 1}">
                         <div class="move-header">
                             <div class="move-number">${color} ${moveNum}.</div>
-                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
                         </div>
                         <div class="move-notation">${move.san}</div>
-                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                        ${isBlackMove && annotation ? `<div class="move-comment"><strong>À observer :</strong> ${annotation.comment}</div>` : ''}
                     </div>
                 `;
 

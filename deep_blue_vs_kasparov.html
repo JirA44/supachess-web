@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Blue vs Kasparov - Partie 6 (1997)</title>
+    <title>Deep Blue–Kasparov · 6e partie du match de 1997</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -16,538 +22,550 @@
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             color: #fff;
             min-height: 100vh;
-            padding: 20px;
+            padding: 30px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.6);
+            padding: 50px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(0,200,255,0.4);
+            box-shadow: 0 0 50px rgba(0,200,255,0.3);
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+            font-size: 3.2em;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-bottom: 15px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(0,200,255,0.5); }
+            50% { text-shadow: 0 0 40px rgba(0,255,136,0.8); }
         }
 
         .subtitle {
-            color: #aaa;
-            font-size: 1.2em;
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin: 15px 0;
+            text-shadow: 0 0 10px rgba(0,200,255,0.5);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 14px 24px;
+            margin: 8px;
+            border-radius: 25px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid rgba(0, 255, 136, 0.5);
+            font-size: 1.05em;
+            font-weight: bold;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 20px 45px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            color: #0f2027;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 25px 0;
+            font-size: 1.15em;
+        }
+
+        .back-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 212, 255, 0.8);
         }
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 600px 1fr;
-            gap: 30px;
-            align-items: start;
+            grid-template-columns: 680px 1fr;
+            gap: 50px;
+            margin-top: 40px;
         }
 
-        .info-panel {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 25px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
+        .board-section {
+            background: rgba(0,0,0,0.7);
+            padding: 45px;
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            border: 3px solid rgba(0,212,255,0.4);
+            box-shadow: 0 0 40px rgba(0,200,255,0.2);
         }
 
-        .info-panel h2 {
-            color: #6dd5ed;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-        }
-
-        .stat-item {
-            margin: 15px 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            border-left: 3px solid #2193b0;
-        }
-
-        .stat-label {
-            color: #888;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .board-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 25px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        #chessboard {
-            display: grid;
-            grid-template-columns: repeat(8, 70px);
-            grid-template-rows: repeat(8, 70px);
-            gap: 0;
+        #board {
+            width: 590px;
             margin: 0 auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0,212,255,0.5);
         }
 
-        .square {
-            width: 70px;
-            height: 70px;
+        .player-info {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 45px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
+            padding: 28px;
+            margin: 20px 0;
+            border-radius: 20px;
+            border: 3px solid rgba(0,212,255,0.5);
         }
 
-        .square.light {
-            background: #f0d9b5;
+        .player-info.human {
+            background: linear-gradient(135deg, rgba(255,100,0,0.3), rgba(255,150,0,0.2));
+            border-color: rgba(255,150,0,0.6);
         }
 
-        .square.dark {
-            background: #b58863;
+        .player-info.machine {
+            background: linear-gradient(135deg, rgba(0,212,255,0.3), rgba(0,255,136,0.2));
+            border-color: rgba(0,255,136,0.6);
         }
 
-        /* Pièces noires en noir pur avec contour blanc */
-        .piece-black {
-            color: #000000 !important;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-            text-shadow:
-                1px 1px 0 rgba(255,255,255,0.8),
-                -1px -1px 0 rgba(255,255,255,0.8),
-                1px -1px 0 rgba(255,255,255,0.8),
-                -1px 1px 0 rgba(255,255,255,0.8);
+        .player-name {
+            font-size: 1.8em;
+            font-weight: bold;
         }
 
-        /* Pièces blanches avec fond blanc complet */
-        .piece-white {
-            color: #000000 !important;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-            text-shadow:
-                1px 1px 0 rgba(255,255,255,0.5),
-                -1px -1px 0 rgba(255,255,255,0.5),
-                1px -1px 0 rgba(255,255,255,0.5),
-                -1px 1px 0 rgba(255,255,255,0.5);
-            box-shadow: 0 0 3px rgba(0,0,0,0.5);
-        }
-
-        .square:hover {
-            filter: brightness(1.2);
-            transform: scale(1.05);
+        .player-rating {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 7px;
         }
 
         .controls {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 35px;
         }
 
         .btn {
-            padding: 12px 24px;
+            padding: 18px 32px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            border-radius: 16px;
+            font-size: 18px;
             font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
             color: white;
-            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(33, 147, 176, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,212,255,0.6);
         }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+        .btn-first { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .btn-prev { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .btn-next { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .btn-last { background: linear-gradient(135deg, #30cfd0, #330867); }
 
         .move-info {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            min-height: 100px;
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            padding: 26px;
+            border-radius: 18px;
+            text-align: center;
+            font-weight: bold;
+            color: #0f2027;
+            margin-top: 25px;
+            font-size: 1.25em;
+        }
+
+        .moves-section {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        .move-card {
+            background: rgba(0,0,0,0.5);
+            border-radius: 22px;
+            padding: 32px;
+            margin-bottom: 28px;
+            border-left: 8px solid #00d4ff;
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+            transition: all 0.4s;
+        }
+
+        .move-card:hover {
+            transform: translateX(18px);
+            background: rgba(0,212,255,0.15);
+            border-left-color: #00ff88;
+        }
+
+        .move-card.active {
+            border-left-color: #00ff88;
+            background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,212,255,0.2));
+            box-shadow: 0 0 40px rgba(0,255,136,0.4);
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         .move-number {
-            font-size: 1.1em;
-            color: #6dd5ed;
-            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .move-rating {
+            font-size: 1.8em;
+            font-weight: bold;
+            padding: 14px 24px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #0f2027;
+        }
+
+        .move-notation {
+            font-size: 2.4em;
+            font-weight: bold;
+            margin-bottom: 16px;
+            font-family: 'Courier New', monospace;
+            color: #00d4ff;
         }
 
         .move-comment {
-            color: #ccc;
-            line-height: 1.6;
-            font-size: 1em;
+            font-size: 1.12em;
+            line-height: 2;
+            color: #f5f5f5;
+            margin-top: 16px;
         }
 
-        .timeline {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            max-height: 200px;
-            overflow-y: auto;
+        .move-analysis {
+            margin-top: 22px;
+            padding-top: 22px;
+            border-top: 2px solid rgba(0,212,255,0.3);
         }
 
-        .timeline-move {
-            padding: 8px;
-            margin: 5px 0;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .analysis-section {
+            margin-bottom: 18px;
         }
 
-        .timeline-move:hover {
-            background: rgba(33, 147, 176, 0.3);
-            transform: translateX(5px);
-        }
-
-        .timeline-move.active {
-            background: rgba(33, 147, 176, 0.5);
-            border-left: 3px solid #6dd5ed;
-        }
-
-        .highlight {
-            color: #ffd700;
+        .analysis-title {
             font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 12px;
+            font-size: 1.08em;
         }
 
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                justify-items: center;
-            }
+        .analysis-item {
+            padding: 12px 18px;
+            margin: 7px 0;
+            border-radius: 12px;
+            background: rgba(0,255,136,0.1);
+            font-size: 1.02em;
         }
 
-        .back-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+        .advantage { border-left: 5px solid #4caf50; }
+        .benefit { border-left: 5px solid #00d4ff; }
+        .weakness { border-left: 5px solid #ff5252; }
+
+        .game-info-box {
+            background: rgba(0,0,0,0.6);
+            padding: 40px;
+            border-radius: 22px;
+            margin-bottom: 45px;
+            border: 3px solid rgba(0,212,255,0.4);
+            backdrop-filter: blur(15px);
         }
 
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateX(-5px);
+        .game-info-box h3 {
+            color: #00ff88;
+            margin-bottom: 22px;
+            font-size: 1.7em;
         }
 
-        .historic-note {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(33, 147, 176, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #6dd5ed;
+        .game-info-box p {
+            line-height: 2.1;
+            margin-bottom: 16px;
+            color: #f8f8f8;
+            font-size: 1.1em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            border-radius: 10px;
+        }
+    @media (max-width: 950px) {
+            body { padding: 12px; }
+            header { padding: 24px 16px; }
+            h1 { font-size: clamp(1.7rem, 7vw, 2.6rem); }
+            .main-content { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+            .board-section { position: static; padding: 16px; }
+            #board { width: min(100%, 590px); }
         }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-btn">← Retour au menu</a>
-
     <div class="container">
         <header>
-            <h1>Deep Blue vs Garry Kasparov</h1>
-            <p class="subtitle">Partie 6 - Le jour où une machine battit le champion du monde</p>
+            <h1>Deep Blue–Kasparov · 6e partie</h1>
+            <div class="subtitle">Rematch IBM · New York · 11 mai 1997</div>
+            <div>
+                <span class="badge">Défense Caro-Kann · B17</span>
+                <span class="badge">6e partie · score avant : 2½–2½</span>
+                <span class="badge">1–0 · abandon après 19.c4</span>
+            </div>
+            <a href="./index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
         </header>
 
+        <div class="game-info-box">
+            <h3>Repères historiques</h3>
+            <p>Le 11 mai 1997, à New York, Deep Blue affronte Garry Kasparov dans la sixième partie du rematch. Le score est à égalité, 2½–2½. Après <strong>19.c4</strong>, Kasparov abandonne; Deep Blue gagne la partie 1–0 et le match 3½–2½.</p>
+            <p>Cette victoire fait de Deep Blue le premier ordinateur à remporter un match contre le champion du monde en titre dans ces conditions de match. Elle ne permet pas de convertir la force du moteur en Elo FIDE humain.</p>
+            <p>Les annotations ci-dessous décrivent certains coups de la partie; elles ne sont pas des évaluations Stockfish. La ligne complète et son résultat sont accessibles dans le <a href="./data/games/deep_blue_kasparov_1997_game6.pgn" download>PGN source</a>. <a href="https://www.ibm.com/history/deep-blue" target="_blank" rel="noopener noreferrer">Source historique IBM</a>.</p>
+        </div>
+
         <div class="main-content">
-            <div class="info-panel">
-                <h2>Informations de la partie</h2>
-                <div class="stat-item">
-                    <div class="stat-label">Blancs</div>
-                    <div class="stat-value">Deep Blue (IBM)</div>
+            <div class="board-section">
+                <div class="player-info machine">
+                    <div>
+                        <div class="player-name">♔ Deep Blue · Blancs</div>
+                        <div class="player-rating">IBM RS/6000 SP · ordinateur</div>
+                    </div>
+                    <div style="font-size: 4em;">🤖</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Noirs</div>
-                    <div class="stat-value">Garry Kasparov</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Événement</div>
-                    <div class="stat-value">Match revanche IBM</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Lieu</div>
-                    <div class="stat-value">New York, USA</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Date</div>
-                    <div class="stat-value">11 mai 1997</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Résultat</div>
-                    <div class="stat-value">1-0 (Deep Blue)</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Score final</div>
-                    <div class="stat-value">3½-2½ pour Deep Blue</div>
-                </div>
-            </div>
 
-            <div class="board-container">
-                <div id="chessboard"></div>
+                <div id="board"></div>
+
+                <div class="player-info human">
+                    <div>
+                        <div class="player-name">♚ Garry Kasparov · Noirs</div>
+                        <div class="player-rating">Elo PGN : 2785 · champion du monde en titre</div>
+                    </div>
+                    <div style="font-size: 4em;">👤</div>
+                </div>
+
                 <div class="controls">
-                    <button class="btn" onclick="goToStart()">⏮ Début</button>
-                    <button class="btn" onclick="previousMove()">◀ Précédent</button>
-                    <button class="btn" onclick="nextMove()">Suivant ▶</button>
-                    <button class="btn" onclick="goToEnd()">Fin ⏭</button>
+                    <button class="btn btn-first" onclick="goToStart()">⏮ Début</button>
+                    <button class="btn btn-prev" onclick="goToPrevious()">◀ Préc</button>
+                    <button class="btn btn-next" onclick="goToNext()">Suiv ▶</button>
+                    <button class="btn btn-last" onclick="goToEnd()">⏭ Fin</button>
                 </div>
-                <div class="move-info">
-                    <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Partie décisive du match historique. Pour la première fois, une machine bat le champion du monde d'échecs en titre dans un match officiel.</div>
-                </div>
+
+                <div class="move-info" id="moveInfo">Position de départ</div>
             </div>
 
-            <div class="info-panel">
-                <h2>Contexte historique</h2>
-                <div class="historic-note">
-                    <strong style="color: #6dd5ed;">Un moment historique</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Cette sixième et dernière partie marque un tournant dans l'histoire de l'intelligence artificielle. Kasparov, visiblement déstabilisé psychologiquement par le match, commet une erreur fatale et abandonne après seulement 19 coups.</p>
-                </div>
-                <div class="timeline" id="timeline"></div>
-                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 8px; border-left: 3px solid #ffd700;">
-                    <strong style="color: #ffd700;">Impact:</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Cette victoire a prouvé que les ordinateurs pouvaient rivaliser avec les meilleurs joueurs humains, marquant le début d'une nouvelle ère pour l'IA.</p>
-                </div>
-            </div>
+            <div class="moves-section" id="movesSection"></div>
         </div>
     </div>
 
-    <!-- Bibliothèque chess.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
     <script>
-        // Initialisation du moteur chess.js
-        const chess = new Chess();
+        const gamePGN = `[Event "IBM Man-Machine Rematch"]
+[Site "New York, NY USA"]
+[Date "1997.05.11"]
+[Round "6"]
+[White "Deep Blue"]
+[Black "Garry Kasparov"]
+[Result "1-0"]
+[WhiteElo "?"]
+[BlackElo "2785"]
+[ECO "B17"]
+[PlyCount "37"]
 
-        // PGN de la partie historique (Game 6)
-        const gameMoves = [
-            { move: 'e4', comment: '🤖 Deep Blue ouvre avec le coup de roi classique. La machine IBM lance son offensive avec le coup le plus populaire de l\'histoire!' },
-            { move: 'c6', comment: '💎 LA CARO-KANN! Kasparov choisit une défense solide et fiable. Une ouverture favorite des joueurs positionnels cherchant une structure saine.' },
-            { move: 'd4', comment: 'Occupation classique du centre. Deep Blue construit un centre de pions idéal avec e4 et d4!' },
-            { move: 'd5', comment: 'Kasparov conteste immédiatement le centre! Le champion du monde revendique son espace et crée une tension stratégique.' },
-            { move: 'Nc3', comment: 'Deep Blue développe le cavalier dame avec pression sur d5. Le cavalier soutient e4 et prépare des options flexibles!' },
-            { move: 'dxe4', comment: 'Kasparov échange au centre, libérant la tension. Il ouvre la diagonale pour son fou c8 et simplifie la position!' },
-            { move: 'Nxe4', comment: 'Récupération naturelle avec le cavalier. Deep Blue centralise sa pièce mineure sur une case dominante!' },
-            { move: 'Nd7', comment: 'Développement du cavalier dame de Kasparov. Le champion prépare Ngf6 et garde une structure flexible!' },
-            { move: 'Ng5', comment: '🔥 PLACEMENT AGRESSIF! Deep Blue attaque f7, le point faible traditionnel! Le cavalier menace de créer des problèmes immédiats!' },
-            { move: 'Ngf6', comment: 'Kasparov développe son cavalier roi tout en défendant e4 et h7. Développement naturel avec défense active!' },
-            { move: 'Bd3', comment: '💥 LE FOU VISE H7! Deep Blue pointe vers les cases faibles autour du roi noir. Pression constante sur le roque futur!' },
-            { move: 'e6', comment: 'Consolidation du centre et libération du fou f8. Kasparov renforce sa structure mais crée une certaine rigidité!' },
-            { move: 'N1f3', comment: 'Deep Blue développe son deuxième cavalier. Les pièces blanches se coordonnent harmonieusement pour l\'attaque!' },
-            { move: 'h6', comment: 'Kasparov chasse le cavalier agressif g5. Coup prophylactique qui gagne du temps mais affaiblit le roque!' },
-            { move: 'Nxe6', comment: '⚡⚡⚡ SACRIFICE BRILLANT! DEEP BLUE SACRIFIE LE CAVALIER! La machine calcule que la destruction de la structure de pions vaut le matériel!' },
-            { move: 'Qe7', comment: 'Kasparov doit répondre à la menace immédiate. Le champion défend f7 et attaque le cavalier e6!' },
-            { move: 'O-O', comment: '👑 DEEP BLUE ROQUE CALMEMENT! Coup psychologiquement dévastateur - la machine ignore les menaces et augmente la pression! Kasparov est sous le choc!' },
-            { move: 'fxe6', comment: 'Kasparov capture finalement le cavalier. Mais son roi est maintenant tragiquement exposé au centre avec e6 affaibli!' },
-            { move: 'Bg6+', comment: '🔥 ÉCHEC DU FOU! Deep Blue donne échec avec tempo! Le roi noir doit bouger et ne pourra JAMAIS roquer!' },
-            { move: 'Kd8', comment: '😱 LE ROI DOIT FUIR! Kasparov perd le droit de roquer. Son roi au centre deviendra une cible permanente!' },
-            { move: 'Bf4', comment: '💎 LE FOU SE REPOSITIONNE! Deep Blue maintient la pression tout en menaçant d\'envahir avec Re1. Coordination parfaite!' },
-            { move: 'b5', comment: 'Kasparov cherche désespérément du contre-jeu sur l\'aile dame. Tentative de créer des menaces contre le roi blanc!' },
-            { move: 'a4', comment: '⚡ DEEP BLUE BLOQUE L\'EXPANSION! La machine empêche b4 et ouvre la possibilité axb5. Précision chirurgicale!' },
-            { move: 'Bb7', comment: 'Développement du fou de Kasparov. Le champion essaie d\'activer ses pièces dans une position déjà compromise!' },
-            { move: 'Re1', comment: '♜ LA TOUR ENTRE EN JEU! Deep Blue occupe la colonne e ouverte avec une pression dévastatrice sur e6!' },
-            { move: 'Nd5', comment: 'Kasparov centralise son cavalier dans une tentative désespérée de défense. Le cavalier essaie de bloquer la colonne e!' },
-            { move: 'Bg3', comment: 'Le fou recule mais reste actif. Deep Blue maintient toutes ses pièces en jeu et prépare l\'assaut final!' },
-            { move: 'Kc8', comment: '😰 LE ROI CHERCHE REFUGE! Kasparov déplace son roi vers l\'aile dame. Chaque case est dangereuse pour le monarque exposé!' },
-            { move: 'axb5', comment: '💥 DEEP BLUE OUVRE LES LIGNES! Capture qui ouvre la position et expose encore plus le roi noir!' },
-            { move: 'cxb5', comment: 'Reprise forcée de Kasparov. Le champion n\'a pas le choix, chaque coup devient forcing!' },
-            { move: 'Qd3', comment: '♛ LA DAME ENTRE DANS L\'ATTAQUE! Deep Blue amène la pièce la plus puissante. Menaces multiples sur b5, g6 et h7!' },
-            { move: 'Bc6', comment: 'Kasparov défend désespérément. Le fou essaie de coordonner la défense mais les faiblesses sont trop nombreuses!' },
-            { move: 'Bf5', comment: '🔥 LE FOU ATTAQUE E6! Deep Blue cible le pion faible e6. Chaque pièce blanche participe à l\'assaut!' },
-            { move: 'exf5', comment: 'Kasparov doit capturer pour éviter de perdre le pion. Mais cela ouvre encore plus la position!' },
-            { move: 'Rxe7', comment: '⚡⚡⚡ LA TOUR ENVAHIT LA 7ÈME RANGÉE! Deep Blue pénètre avec une force dévastatrice! Position complètement gagnante!' },
-            { move: 'Bxe7', comment: 'Reprise forcée du fou. Kasparov est acculé, ses pièces sont désorganisées et son roi complètement exposé!' },
-            { move: 'c4', comment: '💥 DEEP BLUE OUVRE ENCORE LA POSITION! Le pion c4 attaque b5 et le cavalier d5. Les Noirs s\'effondrent!' }];
+1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Ng5 Ngf6 6. Bd3 e6 7. N1f3 h6
+8. Nxe6 Qe7 9. O-O fxe6 10. Bg6+ Kd8 11. Bf4 b5 12. a4 Bb7 13. Re1 Nd5
+14. Bg3 Kc8 15. axb5 cxb5 16. Qd3 Bc6 17. Bf5 exf5 18. Rxe7 Bxe7 19. c4 1-0`;
 
-        // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)
-        const pieceSymbols = {
-            'p': '♙', 'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔',
-            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        const moveAnnotations = {
+            1: "1...c6 : Kasparov choisit la défense Caro-Kann.",
+            2: "2...d5 : les Noirs contestent le centre.",
+            3: "3...dxe4 : le pion noir capture le pion blanc en e4.",
+            4: "4...Nd7 : le cavalier se développe en d7.",
+            5: "5...Ngf6 : le cavalier attaque le cavalier blanc en e4.",
+            6: "6...e6 : le pion libère la diagonale du fou f8.",
+            7: "7...h6 : le pion attaque le cavalier blanc en g5.",
+            8: "8...Qe7 : la dame noire se place en e7.",
+            9: "9...fxe6 : le pion f7 capture le cavalier blanc en e6.",
+            10: "10...Kd8 : le roi quitte l'échec donné par 10.Bg6+.",
+            11: "11...b5 : les Noirs avancent leur pion b.",
+            12: "12...Bb7 : le fou se développe en b7.",
+            13: "13...Nd5 : le cavalier se place au centre, en d5.",
+            14: "14...Kc8 : le roi se déplace en c8.",
+            15: "15...cxb5 : le pion c6 capture le pion blanc en b5.",
+            16: "16...Bc6 : le fou se replie en c6.",
+            17: "17...exf5 : le pion e6 capture le fou blanc en f5.",
+            18: "18...Bxe7 : le fou capture la tour blanche en e7."
         };
 
-        let currentMoveIndex = -1;
+        let game = new Chess();
+        let board = null;
+        let moveHistory = [];
+        let currentMoveIndex = 0;
 
-        function initBoard() {
-            const board = document.getElementById('chessboard');
-            board.innerHTML = '';
-            const position = chess.board();
-
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 8; col++) {
-                    const square = document.createElement('div');
-                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
-                    square.dataset.row = row;
-                    square.dataset.col = col;
-
-                    const piece = position[row][col];
-                    if (piece) {
-                        const pieceSpan = document.createElement('span');
-                        pieceSpan.textContent = pieceSymbols[piece.color === 'w' ? piece.type.toUpperCase() : piece.type];
-                        pieceSpan.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-                        square.appendChild(pieceSpan);
-                    }
-
-                    board.appendChild(square);
-                }
-            }
-            updateTimeline();
+        function parsePGN() {
+            game.load_pgn(gamePGN);
+            moveHistory = game.history({ verbose: true });
+            game.reset();
         }
 
-        function updateMoveInfo() {
-            const moveNumberEl = document.getElementById('moveNumber');
-            const moveCommentEl = document.getElementById('moveComment');
+        function init() {
+            parsePGN();
 
-            if (currentMoveIndex === -1) {
-                moveNumberEl.textContent = 'Position initiale';
-                moveCommentEl.textContent = 'Partie décisive du match historique. Pour la première fois, une machine bat le champion du monde d\'échecs en titre dans un match officiel.';
-            } else {
-                const moveNum = Math.floor(currentMoveIndex / 2) + 1;
-                const isWhite = currentMoveIndex % 2 === 0;
-                const move = gameMoves[currentMoveIndex].move;
-                moveNumberEl.textContent = `Coup ${moveNum}${isWhite ? '.' : '...'} ${move}`;
-                moveCommentEl.innerHTML = gameMoves[currentMoveIndex].comment;
-            }
+            board = Chessboard('board', {
+                draggable: false,
+                position: 'start',
+                pieceTheme: './assets/chess-pieces/{piece}.svg'
+            });
+
+            drawMovesList();
+            updateMoveInfo();
         }
 
-        function updateTimeline() {
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = '';
+        function drawMovesList() {
+            const movesDiv = $('#movesSection');
+            movesDiv.html('<h2 style="margin-bottom: 35px; font-size: 2.3em; color: #00ff88;">🤖 Analyse de la Partie Historique</h2>');
 
-            gameMoves.forEach((moveData, index) => {
-                const moveEl = document.createElement('div');
-                moveEl.className = 'timeline-move';
-                if (index === currentMoveIndex) {
-                    moveEl.classList.add('active');
-                }
-
+            moveHistory.forEach((move, index) => {
                 const moveNum = Math.floor(index / 2) + 1;
-                const isWhite = index % 2 === 0;
-                moveEl.textContent = `${moveNum}${isWhite ? '.' : '...'} ${moveData.move}`;
+                const color = index % 2 === 0 ? '⚪' : '⚫';
+                const isBlackMove = index % 2 === 1;
 
-                moveEl.onclick = () => goToMove(index);
-                timeline.appendChild(moveEl);
+                const annotation = isBlackMove ? moveAnnotations[moveNum] : null;
+
+                let cardHTML = `
+                    <div class="move-card" data-move="${index + 1}">
+                        <div class="move-header">
+                            <div class="move-number">${color} ${moveNum}.</div>
+                        </div>
+                        <div class="move-notation">${move.san}</div>
+                        ${annotation ? `<div class="move-comment">${annotation}</div>` : ''}
+                    </div>
+                `;
+
+                const $card = $(cardHTML);
+                $card.on('click', () => goToMoveNumber(index + 1));
+                movesDiv.append($card);
             });
         }
 
-        function nextMove() {
-            if (currentMoveIndex < gameMoves.length - 1) {
-                currentMoveIndex++;
-                const move = gameMoves[currentMoveIndex].move;
+        function updateMoveInfo() {
+            if (currentMoveIndex === 0) {
+                $('#moveInfo').text('Position de départ · rematch de 1997');
+            } else {
+                const moveNum = Math.floor((currentMoveIndex - 1) / 2) + 1;
+                const move = moveHistory[currentMoveIndex - 1];
+                $('#moveInfo').text(`Coup ${moveNum}: ${move.san}`);
+            }
 
-                if (move === '1-0') {
-                    updateMoveInfo();
-                    updateTimeline();
-                    return;
-                }
-
-                try {
-                    chess.move(move, { sloppy: true });
-                    initBoard();
-                    updateMoveInfo();
-                } catch (e) {
-                    console.error('Erreur de coup:', move, e);
+            $('.move-card').removeClass('active');
+            if (currentMoveIndex > 0) {
+                const activeCard = $(`.move-card[data-move="${currentMoveIndex}"]`);
+                activeCard.addClass('active');
+                // Scroll active move into view centered
+                if (activeCard.length > 0) {
+                    activeCard[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
         }
 
-        function previousMove() {
-            if (currentMoveIndex >= 0) {
+        function goToNext() {
+            if (currentMoveIndex < moveHistory.length) {
+                game.move(moveHistory[currentMoveIndex].san);
+                currentMoveIndex++;
+                board.position(game.fen());
+                updateMoveInfo();
+            }
+        }
+
+        function goToPrevious() {
+            if (currentMoveIndex > 0) {
                 currentMoveIndex--;
-                rebuildGame();
+                game.reset();
+                for (let i = 0; i < currentMoveIndex; i++) {
+                    game.move(moveHistory[i].san);
+                }
+                board.position(game.fen());
                 updateMoveInfo();
             }
         }
 
         function goToStart() {
-            currentMoveIndex = -1;
-            chess.reset();
-            initBoard();
+            currentMoveIndex = 0;
+            game.reset();
+            board.position('start');
             updateMoveInfo();
         }
 
         function goToEnd() {
-            while (currentMoveIndex < gameMoves.length - 1) {
-                nextMove();
+            goToStart();
+            while (currentMoveIndex < moveHistory.length) {
+                goToNext();
             }
         }
 
-        function goToMove(index) {
-            if (index < currentMoveIndex) {
-                currentMoveIndex = index;
-                rebuildGame();
-                updateMoveInfo();
-            } else {
-                while (currentMoveIndex < index) {
-                    nextMove();
-                }
+        function goToMoveNumber(moveIndex) {
+            goToStart();
+            for (let i = 0; i < moveIndex && i < moveHistory.length; i++) {
+                goToNext();
             }
         }
 
-        function rebuildGame() {
-            chess.reset();
-            for (let i = 0; i <= currentMoveIndex; i++) {
-                const move = gameMoves[i].move;
-                if (move !== '1-0') {
-                    try {
-                        chess.move(move, { sloppy: true });
-                    } catch (e) {
-                        console.error('Erreur de reconstruction:', move, e);
-                    }
-                }
+        $(document).on('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                goToNext();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToPrevious();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToStart();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToEnd();
             }
-            initBoard();
-        }
+        });
 
-        // Initialisation
-        initBoard();
-        updateMoveInfo();
+        $(document).ready(init);
     </script>
+
+    <!-- Bouton retour en bas -->
+    <div style="text-align: center; margin: 40px 0;">
+        <a href="./index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+    </div>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<link rel="stylesheet" href="shared/community.css">
-<script src="shared/i18n.js"></script>
-<script src="shared/community.js"></script>
+<link rel="stylesheet" href="./shared/community.css">
+<script src="./shared/i18n.js"></script>
+<script src="./shared/community.js"></script>
 <!-- /ChessNova Community -->
-<script src="supa-dots-widget.js"></script>
+    <script src="pgn-export.js"></script>
 
-<script defer src="shared/site-global.js"></script>
+<script defer src="./shared/site-global.js"></script>
 </body>
 </html>

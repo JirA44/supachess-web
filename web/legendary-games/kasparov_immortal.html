@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasparov vs Topalov 1999 - The Immortal Game</title>
+    <title>Kasparov–Topalov 1999 · Partie légendaire</title>
 
     <!-- Chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -235,8 +235,9 @@
     <div class="container">
         <header>
             <a href="../../index.html" class="back-button">← Retour à la Bibliothèque</a>
-            <h1>🏆 Kasparov vs Topalov 1999</h1>
-            <div class="subtitle">"The Immortal Game" - Wijk aan Zee</div>
+            <a href="../../data/games/kasparov_topalov_1999_immortal.pgn" download>PGN complet</a>
+            <h1>🏆 Kasparov–Topalov · Wijk aan Zee 1999</h1>
+            <div class="subtitle">Hoogovens · 20 janvier 1999 · 1–0</div>
         </header>
 
         <div class="main-content">
@@ -256,7 +257,7 @@
                     <div class="player player-white">
                         <div>
                             <div class="player-name">⚪ Garry Kasparov</div>
-                            <div class="player-info">Champion du Monde • ELO 2812</div>
+                            <div class="player-info">Champion du monde · Blancs</div>
                         </div>
                         <div class="player-info">Russie 🇷🇺</div>
                     </div>
@@ -275,7 +276,7 @@
                     <div class="move-notation">-</div>
                     <div class="move-comment">
                         Cliquez sur "Suivant" pour commencer à explorer cette partie légendaire.
-                        Kasparov va démontrer une combinaison tactique extraordinaire avec un sacrifice de Dame spectaculaire!
+                        Rejouez la partie coup par coup. Le commentaire signale quelques moments clés sans attribuer de note moteur.
                     </div>
                 </div>
 
@@ -284,18 +285,15 @@
                     <p><strong>Tournoi:</strong> Hoogovens Tournament (Wijk aan Zee)</p>
                     <p><strong>Date:</strong> 20 Janvier 1999</p>
                     <p><strong>Résultat:</strong> 1-0 (Victoire des Blancs)</p>
-                    <p><strong>Ouverture:</strong> Pirc Defense</p>
-                    <p><strong>Coups:</strong> 44 moves</p>
+                    <p><strong>Ouverture:</strong> Défense Pirc · B07</p>
+                    <p><strong>Coups:</strong> 44 coups complets · 87 demi-coups</p>
                     <br>
                     <p>
-                        Cette partie est souvent appelée <span class="highlight-text">"The Immortal Game"</span> du 20ème siècle.
-                        Kasparov démontre un sacrifice de Dame extraordinaire suivi d'une attaque dévastatrice avec ses pièces mineures.
-                        La précision calculatoire et la vision tactique sont absolument époustouflantes.
+                        Cette partie est connue sous le nom de « Kasparov’s Immortal ». Le moment le plus célèbre est 24.Rxd4!, un sacrifice de tour qui ouvre la position du roi noir.
                     </p>
                     <br>
                     <p>
-                        <span class="highlight-text">Point culminant:</span> Le coup 24.Rxd4!! est considéré comme l'un des plus beaux coups
-                        de l'histoire des échecs, sacrifiant la Dame pour une attaque irrésistible.
+                        <span class="highlight-text">Moment clé :</span> après 24.Rxd4 cxd4, Kasparov poursuit l’attaque par 25.Re7+. La pièce sacrifiée est une tour, pas la dame.
                     </p>
                 </div>
             </div>
@@ -310,93 +308,93 @@
 
         // Partie complète avec commentaires en français
         const moves = [
-            { move: 'e4', comment: "Kasparov ouvre classique." },
-            { move: 'd6', comment: "Topalov Pirc moderne." },
-            { move: 'd4', comment: "d4 centre." },
-            { move: 'Nf6', comment: "Nf6 développement." },
-            { move: 'Nc3', comment: "Nc3 cavalier." },
-            { move: 'g6', comment: "g6 fianchetto." },
-            { move: 'Be3', comment: "Be3 solide." },
-            { move: 'Bg7', comment: "Bg7 fianchetté." },
-            { move: 'Qd2', comment: "Qd2 grand roque." },
-            { move: 'c6', comment: "c6 solide." },
-            { move: 'f3', comment: "f3 renforce e4." },
-            { move: 'b5', comment: "b5 expansion!" },
-            { move: 'Nge2', comment: "Nge2 vers g3." },
-            { move: 'Nbd7', comment: "Nbd7 développement." },
-            { move: 'Bh6', comment: "Bh6 échange!" },
-            { move: 'Bxh6', comment: "Bxh6 forcé." },
-            { move: 'Qxh6', comment: "Qxh6 active." },
-            { move: 'Bb7', comment: "Bb7 développement." },
-            { move: 'a3', comment: "a3 prépare roque." },
-            { move: 'e5', comment: "e5 contre!" },
-            { move: 'O-O-O', comment: "O-O-O audacieux!" },
-            { move: 'Qe7', comment: "Qe7 développe." },
-            { move: 'Kb1', comment: "Kb1 sécurité." },
-            { move: 'a6', comment: "a6 contre-jeu." },
-            { move: 'Nc1', comment: "Nc1 vers b3." },
-            { move: 'O-O-O', comment: "O-O-O deux roqués!" },
-            { move: 'Nb3', comment: "Nb3 case." },
-            { move: 'exd4', comment: "exd4 ouvre." },
-            { move: 'Rxd4', comment: "Rxd4 active!" },
-            { move: 'c5', comment: "c5 attaque." },
-            { move: 'Rd1', comment: "Rd1 recule." },
-            { move: 'Nb6', comment: "Nb6 actif." },
-            { move: 'g3', comment: "g3 sécurité." },
-            { move: 'Kb8', comment: "Kb8 écarte." },
-            { move: 'Na5', comment: "Na5 saute!" },
-            { move: 'Ba8', comment: "Ba8 recule." },
-            { move: 'Bh3', comment: "Bh3 vise d7." },
-            { move: 'd5', comment: "d5 contre." },
-            { move: 'Qf4+', comment: "Qf4+ ÉCHEC entre!" },
-            { move: 'Ka7', comment: "Ka7 fuit." },
-            { move: 'Rhe1', comment: "Rhe1 tours actives!" },
-            { move: 'd4', comment: "d4 passé." },
-            { move: 'Nd5', comment: "Nd5 bondit!" },
-            { move: 'Nbxd5', comment: "Nbxd5 prend." },
-            { move: 'exd5', comment: "exd5 reprise." },
-            { move: 'Qd6', comment: "Qd6 centralise." },
-            { move: 'Rxd4', comment: "Rxd4 sacrifice!" },
-            { move: 'cxd4', comment: "cxd4 forcé." },
-            { move: 'Re7+', comment: "Re7+ ÉCHEC entre!" },
-            { move: 'Kb6', comment: "Kb6 exposé." },
-            { move: 'Qxd4+', comment: "Qxd4+ ÉCHEC dévastatrice!" },
-            { move: 'Kxa5', comment: "Kxa5 prend." },
-            { move: 'b4+', comment: "b4+ ÉCHEC pion!" },
-            { move: 'Ka4', comment: "Ka4 fuite." },
-            { move: 'Qc3', comment: "Qc3 mat!" },
-            { move: 'Qxd5', comment: "Qxd5 échange." },
-            { move: 'Ra7', comment: "Ra7 chasse!" },
-            { move: 'Bb7', comment: "Bb7 désespoir." },
-            { move: 'Rxb7', comment: "Rxb7 capture!" },
-            { move: 'Qc4', comment: "Qc4 espoir." },
-            { move: 'Qxf6', comment: "Qxf6 prend!" },
-            { move: 'Kxa3', comment: "Kxa3 pion." },
-            { move: 'Qxa6+', comment: "Qxa6+ ÉCHEC!" },
-            { move: 'Kxb4', comment: "Kxb4 forcé." },
-            { move: 'c3+', comment: "c3+ ÉCHEC!" },
-            { move: 'Kxc3', comment: "Kxc3 prend." },
-            { move: 'Qa1+', comment: "Qa1+ ÉCHEC!" },
-            { move: 'Kd2', comment: "Kd2 fuite." },
-            { move: 'Qb2+', comment: "Qb2+ ÉCHEC!" },
-            { move: 'Kd1', comment: "Kd1 coin." },
-            { move: 'Bf1', comment: "Bf1 entre!" },
-            { move: 'Rd2', comment: "Rd2 active." },
-            { move: 'Rd7', comment: "Rd7 attaque!" },
-            { move: 'Rxd7', comment: "Rxd7 forcé." },
-            { move: 'Bxc4', comment: "Bxc4 capture!" },
-            { move: 'bxc4', comment: "bxc4 reprise." },
-            { move: 'Qxh8', comment: "Qxh8 tour!" },
-            { move: 'Rd3', comment: "Rd3 désespoir." },
-            { move: 'Qa8', comment: "Qa8 domine." },
-            { move: 'c3', comment: "c3 passé." },
-            { move: 'Qa4+', comment: "Qa4+ ÉCHEC!" },
-            { move: 'Ke1', comment: "Ke1 centre." },
-            { move: 'f4', comment: "f4 avance." },
-            { move: 'f5', comment: "f5 espoir." },
-            { move: 'Kc1', comment: "Kc1 actif." },
-            { move: 'Rd2', comment: "Rd2 active." },
-            { move: 'Qa7', comment: "Qa7 VICTOIRE BRILLANTE!" }
+            { move: 'e4', comment: "" },
+            { move: 'd6', comment: "" },
+            { move: 'd4', comment: "" },
+            { move: 'Nf6', comment: "" },
+            { move: 'Nc3', comment: "" },
+            { move: 'g6', comment: "" },
+            { move: 'Be3', comment: "" },
+            { move: 'Bg7', comment: "" },
+            { move: 'Qd2', comment: "" },
+            { move: 'c6', comment: "" },
+            { move: 'f3', comment: "" },
+            { move: 'b5', comment: "" },
+            { move: 'Nge2', comment: "" },
+            { move: 'Nbd7', comment: "" },
+            { move: 'Bh6', comment: "" },
+            { move: 'Bxh6', comment: "" },
+            { move: 'Qxh6', comment: "" },
+            { move: 'Bb7', comment: "" },
+            { move: 'a3', comment: "" },
+            { move: 'e5', comment: "" },
+            { move: 'O-O-O', comment: "" },
+            { move: 'Qe7', comment: "" },
+            { move: 'Kb1', comment: "" },
+            { move: 'a6', comment: "" },
+            { move: 'Nc1', comment: "" },
+            { move: 'O-O-O', comment: "" },
+            { move: 'Nb3', comment: "" },
+            { move: 'exd4', comment: "" },
+            { move: 'Rxd4', comment: "24.Rxd4! sacrifie une tour pour ouvrir des lignes vers le roi noir. Topalov accepte par 24...cxd4." },
+            { move: 'c5', comment: "" },
+            { move: 'Rd1', comment: "" },
+            { move: 'Nb6', comment: "" },
+            { move: 'g3', comment: "" },
+            { move: 'Kb8', comment: "" },
+            { move: 'Na5', comment: "" },
+            { move: 'Ba8', comment: "" },
+            { move: 'Bh3', comment: "" },
+            { move: 'd5', comment: "" },
+            { move: 'Qf4+', comment: "" },
+            { move: 'Ka7', comment: "" },
+            { move: 'Rhe1', comment: "" },
+            { move: 'd4', comment: "" },
+            { move: 'Nd5', comment: "" },
+            { move: 'Nbxd5', comment: "" },
+            { move: 'exd5', comment: "" },
+            { move: 'Qd6', comment: "" },
+            { move: 'Rxd4', comment: "" },
+            { move: 'cxd4', comment: "" },
+            { move: 'Re7+', comment: "25.Re7+ poursuit l’attaque et rend la prise de la tour tactiquement dangereuse." },
+            { move: 'Kb6', comment: "" },
+            { move: 'Qxd4+', comment: "" },
+            { move: 'Kxa5', comment: "" },
+            { move: 'b4+', comment: "" },
+            { move: 'Ka4', comment: "" },
+            { move: 'Qc3', comment: "" },
+            { move: 'Qxd5', comment: "" },
+            { move: 'Ra7', comment: "" },
+            { move: 'Bb7', comment: "" },
+            { move: 'Rxb7', comment: "" },
+            { move: 'Qc4', comment: "" },
+            { move: 'Qxf6', comment: "" },
+            { move: 'Kxa3', comment: "" },
+            { move: 'Qxa6+', comment: "" },
+            { move: 'Kxb4', comment: "" },
+            { move: 'c3+', comment: "" },
+            { move: 'Kxc3', comment: "" },
+            { move: 'Qa1+', comment: "" },
+            { move: 'Kd2', comment: "" },
+            { move: 'Qb2+', comment: "" },
+            { move: 'Kd1', comment: "" },
+            { move: 'Bf1', comment: "36.Bf1! est le coup décisif de la combinaison finale, selon l’analyse publiée par ChessBase." },
+            { move: 'Rd2', comment: "" },
+            { move: 'Rd7', comment: "37.Rd7! cloue la tour noire; après 37...Rxd7, Kasparov reprend par 38.Bxc4." },
+            { move: 'Rxd7', comment: "" },
+            { move: 'Bxc4', comment: "" },
+            { move: 'bxc4', comment: "" },
+            { move: 'Qxh8', comment: "" },
+            { move: 'Rd3', comment: "" },
+            { move: 'Qa8', comment: "" },
+            { move: 'c3', comment: "" },
+            { move: 'Qa4+', comment: "" },
+            { move: 'Ke1', comment: "" },
+            { move: 'f4', comment: "" },
+            { move: 'f5', comment: "" },
+            { move: 'Kc1', comment: "" },
+            { move: 'Rd2', comment: "" },
+            { move: 'Qa7', comment: "" }
         ];
 
         // Configuration du plateau
@@ -495,7 +493,7 @@
 
     <!-- Bouton retour en bas -->
     <div style="text-align: center; margin: 40px 0;">
-        <a href="../../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
+        <a href="../../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a> · <a href="../../data/games/kasparov_topalov_1999_immortal.pgn" download>PGN complet</a>
     </div>
 
 <!-- ChessNova Community -->

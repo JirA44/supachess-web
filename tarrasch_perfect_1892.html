@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% Accuracy - Tarrasch vs Marco 1892</title>
+    <title>Tarrasch–Marco · Dresde 1892</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; min-height: 100vh; padding: 20px; }
@@ -48,8 +48,8 @@
     <div class="container">
         <header>
             <h1>Tarrasch vs Marco - 1892</h1>
-            <p class="subtitle">La plus ancienne partie parfaite de l'histoire</p>
-            <div class="accuracy-badge">TARRASCH : 100% ACCURACY (verifie par Stockfish 15)</div>
+            <p class="subtitle">Ruy Lopez · piège de Tarrasch · résultat 1–0</p>
+            <div class="accuracy-badge">Partie historique · score 1–0</div>
         </header>
         <div class="main-content">
             <div class="info-panel">
@@ -60,10 +60,10 @@
                 <div class="stat-item"><div class="stat-label">Annee</div><div class="stat-value">1892 - Il y a plus de 130 ans!</div></div>
                 <div class="stat-item"><div class="stat-label">Ouverture</div><div class="stat-value">Espagnole, Defense de Berlin (C66)</div></div>
                 <div class="stat-item"><div class="stat-label">Resultat</div><div class="stat-value">1-0 (Tarrasch)</div></div>
-                <div class="stat-item"><div class="stat-label">Precision</div><div class="stat-value" style="color:#ffd700">Tarrasch: 100% (Stockfish 15, depth 30)</div></div>
+                <div class="stat-item"><div class="stat-label">Résultat</div><div class="stat-value" style="color:#ffd700">1–0</div></div>
                 <div class="highlight-box">
-                    <strong>130 ans avant les engines :</strong>
-                    <p>Tarrasch a joue cette partie en 1892, bien avant l'invention des ordinateurs. Quand Stockfish 15 analyse cette partie a profondeur 30, chaque coup de Tarrasch est le meilleur coup possible. Un exploit intellectuel prodigieux!</p>
+                    <strong>Le piège de Tarrasch</strong>
+                    <p>Dans cette partie jouée à Dresde en 1892, le dernier coup 18.c4 attaque la tour noire en d5. Marco abandonne et le résultat est 1–0.</p>
                 </div>
             </div>
             <div class="board-container">
@@ -77,7 +77,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">En 1892, sans engine, sans preparation informatique, Tarrasch joue 18 coups parfaits. Cliquez "Suivant".</div>
+                    <div class="move-comment" id="moveComment">Rejouez la partie et observez la menace créée par 18.c4.</div>
                 </div>
             </div>
             <div class="info-panel">
@@ -85,7 +85,7 @@
                 <div class="timeline" id="timeline"></div>
                 <div class="highlight-box">
                     <strong>Surnom : "Marco Polo"</strong>
-                    <p>Cette partie est surnommee "Marco Polo" sur chessgames.com. Tarrasch, surnomme "le Praeceptor Germaniae" (professeur d'Allemagne), etait connu pour son jeu classique et sa precision quasi-mecanique. Cette partie en est la preuve ultime.</p>
+                    <p>Le replay suit la partie notée jusqu’à 18.c4, après quoi Marco abandonne. Aucun pourcentage de précision moteur n’est affiché.</p>
                 </div>
             </div>
         </div>
@@ -128,7 +128,7 @@
             { move: 'Rd5', comment: '16...Td5 - La tour se deplace pour eviter le clouage.' },
             { move: 'Be7', comment: '17.Fe7! - Le fou s\'infiltre en e7, attaquant la tour f8 et le cavalier c5!' },
             { move: 'Re8', comment: '17...Te8 - Marco attaque le fou. Mais Tarrasch a tout calcule.' },
-            { move: 'c4', comment: '18.c4! - COUP FINAL! Le pion attaque la tour d5. Apres Td7 (ou Td2), Fe7xc5 gagne une piece. La position est perdue pour Marco. ABANDON! 18 coups parfaits en 1892, confirmes par Stockfish 130 ans plus tard.' }
+            { move: 'c4', comment: '18.c4 attaque la tour en d5; Marco abandonne. Résultat : 1–0.' }
         ];
 
         let currentMoveIndex = -1;
@@ -143,7 +143,7 @@
         }
         function updateMoveInfo() {
             const mn = document.getElementById('moveNumber'), mc = document.getElementById('moveComment');
-            if (currentMoveIndex===-1) { mn.textContent='Position initiale'; mc.textContent='1892. Pas d\'ordinateur. Pas d\'engine. Et pourtant, 18 coups parfaits.'; }
+            if (currentMoveIndex===-1) { mn.textContent='Position initiale'; mc.textContent='Dresde 1892 : observez le piège qui conclut la partie par 18.c4.'; }
             else { mn.textContent='Coup '+Math.floor(currentMoveIndex/2+1)+'. '+(currentMoveIndex%2===0?'Blancs':'Noirs')+': '+gameMoves[currentMoveIndex].move; mc.textContent=gameMoves[currentMoveIndex].comment; }
             updateTimeline();
         }

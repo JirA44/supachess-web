@@ -688,6 +688,10 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/nakamura_perfect_2010.html', pgn: '/data/games/nakamura_vs_van_wely_2010.pgn', download: 'data/games/nakamura_vs_van_wely_2010.pgn', expectedPlies: 77, heading: 'Nakamura vs Van Wely', expectedText: '39.Qb3', forbiddenText: '100% ACCURACY' },
     { page: '/nezhmetdinov_perfect_1951.html', pgn: '/data/games/nezhmetdinov_vs_chernikov_1962.pgn', download: 'data/games/nezhmetdinov_vs_chernikov_1962.pgn', expectedPlies: 65, heading: 'Nezhmetdinov vs Chernikov', expectedText: '12.Qxf6', forbiddenText: '100% ACCURACY' },
     { page: '/tarrasch_perfect_1892.html', pgn: '/data/games/tarrasch_vs_marco_1892.pgn', download: 'data/games/tarrasch_vs_marco_1892.pgn', expectedPlies: 35, heading: 'Tarrasch vs Marco - 1892', expectedText: '18.c4', forbiddenText: '100% ACCURACY' },
+    { page: '/ding_gukesh_perfect_2024.html', pgn: '/data/games/ding_liren_vs_gukesh_wcc_2024_game4.pgn', download: 'data/games/ding_liren_vs_gukesh_wcc_2024_game4.pgn', expectedPlies: 84, heading: 'Ding Liren vs Gukesh D', expectedText: '42 coups complets', forbiddenText: '100% ACCURACY' },
+    { page: '/nakamura_perfect_2010.html', pgn: '/data/games/nakamura_vs_van_wely_2010.pgn', download: 'data/games/nakamura_vs_van_wely_2010.pgn', expectedPlies: 77, heading: 'Nakamura vs Van Wely', expectedText: '39.Qb3', forbiddenText: '100% ACCURACY' },
+    { page: '/nezhmetdinov_perfect_1951.html', pgn: '/data/games/nezhmetdinov_vs_chernikov_1962.pgn', download: 'data/games/nezhmetdinov_vs_chernikov_1962.pgn', expectedPlies: 65, heading: 'Nezhmetdinov vs Chernikov', expectedText: '12.Qxf6', forbiddenText: '100% ACCURACY' },
+    { page: '/tarrasch_perfect_1892.html', pgn: '/data/games/tarrasch_vs_marco_1892.pgn', download: 'data/games/tarrasch_vs_marco_1892.pgn', expectedPlies: 35, heading: 'Tarrasch vs Marco - 1892', expectedText: '18.c4', forbiddenText: '100% ACCURACY' },
     { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn' }
   ];

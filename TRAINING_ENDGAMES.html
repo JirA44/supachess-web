@@ -1254,6 +1254,9 @@
         // === START ===
         $(document).ready(function() {
             init();
+            var requestedId = new URLSearchParams(location.search).get('endgame');
+            var requestedIndex = ENDGAMES.findIndex(function(item) { return item.id === requestedId; });
+            if (requestedIndex >= 0) window.selectEndgame(requestedIndex);
         });
 
     })();

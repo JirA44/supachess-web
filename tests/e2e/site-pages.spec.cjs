@@ -510,3 +510,18 @@ test('endgame training supports the defender to move and gates mastery behind a 
   await expect(page.locator('#explanation-box')).toHaveClass(/visible/);
   await expect(page.locator('#count-done')).toHaveText('1');
 });
+
+test('global site search finds a specific endgame and opens its direct exercise', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/index.html');
+  const input = page.locator('#user-search');
+  await expect(input).toBeVisible();
+  await input.fill('Position Philidor');
+  const result = page.locator('#user-search-results a').filter({ hasText: 'Position Philidor' }).first();
+  await expect(result).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await result.click();
+  await expect(page).toHaveURL(/TRAINING_ENDGAMES\.html\?endgame=philidor/);
+  await expect(page.locator('#endgame-title')).toContainText('Position Philidor');
+});

@@ -1610,6 +1610,8 @@ document.getElementById('modal-bg').addEventListener('click', function(e) {
 updateStats();
 renderTabs();
 renderGrid();
+const requestedPuzzle = new URLSearchParams(location.search).get('puzzle');
+if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(requestedPuzzle);
 </script>
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
 <script src="shared/community.js"></script>

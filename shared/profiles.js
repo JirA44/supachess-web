@@ -220,35 +220,118 @@ function renderOwnProfileFallback(user){
   if(!user||!user.uid)return;
   renderProfileModal({uid:user.uid,displayName:user.displayName||user.email&&user.email.split('@')[0]||profileText('profile_guest','Player'),email:user.email||'',photoURL:user.photoURL||'',stats:{}});
 }
+var siteSearchIndex = null;
+var siteSearchIndexPromise = null;
+function normalizeSiteSearch(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9+#.-]+/g, ' ').trim();
+}
+function loadSiteSearchIndex() {
+  if (siteSearchIndex) return Promise.resolve(siteSearchIndex);
+  if (siteSearchIndexPromise) return siteSearchIndexPromise;
+  var script = document.querySelector('script[src*="shared/profiles.js"]');
+  var indexUrl = script ? new URL('../site-search-index.json?v=20261031', script.src).href : new URL('./site-search-index.json?v=20261031', location.href).href;
+  siteSearchIndexPromise = fetch(indexUrl).then(function(response) {
+    if (!response.ok) throw new Error('Index de recherche indisponible');
+    return response.json();
+  }).then(function(data) {
+    siteSearchIndex = Array.isArray(data.entries) ? data.entries : [];
+    return siteSearchIndex;
+  }).catch(function(error) {
+    siteSearchIndexPromise = null;
+    throw error;
+  });
+  return siteSearchIndexPromise;
+}
+function searchSiteContent(query, entries, limit) {
+  var normalized = normalizeSiteSearch(query);
+  var tokens = normalized.split(/\s+/).filter(Boolean);
+  if (!tokens.length) return [];
+  return entries.map(function(entry) {
+    var title = normalizeSiteSearch(entry.title);
+    var haystack = normalizeSiteSearch(entry.text);
+    if (!tokens.every(function(token){ return (title + ' ' + haystack).indexOf(token) !== -1; })) return null;
+    var score = title.indexOf(normalized) !== -1 ? 80 : 0;
+    if (title.indexOf(normalized) === 0) score += 35;
+    tokens.forEach(function(token){ if(title.indexOf(token)!==-1) score+=12; });
+    if (haystack.indexOf(normalized) !== -1) score += 8;
+    return { entry:entry, score:score };
+  }).filter(Boolean).sort(function(a,b){ return b.score-a.score || a.entry.title.localeCompare(b.entry.title); }).slice(0,limit||8).map(function(item){return item.entry;});
+}
+function siteSearchHref(entry) {
+  var localWeb = location.hostname === 'jira44.github.io' ? '/supachess-web/' : '/';
+  var path = String(entry.path || '').replace(/^\/+/, '');
+  var base = entry.repo === 'supachess' ? (location.hostname === 'jira44.github.io' ? '/supachess/' : 'https://jira44.github.io/supachess/') : localWeb;
+  return base + path;
+}
 function initSearchBar(){
   var header=document.querySelector('.header');
   if(!header||document.getElementById('user-search-wrap')) return;
   var wrap=document.createElement('div');
   wrap.id='user-search-wrap';
-  wrap.style.cssText='max-width:520px;margin:14px auto 0;position:relative;';
-  wrap.innerHTML='<input id="user-search" placeholder="🔍 Rechercher un joueur (nom ou email) — cliquer pour voir profil" style="width:100%;padding:10px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.35);color:#fff;outline:none;"><div id="user-search-results" style="position:absolute;top:100%;left:0;right:0;background:#1a1f2e;border:1px solid #333;border-radius:12px;margin-top:6px;display:none;max-height:240px;overflow-y:auto;z-index:50;"></div>';
+  wrap.style.cssText='max-width:760px;margin:16px auto 0;position:relative;text-align:left;';
+  wrap.innerHTML='<input id="user-search" type="search" autocomplete="off" aria-label="Rechercher sur tout SupaChess" aria-controls="user-search-results" aria-expanded="false" placeholder="🔍 Rechercher partout : pages, leçons, exercices, parties ou joueurs" style="width:100%;padding:12px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.42);color:#fff;outline:none;font:inherit;"><div id="user-search-results" role="listbox" aria-label="Résultats de recherche" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#101827;border:1px solid #52617a;border-radius:12px;display:none;max-height:min(70vh,460px);overflow-y:auto;overscroll-behavior:contain;z-index:1000;box-shadow:0 14px 36px rgba(0,0,0,.45);"></div>';
   header.appendChild(wrap);
-  var inp=document.getElementById('user-search');
-  var res=document.getElementById('user-search-results');
-  var timer=null;
-  inp.addEventListener('input', function(){
-    clearTimeout(timer);
-    var q=this.value.trim();
-    if(!q){ res.style.display='none'; return; }
+  var inp=document.getElementById('user-search'), res=document.getElementById('user-search-results');
+  var timer=null, generation=0;
+  function rowTitle(entry) {
+    var type=document.createElement('span'); type.textContent=entry.type||'Page';
+    type.style.cssText='display:block;color:#a8c7ff;font-size:.76rem;font-weight:700;margin-bottom:3px;';
+    return type;
+  }
+  function addGroup(label) {
+    var group=document.createElement('div');group.textContent=label;
+    group.style.cssText='padding:8px 12px 5px;color:#fbbf24;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;';
+    res.appendChild(group);
+  }
+  function addSiteResult(entry, query) {
+    var link=document.createElement('a');link.href=siteSearchHref(entry);link.setAttribute('role','option');
+    link.style.cssText='display:block;padding:10px 12px;color:#f5f7fb;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.08);overflow-wrap:anywhere;';
+    link.addEventListener('mouseenter',function(){link.style.background='#243148';});
+    link.addEventListener('mouseleave',function(){link.style.background='transparent';});
+    link.appendChild(rowTitle(entry));
+    var title=document.createElement('strong');title.textContent=entry.title;link.appendChild(title);
+    var snippet=document.createElement('span');snippet.style.cssText='display:block;margin-top:4px;color:#d1d8e4;font-size:.88rem;line-height:1.35;';
+    var text=String(entry.text||'');var at=text.toLowerCase().indexOf(String(query).toLowerCase());
+    if(at<0){var token=String(query).trim().split(/\s+/).find(Boolean)||'';at=text.toLowerCase().indexOf(token.toLowerCase());}
+    var start=at<0?0:Math.max(0,at-65);snippet.textContent=(start?'…':'')+text.slice(start,start+170)+(start+170<text.length?'…':'');
+    link.appendChild(snippet);res.appendChild(link);
+  }
+  function addPlayerResult(user) {
+    var button=document.createElement('button');button.type='button';button.setAttribute('role','option');
+    button.style.cssText='width:100%;padding:9px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:transparent;color:#fff;text-align:left;font:inherit;';
+    var photo=document.createElement('span');photo.setAttribute('aria-hidden','true');photo.textContent='♟';photo.style.cssText='width:30px;height:30px;display:grid;place-items:center;background:#34445d;border-radius:50%;';
+    if(user.photoURL && /^https:\/\//i.test(user.photoURL)){photo.textContent='';var img=document.createElement('img');img.src=user.photoURL;img.alt='';img.width=30;img.height=30;img.style.borderRadius='50%';photo.appendChild(img);}
+    var name=document.createElement('span');name.textContent=user.displayName||'Joueur';
+    var email=document.createElement('small');email.textContent=user.email||'';email.style.cssText='opacity:.72;margin-left:auto;';
+    button.append(photo,name,email);button.addEventListener('click',function(){res.style.display='none';inp.setAttribute('aria-expanded','false');getProfile(user.uid).then(renderProfileModal).catch(function(){});});
+    res.appendChild(button);
+  }
+  function render(q, sites, users, failed) {
+    res.replaceChildren();
+    if(sites.length){addGroup('Pages, leçons, exercices et parties');sites.forEach(function(entry){addSiteResult(entry,q);});}
+    if(users.length){addGroup('Joueurs');users.forEach(addPlayerResult);}
+    if(!sites.length&&!users.length){var none=document.createElement('div');none.textContent=failed?'Recherche du site indisponible pour le moment.':'Aucun résultat. Essaie un autre terme.';none.style.cssText='padding:12px;color:#e5e7eb;';res.appendChild(none);}
+    res.style.display='block';inp.setAttribute('aria-expanded','true');
+  }
+  inp.addEventListener('input',function(){
+    clearTimeout(timer);var q=inp.value.trim(),run=++generation;
+    if(!q){res.style.display='none';inp.setAttribute('aria-expanded','false');return;}
+    res.textContent='Recherche dans le site…';res.style.display='block';inp.setAttribute('aria-expanded','true');
     timer=setTimeout(function(){
-      searchUsers(q,8).then(function(list){
-        if(!list.length){ res.innerHTML='<div style="padding:10px;opacity:.6">Aucun joueur trouvé</div>'; res.style.display='block'; return; }
-        res.innerHTML=list.map(function(u){
-          return '<div class="search-hit" data-uid="'+u.uid+'" style="padding:8px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)"><img src="'+(u.photoURL||'https://ui-avatars.com/api/?name='+encodeURIComponent(u.displayName||'?'))+'" style="width:28px;height:28px;border-radius:50%"><span>'+u.displayName+'</span><span style="opacity:.5;font-size:.8em;margin-left:auto">'+u.email+'</span></div>';
-        }).join('');
-        res.style.display='block';
-        res.querySelectorAll('.search-hit').forEach(function(el){
-          el.addEventListener('click', function(){ res.style.display='none'; getProfile(el.getAttribute('data-uid')).then(renderProfileModal); });
-        });
+      var indexTask=loadSiteSearchIndex().then(function(entries){return {entries:entries,failed:false};}).catch(function(){return {entries:[],failed:true};});
+      var usersTask=typeof searchUsers==='function'?searchUsers(q,5).catch(function(){return [];}):Promise.resolve([]);
+      Promise.all([indexTask,usersTask]).then(function(results){
+        if(run!==generation)return;
+        var state=results[0],sites=state.failed?[]:searchSiteContent(q,state.entries,8);
+        render(q,sites,results[1],state.failed);
       });
-    }, 280);
+    },140);
   });
-  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) res.style.display='none'; });
+  inp.addEventListener('keydown',function(event){
+    if(event.key==='Escape'){res.style.display='none';inp.setAttribute('aria-expanded','false');return;}
+    if(event.key==='ArrowDown'){var first=res.querySelector('a[role="option"],button[role="option"]');if(first){event.preventDefault();first.focus();}}
+  });
+  document.addEventListener('click',function(event){if(!wrap.contains(event.target)){res.style.display='none';inp.setAttribute('aria-expanded','false');}});
 }
 function initRankingSection(){
   if(document.getElementById('ranking-section')) return;

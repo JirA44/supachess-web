@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tal - Masterpiece 1958</title>
+    <title>Tal–Tolush · Championnat soviétique 1958, 1re ronde</title>
     <style>
         * {
             margin: 0;
@@ -328,8 +328,8 @@
 
     <div class="container">
         <header>
-            <h1>🎯 Tal - Masterpiece 1958</h1>
-            <p class="subtitle">Le Magicien de Riga démontre son art du sacrifice</p>
+            <h1>Tal–Tolush · Championnat soviétique 1958, 1re ronde</h1>
+            <p class="subtitle">Riga · 13 janvier 1958 · Défense nimzo-indienne (E53)</p>
         </header>
 
         <div class="main-content">
@@ -341,15 +341,15 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Noirs</div>
-                    <div class="stat-value">Vasiukov</div>
+                    <div class="stat-value">Alexander Tolush</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Tournoi</div>
-                    <div class="stat-value">USSR Championship</div>
+                    <div class="stat-value">25e Championnat d’URSS · ronde 1</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Ouverture</div>
-                    <div class="stat-value">Sicilienne</div>
+                    <div class="stat-value">Défense nimzo-indienne (E53)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Résultat</div>
@@ -371,7 +371,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer cette partie légendaire de Mikhail Tal, le Magicien de Riga.</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur « Suivant » pour rejouer Tal–Tolush, demi-coup par demi-coup.</div>
                 </div>
             </div>
 
@@ -380,7 +380,8 @@
                 <div class="timeline" id="timeline"></div>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(155, 89, 182, 0.1); border-radius: 8px; border-left: 3px solid #9b59b6;">
                     <strong style="color: #9b59b6;">Le style Tal:</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Mikhail Tal était célèbre pour ses sacrifices intuitifs et son jeu ultra-agressif. Cette partie démontre parfaitement son talent pour créer des complications qui déstabilisent même les meilleurs joueurs.</p>
+                    <p style="margin-top: 10px; color: #ccc;">Cette partie de la première ronde du 25e Championnat d’URSS se termine par une victoire de Tal, 1–0. Le PGN archivé indique 55 demi-coups. Les commentaires du replay décrivent les coups et les motifs vérifiables, sans attribuer de score moteur.</p>
+                    <p><a href="data/games/tal_vs_tolush_urs_ch25_1958_round1.pgn" download>📥 Télécharger le PGN sourcé</a></p>
                 </div>
             </div>
         </div>
@@ -393,67 +394,61 @@
 
         // Partie dans le style de Tal - Attaque Yougoslave avec sacrifices
         const gameMoves = [
-            { move: 'e4', comment: 'Tal commence avec le coup de roi, son ouverture favorite pour attaquer.' },
-            { move: 'c5', comment: 'La Défense Sicilienne - acceptant le défi d\'un jeu tactique complexe.' },
-            { move: 'Nf3', comment: 'Développement naturel du cavalier.' },
-            { move: 'd6', comment: 'Formation Sicilienne classique.' },
-            { move: 'd4', comment: 'Tal occupe le centre avec autorité.' },
-            { move: 'cxd4', comment: 'Échange forcé au centre.' },
-            { move: 'Nxd4', comment: 'Le cavalier contrôle des cases importantes.' },
-            { move: 'Nf6', comment: 'Développement et attaque sur e4.' },
-            { move: 'Nc3', comment: 'Défense du pion et développement.' },
-            { move: 'g6', comment: 'Fianchetto - préparation d\'une défense Dragon.' },
-            { move: 'Be3', comment: 'Développement du fou, menaçant déjà de l\'activité.' },
-            { move: 'Bg7', comment: 'Complétant le fianchetto.' },
-            { move: 'f3', comment: '💡 Formation agressive! Tal prépare l\'assaut.' },
-            { move: 'O-O', comment: 'Les Noirs mettent leur roi en sécurité.' },
-            { move: 'Qd2', comment: 'Connectant les tours, préparant O-O-O.' },
-            { move: 'Nc6', comment: 'Développement naturel.' },
-            { move: 'O-O-O', comment: '⚔️ Grand roque agressif! Les deux rois sur des flancs opposés - bataille à mort!' },
-            { move: 'Nxd4', comment: 'Échange pour simplifier.' },
-            { move: 'Bxd4', comment: 'Le fou devient puissant sur cette diagonale.' },
-            { move: 'Be6', comment: 'Développement et blocage de la diagonale.' },
-            { move: 'Kb1', comment: 'Tal sécurise son roi avant l\'assaut.' },
-            { move: 'Qa5', comment: 'Contre-attaque active!' },
-            { move: 'Bxf6', comment: '💥 SACRIFICE SPECTACULAIRE! Tal sacrifie le fou!' },
-            { move: 'Bxf6', comment: 'Forcé d\'accepter le sacrifice.' },
-            { move: 'Nd5', comment: '⚡ Le cavalier surgit avec une force dévastatrice!' },
-            { move: 'Bxd5', comment: 'Tentative de défense désespérée.' },
-            { move: 'exd5', comment: 'Le pion central devient un monstre!' },
-            { move: 'Rfc8', comment: 'Activation de la tour.' },
-            { move: 'Bc4', comment: '🎯 Le fou entre dans l\'attaque!' },
-            { move: 'Rxc4', comment: 'Sacrifice accepté, mais...' },
-            { move: 'Qxa5', comment: '👑 LA DAME PREND LA DAME! Tal gagne du matériel!' },
-            { move: 'Rxc2', comment: 'Les Noirs tentent de contre-attaquer.' },
-            { move: 'Qc7', comment: '⚔️ Attaque multiple! Menace sur f7 et b7!' },
-            { move: 'Rxg2', comment: 'Désespoir - grabbing pawns.' },
-            { move: 'Qb8+', comment: '⚡ ÉCHEC! Le roi noir est exposé!' },
-            { move: 'Kg7', comment: 'Forcé de fuir.' },
-            { move: 'Qxa8', comment: '💎 Tal prend la tour! Avantage matériel écrasant!' },
-            { move: 'Rxh2', comment: 'Tentative de contre-jeu désespérée.' },
-            { move: 'Qxa7', comment: 'Nettoyage systématique du matériel.' },
-            { move: 'Rxh1', comment: 'Attaque la tour blanche.' },
-            { move: 'Rxh1', comment: 'Échange forcé.' },
-            { move: 'Bg5', comment: 'Dernière tentative de sauver le fou.' },
-            { move: 'Rxh7+', comment: '🔥 LA TOUR SURGIT! ÉCHEC DÉVASTATEUR!' },
-            { move: 'Kxh7', comment: 'Forcé de prendre.' },
-            { move: 'Qxb7', comment: 'Tal nettoie les pions - victoire imminente!' },
-            { move: 'Kg7', comment: 'Le roi tente de se cacher.' },
-            { move: 'Qxe7', comment: 'Encore un pion de plus!' },
-            { move: 'Kh6', comment: 'Le roi noir est exposé sur l\'aile.' },
-            { move: 'Qxd6', comment: 'Domination totale de la dame!' },
-            { move: 'Bf4', comment: 'Dernier espoir du fou.' },
-            { move: 'Qxf4+', comment: '⚡ Prend le fou avec échec!' },
-            { move: 'Kg7', comment: 'Le roi fuit.' },
-            { move: 'Qxf7+', comment: 'Échec! Le pion f tombe aussi!' },
-            { move: 'Kh6', comment: 'Fuite désespérée.' },
-            { move: 'd6', comment: '🏃 Le pion passé s\'élance!' },
-            { move: 'g5', comment: 'Tentative de créer du contre-jeu.' },
-            { move: 'd7', comment: 'Le pion va promouvoir!' },
-            { move: 'g4', comment: 'Dernière tentative.' },
-            { move: 'd8=Q', comment: '👑 PROMOTION! Tal a maintenant DEUX dames!' },
-            { move: 'gxf3', comment: 'Les Noirs prennent le pion, mais...' },
-            { move: 'Qdf6#', comment: '🏆 ÉCHEC ET MAT! La double dame coordonne le mat final! VICTOIRE BRILLANTE de Tal!' }
+            { move: "d4", comment: "Tal ouvre par 1.d4." },
+            { move: "Nf6", comment: "Tolush répond par 1...Nf6." },
+            { move: "c4", comment: "Tal joue c4. Observe les menaces et la meilleure réponse adverse." },
+            { move: "e6", comment: "Tolush joue e6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Nc3", comment: "3.Nc3 développe le cavalier; 3...Bb4 entre dans la Nimzo-indienne." },
+            { move: "Bb4", comment: "Tolush joue Bb4. Observe les menaces et la meilleure réponse adverse." },
+            { move: "e3", comment: "Tal joue e3. Observe les menaces et la meilleure réponse adverse." },
+            { move: "c5", comment: "Tolush joue c5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Nf3", comment: "Tal joue Nf3. Observe les menaces et la meilleure réponse adverse." },
+            { move: "d5", comment: "Tolush joue d5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bd3", comment: "Tal joue Bd3. Observe les menaces et la meilleure réponse adverse." },
+            { move: "O-O", comment: "Tolush joue O-O. Observe les menaces et la meilleure réponse adverse." },
+            { move: "O-O", comment: "Tal joue O-O. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Nbd7", comment: "Tolush joue Nbd7. Observe les menaces et la meilleure réponse adverse." },
+            { move: "a3", comment: "Tal joue a3. Observe les menaces et la meilleure réponse adverse." },
+            { move: "cxd4", comment: "Tolush joue cxd4, une capture. Identifie la pièce capturée." },
+            { move: "Nxd5", comment: "9.Nxd5! est le coup tactique signalé dans le score annoté de la partie." },
+            { move: "exd5", comment: "Tolush joue exd5, une capture. Identifie la pièce capturée." },
+            { move: "axb4", comment: "Tal joue axb4, une capture. Identifie la pièce capturée." },
+            { move: "dxc4", comment: "Tolush joue dxc4, une capture. Identifie la pièce capturée." },
+            { move: "Bxc4", comment: "Tal joue Bxc4, une capture. Identifie la pièce capturée." },
+            { move: "Nb6", comment: "Tolush joue Nb6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bb3", comment: "Tal joue Bb3. Observe les menaces et la meilleure réponse adverse." },
+            { move: "dxe3", comment: "Tolush joue dxe3, une capture. Identifie la pièce capturée." },
+            { move: "Bxe3", comment: "Tal joue Bxe3, une capture. Identifie la pièce capturée." },
+            { move: "Nbd5", comment: "Tolush joue Nbd5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bc5", comment: "Tal joue Bc5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Re8", comment: "Tolush joue Re8. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Re1", comment: "Tal joue Re1. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Rxe1+", comment: "Tal joue Rxe1+, échec. Repère la réponse forcée." },
+            { move: "Qxe1", comment: "Tal joue Qxe1, une capture. Identifie la pièce capturée." },
+            { move: "b6", comment: "Tolush joue b6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bd4", comment: "Tal joue Bd4. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bb7", comment: "Tolush joue Bb7. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Rd1", comment: "Tal joue Rd1. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qe8", comment: "Tolush joue Qe8. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Be5", comment: "Tal joue Be5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qb5", comment: "Tolush joue Qb5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bxf6", comment: "Tal joue Bxf6, une capture. Identifie la pièce capturée." },
+            { move: "gxf6", comment: "Tolush joue gxf6, une capture. Identifie la pièce capturée." },
+            { move: "Qe4", comment: "Tal joue Qe4. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qxb4", comment: "Tolush joue Qxb4, une capture. Identifie la pièce capturée." },
+            { move: "Nd4", comment: "Tal joue Nd4. Observe les menaces et la meilleure réponse adverse." },
+            { move: "f5", comment: "Tolush joue f5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qe5", comment: "Tal joue Qe5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Ne7", comment: "Tolush joue Ne7. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qf6", comment: "Tal joue Qf6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Bd5", comment: "Tolush joue Bd5. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Nc6", comment: "Tal joue Nc6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Qxb3", comment: "Tolush joue Qxb3, une capture. Identifie la pièce capturée." },
+            { move: "Nxe7+", comment: "Tal joue Nxe7+, échec. Repère la réponse forcée." },
+            { move: "Kf8", comment: "Tolush joue Kf8. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Re1", comment: "Tal joue Re1. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Be6", comment: "Tolush joue Be6. Observe les menaces et la meilleure réponse adverse." },
+            { move: "Nxf5", comment: "Tal joue Nxf5, une capture. Identifie la pièce capturée." }
         ];
 
         let currentMoveIndex = -1;

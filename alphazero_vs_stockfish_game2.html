@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaZero vs Stockfish - Game 2 | Domination Stratégique</title>
+    <title>Étude stratégique SupaChess · Centre et activité des pièces</title>
     <style>
         * {
             margin: 0;
@@ -388,10 +388,13 @@
         <a href="index.html" class="nav-back">← Retour au Hub</a>
 
         <div class="header">
-            <h1>🤖 AlphaZero vs Stockfish - Game 2</h1>
-            <p class="subtitle">Domination Stratégique | 2017</p>
+            <h1>Étude stratégique · centre et activité des pièces</h1>
+            <p class="subtitle">Ligne d’entraînement originale SupaChess</p>
             <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
-                AlphaZero domine par le jeu positionnel
+                Étudie les échanges centraux et l’activité des pièces dans cette position pédagogique.
+            </p>
+            <p role="note" style="margin-top:12px;padding:12px 16px;border:1px solid rgba(255,215,0,.45);border-radius:10px;background:rgba(255,215,0,.1);">
+                Cette ligne ne correspond pas à la partie 2 publiée par DeepMind. Elle est présentée comme exercice SupaChess, sans attribution historique vérifiée.
             </p>
         </div>
 
@@ -426,79 +429,79 @@
         // Initialisation du moteur chess.js
         const chess = new Chess();
 
-        // PGN de la partie AlphaZero vs Stockfish - Game 2
+        // PGN de la partie les Blancs vs les Noirs - Game 2
         const gameMoves = [
-            { move: 'd4', comment: '🤖 AlphaZero commence avec le coup de dame classique. Contrôle immédiat du centre et préparation du Gambit Dame!' },
-            { move: 'Nf6', comment: 'Stockfish développe son cavalier roi vers sa case optimale. Le cavalier attaque e4 et prépare un développement flexible.' },
-            { move: 'c4', comment: '💎 Gambit de la Dame! Une des ouvertures les plus stratégiques et profondes du répertoire échiquéen. AlphaZero revendique l\'espace!' },
-            { move: 'e6', comment: 'Stockfish opte pour une structure solide et classique. Le pion e6 prépare d5 et libère le fou f8.' },
-            { move: 'Nf3', comment: 'Développement naturel et harmonieux du cavalier. AlphaZero contrôle e5 et d4 tout en préparant le roque court.' },
-            { move: 'd5', comment: 'Occupation du centre avec force! Stockfish établit son bastion central et provoque une tension stratégique immédiate.' },
-            { move: 'Nc3', comment: 'Le cavalier dame se développe avec pression sur d5. AlphaZero coordonne parfaitement ses pièces mineures!' },
+            { move: 'd4', comment: '🤖 les Blancs commence avec le coup de dame classique. Contrôle immédiat du centre et préparation du Gambit Dame!' },
+            { move: 'Nf6', comment: 'les Noirs développe son cavalier roi vers sa case optimale. Le cavalier attaque e4 et prépare un développement flexible.' },
+            { move: 'c4', comment: '💎 Gambit de la Dame! Une des ouvertures les plus stratégiques et profondes du répertoire échiquéen. les Blancs revendique l\'espace!' },
+            { move: 'e6', comment: 'les Noirs opte pour une structure solide et classique. Le pion e6 prépare d5 et libère le fou f8.' },
+            { move: 'Nf3', comment: 'Développement naturel et harmonieux du cavalier. les Blancs contrôle e5 et d4 tout en préparant le roque court.' },
+            { move: 'd5', comment: 'Occupation du centre avec force! les Noirs établit son bastion central et provoque une tension stratégique immédiate.' },
+            { move: 'Nc3', comment: 'Le cavalier dame se développe avec pression sur d5. les Blancs coordonne parfaitement ses pièces mineures!' },
             { move: 'Be7', comment: 'Le fou noir prend position sur e7. Développement solide qui prépare le roque et garde la flexibilité de la structure.' },
-            { move: 'Bf4', comment: '⚡ IDÉE MODERNE! Développement du fou avant e3, évitant d\'enfermer le fou c1. Un choix hautement positionnel d\'AlphaZero!' },
-            { move: 'O-O', comment: 'Stockfish met son roi en sécurité par le roque court. Le roi trouve refuge tandis que la tour f8 s\'active!' },
-            { move: 'e3', comment: 'Consolidation du centre avec e3. AlphaZero crée une formation pyramidale solide avec d4-e3-c4.' },
-            { move: 'c5', comment: '💥 CONTRE-ATTAQUE CENTRALE! Le coup thématique qui cherche à miner le centre blanc. Stockfish joue avec énergie!' },
-            { move: 'dxc5', comment: 'AlphaZero accepte l\'échange au centre. Cette capture ouvre la position et libère les lignes pour les pièces blanches.' },
-            { move: 'Bxc5', comment: 'Le fou noir récupère le pion avec gain de temps. Stockfish active son fou sur une diagonale agressive pointant vers f2!' },
+            { move: 'Bf4', comment: '⚡ IDÉE MODERNE! Développement du fou avant e3, évitant d\'enfermer le fou c1. Un choix hautement positionnel d\'les Blancs!' },
+            { move: 'O-O', comment: 'les Noirs met son roi en sécurité par le roque court. Le roi trouve refuge tandis que la tour f8 s\'active!' },
+            { move: 'e3', comment: 'Consolidation du centre avec e3. les Blancs crée une formation pyramidale solide avec d4-e3-c4.' },
+            { move: 'c5', comment: '💥 CONTRE-ATTAQUE CENTRALE! Le coup thématique qui cherche à miner le centre blanc. les Noirs joue avec énergie!' },
+            { move: 'dxc5', comment: 'les Blancs accepte l\'échange au centre. Cette capture ouvre la position et libère les lignes pour les pièces blanches.' },
+            { move: 'Bxc5', comment: 'Le fou noir récupère le pion avec gain de temps. les Noirs active son fou sur une diagonale agressive pointant vers f2!' },
             { move: 'Qc2', comment: '🔥 LA DAME S\'ACTIVE! Position idéale visant à la fois h7 et la colonne c. Coup multi-fonctions brillant!' },
-            { move: 'Nc6', comment: 'Développement du cavalier dame avec tempo. Stockfish centralise sa pièce tout en menaçant de gagner du terrain.' },
-            { move: 'a3', comment: '💡 PROPHYLAXIE SUBTILE! AlphaZero prévient Nb4 et prépare b4 pour chasser le fou c5. Compréhension positionnelle profonde!' },
-            { move: 'Qa5', comment: 'La dame noire s\'active sur l\'aile dame. Stockfish créé des menaces latérales et met la pression sur a3 et c3!' },
-            { move: 'Rd1', comment: '♜ AlphaZero amène la tour sur la colonne d semi-ouverte. Préparation de la pression sur d5 - chaque pièce trouve sa place optimale!' },
-            { move: 'Be7', comment: 'Le fou noir bat en retraite vers e7. Stockfish consolide sa position et prépare le regroupement de ses forces.' },
-            { move: 'cxd5', comment: '⚡ OUVERTURE DU CENTRE! AlphaZero libère la tension et ouvre des lignes pour ses tours. La bataille tactique commence!' },
-            { move: 'Nxd5', comment: 'Stockfish reprend avec le cavalier, centralisant sa pièce. Le cavalier domine depuis d5, mais pour combien de temps?' },
-            { move: 'Ne5', comment: '🔥 CAVALIER AGRESSIF! AlphaZero bondit vers e5, une case centrale puissante. La menace sur c6 et f7 est réelle!' },
-            { move: 'Nxc3', comment: 'Stockfish échange le cavalier cloué. Simplification forcée pour éviter les complications tactiques sur c3!' },
-            { move: 'bxc3', comment: 'Reprise avec le pion b. AlphaZero ouvre la colonne b pour sa tour et renforce le centre!' },
-            { move: 'Bf6', comment: 'Le fou noir se développe activement. Stockfish attaque le cavalier e5 et prépare des échanges.' },
+            { move: 'Nc6', comment: 'Développement du cavalier dame avec tempo. les Noirs centralise sa pièce tout en menaçant de gagner du terrain.' },
+            { move: 'a3', comment: '💡 PROPHYLAXIE SUBTILE! les Blancs prévient Nb4 et prépare b4 pour chasser le fou c5. Compréhension positionnelle profonde!' },
+            { move: 'Qa5', comment: 'La dame noire s\'active sur l\'aile dame. les Noirs créé des menaces latérales et met la pression sur a3 et c3!' },
+            { move: 'Rd1', comment: '♜ les Blancs amène la tour sur la colonne d semi-ouverte. Préparation de la pression sur d5 - chaque pièce trouve sa place optimale!' },
+            { move: 'Be7', comment: 'Le fou noir bat en retraite vers e7. les Noirs consolide sa position et prépare le regroupement de ses forces.' },
+            { move: 'cxd5', comment: '⚡ OUVERTURE DU CENTRE! les Blancs libère la tension et ouvre des lignes pour ses tours. La bataille tactique commence!' },
+            { move: 'Nxd5', comment: 'les Noirs reprend avec le cavalier, centralisant sa pièce. Le cavalier domine depuis d5, mais pour combien de temps?' },
+            { move: 'Ne5', comment: '🔥 CAVALIER AGRESSIF! les Blancs bondit vers e5, une case centrale puissante. La menace sur c6 et f7 est réelle!' },
+            { move: 'Nxc3', comment: 'les Noirs échange le cavalier cloué. Simplification forcée pour éviter les complications tactiques sur c3!' },
+            { move: 'bxc3', comment: 'Reprise avec le pion b. les Blancs ouvre la colonne b pour sa tour et renforce le centre!' },
+            { move: 'Bf6', comment: 'Le fou noir se développe activement. les Noirs attaque le cavalier e5 et prépare des échanges.' },
             { move: 'Bd3', comment: '⭐ COUP BRILLANT! Le fou se place idéalement sur d3, visant h7 et contrôlant les cases centrales. Position magnifique!' },
-            { move: 'Bxe5', comment: 'Stockfish capture le cavalier agressif. L\'échange allège la pression mais laisse les Blancs avec la paire de fous.' },
-            { move: 'Bxe5', comment: 'AlphaZero reprend avec le fou, maintenant un fou actif sur la grande diagonale!' },
-            { move: 'Qc7', comment: 'La dame noire se repositionne. Stockfish cherche à contester la diagonale et préparer des contre-attaques.' },
+            { move: 'Bxe5', comment: 'les Noirs capture le cavalier agressif. L\'échange allège la pression mais laisse les Blancs avec la paire de fous.' },
+            { move: 'Bxe5', comment: 'les Blancs reprend avec le fou, maintenant un fou actif sur la grande diagonale!' },
+            { move: 'Qc7', comment: 'La dame noire se repositionne. les Noirs cherche à contester la diagonale et préparer des contre-attaques.' },
             { move: 'Bd4', comment: '💎 CENTRALISATION PARFAITE! Le fou domine depuis d4, contrôlant les cases clés et menaçant b6!' },
-            { move: 'Rd8', comment: 'Stockfish active sa tour. La tour rejoint la colonne d pour disputer le contrôle central.' },
-            { move: 'O-O', comment: '👑 AlphaZero roque avec une position stratégiquement supérieure! Le roi trouve la sécurité tandis que les tours s\'activent!' },
-            { move: 'Bd7', comment: 'Le fou se développe enfin. Stockfish complète son développement et connecte ses tours.' },
-            { move: 'c4', comment: '🔥 EXPANSION CENTRALE! AlphaZero avance son pion c, gagnant de l\'espace et préparant c5!' },
-            { move: 'Be8', comment: 'Le fou bat en retraite. Stockfish manoeuvre pour défendre, mais la position s\'affaiblit.' },
-            { move: 'Rb1', comment: '♜ LA TOUR S\'ACTIVE! AlphaZero place sa tour sur la colonne b semi-ouverte, ciblant b7!' },
-            { move: 'b6', comment: 'Défense du pion b7. Stockfish protège mais affaiblit la structure de l\'aile dame.' },
+            { move: 'Rd8', comment: 'les Noirs active sa tour. La tour rejoint la colonne d pour disputer le contrôle central.' },
+            { move: 'O-O', comment: '👑 les Blancs roque avec une position stratégiquement supérieure! Le roi trouve la sécurité tandis que les tours s\'activent!' },
+            { move: 'Bd7', comment: 'Le fou se développe enfin. les Noirs complète son développement et connecte ses tours.' },
+            { move: 'c4', comment: '🔥 EXPANSION CENTRALE! les Blancs avance son pion c, gagnant de l\'espace et préparant c5!' },
+            { move: 'Be8', comment: 'Le fou bat en retraite. les Noirs manoeuvre pour défendre, mais la position s\'affaiblit.' },
+            { move: 'Rb1', comment: '♜ LA TOUR S\'ACTIVE! les Blancs place sa tour sur la colonne b semi-ouverte, ciblant b7!' },
+            { move: 'b6', comment: 'Défense du pion b7. les Noirs protège mais affaiblit la structure de l\'aile dame.' },
             { move: 'Qb3', comment: '♛ PRESSION MAXIMALE! La dame se joint à l\'attaque sur b6. La coordination des pièces blanches est parfaite!' },
-            { move: 'Rab8', comment: 'Stockfish défend passivement. Les deux tours sont maintenant connectées mais la position reste difficile.' },
-            { move: 'Rfc1', comment: '🔥 DOUBLEMENT DES TOURS! AlphaZero prépare l\'invasion sur la colonne c. La pression devient insoutenable!' },
-            { move: 'Qd7', comment: 'La dame noire se repositionne. Stockfish cherche à coordonner sa défense contre les menaces multiples.' },
-            { move: 'c5', comment: '⚡ PERCÉE DÉCISIVE! AlphaZero ouvre les lignes avec c5! La structure noire s\'effondre!' },
-            { move: 'bxc5', comment: 'Stockfish est forcé de prendre. L\'alternative était encore pire avec c6 détruisant la cohésion.' },
-            { move: 'Bxc5', comment: 'Le fou capture avec une position dominante. AlphaZero contrôle toutes les cases clés!' },
-            { move: 'Rdc8', comment: 'Stockfish essaie de contester la colonne c. Dernière tentative de contre-jeu dans une position critique.' },
+            { move: 'Rab8', comment: 'les Noirs défend passivement. Les deux tours sont maintenant connectées mais la position reste difficile.' },
+            { move: 'Rfc1', comment: '🔥 DOUBLEMENT DES TOURS! les Blancs prépare l\'invasion sur la colonne c. La pression devient insoutenable!' },
+            { move: 'Qd7', comment: 'La dame noire se repositionne. les Noirs cherche à coordonner sa défense contre les menaces multiples.' },
+            { move: 'c5', comment: '⚡ PERCÉE DÉCISIVE! les Blancs ouvre les lignes avec c5! La structure noire s\'effondre!' },
+            { move: 'bxc5', comment: 'les Noirs est forcé de prendre. L\'alternative était encore pire avec c6 détruisant la cohésion.' },
+            { move: 'Bxc5', comment: 'Le fou capture avec une position dominante. les Blancs contrôle toutes les cases clés!' },
+            { move: 'Rdc8', comment: 'les Noirs essaie de contester la colonne c. Dernière tentative de contre-jeu dans une position critique.' },
             { move: 'Qb6', comment: '💎 LA DAME ENVAHIT! Position idéale attaquant a7 et menaçant l\'invasion sur la 7ème rangée!' },
-            { move: 'Na5', comment: 'Le cavalier saute vers a5. Stockfish cherche désespérément du contre-jeu avec Nc4.' },
+            { move: 'Na5', comment: 'Le cavalier saute vers a5. les Noirs cherche désespérément du contre-jeu avec Nc4.' },
             { move: 'Qxa7', comment: '♛ INVASION TOTALE! La dame pénètre sur a7, menaçant la tour b8 et le pion a. Domination!' },
-            { move: 'Rxc5', comment: 'Stockfish échange une tour. Simplification désespérée pour tenter de survivre à la pression.' },
-            { move: 'Rxc5', comment: 'AlphaZero reprend la tour avec contrôle absolu de la colonne c ouverte!' },
-            { move: 'Nc6', comment: 'Le cavalier revient défendre. Stockfish essaie de bloquer la dame mais c\'est trop tard.' },
-            { move: 'Qxb8', comment: '🔥 CAPTURE DE LA TOUR! AlphaZero gagne l\'échange! Avantage matériel décisif avec position dominante!' },
-            { move: 'Nxb8', comment: 'Stockfish reprend avec le cavalier. La position matérielle est désastreuse - la tour contre un cavalier.' },
-            { move: 'h3', comment: '💡 PROPHYLAXIE MAGISTRALE! AlphaZero crée du luft pour son roi. Aucune précipitation - technique parfaite!' },
-            { move: 'Qd6', comment: 'La dame se centralise. Stockfish tente de créer des menaces mais le matériel manque cruellement.' },
+            { move: 'Rxc5', comment: 'les Noirs échange une tour. Simplification désespérée pour tenter de survivre à la pression.' },
+            { move: 'Rxc5', comment: 'les Blancs reprend la tour avec contrôle absolu de la colonne c ouverte!' },
+            { move: 'Nc6', comment: 'Le cavalier revient défendre. les Noirs essaie de bloquer la dame mais c\'est trop tard.' },
+            { move: 'Qxb8', comment: '🔥 CAPTURE DE LA TOUR! les Blancs gagne l\'échange! Avantage matériel décisif avec position dominante!' },
+            { move: 'Nxb8', comment: 'les Noirs reprend avec le cavalier. La position matérielle est désastreuse - la tour contre un cavalier.' },
+            { move: 'h3', comment: '💡 PROPHYLAXIE MAGISTRALE! les Blancs crée du luft pour son roi. Aucune précipitation - technique parfaite!' },
+            { move: 'Qd6', comment: 'La dame se centralise. les Noirs tente de créer des menaces mais le matériel manque cruellement.' },
             { move: 'Rc7', comment: '⚡ INVASION DE LA 7ÈME RANGÉE! La tour pénètre avec des menaces dévastatrices sur les pions noirs!' },
-            { move: 'Nd7', comment: 'Le cavalier défend. Stockfish bloque mais la position est sans espoir.' },
+            { move: 'Nd7', comment: 'Le cavalier défend. les Noirs bloque mais la position est sans espoir.' },
             { move: 'Rbb7', comment: '🔥 LES DEUX TOURS SUR LA 7ÈME! La position classique gagnante - les tours dévorent tout!' },
-            { move: 'Nf8', comment: 'Défense désespérée de f7. Stockfish tente de tenir mais les ressources manquent.' },
-            { move: 'Rxf7', comment: '💎 LE PION f7 TOMBE! AlphaZero commence la récolte des pions. L\'avantage devient écrasant!' },
-            { move: 'Qd8', comment: 'La dame bat en retraite. Stockfish protège f8 mais les pions tombent un par un.' },
-            { move: 'Rxf8+', comment: '⚡ SACRIFICE DE TOUR! AlphaZero élimine le défenseur avec échec! Technique imparable!' },
-            { move: 'Kxf8', comment: 'Stockfish est forcé de reprendre. Le roi noir est maintenant exposé et vulnérable.' },
+            { move: 'Nf8', comment: 'Défense désespérée de f7. les Noirs tente de tenir mais les ressources manquent.' },
+            { move: 'Rxf7', comment: '💎 LE PION f7 TOMBE! les Blancs commence la récolte des pions. L\'avantage devient écrasant!' },
+            { move: 'Qd8', comment: 'La dame bat en retraite. les Noirs protège f8 mais les pions tombent un par un.' },
+            { move: 'Rxf8+', comment: '⚡ SACRIFICE DE TOUR! les Blancs élimine le défenseur avec échec! Technique imparable!' },
+            { move: 'Kxf8', comment: 'les Noirs est forcé de reprendre. Le roi noir est maintenant exposé et vulnérable.' },
             { move: 'Rxg7', comment: '🔥 DEUXIÈME PION! La tour dévore g7 - le roi noir est complètement dénudé!' },
-            { move: 'Qf6', comment: 'Contre-attaque sur la tour. Stockfish menace la tour mais c\'est un geste désespéré.' },
-            { move: 'Rg8+', comment: '⚡ ÉCHEC MORTEL! La tour force le roi à fuir. AlphaZero poursuit avec précision chirurgicale!' },
-            { move: 'Ke7', comment: 'Le roi fuit vers e7. Stockfish n\'a pas le choix - chaque coup est forcé.' },
-            { move: 'Rxe8+', comment: '💎 LE FOU TOMBE! AlphaZero capture le fou avec échec! Gain matériel massif!' },
-            { move: 'Kxe8', comment: 'Stockfish reprend le fou. La position est complètement perdue - plus de contre-jeu possible.' },
-            { move: 'Bxh7', comment: '🏆 DOMINATION TOTALE! AlphaZero a gagné une tour entière de matériel. Stockfish abandonne!' },
+            { move: 'Qf6', comment: 'Contre-attaque sur la tour. les Noirs menace la tour mais c\'est un geste désespéré.' },
+            { move: 'Rg8+', comment: '⚡ ÉCHEC MORTEL! La tour force le roi à fuir. les Blancs poursuit avec précision chirurgicale!' },
+            { move: 'Ke7', comment: 'Le roi fuit vers e7. les Noirs n\'a pas le choix - chaque coup est forcé.' },
+            { move: 'Rxe8+', comment: '💎 LE FOU TOMBE! les Blancs capture le fou avec échec! Gain matériel massif!' },
+            { move: 'Kxe8', comment: 'les Noirs reprend le fou. La position est complètement perdue - plus de contre-jeu possible.' },
+            { move: 'Bxh7', comment: '🏆 DOMINATION TOTALE! les Blancs a gagné une tour entière de matériel. les Noirs abandonne!' },
         ];
 
         // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)

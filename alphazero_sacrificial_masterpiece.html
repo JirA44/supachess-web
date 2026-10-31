@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaZero - Chef-d'œuvre Sacrificiel</title>
+    <title>Étude pédagogique SupaChess · Sacrifice et promotion</title>
     <style>
         * {
             margin: 0;
@@ -330,37 +330,35 @@
 
     <div class="container">
         <header>
-            <h1>AlphaZero - Chef-d'œuvre Sacrificiel</h1>
-            <p class="subtitle">Le sacrifice de la tour qui a stupéfié le monde des échecs</p>
+            <h1>Étude pédagogique · sacrifice et promotion</h1>
+            <p class="subtitle">Une ligne d’entraînement sur le sacrifice de fou et la promotion</p>
         </header>
 
         <div class="main-content">
+            <p class="source-note" role="note" style="margin:0 0 20px;padding:14px 18px;border:1px solid rgba(255,215,0,.45);border-radius:10px;background:rgba(255,215,0,.1);">Étude pédagogique originale de SupaChess. Cette ligne n’est pas une partie historique d’les Blancs contre les Noirs; elle ne doit pas être utilisée comme archive de cette rencontre.</p>
             <div class="info-panel">
-                <h2>Informations de la partie</h2>
+                <h2>Informations de l’étude</h2>
                 <div class="stat-item">
                     <div class="stat-label">Blancs</div>
-                    <div class="stat-value">AlphaZero</div>
+                    <div class="stat-value">Camp blanc</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Noirs</div>
-                    <div class="stat-value">Stockfish 8</div>
+                    <div class="stat-value">Camp noir</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Ouverture</div>
                     <div class="stat-value">Sicilienne Najdorf</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">Résultat</div>
-                    <div class="stat-value">1-0 (AlphaZero)</div>
+                    <div class="stat-label">Statut</div>
+                    <div class="stat-value">Étude pédagogique, non historique</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Moment cle</div>
                     <div class="stat-value">Sacrifice Bxg6 + Promotion h8=Q!</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">Année</div>
-                    <div class="stat-value">2017</div>
-                </div>
+
             </div>
 
             <div class="board-container">
@@ -374,7 +372,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour commencer à explorer cette partie légendaire où AlphaZero démontre une compréhension positionnelle surhumaine.</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur « Suivant » pour étudier les idées de cette ligne pédagogique.</div>
                 </div>
             </div>
 
@@ -383,7 +381,7 @@
                 <div class="timeline" id="timeline"></div>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 8px; border-left: 3px solid #ffd700;">
                     <strong style="color: #ffd700;">Point culminant:</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Le sacrifice du fou Bxg6 au coup 25 suivi de la promotion du pion h en dame (h8=Q+) au coup 32 est un chef-d'oeuvre tactique. AlphaZero detruit le roque noir et cree une attaque irresistible!</p>
+                    <p style="margin-top: 10px; color: #ccc;">Le sacrifice du fou Bxg6 au 25e coup suivi de la promotion du pion h en dame illustre un motif tactique à examiner. Vérifie les réponses noires et la conversion de l’avantage dans la suite.</p>
                 </div>
             </div>
         </div>
@@ -400,56 +398,56 @@ document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previo
 
         // PGN de la partie avec le sacrifice spectaculaire
         const gameMoves = [
-            { move: 'e4', comment: '🤖 AlphaZero commence avec le coup de roi classique. Le pion e4 ouvre les diagonales et prepare un developpement dynamique!' },
-            { move: 'c5', comment: '🔥 LA SICILIENNE! Stockfish choisit la defense la plus combative du repertoire noir. La bataille sera tactique et explosive!' },
-            { move: 'Nf3', comment: 'Developpement naturel du cavalier roi. AlphaZero controle d4 et e5 tout en preparant l\'occupation du centre.' },
-            { move: 'd6', comment: 'Preparation de la variante Najdorf. Stockfish garde la flexibilite et prepare e5 pour controler le centre.' },
-            { move: 'd4', comment: '💥 COUP CENTRAL! AlphaZero occupe le centre avec force. Le pion d4 revendique l\'espace et provoque des echanges.' },
-            { move: 'cxd4', comment: 'Stockfish accepte l\'echange. Capture thematique qui ouvre la colonne c pour la contre-attaque future!' },
-            { move: 'Nxd4', comment: 'Recuperation avec le cavalier. AlphaZero centralise sa piece sur la case dominante d4!' },
-            { move: 'Nf6', comment: 'Developpement agressif du cavalier! Stockfish attaque e4 immediatement et prepare un jeu dynamique au centre.' },
-            { move: 'Nc3', comment: 'Protection du pion e4 avec developpement. AlphaZero coordonne ses cavaliers de maniere harmonieuse!' },
-            { move: 'a6', comment: '⭐ LE COUP NAJDORF! Le coup signature de cette variante ultra-complexe. Stockfish previent Nb5 et prepare b5.' },
-            { move: 'Be3', comment: '💎 PREPARATION DU ROQUE LONG! Developpement du fou avant le grand roque. AlphaZero se prepare pour une attaque mutuelle explosive!' },
-            { move: 'e5', comment: '⚡ ATTAQUE CENTRALE! Stockfish chasse le cavalier d4 et gagne de l\'espace. Le centre noir devient impressionnant!' },
-            { move: 'Nb3', comment: 'Retraite strategique du cavalier. AlphaZero maintient son controle sur d5 tout en preparant de nouveaux plans.' },
-            { move: 'Be6', comment: 'Developpement symetrique du fou. Stockfish developpe ses pieces tout en controlant les cases centrales importantes.' },
-            { move: 'f3', comment: '🔥 FORMATION D\'ATTAQUE! AlphaZero prepare g4 et une avalanche de pions sur le flanc roi. Plan agressif typique!' },
-            { move: 'Be7', comment: 'Developpement solide du fou et preparation du roque. Stockfish complete son developpement avant la tempete!' },
-            { move: 'Qd2', comment: 'La dame se place pour le grand roque. AlphaZero coordonne ses pieces pour l\'assaut imminent!' },
-            { move: 'O-O', comment: '👑 Stockfish roque court, mettant son roi en securite. Mais sera-t-il vraiment a l\'abri de la fureur d\'AlphaZero?' },
+            { move: 'e4', comment: '🤖 les Blancs commence avec le coup de roi classique. Le pion e4 ouvre les diagonales et prepare un developpement dynamique!' },
+            { move: 'c5', comment: '🔥 LA SICILIENNE! les Noirs choisit la defense la plus combative du repertoire noir. La bataille sera tactique et explosive!' },
+            { move: 'Nf3', comment: 'Developpement naturel du cavalier roi. les Blancs controle d4 et e5 tout en preparant l\'occupation du centre.' },
+            { move: 'd6', comment: 'Preparation de la variante Najdorf. les Noirs garde la flexibilite et prepare e5 pour controler le centre.' },
+            { move: 'd4', comment: '💥 COUP CENTRAL! les Blancs occupe le centre avec force. Le pion d4 revendique l\'espace et provoque des echanges.' },
+            { move: 'cxd4', comment: 'les Noirs accepte l\'echange. Capture thematique qui ouvre la colonne c pour la contre-attaque future!' },
+            { move: 'Nxd4', comment: 'Recuperation avec le cavalier. les Blancs centralise sa piece sur la case dominante d4!' },
+            { move: 'Nf6', comment: 'Developpement agressif du cavalier! les Noirs attaque e4 immediatement et prepare un jeu dynamique au centre.' },
+            { move: 'Nc3', comment: 'Protection du pion e4 avec developpement. les Blancs coordonne ses cavaliers de maniere harmonieuse!' },
+            { move: 'a6', comment: '⭐ LE COUP NAJDORF! Le coup signature de cette variante ultra-complexe. les Noirs previent Nb5 et prepare b5.' },
+            { move: 'Be3', comment: '💎 PREPARATION DU ROQUE LONG! Developpement du fou avant le grand roque. les Blancs se prepare pour une attaque mutuelle explosive!' },
+            { move: 'e5', comment: '⚡ ATTAQUE CENTRALE! les Noirs chasse le cavalier d4 et gagne de l\'espace. Le centre noir devient impressionnant!' },
+            { move: 'Nb3', comment: 'Retraite strategique du cavalier. les Blancs maintient son controle sur d5 tout en preparant de nouveaux plans.' },
+            { move: 'Be6', comment: 'Developpement symetrique du fou. les Noirs developpe ses pieces tout en controlant les cases centrales importantes.' },
+            { move: 'f3', comment: '🔥 FORMATION D\'ATTAQUE! les Blancs prepare g4 et une avalanche de pions sur le flanc roi. Plan agressif typique!' },
+            { move: 'Be7', comment: 'Developpement solide du fou et preparation du roque. les Noirs complete son developpement avant la tempete!' },
+            { move: 'Qd2', comment: 'La dame se place pour le grand roque. les Blancs coordonne ses pieces pour l\'assaut imminent!' },
+            { move: 'O-O', comment: '👑 les Noirs roque court, mettant son roi en securite. Mais sera-t-il vraiment a l\'abri de la fureur d\'les Blancs?' },
             { move: 'O-O-O', comment: '🔥 ROQUE LONG SPECTACULAIRE! Les rois sur ailes opposees - la partie devient une course a l\'attaque! Qui arrivera le premier?' },
-            { move: 'Nbd7', comment: 'Developpement du cavalier dame. Stockfish complete son developpement et prepare le contre-jeu sur l\'aile dame!' },
-            { move: 'g4', comment: '⚡ L\'ASSAUT COMMENCE! Premier pion de l\'attaque qui avance. AlphaZero lance son armee de pions vers le roi noir!' },
-            { move: 'b5', comment: '💥 CONTRE-ATTAQUE VIGOUREUSE! Stockfish lance ses pions vers le roi blanc. Course a l\'attaque mutuelle!' },
-            { move: 'g5', comment: '🔥 L\'AVALANCHE CONTINUE! Le pion g avance inexorablement. AlphaZero chasse le cavalier f6!' },
-            { move: 'Nh5', comment: 'Le cavalier fuit vers la peripherie. Stockfish cherche a redeployer son cavalier via f4!' },
-            { move: 'Kb1', comment: '👑 SECURITE DU ROI! AlphaZero eloigne son roi de la colonne c avant que Stockfish n\'y amene ses tours!' },
+            { move: 'Nbd7', comment: 'Developpement du cavalier dame. les Noirs complete son developpement et prepare le contre-jeu sur l\'aile dame!' },
+            { move: 'g4', comment: '⚡ L\'ASSAUT COMMENCE! Premier pion de l\'attaque qui avance. les Blancs lance son armee de pions vers le roi noir!' },
+            { move: 'b5', comment: '💥 CONTRE-ATTAQUE VIGOUREUSE! les Noirs lance ses pions vers le roi blanc. Course a l\'attaque mutuelle!' },
+            { move: 'g5', comment: '🔥 L\'AVALANCHE CONTINUE! Le pion g avance inexorablement. les Blancs chasse le cavalier f6!' },
+            { move: 'Nh5', comment: 'Le cavalier fuit vers la peripherie. les Noirs cherche a redeployer son cavalier via f4!' },
+            { move: 'Kb1', comment: '👑 SECURITE DU ROI! les Blancs eloigne son roi de la colonne c avant que les Noirs n\'y amene ses tours!' },
             { move: 'Rc8', comment: '♜ PRESSION SUR LA COLONNE C! La tour noire s\'active sur la colonne semi-ouverte.' },
-            { move: 'Nd5', comment: '💎 CENTRALISATION PARFAITE! Le cavalier occupe le poste avance d5. AlphaZero domine le centre!' },
-            { move: 'Bxd5', comment: 'Stockfish echange le cavalier centralise. Elimination d\'une piece dangereuse!' },
-            { move: 'exd5', comment: 'Recuperation avec le pion central. AlphaZero cree un pion passe au centre!' },
-            { move: 'Nf4', comment: '⚡ LE CAVALIER SAUTE EN F4! Stockfish place son cavalier sur une case active, attaquant le fou e3!' },
-            { move: 'Bxf4', comment: 'AlphaZero echange immediatement. Trade strategique pour ouvrir des lignes vers le roi noir!' },
-            { move: 'exf4', comment: 'Stockfish reprend avec le pion. La structure change - le roi noir devient plus vulnerable!' },
-            { move: 'Qxf4', comment: '♛ LA DAME PREND! AlphaZero centralise sa dame avec des menaces sur le flanc roi!' },
+            { move: 'Nd5', comment: '💎 CENTRALISATION PARFAITE! Le cavalier occupe le poste avance d5. les Blancs domine le centre!' },
+            { move: 'Bxd5', comment: 'les Noirs echange le cavalier centralise. Elimination d\'une piece dangereuse!' },
+            { move: 'exd5', comment: 'Recuperation avec le pion central. les Blancs cree un pion passe au centre!' },
+            { move: 'Nf4', comment: '⚡ LE CAVALIER SAUTE EN F4! les Noirs place son cavalier sur une case active, attaquant le fou e3!' },
+            { move: 'Bxf4', comment: 'les Blancs echange immediatement. Trade strategique pour ouvrir des lignes vers le roi noir!' },
+            { move: 'exf4', comment: 'les Noirs reprend avec le pion. La structure change - le roi noir devient plus vulnerable!' },
+            { move: 'Qxf4', comment: '♛ LA DAME PREND! les Blancs centralise sa dame avec des menaces sur le flanc roi!' },
             { move: 'Nc5', comment: 'Le cavalier noir saute sur c5, attaquant le cavalier b3 et visant e4.' },
-            { move: 'h4', comment: '🔥 L\'AVALANCHE DE PIONS! Le pion h avance. AlphaZero prepare h5-h6 pour detruire le roque!' },
+            { move: 'h4', comment: '🔥 L\'AVALANCHE DE PIONS! Le pion h avance. les Blancs prepare h5-h6 pour detruire le roque!' },
             { move: 'Qc7', comment: 'La dame noire se centralise, protegeant le cavalier et preparant la defense.' },
             { move: 'Bd3', comment: '💎 LE FOU S\'ACTIVE! Visant directement la case h7 pres du roi noir!' },
             { move: 'Ne4', comment: 'Le cavalier tente de bloquer, mais c\'est trop tard...' },
-            { move: 'Bxe4', comment: 'AlphaZero elimine le bloqueur. La diagonale b1-h7 est maintenant ouverte!' },
-            { move: 'f6', comment: 'Stockfish tente d\'ouvrir la position pour ses pieces, mais cela affaiblit g6!' },
+            { move: 'Bxe4', comment: 'les Blancs elimine le bloqueur. La diagonale b1-h7 est maintenant ouverte!' },
+            { move: 'f6', comment: 'les Noirs tente d\'ouvrir la position pour ses pieces, mais cela affaiblit g6!' },
             { move: 'gxf6', comment: '⚡ OUVERTURE DE LA COLONNE G! Le pion g disparait - acces direct au roi!' },
             { move: 'Bxf6', comment: 'Le fou reprend, mais la position noire s\'effrite...' },
             { move: 'Qg4', comment: '🔥 LA DAME PIVOTE VERS LE ROI! Menaces directes sur g6 et h7!' },
             { move: 'Qd7', comment: 'Defense desesperee. Le roi noir est sous pression maximale!' },
             { move: 'h5', comment: '⚡ LE PION H AVANCE! Preparation du sacrifice devastateur!' },
-            { move: 'Rfd8', comment: 'Stockfish double ses tours, mais le danger vient de l\'aile roi...' },
+            { move: 'Rfd8', comment: 'les Noirs double ses tours, mais le danger vient de l\'aile roi...' },
             { move: 'h6', comment: '💥 LE PION ARRIVE! Menace hxg7 et destruction du roque noir!' },
-            { move: 'g6', comment: 'Stockfish bloque avec g6, mais cela cree une faiblesse mortelle...' },
-            { move: 'Bxg6', comment: '💥💥💥 SACRIFICE DU FOU! AlphaZero sacrifie son fou pour detruire le bouclier de pions! L\'attaque devient irresistible!' },
-            { move: 'hxg6', comment: 'Stockfish doit accepter - la structure de pions est detruite!' },
+            { move: 'g6', comment: 'les Noirs bloque avec g6, mais cela cree une faiblesse mortelle...' },
+            { move: 'Bxg6', comment: '💥💥💥 SACRIFICE DU FOU! les Blancs sacrifie son fou pour detruire le bouclier de pions! L\'attaque devient irresistible!' },
+            { move: 'hxg6', comment: 'les Noirs doit accepter - la structure de pions est detruite!' },
             { move: 'Qxg6+', comment: '♛ LA DAME ENTRE AVEC ECHEC! Le roi noir est completement expose!' },
             { move: 'Kf8', comment: 'Le roi fuit, mais ou peut-il aller?' },
             { move: 'Qxf6+', comment: '⚡ LA DAME PREND LE FOU AVEC ECHEC! Gain de materiel avec attaque continue!' },
@@ -457,7 +455,7 @@ document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previo
             { move: 'Qg7', comment: '🔥 LA DAME CONTROLE LA 7EME! Menace h7 et infiltration totale!' },
             { move: 'Rc7', comment: 'Defense desesperee de la tour sur la 7eme rangee.' },
             { move: 'h7', comment: '💎 LE PION PASSE AVANCE! Menace de promotion imminente!' },
-            { move: 'Qf7', comment: 'Stockfish bloque avec la dame - seule defense contre la promotion!' },
+            { move: 'Qf7', comment: 'les Noirs bloque avec la dame - seule defense contre la promotion!' },
             { move: 'Qg8+', comment: '⚡ ECHEC FORCING! La dame force l\'echange!' },
             { move: 'Qf8', comment: 'Interposition forcee de la dame noire.' },
             { move: 'Qxf8+', comment: '♛ ECHANGE DES DAMES! Mais le pion h7 est un monstre!' },
@@ -479,12 +477,11 @@ document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') previo
             { move: 'Re6+', comment: '🔥 ECHEC SUR LA 6EME! La tour chasse le roi!' },
             { move: 'Kf5', comment: 'Le roi au centre - position tres exposee!' },
             { move: 'Rxd6', comment: '♜ CAPTURE DU PION D6! Gain de materiel supplementaire!' },
-            { move: 'Rc5', comment: 'Stockfish tente de defendre le pion b5...' },
+            { move: 'Rc5', comment: 'les Noirs tente de defendre le pion b5...' },
             { move: 'Rxa6', comment: '⚡ ENCORE UN PION! La tour ramasse tout!' },
             { move: 'Rxd5', comment: 'La tour noire prend le pion d5 - dernier espoir.' },
             { move: 'Ra7', comment: '🔥 LA TOUR DOMINE LA 7EME! Position completement gagnante!' },
-            { move: '1-0', comment: '🏆🏆🏆 STOCKFISH ABANDONNE! VICTOIRE MAGISTRALE D\'ALPHAZERO! Le sacrifice de fou suivi de la promotion du pion h en dame restera dans l\'histoire comme un chef-d\'oeuvre positionnel et tactique! UN TRIOMPHE ABSOLU!' }
-        ];
+            ];
 
         // Mapping des pièces chess.js vers Unicode (outline symbols pour tous - différenciés par CSS)
         const pieceSymbols = {

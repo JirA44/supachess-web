@@ -602,10 +602,11 @@ test('all legendary game main lines are legal and advance one half-move at a tim
         : typeof moves !== 'undefined' && Array.isArray(moves) ? moves
         : typeof gameHistory !== 'undefined' && Array.isArray(gameHistory) ? gameHistory
         : [];
-      const mainLine = list.map((item) => typeof item === 'string' ? item
+      const listedMoves = list.map((item) => typeof item === 'string' ? item
         : item && (item.san || item.move || item.notation)).filter(Boolean)
-        .map((move) => String(move).trim())
-        .filter((move) => !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(move));
+        .map((move) => String(move).trim());
+      const hasEmbeddedResult = listedMoves.some((move) => /^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(move));
+      const mainLine = listedMoves.filter((move) => !/^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(move));
       const replay = new Chess();
       let illegalMove = null;
       for (let i = 0; i < mainLine.length; i++) {
@@ -625,12 +626,14 @@ test('all legendary game main lines are legal and advance one half-move at a tim
         : typeof game !== 'undefined' ? game : null;
       return {
         count: mainLine.length,
+        hasEmbeddedResult,
         illegalMove,
         index: currentIndex(),
         fen: position && typeof position.fen === 'function' ? position.fen() : null
       };
     });
     expect(audit.count, path + ' exposes its complete main line').toBeGreaterThan(0);
+    expect(audit.hasEmbeddedResult, path + ' stores the result outside the move list').toBe(false);
     expect(audit.illegalMove, path + ' contains only legal consecutive moves').toBeNull();
     expect(audit.index, path + ' exposes its replay position').not.toBeNull();
     expect(audit.fen, path + ' exposes its current board position').toBeTruthy();
@@ -659,5 +662,45 @@ test('all legendary game main lines are legal and advance one half-move at a tim
     expect(replay.error, path + ' has a working next button').toBeUndefined();
     expect(replay.errors, path + ' advances every move exactly once').toEqual([]);
     expect(replay.steps, path + ' replays its entire main line').toBe(audit.count);
+  }
+});
+
+
+test('published PGN source lines match their replay pages', async ({ page }) => {
+  await isolateExternalServices(page);
+  const sources = [
+    { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn' },
+    { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn' },
+    { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
+    { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
+    { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn' }
+  ];
+  for (const item of sources) {
+    await page.goto(item.page);
+    if (item.download) await expect(page.locator('a[download]')).toHaveAttribute('href', item.download);
+    const audit = await page.evaluate(async (pgnPath) => {
+      const pgnResponse = await fetch(pgnPath);
+      if (!pgnResponse.ok) return { error: 'PGN source unavailable: ' + pgnResponse.status };
+      const source = new Chess();
+      const loaded = source.load_pgn(await pgnResponse.text(), { sloppy: true });
+      if (loaded === false) return { error: 'PGN source could not be parsed' };
+      const sourceMoves = source.history();
+      const entries = typeof gameMoves !== 'undefined' && Array.isArray(gameMoves) ? gameMoves
+        : typeof moveHistory !== 'undefined' && Array.isArray(moveHistory) ? moveHistory
+        : typeof moves !== 'undefined' && Array.isArray(moves) ? moves : [];
+      const replay = new Chess();
+      const pageMoves = [];
+      for (const entry of entries) {
+        const san = String(typeof entry === 'string' ? entry : entry && (entry.san || entry.move || entry.notation) || '').trim();
+        if (!san || /^(1-0|0-1|1\\/2-1\\/2|\\*)$/.test(san)) return { error: 'Result marker or empty move found in page line' };
+        const played = replay.move(san, { sloppy: true });
+        if (!played) return { error: 'Page line contains an illegal move: ' + san };
+        pageMoves.push(played.san);
+      }
+      return { sourceMoves, pageMoves };
+    }, item.pgn);
+    expect(audit.error, item.page + ' parses its linked PGN').toBeUndefined();
+    expect(audit.pageMoves, item.page + ' follows the linked PGN at every half-move').toEqual(audit.sourceMoves);
+    if (item.expectedPlies) expect(audit.pageMoves, item.page + ' has the complete expected ply count').toHaveLength(item.expectedPlies);
   }
 });

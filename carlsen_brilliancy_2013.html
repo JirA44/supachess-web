@@ -371,7 +371,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Cliquez sur "Suivant" pour explorer la partie décisive où Carlsen devient Champion du Monde.</div>
+                    <div class="move-comment" id="moveComment">Cliquez sur « Suivant » pour revoir la victoire qui donne à Carlsen une avance de 6–3 dans le match.</div>
                 </div>
             </div>
 
@@ -449,7 +449,7 @@
             { move: 'Rf4', comment: 'La tour se place en attaque. Anand cherche le mat.' },
             { move: 'b1=Q+', comment: 'PROMOTION! La dame noire apparait avec echec. Coup spectaculaire!' },
             { move: 'Nf1', comment: 'GAFFE HISTORIQUE! 28.Ff1! etait necessaire pour couvrir h4. Cette erreur est fatale!' },
-            { move: 'Qe1', comment: 'COUP GAGNANT! Echec et la tour h4 est menacee. Anand ne peut pas defendre les deux menaces. ABANDON! Carlsen remporte la partie 9 et se rapproche du titre mondial.' }
+            { move: 'Qe1', comment: 'COUP GAGNANT! Echec et la tour h4 est menacee. Anand ne peut pas defendre les deux menaces. ABANDON! Carlsen remporte la partie 9 et mène 6–3. Il aura besoin d’une nulle dans les trois dernières parties pour gagner le match.' }
         ];
 
         let currentMoveIndex = -1;
@@ -490,7 +490,7 @@
 
             if (currentMoveIndex === -1) {
                 moveNumber.textContent = 'Position initiale';
-                moveComment.textContent = 'Cliquez sur "Suivant" pour explorer la partie décisive où Carlsen devient Champion du Monde.';
+                moveComment.textContent = 'Cliquez sur « Suivant » pour revoir la victoire qui donne à Carlsen une avance de 6–3 dans le match.';
             } else {
                 const moveNum = Math.floor(currentMoveIndex / 2) + 1;
                 const color = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';

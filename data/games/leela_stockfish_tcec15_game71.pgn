@@ -1,0 +1,13 @@
+[Event "TCEC Season 15 Superfinal, Game 71.1"]
+[Site "TCEC"]
+[Date "2019.05.23"]
+[Round "71.1"]
+[White "Stockfish 19050918"]
+[Black "LCZero v0.21.1-nT40.T8.610"]
+[Result "1/2-1/2"]
+[ECO "C25"]
+[Opening "Vienna gambit"]
+[Termination "adjudication"]
+[TerminationDetails "TCEC draw rule"]
+
+1. e4 e5 2. Nc3 Nc6 3. f4 exf4 4. Nf3 g5 5. g3 g4 6. Nh4 Nd4 7. Nd5 f3 8. c3 Ne6 9. h3 h5 10. Nf5 c6 11. Nde3 Ng5 12. hxg4 d5 13. exd5 Bxf5 14. gxf5 Bd6 15. Qa4 Bxg3+ 16. Kd1 Qd7 17. Kc2 h4 18. dxc6 bxc6 19. Ba6 Kf8 20. Nf1 Qxf5+ 21. d3 Re8 22. Nxg3 hxg3 23. Rxh8 g2 24. Qb4+ Kg7 25. Bxg5 Re2+ 26. Kb3 Kxh8 27. Qh4+ Kg7 28. Qg3 Nh6 29. Bxh6+ Kxh6 30. Qh4+ Kg7 31. Qg3+ Kf8 32. Qd6+ Kg8 33. Qg3+ Kf8 34. Qd6+ Kg7 35. Qg3+ Kh6 36. Rg1 Re6 37. Bc4 Rf6 38. d4 c5 39. Qh4+ Kg7 40. Qf2 Rb6+ 41. Ka3 Qe4 42. Re1 Qg4 43. Bd5 Rf6 1/2-1/2

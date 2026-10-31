@@ -693,6 +693,7 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/nezhmetdinov_perfect_1951.html', pgn: '/data/games/nezhmetdinov_vs_chernikov_1962.pgn', download: 'data/games/nezhmetdinov_vs_chernikov_1962.pgn', expectedPlies: 65, heading: 'Nezhmetdinov vs Chernikov', expectedText: '12.Qxf6', forbiddenText: '100% ACCURACY' },
     { page: '/tarrasch_perfect_1892.html', pgn: '/data/games/tarrasch_vs_marco_1892.pgn', download: 'data/games/tarrasch_vs_marco_1892.pgn', expectedPlies: 35, heading: 'Tarrasch vs Marco - 1892', expectedText: '18.c4', forbiddenText: '100% ACCURACY' },
     { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
+    { page: '/stockfish_vs_komodo_2018.html', pgn: '/data/games/stockfish_komodo_tcec13_game47.pgn', download: 'data/games/stockfish_komodo_tcec13_game47.pgn', expectedPlies: 85, heading: 'Stockfish–Komodo · TCEC Season 13, partie 47.1', expectedText: '½–½ · répétition triple', forbiddenText: 'Queen\'s Gambit Declined' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn', expectedPlies: 248, heading: 'TCEC S28 Superfinal - Game 83', expectedText: 'LCZero (Blancs) contre Stockfish (Noirs)', forbiddenText: 'Stockfish (Blancs)' }
   ];
   for (const item of sources) {

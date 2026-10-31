@@ -437,6 +437,7 @@
 
         // Navigation au clavier
         document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
             if (e.key === 'ArrowLeft') {
                 document.getElementById('prevBtn').click();
             } else if (e.key === 'ArrowRight') {

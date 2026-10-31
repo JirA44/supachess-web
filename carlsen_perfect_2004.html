@@ -181,7 +181,8 @@
         function goToStart() { chess.reset();currentMoveIndex=-1;renderBoard();updateMoveInfo(); }
         function goToEnd() { goToStart();for(var i=0;i<gameMoves.length;i++)nextMove(); }
         function goToMove(index) { chess.reset();currentMoveIndex=-1;for(var i=0;i<=index;i++){currentMoveIndex++;chess.move(gameMoves[currentMoveIndex].move,{sloppy:true});}renderBoard();updateMoveInfo(); }
-        document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();});
+        document.addEventListener('keydown',function(e){
+            if (e.repeat) return;if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();});
         renderBoard(); updateMoveInfo();
     </script>
 <script src="supa-dots-widget.js"></script>

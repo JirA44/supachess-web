@@ -525,3 +525,36 @@ test('global site search finds a specific endgame and opens its direct exercise'
   await expect(page).toHaveURL(/TRAINING_ENDGAMES\.html\?endgame=philidor/);
   await expect(page.locator('#endgame-title')).toContainText('Position Philidor');
 });
+
+test('legendary games advance one half-move per arrow key press', async ({ page }) => {
+  await isolateExternalServices(page);
+  const paths = [
+    '/alphazero_sacrificial_masterpiece.html',
+    '/alphazero_vs_stockfish.html',
+    '/alphazero_vs_stockfish_game2.html',
+    '/carlsen_perfect_2004.html',
+    '/kasparov_immortal_1999.html',
+    '/scc_carlsen_vs_lazavik.html',
+    '/web/legendary-games/carlsen_modern.html',
+    '/web/legendary-games/karpov_positional.html',
+    '/web/legendary-games/kasparov_immortal.html',
+    '/web/legendary-games/tal_masterpiece.html'
+  ];
+
+  for (const path of paths) {
+    await page.goto(path);
+    const before = await page.evaluate(() => (
+      typeof currentMoveIndex === 'number' ? currentMoveIndex :
+      typeof currentMove === 'number' ? currentMove : null
+    ));
+    expect(before, path + ' exposes its current half-move').not.toBeNull();
+    await page.keyboard.down('ArrowRight');
+    await page.keyboard.down('ArrowRight');
+    await page.keyboard.up('ArrowRight');
+    const after = await page.evaluate(() => (
+      typeof currentMoveIndex === 'number' ? currentMoveIndex :
+      typeof currentMove === 'number' ? currentMove : null
+    ));
+    expect(after, path + ' advances exactly once while the key is held').toBe(before + 1);
+  }
+});

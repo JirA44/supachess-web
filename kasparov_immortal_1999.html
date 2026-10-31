@@ -728,6 +728,7 @@
 
         // Navigation au clavier
         document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
             if (e.key === 'ArrowLeft') previousMove();
             if (e.key === 'ArrowRight') nextMove();
             if (e.key === 'Home') goToStart();

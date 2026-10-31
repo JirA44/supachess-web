@@ -1575,7 +1575,9 @@ function answerConcept(index) {
     const explanation=document.getElementById('tactic-explanation');
     explanation.textContent=currentPuzzle.explain;
     explanation.hidden=false;
-    document.getElementById('btn-done').disabled=false;
+    const doneButton=document.getElementById('btn-done');
+    doneButton.disabled=false;
+    doneButton.style.display='inline-flex';
     document.querySelectorAll('.tactic-choice').forEach(button=>button.disabled=true);
 }
 function markSolved(id) {

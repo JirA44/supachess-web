@@ -65,6 +65,7 @@ test('puzzle stays hidden until the learner plays the move and explains it', () 
   assert.match(window.document.getElementById('tactic-feedback').textContent, /Indice 1/);
   correctChoice.click();
   assert.equal(window.document.getElementById('btn-done').disabled, false);
+  assert.equal(window.document.getElementById('btn-done').style.display, 'inline-flex');
   assert.match(modal.textContent, /Le cavalier donne échec tout en attaquant la tour/);
   window.document.getElementById('btn-done').click();
   assert.deepEqual(JSON.parse(window.localStorage.getItem('supachess_tactics_v2')), ['knight-fork-A']);

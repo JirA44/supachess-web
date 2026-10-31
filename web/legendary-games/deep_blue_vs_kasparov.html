@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Deep Blue vs Kasparov 1997 - Man vs Machine</title>
+    <title>Deep Blue–Kasparov · 6e partie du match de 1997</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -317,48 +317,54 @@
             background: linear-gradient(135deg, #00d4ff, #00ff88);
             border-radius: 10px;
         }
+    @media (max-width: 950px) {
+            body { padding: 12px; }
+            header { padding: 24px 16px; }
+            h1 { font-size: clamp(1.7rem, 7vw, 2.6rem); }
+            .main-content { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+            .board-section { position: static; padding: 16px; }
+            #board { width: min(100%, 590px); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🤖 Deep Blue vs Kasparov - Match du Siècle</h1>
-            <div class="subtitle">Deep Blue (IBM) vs Garry Kasparov - Homme vs Machine</div>
+            <h1>Deep Blue–Kasparov · 6e partie</h1>
+            <div class="subtitle">Rematch IBM · New York · 11 mai 1997</div>
             <div>
-                <span class="badge">🔥 Défense Caro-Kann</span>
-                <span class="badge">🏆 Match Historique 1997</span>
-                <span class="badge">1-0 Victoire Deep Blue!</span>
+                <span class="badge">Défense Caro-Kann · B17</span>
+                <span class="badge">6e partie · score avant : 2½–2½</span>
+                <span class="badge">1–0 · abandon après 19.c4</span>
             </div>
             <a href="../../index.html" class="back-button">🏠 Retour à l'Index AIMIX</a>
         </header>
 
         <div class="game-info-box">
-            <h3>📖 À Propos de Ce Moment Historique</h3>
-            <p><strong>Contexte :</strong> 11 mai 1997, New York. Avant la sixième partie, le match est à égalité (2½–2½). Deep Blue remporte cette partie et le match sur le score final de 3½–2½.</p>
-            <p><strong>Importance historique :</strong> Deep Blue devient le premier ordinateur à remporter un match contre le champion du monde en titre sous cadence classique. Ce résultat décrit ce match précis, pas une mesure générale de la force de tous les ordinateurs et joueurs humains.</p>
-            <p><strong>La partie :</strong> la dernière partie se termine après 19 coups, sur l'abandon de Kasparov. Le lecteur ci-dessous permet de suivre la ligne complète.</p>
-            <p><strong>Legacy:</strong> Change TOUT! Prouve que l'IA peut surpasser l'humain dans des domaines complexes. Lance l'ère moderne de l'IA aux échecs. Stockfish, AlphaZero, Leela sont les héritiers de Deep Blue.</p>
-            <p><strong>Controverse:</strong> Kasparov a contesté certains coups de Deep Blue, les jugeant "trop humains". IBM a refusé de dévoiler les logs. Mystère non résolu!</p>
+            <h3>Repères historiques</h3>
+            <p>Le 11 mai 1997, à New York, Deep Blue affronte Garry Kasparov dans la sixième partie du rematch. Le score est à égalité, 2½–2½. Après <strong>19.c4</strong>, Kasparov abandonne; Deep Blue gagne la partie 1–0 et le match 3½–2½.</p>
+            <p>Cette victoire fait de Deep Blue le premier ordinateur à remporter un match contre le champion du monde en titre dans ces conditions de match. Elle ne permet pas de convertir la force du moteur en Elo FIDE humain.</p>
+            <p>Les annotations ci-dessous décrivent certains coups de la partie; elles ne sont pas des évaluations Stockfish. La ligne complète et son résultat sont accessibles dans le <a href="../../data/games/deep_blue_kasparov_1997_game6.pgn" download>PGN source</a>. <a href="https://www.ibm.com/history/deep-blue" target="_blank" rel="noopener noreferrer">Source historique IBM</a>.</p>
         </div>
 
         <div class="main-content">
             <div class="board-section">
-                <div class="player-info human">
+                <div class="player-info machine">
                     <div>
-                        <div class="player-name">♚ Garry Kasparov</div>
-                        <div class="player-rating">ELO: 2785 | Champion du Monde | Humain</div>
+                        <div class="player-name">♔ Deep Blue · Blancs</div>
+                        <div class="player-rating">IBM RS/6000 SP · ordinateur</div>
                     </div>
-                    <div style="font-size: 4em;">👤</div>
+                    <div style="font-size: 4em;">🤖</div>
                 </div>
 
                 <div id="board"></div>
 
-                <div class="player-info machine">
-                    <div style="font-size: 4em;">🤖</div>
-                    <div style="text-align: right;">
-                        <div class="player-name">♔ Deep Blue</div>
-                        <div class="player-rating">IBM RS/6000 SP | 200M pos/sec | Machine</div>
+                <div class="player-info human">
+                    <div>
+                        <div class="player-name">♚ Garry Kasparov · Noirs</div>
+                        <div class="player-rating">Elo PGN : 2785 · champion du monde en titre</div>
                     </div>
+                    <div style="font-size: 4em;">👤</div>
                 </div>
 
                 <div class="controls">
@@ -376,35 +382,41 @@
     </div>
 
     <script>
-        const gamePGN = `[Event "IBM Man-Machine"]
+        const gamePGN = `[Event "IBM Man-Machine Rematch"]
 [Site "New York, NY USA"]
 [Date "1997.05.11"]
 [Round "6"]
-[White "Deep Blue (Computer)"]
+[White "Deep Blue"]
 [Black "Garry Kasparov"]
 [Result "1-0"]
 [WhiteElo "?"]
 [BlackElo "2785"]
 [ECO "B17"]
+[PlyCount "37"]
 
-1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Nd7 5.Ng5 Ngf6 6.Bd3 e6 7.N1f3 h6
-8.Nxe6 Qe7 9.O-O fxe6 10.Bg6+ Kd8 11.Bf4 b5 12.a4 Bb7 13.Re1 Nd5
-14.Bg3 Kc8 15.axb5 cxb5 16.Qd3 Bc6 17.Bf5 exf5 18.Rxe7 Bxe7 19.c4 1-0`;
+1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Ng5 Ngf6 6. Bd3 e6 7. N1f3 h6
+8. Nxe6 Qe7 9. O-O fxe6 10. Bg6+ Kd8 11. Bf4 b5 12. a4 Bb7 13. Re1 Nd5
+14. Bg3 Kc8 15. axb5 cxb5 16. Qd3 Bc6 17. Bf5 exf5 18. Rxe7 Bxe7 19. c4 1-0`;
 
         const moveAnnotations = {
-            1: { rating: 8.0, comment: "e4 - Deep Blue ouvre classiquement. Répertoire programmé.", advantages: ["✓ Contrôle centre"], benefits: ["✓ Initiative"], weaknesses: [] },
-            2: { rating: 8.5, comment: "Caro-Kann! Kasparov choisit une défense solide et éprouvée.", advantages: ["✓ Structure solide"], benefits: ["✓ Défense sûre"], weaknesses: [] },
-            5: { rating: 7.5, comment: "Ng5 - Variante agressive de Deep Blue. Position théorique.", advantages: ["✓ Pression immédiate"], benefits: ["✓ Initiative"], weaknesses: [] },
-            7: { rating: 8.0, comment: "N1f3 - Deep Blue développe avec précision machine.", advantages: ["✓ Développement"], benefits: ["✓ Contrôle centre"], weaknesses: [] },
-            8: { rating: 9.5, comment: "Nxe6!! SACRIFICE BRILLANT! Deep Blue sacrifie le cavalier!", advantages: ["✓ Ouvre lignes", "✓ Attaque roi noir"], benefits: ["✓ Initiative dévastatrice", "✓ Coup programmé parfait"], weaknesses: [] },
-            9: { rating: 8.0, comment: "O-O! Deep Blue roque calmement malgré le sacrifice. Confiance totale.", advantages: ["✓ Roi en sécurité"], benefits: ["✓ Tours connectées"], weaknesses: [] },
-            10: { rating: 9.0, comment: "Bg6+! ÉCHEC! Le roi noir est exposé, forcé à bouger!", advantages: ["✓ Roi déplacé", "✓ Avantage positionnel"], benefits: ["✓ Attaque continue"], weaknesses: [] },
-            11: { rating: 8.5, comment: "Bf4 - Deep Blue continue à développer avec menaces.", advantages: ["✓ Fou actif"], benefits: ["✓ Pression maximale"], weaknesses: [] },
-            13: { rating: 8.0, comment: "Re1 - La tour entre, doublant la pression sur e6.", advantages: ["✓ Tour sur colonne ouverte"], benefits: ["✓ Menaces multiples"], weaknesses: [] },
-            14: { rating: 7.5, comment: "Bg3 - Deep Blue maintient la pression, toutes pièces actives.", advantages: ["✓ Coordination parfaite"], benefits: ["✓ Position dominante"], weaknesses: [] },
-            16: { rating: 9.0, comment: "Qd3! La dame entre avec des menaces dévastatrices!", advantages: ["✓ Dame centralisée", "✓ Menaces multiples"], benefits: ["✓ Avantage décisif"], weaknesses: [] },
-            17: { rating: 9.5, comment: "Bf5!! COUP MACHINE! Menace mat et gagne pion e6!", advantages: ["✓ Menace Rxe7", "✓ Menace Bxe6"], benefits: ["✓ Position gagnante"], weaknesses: [] },
-            18: { rating: 10.0, comment: "Rxe7!! Deep Blue gagne la Dame! VICTOIRE HISTORIQUE! 1-0", advantages: ["✓ Gagne Dame", "✓ Avantage matériel décisif"], benefits: ["✓ DEEP BLUE BAT KASPAROV!", "✓ L'ÈRE DE L'IA COMMENCE!"], weaknesses: [] }
+            1: "1...c6 : Kasparov choisit la défense Caro-Kann.",
+            2: "2...d5 : les Noirs contestent le centre.",
+            3: "3...dxe4 : le pion noir capture le pion blanc en e4.",
+            4: "4...Nd7 : le cavalier se développe en d7.",
+            5: "5...Ngf6 : le cavalier attaque le cavalier blanc en e4.",
+            6: "6...e6 : le pion libère la diagonale du fou f8.",
+            7: "7...h6 : le pion attaque le cavalier blanc en g5.",
+            8: "8...Qe7 : la dame noire se place en e7.",
+            9: "9...fxe6 : le pion f7 capture le cavalier blanc en e6.",
+            10: "10...Kd8 : le roi quitte l'échec donné par 10.Bg6+.",
+            11: "11...b5 : les Noirs avancent leur pion b.",
+            12: "12...Bb7 : le fou se développe en b7.",
+            13: "13...Nd5 : le cavalier se place au centre, en d5.",
+            14: "14...Kc8 : le roi se déplace en c8.",
+            15: "15...cxb5 : le pion c6 capture le pion blanc en b5.",
+            16: "16...Bc6 : le fou se replie en c6.",
+            17: "17...exf5 : le pion e6 capture le fou blanc en f5.",
+            18: "18...Bxe7 : le fou capture la tour blanche en e7."
         };
 
         let game = new Chess();
@@ -440,19 +452,15 @@
                 const color = index % 2 === 0 ? '⚪' : '⚫';
                 const isBlackMove = index % 2 === 1;
 
-                const annotation = moveAnnotations[moveNum] || {
-                    rating: 8.0,
-                    comment: "Coup de précision machine."
-                };
+                const annotation = isBlackMove ? moveAnnotations[moveNum] : null;
 
                 let cardHTML = `
                     <div class="move-card" data-move="${index + 1}">
                         <div class="move-header">
                             <div class="move-number">${color} ${moveNum}.</div>
-                            <div class="move-rating">${annotation.rating.toFixed(1)}/10</div>
                         </div>
                         <div class="move-notation">${move.san}</div>
-                        ${isBlackMove ? `<div class="move-comment">${annotation.comment}</div>` : ''}
+                        ${annotation ? `<div class="move-comment">${annotation}</div>` : ''}
                     </div>
                 `;
 
@@ -464,7 +472,7 @@
 
         function updateMoveInfo() {
             if (currentMoveIndex === 0) {
-                $('#moveInfo').text('Position de départ - Le match du siècle commence...');
+                $('#moveInfo').text('Position de départ · rematch de 1997');
             } else {
                 const moveNum = Math.floor((currentMoveIndex - 1) / 2) + 1;
                 const move = moveHistory[currentMoveIndex - 1];

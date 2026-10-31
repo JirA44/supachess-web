@@ -674,6 +674,9 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
     { page: '/karpov_positional_1978.html', pgn: '/data/games/korchnoi_karpov_1978_game31.pgn', download: 'data/games/korchnoi_karpov_1978_game31.pgn', expectedPlies: 141, heading: 'Korchnoi–Karpov · Partie 31 (1978)' },
     { page: '/web/legendary-games/carlsen_vs_kasparov.html', pgn: '/data/games/carlsen_vs_kasparov_2004.pgn', download: '../../data/games/carlsen_vs_kasparov_2004.pgn', expectedPlies: 103, heading: '🏆 Carlsen vs Kasparov - Reykjavik Rapid 2004', expectedText: 'Gambit dame · D52', forbiddenText: 'Sicilienne Sveshnikov' },
+    { page: '/web/legendary-games/anand_vs_kasparov.html', pgn: '/data/games/anand_vs_kasparov_moscow_1995.pgn', download: '../../data/games/anand_vs_kasparov_moscow_1995.pgn', expectedPlies: 55, heading: '🐅 Anand–Kasparov · PCA/Intel Grand Prix 1995', expectedText: 'Sicilienne Chekhover · B53', forbiddenText: 'Nimzo-Indienne', noMoveRatings: true, white: 'Viswanathan Anand · Blancs', black: 'Garry Kasparov · Noirs' },
+    { page: '/web/legendary-games/kasparov_vs_karpov.html', pgn: '/data/games/karpov_kasparov_1985_game16.pgn', download: '../../data/games/karpov_kasparov_1985_game16.pgn', expectedPlies: 80, heading: '⚔️ Karpov–Kasparov · Championnat du monde 1985, partie 16', expectedText: '16...Nd3', forbiddenText: '1-0 Victoire Kasparov', noMoveRatings: true, white: 'Anatoly Karpov · Blancs', black: 'Garry Kasparov · Noirs' },
+    { page: '/web/legendary-games/deep_blue_vs_kasparov.html', pgn: '/data/games/deep_blue_kasparov_1997_game6.pgn', download: '../../data/games/deep_blue_kasparov_1997_game6.pgn', expectedPlies: 37, heading: 'Deep Blue–Kasparov · 6e partie', expectedText: '1–0 · abandon après 19.c4', forbiddenText: 'Mystère non résolu', noMoveRatings: true, white: 'Deep Blue · Blancs', black: 'Garry Kasparov · Noirs' },
     { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn' }
   ];
@@ -683,6 +686,28 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     if (item.heading) await expect(page.getByRole('heading', { name: item.heading })).toBeVisible();
     if (item.expectedText) await expect(page.locator('body')).toContainText(item.expectedText);
     if (item.forbiddenText) await expect(page.locator('body')).not.toContainText(item.forbiddenText);
+    if (item.noMoveRatings) await expect(page.locator('.move-rating')).toHaveCount(0);
+    if (item.white) await expect(page.locator('.player-name').filter({ hasText: item.white })).toBeVisible();
+    if (item.black) await expect(page.locator('.player-name').filter({ hasText: item.black })).toBeVisible();
+    if (item.noMoveRatings) {
+      const annotations = await page.evaluate(() => {
+        const map = typeof moveAnnotations !== 'undefined' ? moveAnnotations : {};
+        const line = typeof moveHistory !== 'undefined' ? moveHistory : [];
+        return Object.entries(map).map(([key]) => {
+          const moveNumber = Number(key);
+          const ply = moveNumber * 2 - 1;
+          const card = document.querySelector(`.move-card[data-move="${ply + 1}"]`);
+          return {
+            moveNumber,
+            hasBlackMove: Boolean(line[ply]),
+            commentOnBlackMove: Boolean(card && card.querySelector('.move-comment')),
+            san: line[ply] && line[ply].san
+          };
+        });
+      });
+      expect(annotations.length, item.page + ' has curated comments').toBeGreaterThan(0);
+      expect(annotations.every((item) => item.hasBlackMove && item.commentOnBlackMove), item.page + ' attaches every comment to an existing black half-move').toBe(true);
+    }
     if (item.page.includes('carlsen_vs_kasparov.html')) {
       await expect(page.locator('.move-rating')).toHaveCount(0);
       await expect(page.locator('.player-info').first()).toContainText('Blancs');

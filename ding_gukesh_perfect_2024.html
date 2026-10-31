@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% Accuracy - Ding Liren vs Gukesh 2024</title>
+    <title>Ding Liren–Gukesh D · Championnat du monde 2024, 4e partie</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -132,8 +132,8 @@
     <div class="container">
         <header>
             <h1>Ding Liren vs Gukesh D</h1>
-            <p class="subtitle">Championnat du Monde 2024 - La partie parfaite</p>
-            <div class="accuracy-badge">LES DEUX JOUEURS : 100% ACCURACY</div>
+            <p class="subtitle">Championnat du monde 2024 · 4e partie · nulle en 42 coups</p>
+            <div class="accuracy-badge">Partie 4 · ½–½ après 42...Rd4+</div>
         </header>
 
         <div class="main-content">
@@ -164,12 +164,12 @@
                     <div class="stat-value">1/2-1/2 (Nulle par repetition)</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">Precision</div>
-                    <div class="stat-value" style="color:#ffd700">Ding: 100% | Gukesh: 100%</div>
+                    <div class="stat-label">Durée</div>
+                    <div class="stat-value">42 coups complets · 84 demi-coups</div>
                 </div>
                 <div class="highlight-box">
-                    <strong>Record historique :</strong>
-                    <p>Premiere fois dans l'histoire du Championnat du Monde que les DEUX joueurs atteignent 100% de precision sur 41 coups. Chaque coup joue est le meilleur coup selon Stockfish.</p>
+                    <strong>Repères de la partie</strong>
+                    <p>Ding ouvre par 1.Nf3 et choisit le développement précoce 5.Ba3. Le replay complet se termine par une répétition de coups.</p>
                 </div>
             </div>
 
@@ -184,7 +184,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Deux joueurs, 41 coups, 100% de precision chacun. Un evenement unique dans l'histoire des echecs. Cliquez sur "Suivant" pour decouvrir cette partie parfaite.</div>
+                    <div class="move-comment" id="moveComment">Parcourez la partie demi-coup par demi-coup. Les observations affichées sont des repères de replay, pas des évaluations moteur.</div>
                 </div>
             </div>
 
@@ -192,8 +192,8 @@
                 <h2>Timeline</h2>
                 <div class="timeline" id="timeline"></div>
                 <div class="highlight-box">
-                    <strong>Pourquoi cette partie est unique :</strong>
-                    <p>Sur 41 coups, aucun des deux joueurs n'a devie du meilleur coup de l'engine. La partie est un chef-d'oeuvre de precision, ou chaque decision est optimale. La nulle par repetition triple est la conclusion logique d'un jeu parfait des deux cotes.</p>
+                    <strong>Fin de partie</strong>
+                    <p>Après 42.Ke4, 42...Rd4+ complète la répétition et la partie est nulle (½–½).</p>
                 </div>
             </div>
         </div>
@@ -203,87 +203,90 @@
     <script>
         const chess = new Chess();
         const gameMoves = [
-            { move: 'Nf3', comment: '1.Cf3 - Ding surprend avec l\'ouverture Zukertort/Reti, evitant les preparations theoriques profondes de Gukesh. Un choix strategique pour une partie de Championnat du Monde.' },
-            { move: 'd5', comment: '1...d5 - Gukesh repond de facon classique et solide. Le pion central occupe d5 immediatement.' },
-            { move: 'e3', comment: '2.e3 - Ding opte pour un systeme tranquille. Le fou de cases blanches pourra se developper en c4 ou d3.' },
-            { move: 'Nf6', comment: '2...Cf6 - Developpement naturel. Le cavalier controle e4 et d5.' },
-            { move: 'b3', comment: '3.b3 - Fianchetto du fou dame. Ding vise une pression sur la grande diagonale a1-h8.' },
-            { move: 'Bf5', comment: '3...Ff5 - Gukesh developpe son fou en dehors de la chaine de pions AVANT de jouer e6. Decision precise qui evite d\'enfermer le fou.' },
-            { move: 'Be2', comment: '4.Fe2 - Developpement modeste mais flexible. Le fou pourra supporter c4 ou se rediriger.' },
-            { move: 'h6', comment: '4...h6 - Coup prophylactique! Gukesh empeche Fg5 qui clouerait le cavalier. Subtil mais precis.' },
-            { move: 'Ba3', comment: '5.Fa3 - Le fou se developpe en a3 pour echanger le fou de cases noires de Gukesh. Ding vise la paire de fous a long terme.' },
-            { move: 'Nbd7', comment: '5...Cbd7 - Developpement naturel du cavalier dame. Il soutient e5 et peut aller en f8 pour la defense.' },
-            { move: 'O-O', comment: '6.O-O - Ding roque rapidement. Le roi est en securite et la tour est prete a jouer.' },
-            { move: 'e6', comment: '6...e6 - Gukesh solidifie le centre. La chaine de pions d5-e6 est tres solide.' },
-            { move: 'Bxf8', comment: '7.Fxf8 - Ding echange le fou! Il elimine le fou de cases noires pour creer un leger desequilibre.' },
-            { move: 'Nxf8', comment: '7...Cxf8 - Le cavalier reprend. Il peut se redevelopper en d7 ou g6.' },
-            { move: 'c4', comment: '8.c4 - Ding frappe au centre. Attaque sur d5 pour ouvrir la position.' },
-            { move: 'N8d7', comment: '8...C8d7 - Le cavalier revient en d7, une case plus active. Il soutient les cases centrales.' },
-            { move: 'Nc3', comment: '9.Cc3 - Le cavalier se developpe en c3, attaquant d5 une deuxieme fois.' },
-            { move: 'O-O', comment: '9...O-O - Gukesh roque. Les deux rois sont maintenant en securite. La position est symetrique et equilibree.' },
-            { move: 'cxd5', comment: '10.cxd5 - Ding echange au centre. Il ouvre des lignes pour ses pieces.' },
-            { move: 'exd5', comment: '10...exd5 - Reprise au centre. La structure est maintenant symetrique avec pions isoles potentiels.' },
-            { move: 'b4', comment: '11.b4 - Ding gagne de l\'espace au flanc dame. Il prepare une expansion et limite le cavalier noir.' },
-            { move: 'c6', comment: '11...c6 - Gukesh solidifie d5. Le pion c6 soutient le centre et empeche Cb5.' },
-            { move: 'Nd4', comment: '12.Cd4 - Le cavalier saute au centre! Case dominante qui attaque f5 et controle e6/c6.' },
-            { move: 'Bh7', comment: '12...Fh7 - Le fou recule en h7 pour eviter l\'echange force. Il reste actif sur la diagonale b1-h7.' },
-            { move: 'Qb3', comment: '13.Db3 - La dame se place en b3, appuyant b4-b5 et visant d5 et f7.' },
-            { move: 'Ne5', comment: '13...Ce5 - Le cavalier noir se centralise magnifiquement! Il controle c4, d3, f3 et menace des fourchettes.' },
-            { move: 'a4', comment: '14.a4 - Ding avance sur le flanc dame. Il prepare a5 pour fixer les pions noirs.' },
-            { move: 'Rc8', comment: '14...Tc8 - La tour occupe la colonne c semi-ouverte. Piece active et bien placee.' },
-            { move: 'a5', comment: '15.a5 - Ding fixe le flanc dame. Le pion a5 restreint les pions noirs et prepare un eventuel a6.' },
-            { move: 'b6', comment: '15...b6 - Gukesh ouvre la colonne b et cree des contre-jeux. Coup precis pour maintenir l\'equilibre.' },
-            { move: 'Nf3', comment: '16.Cf3 - Le cavalier recule pour echanger le cavalier centralise e5. Ding refuse de laisser le cavalier dominer.' },
-            { move: 'Nxf3+', comment: '16...Cxf3+ - Gukesh echange le cavalier puissant avec echec. Les pieces s\'equilibrent.' },
-            { move: 'Bxf3', comment: '17.Fxf3 - Le fou reprend, visant la diagonale a8-h1 et d5.' },
-            { move: 'd4', comment: '17...d4! - Coup brillant de Gukesh! Le pion avance au centre, ouvrant des lignes et creant un pion passe potentiel.' },
-            { move: 'Ne2', comment: '18.Ce2 - Le cavalier recule pour bloquer le pion d4 et maintenir la structure intacte.' },
-            { move: 'dxe3', comment: '18...dxe3 - Gukesh capture en e3, eliminant le pion central blanc.' },
-            { move: 'dxe3', comment: '19.dxe3 - Ding reprend. La position reste parfaitement equilibree.' },
-            { move: 'Be4', comment: '19...Fe4 - Le fou vient au centre! Il attaque la tour a1 et controle des cases cles. Coup actif de Gukesh.' },
-            { move: 'Rfd1', comment: '20.Tfd1 - La tour occupe la colonne d ouverte. Centralisation parfaite.' },
-            { move: 'Qe7', comment: '20...De7 - La dame se centralise et protege le flanc roi. Position harmonieuse pour les noirs.' },
-            { move: 'Bxe4', comment: '21.Fxe4 - Ding echange le fou. Les fous sont elimines, simplifiant la position.' },
-            { move: 'Nxe4', comment: '21...Cxe4 - Le cavalier reprend au centre. Il est puissamment place en e4.' },
-            { move: 'Nc3', comment: '22.Cc3 - Ding attaque le cavalier centralise. Il force l\'echange ou le recul.' },
-            { move: 'Rfd8', comment: '22...Tfd8 - La tour rejoint la colonne d. Pression maximale sur la colonne ouverte.' },
-            { move: 'Nxe4', comment: '23.Cxe4 - Echange des cavaliers. La simplification continue vers une finale equilibree.' },
-            { move: 'Qxe4', comment: '23...Dxe4 - La dame reprend en e4, centralisee et active.' },
-            { move: 'h3', comment: '24.h3 - Coup prophylactique. Ding donne une case de fuite a son roi et empeche toute intrusion en g4.' },
-            { move: 'c5', comment: '24...c5 - Gukesh pousse pour activer son jeu. Le pion vise c4 pour restreindre la dame blanche.' },
-            { move: 'Rxd8+', comment: '25.Txd8+ - Ding echange les tours. Simplification vers la finale.' },
-            { move: 'Rxd8', comment: '25...Txd8 - Reprise forcee.' },
-            { move: 'bxc5', comment: '26.bxc5 - Ding capture le pion c5.' },
-            { move: 'bxc5', comment: '26...bxc5 - Gukesh reprend. La position est maintenant tres simplifiee.' },
-            { move: 'Rc1', comment: '27.Tc1 - La tour blanche attaque le pion c5.' },
-            { move: 'Qe5', comment: '27...De5 - La dame defendet centralise en meme temps. Elle protege c5 tout en etant active.' },
-            { move: 'Qc2', comment: '28.Dc2 - Ding repositionne sa dame pour viser c5 et potentiellement h7.' },
-            { move: 'Rd5', comment: '28...Td5 - La tour se centralise en d5. Position solide et active pour Gukesh.' },
-            { move: 'g3', comment: '29.g3 - Ding securise son roi. Aucune faiblesse ne doit etre laissee.' },
-            { move: 'f5', comment: '29...f5 - Gukesh avance le pion f pour gagner de l\'espace et soutenir sa dame en e5.' },
-            { move: 'Kg2', comment: '30.Rg2 - Le roi blanc se rapproche du centre. Preparation pour une eventuelle finale.' },
-            { move: 'Kh7', comment: '30...Rh7 - Le roi noir aussi se degage de la 8eme rangee. Securite accrue.' },
-            { move: 'Qc4', comment: '31.Dc4 - La dame blanche attaque la tour d5. Pression continue.' },
-            { move: 'Qd6', comment: '31...Dd6 - La dame noire protege la tour et reste active. Position tendue mais equilibree.' },
-            { move: 'e4', comment: '32.e4! - Ding frappe au centre! Ce coup ouvre des lignes et active ses pieces.' },
-            { move: 'Re5', comment: '32...Te5 - La tour s\'active sur la 5eme rangee, maintenant la pression.' },
-            { move: 'exf5', comment: '33.exf5 - Ding capture et simplifie. Les pions s\'echangent.' },
-            { move: 'Rxf5', comment: '33...Txf5 - Gukesh reprend avec la tour. Position egale.' },
-            { move: 'Qe4', comment: '34.De4 - La dame blanche se centralise puissamment, visant le roi et la tour.' },
-            { move: 'Qd5', comment: '34...Dd5 - Gukesh propose l\'echange de dames. Position completement equilibree.' },
-            { move: 'Qxd5', comment: '35.Dxd5 - Ding accepte l\'echange. La finale de tour est clairement nulle.' },
-            { move: 'Rxd5', comment: '35...Txd5 - Finale de tour pure. Les deux joueurs ont joue parfaitement.' },
-            { move: 'Kf3', comment: '36.Rf3 - Le roi se centralise. En finale, le roi est une piece forte!' },
-            { move: 'Kg6', comment: '36...Rg6 - Meme idee pour Gukesh. Roi actif au centre.' },
-            { move: 'Ke4', comment: '37.Re4 - Le roi blanc avance agressivement au centre.' },
-            { move: 'Rd4+', comment: '37...Td4+ - Echec! Gukesh force le roi a reculer.' },
-            { move: 'Ke3', comment: '38.Re3 - Le roi recule. La position est un forteresse de nulle.' },
-            { move: 'Rd5', comment: '38...Td5 - La tour revient. La repetition commence.' },
-            { move: 'Ke4', comment: '39.Re4 - Le roi retourne en e4. Deuxieme repetition de la position.' },
-            { move: 'Rd4+', comment: '39...Td4+ - Deuxieme echec identique.' },
-            { move: 'Ke3', comment: '40.Re3 - Meme reponse. Les deux joueurs savent que c\'est nulle.' },
-            { move: 'Rd5', comment: '40...Td5 - La tour revient encore.' },
-            { move: 'Ke4', comment: '41.Re4 - Troisieme repetition. NULLE par triple repetition! 41 coups de precision absolue des deux cotes. Un moment unique dans l\'histoire des Championnats du Monde.' }
+            { move: 'Nf3', comment: 'Ding choisit 1.Nf3, une ouverture peu habituelle pour lui dans ce match.' },
+            { move: 'd5', comment: '' },
+            { move: 'e3', comment: '' },
+            { move: 'Nf6', comment: '' },
+            { move: 'b3', comment: '' },
+            { move: 'Bf5', comment: '' },
+            { move: 'Be2', comment: '' },
+            { move: 'h6', comment: '' },
+            { move: 'Ba3', comment: '5.Ba3 est le développement original qui caractérise la préparation de cette partie.' },
+            { move: 'Nbd7', comment: '' },
+            { move: 'O-O', comment: '' },
+            { move: 'e6', comment: '' },
+            { move: 'Bxf8', comment: '' },
+            { move: 'Nxf8', comment: '' },
+            { move: 'c4', comment: '' },
+            { move: 'N8d7', comment: '' },
+            { move: 'Nc3', comment: '' },
+            { move: 'O-O', comment: '' },
+            { move: 'cxd5', comment: '' },
+            { move: 'exd5', comment: '' },
+            { move: 'b4', comment: '' },
+            { move: 'c6', comment: '' },
+            { move: 'Nd4', comment: '' },
+            { move: 'Bh7', comment: '' },
+            { move: 'Qb3', comment: '' },
+            { move: 'Ne5', comment: '' },
+            { move: 'a4', comment: '' },
+            { move: 'Rc8', comment: '' },
+            { move: 'a5', comment: '' },
+            { move: 'b6', comment: '' },
+            { move: 'Nf3', comment: '' },
+            { move: 'Nxf3+', comment: '' },
+            { move: 'Bxf3', comment: '' },
+            { move: 'd4', comment: '' },
+            { move: 'Ne2', comment: '' },
+            { move: 'dxe3', comment: '' },
+            { move: 'dxe3', comment: '' },
+            { move: 'Be4', comment: '' },
+            { move: 'Rfd1', comment: '' },
+            { move: 'Qe7', comment: '' },
+            { move: 'Bxe4', comment: '' },
+            { move: 'Nxe4', comment: '' },
+            { move: 'axb6', comment: '' },
+            { move: 'axb6', comment: '' },
+            { move: 'Nc3', comment: '' },
+            { move: 'Rfd8', comment: '' },
+            { move: 'Nxe4', comment: '' },
+            { move: 'Qxe4', comment: '' },
+            { move: 'h3', comment: '' },
+            { move: 'c5', comment: '' },
+            { move: 'Rxd8+', comment: '' },
+            { move: 'Rxd8', comment: '' },
+            { move: 'bxc5', comment: '' },
+            { move: 'bxc5', comment: '' },
+            { move: 'Rc1', comment: '' },
+            { move: 'Qe5', comment: '' },
+            { move: 'Qc2', comment: '' },
+            { move: 'Rd5', comment: '' },
+            { move: 'g3', comment: '' },
+            { move: 'f5', comment: '' },
+            { move: 'Kg2', comment: '' },
+            { move: 'Kh7', comment: '' },
+            { move: 'Qc4', comment: '' },
+            { move: 'Qd6', comment: '' },
+            { move: 'e4', comment: '' },
+            { move: 'Re5', comment: '' },
+            { move: 'exf5', comment: '' },
+            { move: 'Rxf5', comment: '' },
+            { move: 'Qe4', comment: '' },
+            { move: 'Qd5', comment: '' },
+            { move: 'Qxd5', comment: '' },
+            { move: 'Rxd5', comment: '' },
+            { move: 'Kf3', comment: '' },
+            { move: 'Kg6', comment: '' },
+            { move: 'Ke4', comment: '' },
+            { move: 'Rd4+', comment: '' },
+            { move: 'Ke3', comment: '' },
+            { move: 'Rd5', comment: '' },
+            { move: 'Ke4', comment: '' },
+            { move: 'Rd4+', comment: '' },
+            { move: 'Ke3', comment: '' },
+            { move: 'Rd5', comment: '' },
+            { move: 'Ke4', comment: '' },
+            { move: 'Rd4+', comment: '42...Rd4+ complète la répétition; la partie se termine par la nulle.' }
         ];
 
         let currentMoveIndex = -1;
@@ -317,12 +320,12 @@
             const mc = document.getElementById('moveComment');
             if (currentMoveIndex === -1) {
                 mn.textContent = 'Position initiale';
-                mc.textContent = 'Deux joueurs, 41 coups, 100% de precision chacun. Cliquez sur "Suivant" pour decouvrir cette partie parfaite.';
+                mc.textContent = 'Partie d ouverture Zukertort : Ding–Gukesh, nulle en 42 coups. Aucun score de précision moteur n est affiché.';
             } else {
                 const num = Math.floor(currentMoveIndex / 2) + 1;
                 const col = currentMoveIndex % 2 === 0 ? 'Blancs' : 'Noirs';
                 mn.textContent = 'Coup ' + num + '. ' + col + ': ' + gameMoves[currentMoveIndex].move;
-                mc.textContent = gameMoves[currentMoveIndex].comment;
+                mc.textContent = gameMoves[currentMoveIndex].comment || 'Observez les menaces et les cases clés dans cette position avant de poursuivre.';
             }
             updateTimeline();
         }

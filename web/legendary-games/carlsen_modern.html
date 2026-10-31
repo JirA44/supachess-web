@@ -436,8 +436,14 @@
         });
 
         // Navigation au clavier
+        var __supaMoveKeysDown = new Set();
+        document.addEventListener('keyup', function(e) { __supaMoveKeysDown.delete(e.key); });
+        window.addEventListener('blur', function() { __supaMoveKeysDown.clear(); });
         document.addEventListener('keydown', (e) => {
-            if (e.repeat) return;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                if (e.repeat || __supaMoveKeysDown.has(e.key)) return;
+                __supaMoveKeysDown.add(e.key);
+            }
             if (e.key === 'ArrowLeft') {
                 document.getElementById('prevBtn').click();
             } else if (e.key === 'ArrowRight') {

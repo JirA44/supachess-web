@@ -181,8 +181,14 @@
         function goToStart() { chess.reset();currentMoveIndex=-1;renderBoard();updateMoveInfo(); }
         function goToEnd() { goToStart();for(var i=0;i<gameMoves.length;i++)nextMove(); }
         function goToMove(index) { chess.reset();currentMoveIndex=-1;for(var i=0;i<=index;i++){currentMoveIndex++;chess.move(gameMoves[currentMoveIndex].move,{sloppy:true});}renderBoard();updateMoveInfo(); }
+        var __supaMoveKeysDown = new Set();
+        document.addEventListener('keyup', function(e) { __supaMoveKeysDown.delete(e.key); });
+        window.addEventListener('blur', function() { __supaMoveKeysDown.clear(); });
         document.addEventListener('keydown',function(e){
-            if (e.repeat) return;if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();});
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                if (e.repeat || __supaMoveKeysDown.has(e.key)) return;
+                __supaMoveKeysDown.add(e.key);
+            }if(e.key==='ArrowRight')nextMove();else if(e.key==='ArrowLeft')previousMove();else if(e.key==='Home')goToStart();else if(e.key==='End')goToEnd();});
         renderBoard(); updateMoveInfo();
     </script>
 <script src="supa-dots-widget.js"></script>

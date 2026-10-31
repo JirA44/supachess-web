@@ -673,16 +673,22 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn' },
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
     { page: '/karpov_positional_1978.html', pgn: '/data/games/korchnoi_karpov_1978_game31.pgn', download: 'data/games/korchnoi_karpov_1978_game31.pgn', expectedPlies: 141, heading: 'Korchnoi–Karpov · Partie 31 (1978)' },
+    { page: '/web/legendary-games/carlsen_vs_kasparov.html', pgn: '/data/games/carlsen_vs_kasparov_2004.pgn', download: '../../data/games/carlsen_vs_kasparov_2004.pgn', expectedPlies: 103, heading: '🏆 Carlsen vs Kasparov - Reykjavik Rapid 2004', expectedText: 'Gambit dame · D52', forbiddenText: 'Sicilienne Sveshnikov' },
     { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn' }
   ];
   for (const item of sources) {
     await page.goto(item.page);
     if (item.download) await expect(page.locator('a[download]')).toHaveAttribute('href', item.download);
-    if (item.heading) {
-      await expect(page.getByRole('heading', { name: item.heading })).toBeVisible();
-      await expect(page.locator('body')).toContainText('1-0 (Korchnoi)');
+    if (item.heading) await expect(page.getByRole('heading', { name: item.heading })).toBeVisible();
+    if (item.expectedText) await expect(page.locator('body')).toContainText(item.expectedText);
+    if (item.forbiddenText) await expect(page.locator('body')).not.toContainText(item.forbiddenText);
+    if (item.page.includes('carlsen_vs_kasparov.html')) {
+      await expect(page.locator('.move-rating')).toHaveCount(0);
+      await expect(page.locator('.player-info').first()).toContainText('Blancs');
+      await expect(page.locator('.player-info').last()).toContainText('Noirs');
     }
+    if (item.page.includes('karpov_positional_1978.html')) await expect(page.locator('body')).toContainText('1-0 (Korchnoi)');
     const audit = await page.evaluate(async (pgnPath) => {
       const pgnResponse = await fetch(pgnPath);
       if (!pgnResponse.ok) return { error: 'PGN source unavailable: ' + pgnResponse.status };

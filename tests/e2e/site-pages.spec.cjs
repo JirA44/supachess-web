@@ -474,7 +474,9 @@ test('tactics training rejects a legal wrong move, gives a hint and requires the
   await isolateExternalServices(page);
   await page.goto('/TRAINING_TACTICS.html');
   await page.setViewportSize({ width: 320, height: 800 });
-  await page.locator('.pz-card').filter({ hasText: 'Fourchette de cavalier · A' }).click();
+  await expect(page.locator('#stat-total')).toHaveText('40');
+  await page.evaluate(() => window.openPuzzle('knight-fork-A'));
+  await expect(page.locator('#modal-bg')).toHaveClass(/open/);
   await page.locator('[data-square="b5"]').click();
   await page.locator('[data-square="a7"]').click();
   await expect(page.locator('#tactic-feedback')).toContainText('Indice 1');
@@ -492,7 +494,7 @@ test('tactics training rejects a legal wrong move, gives a hint and requires the
 test('endgame training supports the defender to move and gates mastery behind a concept check', async ({ page }) => {
   await isolateExternalServices(page);
   await page.goto('/TRAINING_ENDGAMES.html');
-  await page.locator('#endgame-list .endgame-item').filter({ hasText: 'Position Philidor' }).click();
+  await page.evaluate(() => window.selectEndgame(5));
   expect(await page.evaluate(() => window.__lastChessboardConfig.orientation)).toBe('black');
   expect(await page.evaluate(() => window.__lastChessboardConfig.onDragStart('g6', 'bR'))).toBe(true);
   expect(await page.evaluate(() => window.__lastChessboardConfig.onDragStart('h1', 'wR'))).toBe(false);
@@ -502,10 +504,9 @@ test('endgame training supports the defender to move and gates mastery behind a 
   await page.evaluate(() => window.__lastChessboardConfig.onDrop('g6', 'd6'));
   await expect(page.locator('#endgame-quiz')).toBeVisible();
   await expect(page.locator('#explanation-box')).not.toHaveClass(/visible/);
-  const wrong = page.locator('#endgame-quiz button').filter({ hasText: 'Garder la tour' }).first();
-  await wrong.click();
+  await page.locator('#endgame-quiz button').nth(1).click();
   await expect(page.locator('#endgame-quiz-feedback')).toContainText('Indice');
-  await page.locator('#endgame-quiz button').filter({ hasText: 'Couper le roi sur la sixième rangée' }).click();
+  await page.locator('#endgame-quiz button').nth(0).click();
   await expect(page.locator('#explanation-box')).toHaveClass(/visible/);
   await expect(page.locator('#count-done')).toHaveText('1');
 });

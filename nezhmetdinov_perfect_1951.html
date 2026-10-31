@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% Accuracy - Nezhmetdinov vs Chernikov 1962</title>
+    <title>Nezhmetdinov–Chernikov · Rostov 1962</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; min-height: 100vh; padding: 20px; }
@@ -48,8 +48,8 @@
     <div class="container">
         <header>
             <h1>Nezhmetdinov vs Chernikov</h1>
-            <p class="subtitle">1962 - Le sacrifice de dame immortel a 100%</p>
-            <div class="accuracy-badge">NEZHMETDINOV : 100% ACCURACY</div>
+            <p class="subtitle">Rostov-on-Don · 1962 · sacrifice de dame</p>
+            <div class="accuracy-badge">Partie historique · résultat 1–0</div>
         </header>
         <div class="main-content">
             <div class="info-panel">
@@ -59,10 +59,10 @@
                 <div class="stat-item"><div class="stat-label">Annee</div><div class="stat-value">1962, URSS</div></div>
                 <div class="stat-item"><div class="stat-label">Ouverture</div><div class="stat-value">Sicilienne (B32)</div></div>
                 <div class="stat-item"><div class="stat-label">Resultat</div><div class="stat-value">1-0 (Nezhmetdinov)</div></div>
-                <div class="stat-item"><div class="stat-label">Precision</div><div class="stat-value" style="color:#ffd700">Nezhmetdinov: 100%</div></div>
+                <div class="stat-item"><div class="stat-label">Résultat</div><div class="stat-value" style="color:#ffd700">1–0</div></div>
                 <div class="highlight-box">
                     <strong>Plus mauvais que Tal :</strong>
-                    <p>Nezhmetdinov etait le maitre de Mikhail Tal. Il a battu 3 Champions du Monde (Tal, Spassky, Petrosian) tout en n'etant "que" Candidat Maitre. Son style sacrificiel etait si precis que les engines modernes confirment: chaque sacrifice etait correct!</p>
+                    <p>Partie du Championnat par équipes de la RSFSR à Rostov en 1962. Son motif célèbre est le sacrifice de dame 12.Qxf6!; la ligne complète est disponible en PGN.</p>
                 </div>
             </div>
             <div class="board-container">
@@ -76,7 +76,7 @@
                 </div>
                 <div class="move-info">
                     <div class="move-number" id="moveNumber">Position initiale</div>
-                    <div class="move-comment" id="moveComment">Le sacrifice de dame immortel de Nezhmetdinov. Chaque coup est le meilleur selon Stockfish. Cliquez "Suivant".</div>
+                    <div class="move-comment" id="moveComment">Rejouez la partie coup par coup. Le sacrifice de dame intervient en 12.Qxf6!.</div>
                 </div>
             </div>
             <div class="info-panel">
@@ -84,7 +84,7 @@
                 <div class="timeline" id="timeline"></div>
                 <div class="highlight-box">
                     <strong>Le sacrifice de dame immortel :</strong>
-                    <p>Nezhmetdinov sacrifie sa dame au coup 24 et poursuit l'attaque uniquement avec des pieces mineures et des tours. L'engine confirme que chaque coup est le meilleur. Une partie qui transcende les epoques.</p>
+                    <p>Le sacrifice de dame est joué en 12.Qxf6!, et non au 24e coup. Les Blancs poursuivent ensuite l’attaque avec leurs pièces restantes.</p>
                 </div>
             </div>
         </div>
@@ -173,7 +173,7 @@
         }
         function updateMoveInfo() {
             const mn = document.getElementById('moveNumber'), mc = document.getElementById('moveComment');
-            if (currentMoveIndex===-1) { mn.textContent='Position initiale'; mc.textContent='Le sacrifice de dame immortel. 100% precision selon Stockfish. Cliquez "Suivant".'; }
+            if (currentMoveIndex===-1) { mn.textContent='Position initiale'; mc.textContent='Partie historique de 1962 : repérez le sacrifice de dame en 12.Qxf6!.'; }
             else { mn.textContent='Coup '+Math.floor(currentMoveIndex/2+1)+'. '+(currentMoveIndex%2===0?'Blancs':'Noirs')+': '+gameMoves[currentMoveIndex].move; mc.textContent=gameMoves[currentMoveIndex].comment; }
             updateTimeline();
         }

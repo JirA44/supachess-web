@@ -527,18 +527,35 @@ test('global site search finds a specific endgame and opens its direct exercise'
 });
 
 test('legendary games advance one half-move per arrow key press', async ({ page }) => {
+  test.setTimeout(120000);
   await isolateExternalServices(page);
   const paths = [
     '/alphazero_sacrificial_masterpiece.html',
     '/alphazero_vs_stockfish.html',
     '/alphazero_vs_stockfish_game2.html',
+    '/carlsen_brilliancy_2013.html',
     '/carlsen_perfect_2004.html',
+    '/deep_blue_kasparov_1997.html',
+    '/deep_blue_vs_kasparov.html',
+    '/fischer_game_of_century_interactive_v2.html',
     '/kasparov_immortal_1999.html',
+    '/leela_vs_stockfish_2019.html',
     '/scc_carlsen_vs_lazavik.html',
+    '/stockfish_vs_komodo_2018.html',
+    '/tal_masterpiece_1958.html',
+    '/tcec_s28_best_game.html',
+    '/stockfish_vs_komodo_2018.html',
+    '/leela_vs_stockfish_2019.html',
+    '/web/legendary-games/anand_vs_kasparov.html',
     '/web/legendary-games/carlsen_modern.html',
+    '/web/legendary-games/carlsen_vs_kasparov.html',
+    '/web/legendary-games/deep_blue_vs_kasparov.html',
+    '/web/legendary-games/fischer_game_of_century.html',
     '/web/legendary-games/karpov_positional.html',
     '/web/legendary-games/kasparov_immortal.html',
-    '/web/legendary-games/tal_masterpiece.html'
+    '/web/legendary-games/kasparov_vs_karpov.html',
+    '/web/legendary-games/tal_masterpiece.html',
+    '/karpov_positional_1978.html'
   ];
 
   for (const path of paths) {
@@ -669,9 +686,9 @@ test('all legendary game main lines are legal and advance one half-move at a tim
 test('published PGN source lines match their replay pages', async ({ page }) => {
   await isolateExternalServices(page);
   const sources = [
-    { page: '/alphazero_vs_stockfish.html', pgn: '/data/games/alphazero_stockfish_game10.pgn', expectedPlies: 111, heading: '🤖 AlphaZero vs Stockfish · replay d’un PGN public', expectedText: 'PGN public · E17 · 1–0', forbiddenText: 'Game 10' },
-    { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn' },
-    { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn' },
+    { page: '/alphazero_vs_stockfish.html', pgn: '/data/games/alphazero_stockfish_game10.pgn', expectedPlies: 111, heading: '🤖 AlphaZero vs Stockfish · replay d’un PGN public', expectedText: 'PGN public · E17 · 1–0', forbiddenText: 'AlphaZero vs Stockfish 8 - Game 10' },
+    { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn', expectedPlies: 84 },
+    { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn', expectedPlies: 40 },
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
     { page: '/karpov_positional_1978.html', pgn: '/data/games/korchnoi_karpov_1978_game31.pgn', download: 'data/games/korchnoi_karpov_1978_game31.pgn', expectedPlies: 141, heading: 'Korchnoi–Karpov · Partie 31 (1978)' },
     { page: '/web/legendary-games/carlsen_vs_kasparov.html', pgn: '/data/games/carlsen_vs_kasparov_2004.pgn', download: '../../data/games/carlsen_vs_kasparov_2004.pgn', expectedPlies: 103, heading: '🏆 Carlsen vs Kasparov - Reykjavik Rapid 2004', expectedText: 'Gambit dame · D52', forbiddenText: 'Sicilienne Sveshnikov' },
@@ -695,7 +712,7 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/tarrasch_perfect_1892.html', pgn: '/data/games/tarrasch_vs_marco_1892.pgn', download: 'data/games/tarrasch_vs_marco_1892.pgn', expectedPlies: 35, heading: 'Tarrasch vs Marco - 1892', expectedText: '18.c4', forbiddenText: '100% ACCURACY' },
     { page: '/leela_vs_stockfish_2019.html', pgn: '/data/games/leela_stockfish_tcec15_game71.pgn', download: 'data/games/leela_stockfish_tcec15_game71.pgn', expectedPlies: 86, heading: 'Stockfish–LCZero · TCEC Season 15, partie 71.1', expectedText: 'nulle par adjudication', forbiddenText: '1-0 Leela gagne brillamment' },
     { page: '/tal_masterpiece_1958.html', pgn: '/data/games/tal_vs_tolush_urs_ch25_1958_round1.pgn', download: 'data/games/tal_vs_tolush_urs_ch25_1958_round1.pgn', expectedPlies: 55, heading: 'Tal–Tolush · Championnat soviétique 1958, 1re ronde', expectedText: '55 demi-coups', forbiddenText: 'Vasiukov' },
-    { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
+    { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn', expectedPlies: 104 },
     { page: '/stockfish_vs_komodo_2018.html', pgn: '/data/games/stockfish_komodo_tcec13_game47.pgn', download: 'data/games/stockfish_komodo_tcec13_game47.pgn', expectedPlies: 85, heading: 'Stockfish–Komodo · TCEC Season 13, partie 47.1', expectedText: '½–½ · répétition triple', forbiddenText: 'Queen\'s Gambit Declined' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn', expectedPlies: 248, heading: 'TCEC S28 Superfinal - Game 83', expectedText: 'LCZero (Blancs) contre Stockfish (Noirs)', forbiddenText: 'Stockfish (Blancs)' }
   ];

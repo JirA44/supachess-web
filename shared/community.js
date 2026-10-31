@@ -1486,12 +1486,16 @@
                 var entry = KEY_NAV_MAP[i];
                 if (entry.keys.indexOf(e.key) === -1) continue;
 
+                e.preventDefault();
+                if (e.repeat) {
+                    e.stopImmediatePropagation();
+                    return;
+                }
+
                 var handler = resolveNavHandler(entry.names);
                 if (!handler) continue;
 
-                e.preventDefault();
                 e.stopImmediatePropagation();
-                if (e.repeat) return;
                 handler();
                 return;
             }

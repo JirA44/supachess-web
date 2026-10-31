@@ -352,7 +352,7 @@
             { move: "e5", comment: "25.e5! Karpov souligne cette rupture centrale comme le moment où l’attaque prend de l’ampleur." },
             { move: "dxe5", comment: "" },
             { move: "Qxe5", comment: "" },
-            { move: "Ncxd5", comment: "26...Ncxd5 est la notation complète : le cavalier c7 capture en d5." },
+            { move: "Ncxd5", from: "c7", to: "d5", comment: "26...Ncxd5 : le cavalier de c7 capture le pion blanc en d5." },
             { move: "Bxb5", comment: "" },
             { move: "Ra7", comment: "" },
             { move: "Nh4", comment: "" },
@@ -428,6 +428,18 @@
             document.getElementById('endBtn').disabled = currentMove >= moves.length;
         }
 
+        function applyReplayMove(moveData) {
+            const played = moveData.from && moveData.to
+                ? game.move({ from: moveData.from, to: moveData.to })
+                : game.move(moveData.move);
+            if (!played) {
+                document.getElementById('moveInfo').innerHTML =
+                    '<div class="move-comment">Relecture arrêtée : le demi-coup prévu est illégal dans cette position.</div>';
+                return false;
+            }
+            return true;
+        }
+
         // Event listeners pour les boutons
         document.getElementById('startBtn').addEventListener('click', () => {
             game.reset();
@@ -446,16 +458,17 @@
         document.getElementById('nextBtn').addEventListener('click', () => {
             if (currentMove < moves.length) {
                 const moveData = moves[currentMove];
-                game.move(moveData.move);
-                currentMove++;
-                updateDisplay();
+                if (applyReplayMove(moveData)) {
+                    currentMove++;
+                    updateDisplay();
+                }
             }
         });
 
         document.getElementById('endBtn').addEventListener('click', () => {
             while (currentMove < moves.length) {
                 const moveData = moves[currentMove];
-                game.move(moveData.move);
+                if (!applyReplayMove(moveData)) return;
                 currentMove++;
             }
             updateDisplay();

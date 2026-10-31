@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasparov vs Topalov - Wijk aan Zee 1999 | La Partie Immortelle Moderne</title>
+    <title>Kasparov–Topalov · Wijk aan Zee 1999 | Partie légendaire</title>
     <style>
         * {
             margin: 0;
@@ -335,8 +335,8 @@
         <a href="index.html" class="nav-back">← Retour au Hub</a>
 
         <div class="header">
-            <h1>🔥 Kasparov vs Topalov - La Partie Immortelle Moderne 👑</h1>
-            <p class="subtitle">Wijk aan Zee, 1999 | Défense Pirc</p>
+            <h1>🏆 Kasparov–Topalov · Wijk aan Zee 1999</h1>
+            <p class="subtitle">Hoogovens · 20 janvier 1999 · Défense Pirc B07</p>
             <p style="margin-top: 15px; font-size: 1.1em; opacity: 0.9;">
                 "Une des plus belles parties jamais jouées" - ChessBase
             </p>
@@ -353,7 +353,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">🎯 Ouverture</div>
-                <div class="stat-value" style="font-size: 1.3em;">Pirc Defense</div>
+                <div class="stat-value" style="font-size: 1.3em;">Défense Pirc · B07</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">⚡ Nombre de coups</div>
@@ -389,7 +389,7 @@
             <div class="moves-section" id="pgnSection">
                 <h2>PGN de la partie</h2>
                 <div class="controls">
-                    <button class="btn" type="button" onclick="downloadPgn()">⬇️ Télécharger le PGN</button>
+                    <button class="btn" type="button" onclick="downloadPgn()">⬇️ Télécharger le PGN</button>\n                    <a href="data/games/kasparov_topalov_1999_immortal.pgn" download>PGN source vérifiable</a>
                 </div>
                 <pre id="pgnContent" style="white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#111827;color:#f3f4f6;border-radius:8px;"></pre>
             </div>
@@ -405,93 +405,93 @@
 
         // PGN de la partie légendaire Kasparov vs Topalov
         const gameMoves = [
-            { move: 'e4', comment: '💪 Kasparov ouvre avec 1.e4, son arme favorite! Le champion du monde joue pour la victoire!' },
-            { move: 'd6', comment: '🎯 La Défense Pirc! Topalov choisit une ouverture hypermoderne et flexible, acceptant un léger retard de développement.' },
-            { move: 'd4', comment: '⚔️ Occupation classique du centre! Kasparov établit le duo de pions idéal e4-d4.' },
-            { move: 'Nf6', comment: 'Le cavalier noir attaque le pion e4 tout en se développant harmonieusement.' },
-            { move: 'Nc3', comment: 'Défense du pion e4 et développement! Le cavalier contrôle d5 et e4.' },
-            { move: 'g6', comment: '🏰 Topalov fianchette son fou! Typique de la Pirc - le fou g7 sera un monstre sur la grande diagonale.' },
-            { move: 'Be3', comment: '💎 Développement actif! Le fou vise f2 et prépare Qd2 avec l\'idée Bh6.' },
-            { move: 'Bg7', comment: '🐉 Le Dragon s\'éveille! Le fou noir prend sa diagonale mortelle a1-h8.' },
-            { move: 'Qd2', comment: '⚡ Kasparov prépare le grand roque ET l\'échange du puissant fou g7!' },
-            { move: 'c6', comment: 'Renforce le centre et prépare b5! Topalov planifie une contre-attaque sur l\'aile dame.' },
-            { move: 'f3', comment: '🛡️ Kasparov construit une forteresse au centre! Structure Samisch - très agressive!' },
-            { move: 'b5', comment: '🔥 CONTRE-ATTAQUE IMMÉDIATE! Topalov lance son offensive sur l\'aile dame!' },
-            { move: 'Nge2', comment: '💡 Manœuvre profonde! Le cavalier ira g3 puis f5 ou h5 pour attaquer.' },
-            { move: 'Nbd7', comment: 'Développement harmonieux du cavalier dame vers e5 ou c5.' },
-            { move: 'Bh6', comment: '⭐ ÉCHANGE STRATÉGIQUE BRILLANT! Kasparov élimine le défenseur clé de l\'aile roi!' },
-            { move: 'Bxh6', comment: 'Échange forcé - le fou dragon disparaît!' },
-            { move: 'Qxh6', comment: '👑 La dame blanche devient ULTRA ACTIVE sur h6! Pression sur g7 et h7!' },
-            { move: 'Bb7', comment: 'Le fou noir active sur la grande diagonale, visant e4.' },
-            { move: 'a3', comment: '🎯 Coup prophylactique! Prépare Nc1-b3-d4 et empêche b4.' },
-            { move: 'e5', comment: '💥 RUPTURE CENTRALE! Topalov ouvre le jeu et active ses pièces!' },
-            { move: 'O-O-O', comment: '🏰 GRAND ROQUE! Les rois sont de côtés OPPOSÉS - combat total garanti!' },
-            { move: 'Qe7', comment: 'La dame noire centralise et protège e5. Position tendue!' },
-            { move: 'Kb1', comment: '🛡️ Sécurité préventive du roi et libération de c1 pour les tours.' },
-            { move: 'a6', comment: 'Topalov prépare son offensive sur l\'aile dame avec b4.' },
-            { move: 'Nc1', comment: '💎 MANŒUVRE DE GRAND MAÎTRE! Le cavalier va vers b3→a5 ou d3!' },
-            { move: 'O-O-O', comment: '🔥 ROQUES OPPOSÉS! Les deux camps vont attaquer - qui arrivera premier?!' },
-            { move: 'Nb3', comment: 'Le cavalier progresse vers a5 où il sera très puissant!' },
-            { move: 'exd4', comment: '💥 Ouverture du centre! Topalov cherche du contre-jeu.' },
-            { move: 'Rxd4', comment: '⚡ Kasparov reprend avec la TOUR! Position explosive, la tour d4 est très active!' },
-            { move: 'c5', comment: 'Attaque de la tour et gain d\'espace! Topalov veut chasser la tour.' },
-            { move: 'Rd1', comment: 'Retraite tactique - la tour reste connectée et active.' },
-            { move: 'Nb6', comment: 'Le cavalier noir améliore sa position et vise a4 ou c4.' },
-            { move: 'g3', comment: '🎯 Kasparov prépare Bh3! Le fou va devenir dévastateur.' },
-            { move: 'Kb8', comment: '🛡️ Le roi noir cherche la sécurité en a7.' },
-            { move: 'Na5', comment: '⭐ INVASION! Le cavalier blanc vise c6 et b7 - position dominante!' },
-            { move: 'Ba8', comment: 'Le fou doit se réfugier - il est presque hors-jeu.' },
-            { move: 'Bh3', comment: '🔥 LE FOU BLANC DEVIENT UN MONSTRE! Il pointe vers f5 et d7!' },
-            { move: 'd5', comment: 'Tentative désespérée de fermer la diagonale du fou h3.' },
-            { move: 'Qf4+', comment: '⭐⭐ COUP BRILLANT! Échec avec tempo - le début de la combinaison IMMORTELLE!' },
-            { move: 'Ka7', comment: 'Le roi noir fuit vers l\'aile dame.' },
-            { move: 'Rhe1', comment: '💪 TOUTES les pièces blanches sont dans l\'attaque! Coordination parfaite!' },
-            { move: 'd4', comment: 'Contre-attaque désespérée - Topalov essaie de créer des menaces.' },
-            { move: 'Nd5', comment: '🔥🔥 SACRIFICE DE CAVALIER SPECTACULAIRE!! Kasparov donne une pièce pour ouvrir les lignes!' },
-            { move: 'Nbxd5', comment: 'Topalov accepte le sacrifice - que peut-il faire d\'autre?' },
-            { move: 'exd5', comment: '⚡ Kasparov reprend! La position noire commence à s\'effondrer!' },
-            { move: 'Qd6', comment: 'Topalov essaie de défendre et contre-attaquer simultanément.' },
-            { move: 'Rxd4', comment: '💎💎💎 SACRIFICE DE TOUR IMMORTEL!! Kasparov donne sa TOUR pour ouvrir la voie vers le roi!!' },
-            { move: 'cxd4', comment: 'Forcé - Topalov doit prendre.' },
-            { move: 'Re7+', comment: '⚡⚡⚡ ÉCHEC DÉVASTATEUR!! La tour sacrifiée a ouvert la colonne e pour ce coup mortel!!' },
-            { move: 'Kb6', comment: '😰 Le roi essaie de fuir - mais il n\'y a NULLE PART où aller!' },
-            { move: 'Qxd4+', comment: '👑 Échec avec GAIN de pion! La position noire s\'effondre totalement!' },
-            { move: 'Kxa5', comment: 'Le roi prend le cavalier - il est maintenant exposé au milieu du plateau!' },
-            { move: 'b4+', comment: '🔥🔥🔥 LE PION DONNE ÉCHEC!! Le roi noir est CHASSÉ comme un animal! GÉNIE ABSOLU!' },
-            { move: 'Ka4', comment: '😱 Le roi fuit désespérément - position historiquement désespérée!' },
-            { move: 'Qc3', comment: '♛ Menace de MAT! Kasparov a une attaque IMPARABLE!' },
-            { move: 'Qxd5', comment: 'Topalov prend la dame - dernier espoir de survie.' },
-            { move: 'Ra7', comment: '⭐⭐⭐ MAT IMPARABLE!! La tour sur la 7ème rangée crée des menaces MORTELLES!! CHEF-D\'ŒUVRE!!' },
-            { move: 'Bb7', comment: 'Tentative désespérée de bloquer - mais c\'est FINI!' },
-            { move: 'Rxb7', comment: '🏆🏆🏆 KASPAROV GAGNE!! PARTIE IMMORTELLE!! Topalov poursuit la partie; la victoire ne sera obtenue qu’après 44.Qa7. Une des plus BELLES parties de l\'HISTOIRE des échecs!!' }
-            ,{ move: 'Qc4', comment: 'La dame noire se place en c4 et maintient la défense.' },
-            { move: 'Qxf6', comment: 'Kasparov prend le cavalier et continue l’attaque.' },
-            { move: 'Kxa3', comment: 'Le roi noir capture le pion a3.' },
-            { move: 'Qxa6+', comment: 'Échec : la dame blanche attire le roi vers b4.' },
-            { move: 'Kxb4', comment: 'Le roi noir prend le pion b4.' },
-            { move: 'c3+', comment: 'Le pion c donne échec et force le roi à capturer.' },
-            { move: 'Kxc3', comment: 'Le roi noir prend le pion c3.' },
-            { move: 'Qa1+', comment: 'Échec : la dame blanche chasse le roi.' },
-            { move: 'Kd2', comment: 'Le roi noir avance en d2.' },
-            { move: 'Qb2+', comment: 'Nouvel échec sur la deuxième rangée.' },
-            { move: 'Kd1', comment: 'Le roi noir se réfugie en d1.' },
-            { move: 'Bf1', comment: 'Le fou entre en jeu avec une menace décisive.' },
-            { move: 'Rd2', comment: 'La tour noire tente de bloquer.' },
-            { move: 'Rd7', comment: 'La tour blanche intervient sur la septième rangée.' },
-            { move: 'Rxd7', comment: 'Les Noirs échangent les tours.' },
-            { move: 'Bxc4', comment: 'Le fou blanc capture la dame noire.' },
-            { move: 'bxc4', comment: 'Le pion reprend le fou.' },
-            { move: 'Qxh8', comment: 'La dame blanche capture la tour h8.' },
-            { move: 'Rd3', comment: 'La tour noire cherche du contre-jeu.' },
-            { move: 'Qa8', comment: 'La dame blanche se place sur la diagonale.' },
-            { move: 'c3', comment: 'Le pion noir avance vers la promotion.' },
-            { move: 'Qa4+', comment: 'Échec : la dame force encore le déplacement du roi.' },
-            { move: 'Ke1', comment: 'Le roi noir se dirige vers e1.' },
-            { move: 'f4', comment: 'Kasparov avance son pion f.' },
-            { move: 'f5', comment: 'Les Noirs poussent le pion f.' },
-            { move: 'Kc1', comment: 'Le roi blanc vient soutenir l’attaque.' },
-            { move: 'Rd2', comment: 'La tour noire revient en d2.' },
-            { move: 'Qa7', comment: 'Le dernier coup scelle la victoire; Topalov abandonne.' }
+            { move: 'e4', comment: '' },
+            { move: 'd6', comment: '' },
+            { move: 'd4', comment: '' },
+            { move: 'Nf6', comment: '' },
+            { move: 'Nc3', comment: '' },
+            { move: 'g6', comment: '' },
+            { move: 'Be3', comment: '' },
+            { move: 'Bg7', comment: '' },
+            { move: 'Qd2', comment: '' },
+            { move: 'c6', comment: '' },
+            { move: 'f3', comment: '' },
+            { move: 'b5', comment: '' },
+            { move: 'Nge2', comment: '' },
+            { move: 'Nbd7', comment: '' },
+            { move: 'Bh6', comment: '' },
+            { move: 'Bxh6', comment: '' },
+            { move: 'Qxh6', comment: '' },
+            { move: 'Bb7', comment: '' },
+            { move: 'a3', comment: '' },
+            { move: 'e5', comment: '' },
+            { move: 'O-O-O', comment: '' },
+            { move: 'Qe7', comment: '' },
+            { move: 'Kb1', comment: '' },
+            { move: 'a6', comment: '' },
+            { move: 'Nc1', comment: '' },
+            { move: 'O-O-O', comment: '' },
+            { move: 'Nb3', comment: '' },
+            { move: 'exd4', comment: '' },
+            { move: 'Rxd4', comment: '' },
+            { move: 'c5', comment: '' },
+            { move: 'Rd1', comment: '' },
+            { move: 'Nb6', comment: '' },
+            { move: 'g3', comment: '' },
+            { move: 'Kb8', comment: '' },
+            { move: 'Na5', comment: '' },
+            { move: 'Ba8', comment: '' },
+            { move: 'Bh3', comment: '' },
+            { move: 'd5', comment: '' },
+            { move: 'Qf4+', comment: '' },
+            { move: 'Ka7', comment: '' },
+            { move: 'Rhe1', comment: '' },
+            { move: 'd4', comment: '' },
+            { move: 'Nd5', comment: '' },
+            { move: 'Nbxd5', comment: '' },
+            { move: 'exd5', comment: '' },
+            { move: 'Qd6', comment: '' },
+            { move: 'Rxd4', comment: '24.Rxd4! sacrifie une tour pour ouvrir des lignes vers le roi noir; Topalov accepte par 24...cxd4.' },
+            { move: 'cxd4', comment: '' },
+            { move: 'Re7+', comment: '25.Re7+ poursuit l’attaque; la prise de la tour est empêchée par une ligne de mat.' },
+            { move: 'Kb6', comment: '' },
+            { move: 'Qxd4+', comment: '' },
+            { move: 'Kxa5', comment: '' },
+            { move: 'b4+', comment: '' },
+            { move: 'Ka4', comment: '' },
+            { move: 'Qc3', comment: '' },
+            { move: 'Qxd5', comment: '' },
+            { move: 'Ra7', comment: '' },
+            { move: 'Bb7', comment: '' },
+            { move: 'Rxb7', comment: '' }
+            ,{ move: 'Qc4', comment: '' },
+            { move: 'Qxf6', comment: '' },
+            { move: 'Kxa3', comment: '' },
+            { move: 'Qxa6+', comment: '' },
+            { move: 'Kxb4', comment: '' },
+            { move: 'c3+', comment: '' },
+            { move: 'Kxc3', comment: '' },
+            { move: 'Qa1+', comment: '' },
+            { move: 'Kd2', comment: '' },
+            { move: 'Qb2+', comment: '' },
+            { move: 'Kd1', comment: '' },
+            { move: 'Bf1', comment: '36.Bf1! est le coup décisif de la combinaison finale, selon l’analyse publiée par ChessBase.' },
+            { move: 'Rd2', comment: '' },
+            { move: 'Rd7', comment: '37.Rd7! cloue la tour noire; après 37...Rxd7, Kasparov reprend par 38.Bxc4.' },
+            { move: 'Rxd7', comment: '' },
+            { move: 'Bxc4', comment: '' },
+            { move: 'bxc4', comment: '' },
+            { move: 'Qxh8', comment: '' },
+            { move: 'Rd3', comment: '' },
+            { move: 'Qa8', comment: '' },
+            { move: 'c3', comment: '' },
+            { move: 'Qa4+', comment: '' },
+            { move: 'Ke1', comment: '' },
+            { move: 'f4', comment: '' },
+            { move: 'f5', comment: '' },
+            { move: 'Kc1', comment: '' },
+            { move: 'Rd2', comment: '' },
+            { move: 'Qa7', comment: '' }
         ];
 
         function buildPgnText() {
@@ -595,13 +595,11 @@
             const movesList = document.getElementById('movesList');
             movesList.innerHTML = '';
 
-            const brilliantEmojis = /[🌟⭐💎🔥⚡💥👑🏆]/;
-
-            gameMoves.forEach((moveData, index) => {
+                        gameMoves.forEach((moveData, index) => {
                 const moveItem = document.createElement('div');
                 moveItem.className = 'move-item';
 
-                const isBrilliant = moveData.comment && brilliantEmojis.test(moveData.comment);
+                const isBrilliant = moveData.brilliant === true;
                 if (isBrilliant) {
                     moveItem.classList.add('brilliant');
                 }
@@ -618,7 +616,7 @@
                         <span class="move-number">${color} ${moveNumber}.</span>
                         <span class="move-notation">${moveNotation}</span>
                     </div>
-                    <div class="move-comment">${moveData.comment}</div>
+                    <div class="move-comment">${moveData.comment || "Rejouez la position et formulez votre observation avant de consulter un commentaire."}</div>
                 `;
 
                 moveItem.onclick = () => goToMove(index);

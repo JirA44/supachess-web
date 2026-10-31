@@ -1,0 +1,13 @@
+[Event "TCEC Season 13 - Superfinal"]
+[Site "TCEC"]
+[Date "2018.10.30"]
+[Round "47.1"]
+[White "Stockfish 18102108"]
+[Black "Komodo 2155.00"]
+[Result "1/2-1/2"]
+[ECO "B01"]
+[Opening "Scandinavian (centre counter) defence"]
+[TerminationDetails "3-Fold repetition"]
+[PlyCount "85"]
+
+1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 4. d4 Nf6 5. Bd2 c6 6. Bd3 Bg4 7. Nge2 Nbd7 8. h3 Bh5 9. O-O e6 10. f4 Qc7 11. Qe1 Bxe2 12. Qxe2 Bd6 13. Rae1 O-O 14. g4 Nd5 15. Nxd5 exd5 16. g5 c5 17. c3 Qb6 18. Be3 Rae8 19. Qf2 Qc7 20. Qf3 cxd4 21. cxd4 Qa5 22. Qg4 Re7 23. f5 g6 24. Qf3 Qxa2 25. Rf2 Rfe8 26. h4 Nf8 27. fxg6 hxg6 28. h5 Qb3 29. hxg6 Nxg6 30. Bxg6 fxg6 31. Qf6 Rxe3 32. Qxg6+ Kh8 33. Qf6+ Kg8 34. Qf7+ Kh8 35. Qh5+ Kg8 36. Qf7+ Kh8 37. Qh5+ Kg8 38. Rxe3 Qxe3 39. Qg6+ Kh8 40. Qf6+ Kg8 41. Qg6+ Kh8 42. Qf6+ Kg8 43. Qg6+ 1/2-1/2

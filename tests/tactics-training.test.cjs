@@ -62,7 +62,7 @@ test('puzzle stays hidden until the learner plays the move and explains it', () 
   const correctChoice = choices.find(button => button.textContent.includes('Le roi et la tour'));
   wrongChoice.click();
   assert.equal(window.document.getElementById('btn-done').disabled, true);
-  assert.match(window.document.getElementById('tactic-feedback').textContent, /Indice 2/);
+  assert.match(window.document.getElementById('tactic-feedback').textContent, /Indice 1/);
   correctChoice.click();
   assert.equal(window.document.getElementById('btn-done').disabled, false);
   assert.match(modal.textContent, /Le cavalier donne échec tout en attaquant la tour/);

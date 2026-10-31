@@ -327,7 +327,15 @@
             gap: 10px;
         }
 
-        .endgame-item {
+                .endgame-item { appearance:none; width:100%; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+        .endgame-item:focus-visible, .endgame-quiz button:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }
+        .endgame-quiz { margin:18px 0; padding:18px; border:1px solid rgba(251,191,36,.55); border-radius:14px; background:#17152c; color:#f4f6fb; }
+        .endgame-quiz h3 { margin:0 0 12px; font-size:1.05rem; }
+        .endgame-quiz-choices { display:grid; gap:9px; }
+        .endgame-quiz button { min-height:44px; padding:10px 14px; border:1px solid #65718a; border-radius:10px; background:#252b42; color:#fff; text-align:left; cursor:pointer; }
+        .endgame-quiz button:hover { background:#333c58; }
+        [hidden] { display:none !important; }
+.endgame-item {
             background: rgba(30, 25, 55, 0.8);
             border: 2px solid rgba(100, 80, 160, 0.2);
             border-radius: 12px;
@@ -606,6 +614,8 @@
                     </button>
                 </div>
 
+                <section class="endgame-quiz" id="endgame-quiz" hidden aria-live="polite"></section>
+
                 <!-- EXPLANATION -->
                 <div class="explanation-box" id="explanation-box">
                     <h3 id="explanation-title">Explication</h3>
@@ -677,7 +687,7 @@
                 difficulty: 'debutant',
                 diffLabel: 'Debutant',
                 keyMoves: ['Rh3+', 'Rh2', 'Rh4'],
-                acceptAny: ['Rh3', 'Rh2', 'Rh4', 'Rh5', 'Rh6', 'Rh7', 'Rh8', 'Ke2'],
+
                 explanation: 'Dans la finale Roi + Tour contre Roi, la technique consiste a utiliser la tour pour couper le roi adverse sur un bord de l\'echiquier, puis amener votre roi en soutien pour forcer le mat.',
                 concept: 'Coupez le roi adverse avec la tour, puis approchez votre roi progressivement. Le mat se donne toujours sur le bord.',
                 hint: 'Utilisez la tour pour couper le roi noir du centre. Rh3+ gagne un temps en donnant echec.'
@@ -691,7 +701,7 @@
                 difficulty: 'debutant',
                 diffLabel: 'Debutant',
                 keyMoves: ['Ke2', 'Kd2', 'Ra5+', 'Ra4'],
-                acceptAny: ['Ke2', 'Kd2', 'Kf2', 'Ra5', 'Ra4', 'Ra3', 'Ra6', 'Ra7', 'Ra8'],
+
                 explanation: 'Meme principe : la tour doit couper le roi noir. Ici, commencer par centraliser votre roi avec Ke2 ou couper directement avec Ra5+ est correct.',
                 concept: 'Centralisez d\'abord votre roi, puis utilisez la tour pour repousser methodiquement le roi adverse vers le bord.',
                 hint: 'Centralisez votre roi vers le centre (Ke2) ou coupez immediatement le roi noir avec Ra5+.'
@@ -705,7 +715,7 @@
                 difficulty: 'debutant',
                 diffLabel: 'Debutant',
                 keyMoves: ['e8=Q', 'e8=R'],
-                acceptAny: ['e8=Q', 'e8=R', 'e8Q', 'e8R'],
+
                 explanation: 'Quand un pion atteint la 8e rangee, il se transforme. La promotion en Dame est presque toujours le meilleur choix car elle donne la piece la plus puissante.',
                 concept: 'Promouvez toujours en Dame sauf cas de pat. Ici e8=D est immediat et gagnant.',
                 hint: 'Le pion est deja en e7 ! Poussez-le en e8 pour le promouvoir en Dame.'
@@ -719,7 +729,7 @@
                 difficulty: 'avance',
                 diffLabel: 'Avance',
                 keyMoves: ['Bc3', 'Bd3', 'Ke2', 'Be3'],
-                acceptAny: ['Bc3', 'Bd3', 'Ke2', 'Be3', 'Bb3', 'Bf4', 'Kd2', 'Kf2', 'Be4'],
+
                 explanation: 'Le mat avec 2 Fous necessite de repousser le roi adverse dans un coin. Les deux fous cooperent en creant une "barriere diagonale" que le roi ne peut pas traverser.',
                 concept: 'Les 2 fous forment une barriere diagonale. Placez-les sur des diagonales adjacentes pour forcer le roi vers un coin, puis matez avec l\'aide de votre roi.',
                 hint: 'Commencez par activer vos fous au centre : Bc3 ou Bd3 forment une barriere diagonale que le roi noir ne peut pas franchir.'
@@ -733,7 +743,7 @@
                 difficulty: 'intermediaire',
                 diffLabel: 'Intermediaire',
                 keyMoves: ['Rf4', 'Rd1+', 'Re1'],
-                acceptAny: ['Rf4', 'Rd1', 'Re1', 'Rf2', 'Rf3', 'Rf5', 'Rf8+'],
+
                 explanation: 'La position Lucena est la plus importante des finales Tour + Pion. La cle est la technique du "pont" : la tour va en f4, le roi sort en a7 ou a8, puis si le roi noir donne echec, la tour interpose en f4 en protegeant le roi.',
                 concept: 'Technique du pont : 1.Rf4! prepare l\'interposition. Le roi blanc sort du pion, et la tour "construit un pont" en s\'interposant aux echecs sur la 4e rangee.',
                 hint: 'Rf4 ! C\'est le coup cle de la position Lucena. La tour se place en f4 pour construire un "pont" et bloquer les echecs adverses.'
@@ -742,15 +752,15 @@
                 id: 'philidor',
                 name: 'Position Philidor',
                 shortName: 'Philidor',
-                description: 'Defense de nulle avec la tour en 6e rangee',
-                fen: '8/3k4/8/3PK3/8/8/8/3r3R w - - 0 1',
+                description: 'Placez la tour sur la sixième rangée pour couper le roi et préserver la nulle',
+                fen: '8/3k4/6r1/3PK3/8/8/8/7R b - - 0 1',
                 difficulty: 'intermediaire',
                 diffLabel: 'Intermediaire',
-                keyMoves: ['Rh7+', 'Rh8', 'Rh6', 'd6'],
-                acceptAny: ['Rh7', 'Rh8', 'Rh6', 'd6', 'Rh4', 'Rh3', 'Rh2', 'Ke6'],
-                explanation: 'La position Philidor est la defense classique en finale Tour + Pion. Le defenseur garde sa tour sur la 6e rangee (ou 3e du point de vue des noirs) pour empecher la progression du roi. Si le pion avance, la tour passe derriere pour donner des echecs a distance.',
-                concept: 'Garder la tour sur la 6e rangee tant que le pion n\'avance pas. Des que le pion pousse, la tour passe derriere pour des echecs perpetuels a longue distance.',
-                hint: 'Avancez avec Rh7+ ou poussez le pion avec d6 pour tester la defense noire.'
+                keyMoves: ['Rd6'],
+
+                explanation: 'Dans cette position de défense de type Philidor, le roi noir se place devant le pion passé et la tour noire cherche la sixième rangée pour empêcher le roi blanc d’avancer. Quand le pion avance, la défense passe aux échecs depuis l’arrière.',
+                concept: 'Coupez le roi avec la tour sur la sixième rangée; si le pion avance, cherchez les échecs par l’arrière. Le résultat dépend de la position exacte et du trait.',
+                hint: 'La tour noire doit se placer sur la sixième rangée, devant le roi blanc et derrière le roi noir.'
             },
             {
                 id: 'rpvr',
@@ -760,8 +770,8 @@
                 fen: '8/3k1R2/3P4/8/8/8/8/3K1r2 w - - 0 1',
                 difficulty: 'intermediaire',
                 diffLabel: 'Intermediaire',
-                keyMoves: ['Ke2', 'Rf8', 'Kd2', 'Re7'],
-                acceptAny: ['Ke2', 'Rf8', 'Kd2', 'Re7', 'Kc2', 'Rf1', 'Rf2', 'Rf3', 'Rf4'],
+                keyMoves: ['Ke2', 'Kd2'],
+
                 explanation: 'En finale Tour + Pion contre Tour, la coordination entre votre roi et votre tour est essentielle. Le roi doit soutenir le pion, et la tour doit empecher le roi adverse de bloquer.',
                 concept: 'Approchez votre roi du pion pour le soutenir. Gardez votre tour active pour empecher les echecs et le blocage adverse.',
                 hint: 'Activez votre roi avec Ke2 pour soutenir le pion d6, ou jouez Re7 pour couper le roi noir.'
@@ -775,7 +785,7 @@
                 difficulty: 'avance',
                 diffLabel: 'Avance',
                 keyMoves: ['Qd6+', 'Qb7+', 'Qc6+', 'Qa8+'],
-                acceptAny: ['Qd6', 'Qb7', 'Qc6', 'Qa8', 'Qd4', 'Qd3', 'Qd2', 'Qe6', 'Qf7', 'Qd1', 'Qa2', 'Qb3', 'Qc4'],
+
                 explanation: 'Les finales de Dames sont complexes. La cle est de centraliser votre dame, donner des echecs pour eloigner le roi adverse de votre pion (s\'il y en a un), et creer une menace d\'echange vers une finale gagnante.',
                 concept: 'En finale de dames, privilegiez les echecs centralises. Une dame centralisee est extremement puissante et peut forcer l\'echange ou le mat.',
                 hint: 'Donnez echec avec Qd6+ ou Qb7+ pour repousser le roi noir et gagner du terrain.'
@@ -789,7 +799,7 @@
                 difficulty: 'expert',
                 diffLabel: 'Expert',
                 keyMoves: ['Kd4', 'Kc3', 'Kb3'],
-                acceptAny: ['Kd4', 'Kc3', 'Kb3', 'b5'],
+
                 explanation: 'Le zugzwang est une situation ou le joueur au trait est desavantage par l\'obligation de jouer. Dans cette position de pions, les blancs doivent manoeuvrer pour mettre les noirs en zugzwang. Apres Kd4, les noirs sont forces de ceder le controle de la case c5 ou b5.',
                 concept: 'Le zugzwang force l\'adversaire a deteriorer sa position. Dans les finales de pions, la cle est souvent l\'opposition et le timing pour placer l\'adversaire en zugzwang.',
                 hint: 'Kd4 ! Cela met les noirs en difficulte. S\'ils jouent Kd6, b5 gagne. S\'ils jouent Kb5, Kd5 domine.'
@@ -803,12 +813,32 @@
                 difficulty: 'expert',
                 diffLabel: 'Expert',
                 keyMoves: ['b6', 'a6', 'Kb4', 'Ka4'],
-                acceptAny: ['b6', 'a6', 'Kb4', 'Ka4', 'Kb3', 'Kb2', 'Ka2'],
+
                 explanation: 'Dans les courses de pions, le calcul precis est essentiel. Ici, les blancs doivent decider quand pousser quel pion. b6 est souvent correct car il force une reaction immediate (axb6 ou a6), et le roi blanc est plus avance.',
                 concept: 'Dans les courses de pions, comptez les temps ! Le roi le plus actif et les pions les plus avances ont l\'avantage. Parfois, sacrifier un pion pour faire une dame en premier est gagnant.',
                 hint: 'Poussez b6 ! Cela force une reaction des noirs et ouvre un passage pour vos pions. Le timing est crucial.'
             }
         ];
+
+
+        var ENDGAME_QUIZZES = {
+            krk: { question:'Quelle méthode permet de mater le roi seul avec roi et tour ?', choices:[{text:'Couper ses cases avec la tour puis rapprocher son roi',correct:true},{text:'Donner des échecs sans améliorer la position',correct:false},{text:'Pousser le roi adverse au centre',correct:false}] },
+            krk2: { question:'Quel est le rôle du roi dans cette finale ?', choices:[{text:'S’approcher pour soutenir la tour et réduire les cases du roi adverse',correct:true},{text:'Rester sur sa case de départ',correct:false},{text:'Échanger la tour contre le roi',correct:false}] },
+            kpk: { question:'Pourquoi choisir la promotion en dame dans cette position ?', choices:[{text:'Elle donne la pièce la plus puissante; une sous-promotion ne se justifie que par une raison tactique',correct:true},{text:'La dame est obligatoire dans toutes les positions',correct:false},{text:'La tour ne peut jamais mater',correct:false}] },
+            kbbk: { question:'Comment les deux fous coopèrent-ils pour mater ?', choices:[{text:'Ils forment une barrière et poussent le roi vers un bord avec le soutien du roi',correct:true},{text:'Ils attaquent le roi sur la même case',correct:false},{text:'Ils doivent être échangés dès que possible',correct:false}] },
+            lucena: { question:'Quelles sont les étapes essentielles de la technique Lucena ?', choices:[{text:'Lever la tour, faire sortir le roi, puis interposer la tour pour construire un pont',correct:true},{text:'Échanger les tours immédiatement',correct:false},{text:'Pousser le pion sans tenir compte des échecs',correct:false}] },
+            philidor: { question:'Quel plan défensif illustre cette position de type Philidor ?', choices:[{text:'Couper le roi sur la sixième rangée, puis chercher des échecs par derrière si le pion avance',correct:true},{text:'Laisser le roi blanc avancer jusqu’au pion',correct:false},{text:'Échanger la tour contre le pion sans calcul',correct:false}] },
+            rpvr: { question:'Quel principe améliore les chances du camp qui a le pion passé ?', choices:[{text:'Activer le roi et coordonner la tour pour soutenir le pion et limiter les échecs',correct:true},{text:'Garder le roi loin du pion',correct:false},{text:'Placer la tour passivement derrière son propre roi',correct:false}] },
+            qqend: { question:'Dans une finale de dames, que faut-il vérifier avant de donner un échec ?', choices:[{text:'Les contre-échecs, la sécurité des deux rois et les possibilités d’échange',correct:true},{text:'Seulement la distance entre les dames',correct:false},{text:'Que la dame ne contrôle aucune case centrale',correct:false}] },
+            zugzwang: { question:'Comment créer un zugzwang dans une finale de pions ?', choices:[{text:'Améliorer le roi et l’opposition pour obliger l’adversaire à céder une case clé',correct:true},{text:'Jouer tous les coups de pion immédiatement',correct:false},{text:'Éviter toute opposition entre les rois',correct:false}] },
+            pawnrace: { question:'Que faut-il calculer dans une course de pions ?', choices:[{text:'Les temps jusqu’à la promotion, les prises possibles et l’activité des rois',correct:true},{text:'La valeur théorique des pions seulement',correct:false},{text:'Le nombre de cases occupées sur le plateau',correct:false}] }
+        };
+        Object.keys(ENDGAME_QUIZZES).forEach(function(id, index) {
+            var question = ENDGAME_QUIZZES[id];
+            var correctIndex = question.choices.findIndex(function(choice) { return choice.correct; });
+            var correctChoice = question.choices.splice(correctIndex, 1)[0];
+            question.choices.splice((index + 1) % 3, 0, correctChoice);
+        });
 
         // === STATE ===
         var board = null;
@@ -818,6 +848,7 @@
         var movesMade = [];
         var hintsUsed = 0;
         var positionSolved = false;
+        var conceptSolved = false;
         var storageData = loadStorage();
 
         // === STORAGE ===
@@ -891,14 +922,14 @@
 
                 var statusIcon = done ? '&#10003;' : (active ? '&#9654;' : '&#9675;');
 
-                html += '<div class="' + classes + '" onclick="selectEndgame(' + i + ')">'
+                html += '<button type="button" class="' + classes + '" onclick="selectEndgame(' + i + ')" aria-label="Finale ' + (i + 1) + ' : ' + eg.name + (done ? ', terminée' : ', à travailler') + '">'
                     + '<div class="item-num">' + (i + 1) + '</div>'
                     + '<div class="item-text">'
                     + '<div class="item-name">' + eg.name + '</div>'
                     + '<div class="item-desc">' + eg.description + '</div>'
                     + '</div>'
                     + '<div class="item-status">' + statusIcon + '</div>'
-                    + '</div>';
+                    + '</button>';
             }
 
             container.innerHTML = html;
@@ -930,6 +961,7 @@
             movesMade = [];
             hintsUsed = 0;
             positionSolved = false;
+            conceptSolved = false;
 
             // Update UI
             document.getElementById('endgame-title').textContent =
@@ -942,6 +974,8 @@
             // Reset feedback
             document.getElementById('feedback-area').innerHTML = '';
             document.getElementById('explanation-box').classList.remove('visible');
+            document.getElementById('endgame-quiz').hidden = true;
+            document.getElementById('endgame-quiz').innerHTML = '';
             document.getElementById('move-history').style.display = 'none';
             document.getElementById('move-history').innerHTML = '';
             document.getElementById('btn-next').style.display = 'none';
@@ -960,7 +994,7 @@
             var boardConfig = {
                 position: currentEndgame.fen,
                 draggable: true,
-                orientation: 'white',
+                orientation: currentEndgame.fen.split(/\s+/)[1] === 'b' ? 'black' : 'white',
                 pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
                 onDragStart: onDragStart,
                 onDrop: onDrop,
@@ -968,58 +1002,33 @@
             };
 
             board = Chessboard('board', boardConfig);
-            document.getElementById('board-label').textContent = 'Trait aux Blancs - Trouvez le meilleur coup !';
+            document.getElementById('board-label').textContent = 'Trait aux ' + (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' — trouvez le coup de référence.';
 
             // Update list highlight
             renderEndgameList();
         };
 
         // === DRAG START: only allow white pieces ===
-        function onDragStart(source, piece, position, orientation) {
-            if (positionSolved) return false;
-            if (game.game_over()) return false;
-            if (piece.search(/^b/) !== -1) return false; // only white
-            if (game.turn() !== 'w') return false;
-            return true;
+        function onDragStart(source, piece) {
+            if (positionSolved || !game || game.game_over()) return false;
+            return piece.charAt(0) === (game.turn() === 'w' ? 'w' : 'b');
         }
 
         // === DROP: validate move ===
         function onDrop(source, target) {
-            if (positionSolved) return 'snapback';
-
-            // Try the move (with possible promotion)
-            var moveObj = game.move({
-                from: source,
-                to: target,
-                promotion: 'q' // always promote to queen
-            });
-
-            if (moveObj === null) return 'snapback';
-
-            var moveSan = moveObj.san;
-            movesMade.push(moveSan);
-
-            // Log in move history
-            logMove(moveSan, true);
-
-            // Check if this is a key move (first move check)
-            if (movesMade.length === 1) {
-                if (isKeyMove(moveSan)) {
-                    handleCorrectMove(moveSan);
-                } else if (isAcceptableMove(moveSan)) {
-                    showFeedback('Bon coup (' + moveSan + '), mais il y a un coup plus precis. Continuez !', 'hint');
-                    // Let them continue playing - make a "response" move for black
-                    setTimeout(function() { makeBlackResponse(); }, 500);
-                } else {
-                    handleWrongMove(moveSan);
-                }
-            } else {
-                // After first move, any legal move is accepted
-                showFeedback('Vous jouez ' + moveSan + '. Continuez...', 'hint');
-                setTimeout(function() { makeBlackResponse(); }, 500);
+            if (positionSolved || !game) return 'snapback';
+            var moveObj = game.move({ from: source, to: target, promotion: 'q' });
+            if (!moveObj) {
+                showFeedback('Coup illégal : choisis une case atteignable. ' + nextHintText(), 'wrong');
+                return 'snapback';
             }
-
-            return undefined; // accept
+            logMove(moveObj.san, true);
+            if (isKeyMove(moveObj.san)) {
+                handleCorrectMove(moveObj.san);
+            } else {
+                handleWrongMove(moveObj.san);
+            }
+            return undefined;
         }
 
         function onSnapEnd() {
@@ -1041,65 +1050,20 @@
             return false;
         }
 
-        function isAcceptableMove(san) {
-            if (!currentEndgame) return false;
-            var am = currentEndgame.acceptAny;
-            if (!am) return false;
-            for (var i = 0; i < am.length; i++) {
-                var normalized = san.replace(/[+#]/g, '');
-                var accNorm = am[i].replace(/[+#]/g, '');
-                if (normalized === accNorm) return true;
-            }
-            return false;
-        }
-
+        // Les coups de référence sont des réponses prévues pour cette position.
         // === CORRECT MOVE ===
         function handleCorrectMove(san) {
             positionSolved = true;
-
-            // Award XP
-            var isNew = markCompleted(currentEndgame.id);
-            if (isNew && window.ChessNovaProgress) {
-                ChessNovaProgress.addXP(15, 'Finale: ' + currentEndgame.name);
-            }
-
-            // Check for badge
-            if (storageData.completed.length >= 10 && window.ChessNovaProgress) {
-                ChessNovaProgress.unlockBadge('endgame-specialist');
-                ChessNovaProgress.checkTrainingBadges();
-            }
-
-            // Show feedback
-            showFeedback('Excellent ! ' + san + ' est le coup cle. Position gagnante !', 'correct');
-
-            // Show explanation
-            showExplanation();
-
-            // Update stats
-            updateCompletionStats();
-            renderEndgameList();
-
-            // Update XP bar
-            if (window.ChessNovaProgress) {
-                ChessNovaProgress.renderProgressBar('xp-bar-top');
-            }
-
-            // Show next button
-            if (currentIndex < ENDGAMES.length - 1) {
-                document.getElementById('btn-next').style.display = 'inline-flex';
-            }
-
-            // Disable interaction
+            showFeedback('Coup de référence trouvé : ' + san + '. Explique maintenant le principe pour valider la leçon.', 'correct');
+            renderEndgameQuiz();
             document.getElementById('btn-hint').disabled = true;
             document.getElementById('btn-solution').disabled = true;
-            document.getElementById('board-label').textContent =
-                'Position resolue ! +15 XP' + (isNew ? '' : ' (deja completee)');
+            document.getElementById('board-label').textContent = 'Coup trouvé — réponds à la question pour valider.';
         }
 
         // === WRONG MOVE ===
         function handleWrongMove(san) {
-            showFeedback('Ce n\'est pas le meilleur coup (' + san + '). Essayez encore !', 'wrong');
-
+            showFeedback('Ce coup (' + san + ') ne correspond pas à la réponse attendue. ' + nextHintText(), 'wrong');
             // Undo the move
             game.undo();
             movesMade.pop();
@@ -1112,43 +1076,6 @@
 
             // Update move history
             logMove(san + ' (annule)', false);
-        }
-
-        // === BLACK RESPONSE (simple) ===
-        function makeBlackResponse() {
-            if (!game || game.game_over() || positionSolved) {
-                if (game && game.game_over()) {
-                    if (game.in_checkmate()) {
-                        handleCorrectMove(movesMade[movesMade.length - 1]);
-                    } else {
-                        showFeedback('Partie terminee (pat ou nulle). Recommencez pour trouver le coup optimal.', 'hint');
-                    }
-                }
-                return;
-            }
-            if (game.turn() !== 'b') return;
-
-            // Simple: pick a random legal move for black
-            var moves = game.moves();
-            if (moves.length === 0) return;
-
-            var randomMove = moves[Math.floor(Math.random() * moves.length)];
-            var moveObj = game.move(randomMove);
-            if (moveObj) {
-                logMove('...' + moveObj.san, true);
-                if (board) board.position(game.fen());
-
-                // Check if game is over after black's move
-                if (game.game_over()) {
-                    if (game.in_checkmate()) {
-                        showFeedback('Les noirs sont mats ! Bien joue.', 'correct');
-                    } else {
-                        showFeedback('Partie terminee.', 'hint');
-                    }
-                } else {
-                    document.getElementById('board-label').textContent = 'Trait aux Blancs - Continuez...';
-                }
-            }
         }
 
         // === FEEDBACK ===
@@ -1173,30 +1100,75 @@
         }
 
         // === SHOW EXPLANATION ===
+        function renderEndgameQuiz() {
+            var quiz = ENDGAME_QUIZZES[currentEndgame.id];
+            var section = document.getElementById('endgame-quiz');
+            if (!quiz || !section) return;
+            var offset = (ENDGAMES.findIndex(function(item){ return item.id === currentEndgame.id; }) + 1) % quiz.choices.length;
+            var choices = quiz.choices.slice(offset).concat(quiz.choices.slice(0, offset));
+            section.innerHTML = '<h3>' + quiz.question + '</h3><div class="endgame-quiz-choices">' +
+                choices.map(function(choice,index){ return '<button type="button" onclick="answerEndgameConcept(' + index + ')">' + choice.text + '</button>'; }).join('') +
+                '</div><p id="endgame-quiz-feedback" role="status" aria-live="polite"></p>';
+            section.hidden = false;
+            section._choices = choices;
+        }
+
+        window.answerEndgameConcept = function(index) {
+            var section = document.getElementById('endgame-quiz');
+            var choices = section && section._choices;
+            if (!positionSolved || conceptSolved || !choices) return;
+            if (!choices[index] || !choices[index].correct) {
+                document.getElementById('endgame-quiz-feedback').textContent = 'Pas encore. Revois le plan puis essaie à nouveau.';
+                window.showHint();
+                return;
+            }
+            conceptSolved = true;
+            document.getElementById('endgame-quiz-feedback').textContent = 'Bonne réponse : le principe est compris.';
+            section.querySelectorAll('button').forEach(function(button){ button.disabled = true; });
+            completeEndgame();
+            showExplanation();
+        };
+
+        function completeEndgame() {
+            var isNew = markCompleted(currentEndgame.id);
+            if (isNew && window.ChessNovaProgress) ChessNovaProgress.addXP(15, 'Finale: ' + currentEndgame.name);
+            if (storageData.completed.length >= 10 && window.ChessNovaProgress) {
+                ChessNovaProgress.unlockBadge('endgame-specialist');
+                ChessNovaProgress.checkTrainingBadges();
+            }
+            updateCompletionStats();
+            renderEndgameList();
+            if (window.ChessNovaProgress) ChessNovaProgress.renderProgressBar('xp-bar-top');
+            if (currentIndex < ENDGAMES.length - 1) document.getElementById('btn-next').style.display = 'inline-flex';
+            document.getElementById('board-label').textContent = 'Leçon validée — ' + (isNew ? '+15 XP' : 'déjà validée');
+        }
+
         function showExplanation() {
             if (!currentEndgame) return;
             var box = document.getElementById('explanation-box');
-            document.getElementById('explanation-title').textContent =
-                'Explication : ' + currentEndgame.name;
-            document.getElementById('explanation-text').textContent =
-                currentEndgame.explanation;
-            document.getElementById('explanation-concept').textContent =
-                currentEndgame.concept;
+            document.getElementById('explanation-title').textContent = 'Explication : ' + currentEndgame.name;
+            document.getElementById('explanation-text').textContent = currentEndgame.explanation;
+            document.getElementById('explanation-concept').textContent = currentEndgame.concept;
             box.classList.add('visible');
         }
 
         // === HINT ===
-        window.showHint = function() {
-            if (!currentEndgame || positionSolved) return;
+        function nextHintText() {
             hintsUsed++;
+            var quiz = ENDGAME_QUIZZES[currentEndgame.id];
+            if (hintsUsed === 1) return 'Indice 1 : ' + currentEndgame.hint;
+            if (hintsUsed === 2) return 'Indice 2 : ' + quiz.question;
+            return 'Indice ' + hintsUsed + ' : le coup de référence est ' + currentEndgame.keyMoves[0] + '.';
+        }
 
-            if (hintsUsed === 1) {
-                showFeedback('Indice : ' + currentEndgame.hint, 'hint');
-            } else if (hintsUsed === 2) {
-                var moves = currentEndgame.keyMoves;
-                showFeedback('Le meilleur coup est : ' + moves[0], 'hint');
-            } else {
-                showFeedback('Essayez ' + currentEndgame.keyMoves[0] + ' ! Deplacez la piece correspondante.', 'hint');
+        window.showHint = function() {
+            if (!currentEndgame || conceptSolved) return;
+            if (!positionSolved) showFeedback(nextHintText(), 'hint');
+            else {
+                hintsUsed++;
+                document.getElementById('endgame-quiz-feedback').textContent = hintsUsed <= 2
+                    ? 'Indice : retrouve le principe central illustré par cette finale.'
+                    : 'Rappel : ' + currentEndgame.concept;
             }
         };
 
@@ -1227,7 +1199,7 @@
             if (!currentEndgame || positionSolved) return;
 
             showFeedback(
-                'Solution : le coup cle est <strong>' + currentEndgame.keyMoves[0] + '</strong>. ' +
+                'Solution : le coup attendu dans cet exercice est <strong>' + currentEndgame.keyMoves[0] + '</strong>. ' +
                 currentEndgame.explanation, 'hint'
             );
 

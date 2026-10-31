@@ -21,7 +21,7 @@ window.Chess = Chess;
 window.Chart = window.Chart || function(){ this.data={labels:[],datasets:[{data:[]},{data:[]}]}; this.destroy=function(){}; this.update=function(){}; };
 window.Chart.defaults = window.Chart.defaults || {};
 window.Chart.getChart = window.Chart.getChart || function(){ return null; };
-window.Chessboard = window.Chessboard || function(id){ const el=document.getElementById(id); if(el){el.style.minHeight='320px';el.style.background='#ddd';el.textContent='Local chessboard fixture';} return {start:function(){},position:function(){},orientation:function(){},flip:function(){},resize:function(){}}; };
+window.Chessboard = window.Chessboard || function(id, config){ window.__lastChessboardConfig=config; const el=document.getElementById(id); if(el){el.style.minHeight='320px';el.style.background='#ddd';el.textContent='Local chessboard fixture';} return {start:function(){},position:function(){},orientation:function(){},flip:function(){},resize:function(){},destroy:function(){}}; };
 window.$ = window.jQuery = window.$ || function(selector){
   if(selector===document || selector===window) return {on:function(){return this;},resize:function(fn){window.addEventListener('resize',fn);return this;},ready:function(fn){fn();return this;}};
   const nodes=selector instanceof Element ? [selector] : typeof selector==='string' && selector.startsWith('<') ? [document.createElement('div')] : [...document.querySelectorAll(selector)];
@@ -64,7 +64,7 @@ window.$ = window.jQuery = window.$ || function(selector){
     }
     if (/unpkg\.com\/@chrisoakman\/chessboardjs/i.test(url)) {
       if (/\.css(?:$|\?)/i.test(url)) return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
-      const boardFixture = `window.Chessboard = function(id, config){ const el=document.getElementById(id); el.style.minHeight='320px'; el.style.background='#ddd'; el.textContent='Local chessboard fixture'; return {start:function(){}, position:function(){}, orientation:function(){}, flip:function(){}, resize:function(){}}; };`;
+      const boardFixture = `window.Chessboard = function(id, config){ window.__lastChessboardConfig=config; const el=document.getElementById(id); el.style.minHeight='320px'; el.style.background='#ddd'; el.textContent='Local chessboard fixture'; return {start:function(){}, position:function(){}, orientation:function(){}, flip:function(){}, resize:function(){}, destroy:function(){}}; };`;
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: boardFixture });
     }
     if (/gstatic\.com\/firebasejs/i.test(url)) return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
@@ -468,4 +468,44 @@ test('Fischer replay Dots toggle shows and clears legal move hints with readable
   }));
   expect(activeColors).toEqual({ notation:'rgb(31, 41, 55)', comment:'rgb(51, 65, 85)' });
   expect(browserErrors).toEqual([]);
+});
+
+test('tactics training rejects a legal wrong move, gives a hint and requires the concept', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.goto('/TRAINING_TACTICS.html');
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.locator('.pz-card').filter({ hasText: 'Fourchette de cavalier · A' }).click();
+  await page.locator('[data-square="b5"]').click();
+  await page.locator('[data-square="a7"]').click();
+  await expect(page.locator('#tactic-feedback')).toContainText('Indice 1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.locator('[data-square="b5"]').click();
+  await page.locator('[data-square="c7"]').click();
+  await page.getByRole('button', { name: 'Le roi et la dame' }).click();
+  await expect(page.locator('#tactic-explanation')).toBeHidden();
+  await page.getByRole('button', { name: 'Le roi et la tour' }).click();
+  await expect(page.locator('#tactic-explanation')).toBeVisible();
+  await page.locator('#btn-done').click();
+  await expect(page.locator('#stat-solved')).toHaveText('1');
+});
+
+test('endgame training supports the defender to move and gates mastery behind a concept check', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.goto('/TRAINING_ENDGAMES.html');
+  await page.locator('#endgame-list .endgame-item').filter({ hasText: 'Position Philidor' }).click();
+  expect(await page.evaluate(() => window.__lastChessboardConfig.orientation)).toBe('black');
+  expect(await page.evaluate(() => window.__lastChessboardConfig.onDragStart('g6', 'bR'))).toBe(true);
+  expect(await page.evaluate(() => window.__lastChessboardConfig.onDragStart('h1', 'wR'))).toBe(false);
+  await page.evaluate(() => window.__lastChessboardConfig.onDrop('g6', 'g7'));
+  await expect(page.locator('#feedback-area')).toContainText('Indice 1');
+  await page.waitForTimeout(650);
+  await page.evaluate(() => window.__lastChessboardConfig.onDrop('g6', 'd6'));
+  await expect(page.locator('#endgame-quiz')).toBeVisible();
+  await expect(page.locator('#explanation-box')).not.toHaveClass(/visible/);
+  const wrong = page.locator('#endgame-quiz button').filter({ hasText: 'Garder la tour' }).first();
+  await wrong.click();
+  await expect(page.locator('#endgame-quiz-feedback')).toContainText('Indice');
+  await page.locator('#endgame-quiz button').filter({ hasText: 'Couper le roi sur la sixième rangée' }).click();
+  await expect(page.locator('#explanation-box')).toHaveClass(/visible/);
+  await expect(page.locator('#count-done')).toHaveText('1');
 });

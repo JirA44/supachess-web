@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="shared/progress.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -62,6 +63,7 @@
             gap: 18px; margin-bottom: 30px;
         }
         .pz-card {
+            width:100%; text-align:left; color:inherit; font:inherit;
             background: rgba(255,255,255,0.08); backdrop-filter: blur(8px);
             border-radius: 14px; padding: 20px;
             border: 1px solid rgba(255,255,255,0.15);
@@ -183,7 +185,13 @@
             height: 100%; border-radius: 10px;
             background: linear-gradient(90deg,#ef4444,#22c55e); transition: width 0.4s;
         }
-    </style>
+            .pz-card { appearance:none; color:#fff; font:inherit; text-align:left; width:100%; }
+        .theme-tab { appearance:none; color:#fff; font:inherit; cursor:pointer; }
+        .pz-card:focus-visible,.theme-tab:focus-visible,.tactic-choice:focus-visible,.m-btn:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }
+        .hint-feedback { color:#fef3c7; font-weight:600; }
+        @media(max-width:700px) { body { padding:12px; } .modal-content { width:min(100%,620px); margin:2vh auto; padding:16px; } .big-board { width:min(100%,440px); aspect-ratio:1; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); } .big-cell { min-width:0; min-height:0; aspect-ratio:1; padding:0; } }
+        @media(max-width:380px) { h1 { font-size:1.65rem; } .theme-tabs { gap:6px; } .theme-tab { padding:8px 10px; } .pz-card { padding:16px; } }
+</style>
 </head>
 <body>
 <div class="container">
@@ -1326,6 +1334,36 @@ const PUZZLES = [
     }
 ]
 
+
+PUZZLES.forEach((puzzle, index) => {
+    const correctIndex = puzzle.choices.findIndex(choice => choice.correct);
+    const correctChoice = puzzle.choices.splice(correctIndex, 1)[0];
+    const targetIndex = (index + 1) % (puzzle.choices.length + 1);
+    puzzle.choices.splice(targetIndex, 0, correctChoice);
+});
+
+
+const TACTIC_EXPLANATION_FIXES = {
+    'discovered-A':'Le cavalier quitte la colonne a : la tour blanche a1 découvre une attaque contre le roi noir a8.',
+    'discovered-B':'Le cavalier quitte la colonne h : la tour blanche h1 découvre une attaque contre le roi noir h8.',
+    'discovered-C':'Le cavalier quitte la colonne a : la tour noire a8 découvre une attaque contre le roi blanc a1.',
+    'discovered-D':'Le cavalier quitte la colonne h : la tour noire h8 découvre une attaque contre le roi blanc h1.'
+};
+PUZZLES.forEach(puzzle => {
+    if (TACTIC_EXPLANATION_FIXES[puzzle.id]) puzzle.explain = TACTIC_EXPLANATION_FIXES[puzzle.id];
+    if (puzzle.id.startsWith('bishop-fork-')) puzzle.explain = 'Le fou donne échec et attaque aussi la dame sur l’autre diagonale. La tour de son camp protège le fou contre une capture immédiate.';
+});
+const TACTIC_HINTS = {
+    fork: ['Repère les pièces adverses vulnérables, puis cherche une attaque double.', 'Vérifie les cases attaquées après le coup et si la pièce peut être capturée.', 'Compare la valeur des deux cibles et demande-toi si une seule réponse peut les sauver toutes deux.'],
+    pin: ['Cherche un alignement entre une pièce, une pièce plus précieuse et le roi.', 'Vérifie quelle pièce serait exposée si le cavalier quittait sa case.', 'Le fou doit viser le cavalier à travers la diagonale qui mène au roi.'],
+    skewer: ['Cherche un échec qui oblige le roi à quitter une ligne.', 'Regarde quelle pièce de valeur se trouve derrière le roi sur cette ligne.', 'Après le déplacement du roi, vérifie si la tour attaque encore la dame.'],
+    discovered: ['Repère une pièce qui masque une tour sur la ligne du roi.', 'Déplace le bloqueur tout en vérifiant où il atterrit.', 'La tour doit donner échec une fois la colonne libérée.'],
+    backrank: ['Compte les cases de fuite du roi et les pièces qui contrôlent la dernière rangée.', 'Vérifie si une capture avec échec est possible.', 'Cherche une tour qui pénètre sur la rangée du roi avec mat.'],
+    smothered: ['Le roi est entouré de ses propres pièces : cherche un échec de cavalier.', 'Un cavalier peut-il atteindre une case d’où le roi ne peut ni fuir ni capturer ?', 'Vérifie que toutes les cases de fuite sont occupées ou contrôlées.'],
+    doublecheck: ['Cherche un coup qui donne échec avec la pièce déplacée et révèle une seconde attaque.', 'Le cavalier peut-il attaquer le roi tout en libérant la ligne de la tour ?', 'En double échec, les parades ordinaires ne suffisent pas : le roi doit bouger.'],
+    xray: ['Repère une pièce de grande valeur cachée derrière le roi.', 'Cherche une attaque sur la même ligne qui oblige le roi à se déplacer.', 'Après le déplacement du roi, vérifie si la pièce derrière est attaquée.']
+};
+
 const SK = 'supachess_tactics_v2';
 function getSolved() {
     try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; }
@@ -1338,6 +1376,8 @@ let solved = getSolved();
 let streak = 0;
 let activeTheme = 'all';
 let currentPuzzle = null;
+let tacticGame = null;
+let tacticHintLevel = 0;
 
 const PIECES = { 'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
 
@@ -1359,7 +1399,7 @@ function renderMiniBoard(boardStr, hl=[]) {
     for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
         const i=r*8+c, isLight=(r+c)%2===0, isHl=hl.includes(i);
         const p = cells[i]!=='.' ? (PIECES[cells[i]]||'') : '';
-        h += `<div class="mini-cell ${isLight?'light':'dark'}${isHl?' hl':''}"><span style="color:#1a1a2e">${p}</span></div>`;
+        h += `<div class="mini-cell ${isLight?'light':'dark'}${isHl?' hl':''}"><span style="color:${cells[i] !== '.' && cells[i]===cells[i].toUpperCase()?'#fff':'#171717'};text-shadow:${cells[i] !== '.' && cells[i]===cells[i].toUpperCase()?'0 1px 2px #000':'0 1px 1px #fff8'}">${p}</span></div>`;
     }
     return h + '</div>';
 }
@@ -1373,7 +1413,7 @@ function renderBigBoard(boardStr, hl=[], turn='w') {
         const file=String.fromCharCode(97+(i%8)), rank=8-Math.floor(i/8), square=file+rank;
         const isLight=((i%8)+Math.floor(i/8))%2===0, isHl=hl.includes(i);
         const p = cells[i]!=='.' ? (PIECES[cells[i]]||'') : '';
-        h += '<button type="button" class="big-cell '+(isLight?'light':'dark')+(isHl?' hl':'')+'" data-square="'+square+'" aria-label="'+square+(p?' '+p:'')+'"><span style="color:#1a1a2e">'+p+'</span></button>';
+        h += '<button type="button" class="big-cell '+(isLight?'light':'dark')+(isHl?' hl':'')+'" data-square="'+square+'" aria-label="'+square+(p?' '+p:'')+'"><span style="color:'+(cells[i] !== '.' && cells[i]===cells[i].toUpperCase()?'#fff':'#171717')+';text-shadow:'+(cells[i] !== '.' && cells[i]===cells[i].toUpperCase()?'0 1px 3px #000':'0 1px 2px #fff')+'">'+p+'</span></button>';
     }
     return h + '</div>';
 }
@@ -1395,9 +1435,9 @@ function renderTabs() {
         const doneCnt = t.id==='all'
             ? PUZZLES.filter(p=>solved.includes(p.id)).length
             : PUZZLES.filter(p=>p.theme===t.id && solved.includes(p.id)).length;
-        return `<div class="theme-tab ${activeTheme===t.id?'active':''}" onclick="setTheme('${t.id}')">
+        return `<button type="button" class="theme-tab ${activeTheme===t.id?'active':''}" aria-pressed="${activeTheme===t.id}" onclick="setTheme('${t.id}')">
             ${t.name} <span class="cnt">${doneCnt}/${cnt}</span>
-        </div>`;
+        </button>`;
     }).join('');
 }
 
@@ -1413,7 +1453,7 @@ function renderGrid() {
     grid.innerHTML = filtered.map(p => {
         const isSolved = solved.includes(p.id);
         const theme = THEMES.find(t=>t.id===p.theme);
-        return `<div class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')">
+        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title}, ${p.rating} Elo, ${isSolved?'résolu':'à résoudre'}">
             <div class="pz-top">
                 <span class="pz-title">${isSolved?'✅ ':''} ${p.title}</span>
                 <span class="pz-rating">⭐ ${p.rating}</span>
@@ -1425,14 +1465,16 @@ function renderGrid() {
                 <span>${p.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span>
                 ${isSolved ? '<span style="color:#22c55e; margin-left:auto;">✅ Résolu</span>' : ''}
             </div>
-        </div>`;
+        </button>`;
     }).join('');
 }
 
 function openPuzzle(id) {
     currentPuzzle = PUZZLES.find(p=>p.id===id);
     if (!currentPuzzle) return;
-    currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null };
+    currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null, mistakes:0 };
+    tacticHintLevel = 0;
+    tacticGame = new Chess(currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1');
     const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
     document.getElementById('modal-inner').innerHTML = `
         <h2>${currentPuzzle.title}</h2>
@@ -1449,12 +1491,13 @@ function openPuzzle(id) {
         </section>
         <p id="tactic-explanation" class="tactic-explanation" hidden></p>
         <div class="modal-btn-row">
-            <button class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" disabled>✅ Valider ma compréhension</button>
+            <button type="button" class="m-btn tactic-hint" id="btn-tactic-hint" onclick="showTacticHint()">💡 Indice</button>
+            <button type="button" class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" disabled>✅ Valider ma compréhension</button>
             <button class="m-btn m-btn-close" onclick="closeModal()">✕ Fermer</button>
         </div>
     `;
     document.getElementById('modal-bg').classList.add('open');
-    document.querySelectorAll('.big-cell').forEach(cell=>cell.addEventListener('click',function(){selectTacticSquare(this.dataset.square);}));
+    bindTacticBoard();
 }
 
 function selectTacticSquare(square) {
@@ -1479,18 +1522,42 @@ function selectTacticSquare(square) {
     }
     currentPuzzle.session.selected=null;
     document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.remove('selected-square'));
+    const move = tacticGame && tacticGame.move({ from:from, to:square, promotion:'q' });
+    if (!move) {
+        feedback.textContent='Ce déplacement est illégal dans cette position. Vérifie la pièce et la case d’arrivée.';
+        showTacticHint();
+        return;
+    }
     if (from+square===currentPuzzle.answer) {
         currentPuzzle.session.moveCorrect=true;
-        feedback.textContent='Coup correct. À présent, explique pourquoi il fonctionne.';
+        const solvedBoard=tacticGame.fen().split(' ')[0];
+        const fromIndex=(8-Number(from[1]))*8+(from.charCodeAt(0)-97);
+        const toIndex=(8-Number(square[1]))*8+(square.charCodeAt(0)-97);
+        document.querySelector('.big-board-wrap').innerHTML=renderBigBoard(solvedBoard,[fromIndex,toIndex],currentPuzzle.turn);
+        bindTacticBoard();
+        feedback.textContent='Coup légal et motif trouvé. Explique maintenant pourquoi il fonctionne.';
         document.getElementById('tactic-knowledge').hidden=false;
         document.querySelectorAll('.big-cell').forEach(cell=>cell.disabled=true);
-    } else if (piece&&piece!=='.'&&ownPiece) {
-        currentPuzzle.session.selected=square;
-        document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.toggle('selected-square',cell.dataset.square===square));
-        feedback.textContent='Essaie un autre coup : sélectionne une pièce puis sa destination.';
+        document.getElementById('btn-tactic-hint').disabled=true;
     } else {
-        feedback.textContent='Ce déplacement ne résout pas le problème. Repère les menaces et la réponse adverse.';
+        tacticGame.undo();
+        currentPuzzle.session.mistakes++;
+        feedback.textContent='Coup légal, mais il ne résout pas le motif de cet exercice.';
+        showTacticHint();
     }
+}
+
+function bindTacticBoard() {
+    document.querySelectorAll('.big-cell').forEach(cell=>cell.addEventListener('click',function(){selectTacticSquare(this.dataset.square);}));
+}
+
+function showTacticHint() {
+    if (!currentPuzzle || !currentPuzzle.session || currentPuzzle.session.conceptCorrect) return;
+    tacticHintLevel++;
+    const hints=TACTIC_HINTS[currentPuzzle.theme]||['Observe les pièces attaquées et cherche une réponse forcée.'];
+    const hint=hints[Math.min(tacticHintLevel-1,hints.length-1)];
+    const feedback=document.getElementById('tactic-feedback');
+    feedback.innerHTML=feedback.innerHTML+' <span class="hint-feedback">Indice '+tacticHintLevel+' : '+hint+'</span>';
 }
 
 function answerConcept(index) {
@@ -1498,7 +1565,9 @@ function answerConcept(index) {
     const choice=currentPuzzle.choices[index];
     const feedback=document.getElementById('tactic-feedback');
     if (!choice || !choice.correct) {
-        feedback.textContent='Pas encore. Reprends le motif créé par ton coup et essaie une autre explication.';
+        currentPuzzle.session.mistakes++;
+        feedback.textContent='Pas encore. Reprends le motif créé par ton coup.';
+        showTacticHint();
         return;
     }
     currentPuzzle.session.conceptCorrect=true;

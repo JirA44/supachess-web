@@ -42,7 +42,7 @@ test('every prescribed move is legal and matches its tactical result', () => {
 });
 
 test('puzzle stays hidden until the learner plays the move and explains it', () => {
-  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously' });
+  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
   const { window } = dom;
   assert.equal(window.document.getElementById('stat-total').textContent, '40');
 
@@ -57,9 +57,13 @@ test('puzzle stays hidden until the learner plays the move and explains it', () 
   assert.equal(window.document.getElementById('tactic-knowledge').hidden, false);
   assert.doesNotMatch(modal.textContent, /Le cavalier donne échec tout en attaquant la tour/);
 
-  window.answerConcept(1);
+  const choices = [...window.document.querySelectorAll('.tactic-choice')];
+  const wrongChoice = choices.find(button => button.textContent.includes('Le roi et la dame'));
+  const correctChoice = choices.find(button => button.textContent.includes('Le roi et la tour'));
+  wrongChoice.click();
   assert.equal(window.document.getElementById('btn-done').disabled, true);
-  window.answerConcept(0);
+  assert.match(window.document.getElementById('tactic-feedback').textContent, /Indice 2/);
+  correctChoice.click();
   assert.equal(window.document.getElementById('btn-done').disabled, false);
   assert.match(modal.textContent, /Le cavalier donne échec tout en attaquant la tour/);
   window.document.getElementById('btn-done').click();
@@ -69,11 +73,25 @@ test('puzzle stays hidden until the learner plays the move and explains it', () 
 });
 
 test('black-to-move puzzles orient the board and accept the correct side', () => {
-  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously' });
+  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
   const { window } = dom;
   window.openPuzzle('knight-fork-C');
   window.document.querySelector('[data-square="b4"]').click();
   window.document.querySelector('[data-square="c2"]').click();
   assert.equal(window.document.getElementById('tactic-knowledge').hidden, false);
+  dom.window.close();
+});
+
+test('wrong legal moves give a progressive hint, and replay keeps the original position', () => {
+  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
+  const { window } = dom;
+  window.openPuzzle('knight-fork-A');
+  const initialKnight = window.document.querySelector('[data-square="b5"]').textContent;
+  window.document.querySelector('[data-square="b5"]').click();
+  window.document.querySelector('[data-square="a7"]').click();
+  assert.match(window.document.getElementById('tactic-feedback').textContent, /Indice 1/);
+  assert.equal(window.document.querySelector('[data-square="b5"]').textContent, initialKnight);
+  window.openPuzzle('knight-fork-A');
+  assert.equal(window.document.querySelector('[data-square="b5"]').textContent, initialKnight);
   dom.window.close();
 });

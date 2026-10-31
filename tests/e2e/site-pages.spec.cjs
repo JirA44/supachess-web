@@ -583,6 +583,20 @@ test('legendary games advance one half-move per arrow key press', async ({ page 
   }
 });
 
+
+test('AlphaZero replay does not advance when a PGN half-move is illegal', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.goto('/alphazero_vs_stockfish.html');
+  const state = await page.evaluate(() => {
+    const before = chess.fen();
+    gameMoves[0].move = 'Qh9';
+    nextMove();
+    return { index: currentMoveIndex, before, after: chess.fen(), message: document.getElementById('moveInfo').textContent };
+  });
+  expect(state.index).toBe(-1);
+  expect(state.after).toBe(state.before);
+  expect(state.message).toContain('coup PGN illégal');
+});
 test('all legendary game main lines are legal and advance one half-move at a time', async ({ page }) => {
   test.setTimeout(120000);
   await isolateExternalServices(page);
@@ -686,7 +700,7 @@ test('all legendary game main lines are legal and advance one half-move at a tim
 test('published PGN source lines match their replay pages', async ({ page }) => {
   await isolateExternalServices(page);
   const sources = [
-    { page: '/alphazero_vs_stockfish.html', pgn: '/data/games/alphazero_stockfish_game10.pgn', expectedPlies: 111, heading: '🤖 AlphaZero vs Stockfish · replay d’un PGN public', expectedText: 'PGN public · E17 · 1–0', forbiddenText: 'AlphaZero vs Stockfish 8 - Game 10' },
+    { page: '/alphazero_vs_stockfish.html', pgn: '/data/games/alphazero_stockfish_game10.pgn', expectedPlies: 111, heading: '🤖 AlphaZero vs Stockfish · replay d’un PGN public', expectedText: 'PGN public · E17 · 1–0', forbiddenText: 'AlphaZero vs Stockfish 8 - Game 10', noBrilliantLabels: true },
     { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn', expectedPlies: 84 },
     { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn', expectedPlies: 40 },
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
@@ -723,6 +737,11 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     if (item.expectedText) await expect(page.locator('body')).toContainText(item.expectedText);
     if (item.forbiddenText) await expect(page.locator('body')).not.toContainText(item.forbiddenText);
     if (item.noMoveRatings) await expect(page.locator('.move-rating')).toHaveCount(0);
+    if (item.noBrilliantLabels) {
+      await expect(page.locator('.move-item.brilliant')).toHaveCount(0);
+      await expect(page.locator('.move-notation')).not.toContainText('!!');
+      await expect(page.locator('.move-comment')).toHaveCount(0);
+    }
     if (item.white) await expect(page.locator('.player-name').filter({ hasText: item.white })).toBeVisible();
     if (item.black) await expect(page.locator('.player-name').filter({ hasText: item.black })).toBeVisible();
     if (item.noMoveRatings) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karpov - Positional Masterclass 1978</title>
+    <title>Korchnoi–Karpov 1978 · Partie 31</title>
     <style>
         * {
             margin: 0;
@@ -328,8 +328,8 @@
 
     <div class="container">
         <header>
-            <h1>Karpov - Positional Masterclass 1978</h1>
-            <p class="subtitle">Le 12e Champion du Monde démontre sa technique impeccable</p>
+            <h1>Korchnoi–Karpov · Partie 31 (1978)</h1>
+            <p class="subtitle">Baguio, 12 octobre 1978 · 1–0 · finale de tours</p>
         </header>
 
         <div class="main-content">
@@ -337,27 +337,27 @@
                 <h2>Informations de la partie</h2>
                 <div class="stat-item">
                     <div class="stat-label">Blancs</div>
-                    <div class="stat-value">Anatoly Karpov</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Noirs</div>
                     <div class="stat-value">Viktor Korchnoi</div>
                 </div>
                 <div class="stat-item">
+                    <div class="stat-label">Noirs</div>
+                    <div class="stat-value">Anatoly Karpov</div>
+                </div>
+                <div class="stat-item">
                     <div class="stat-label">Tournoi</div>
-                    <div class="stat-value">World Championship Match</div>
+                    <div class="stat-value">Championnat du monde, partie 31</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Ouverture</div>
-                    <div class="stat-value">English Opening</div>
+                    <div class="stat-value">Gambit dame refusé, D36 (après transposition)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Résultat</div>
-                    <div class="stat-value">1-0 (Karpov)</div>
+                    <div class="stat-value">1-0 (Korchnoi)</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Année</div>
-                    <div class="stat-value">1978</div>
+                    <div class="stat-value">12 octobre 1978 · Baguio</div>
                 </div>
             </div>
 
@@ -379,8 +379,9 @@
                 <h2>Analyse</h2>
                 <div class="timeline" id="timeline"></div>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 8px; border-left: 3px solid #3498db;">
-                    <strong style="color: #3498db;">Le style Karpov:</strong>
-                    <p style="margin-top: 10px; color: #ccc;">Anatoly Karpov était célèbre pour son jeu positionnel d'une précision absolue. Cette partie de la partie 31 du match mondial 1978 contre Korchnoi démontre sa capacité à transformer de minuscules avantages en victoires. Technique, prophylaxie et précision chirurgicale.</p>
+                    <strong style="color: #3498db;">À observer dans cette partie :</strong>
+                    <p style="margin-top: 10px; color: #ccc;">La lutte bascule vers une finale de tours. Repère l’activité du roi, les pions passés et la coordination des tours. La victoire de Korchnoi dans cette 31e partie ramène le match à égalité.</p>
+                    <p><a href="data/games/korchnoi_karpov_1978_game31.pgn" download>Télécharger le PGN complet</a> · <a href="https://en.chessbase.com/post/kasparov-pays-tribute-to-korchnoi" target="_blank" rel="noopener">Source historique et PGN (ChessBase)</a></p>
                 </div>
             </div>
         </div>
@@ -391,73 +392,149 @@
     <script>
         const chess = new Chess();
 
-        // Partie célèbre Karpov vs Korchnoi - World Championship 1978
+        // Partie 31 vérifiée : Korchnoi (Blancs) - Karpov (Noirs), 1978
         const gameMoves = [
-            { move: 'c4', comment: 'Karpov ouvre avec l\'Anglaise, évitant les préparations théoriques de Korchnoi.' },
-            { move: 'e6', comment: 'Korchnoi choisit une formation solide et flexible.' },
-            { move: 'Nc3', comment: 'Développement classique du cavalier.' },
-            { move: 'Nf6', comment: 'Développement symétrique, les Noirs restent flexibles.' },
-            { move: 'e4', comment: 'Karpov transpose vers une formation de type Botvinnik.' },
-            { move: 'd5', comment: 'Contestation immédiate du centre.' },
-            { move: 'e5', comment: 'Formation française avec un tempo en plus!' },
-            { move: 'Ne4', comment: 'Le cavalier cherche l\'activité.' },
-            { move: 'cxd5', comment: 'Karpov ouvre le jeu au centre.' },
-            { move: 'exd5', comment: 'Recapture centrale.' },
-            { move: 'd4', comment: 'Centre de pions impressionnant pour les Blancs!' },
-            { move: 'Bb4', comment: 'Clouage actif du cavalier c3.' },
-            { move: 'Bd2', comment: 'Développement simple, décloudant le cavalier.' },
-            { move: 'c5', comment: 'Contre-attaque au centre, stratégie critique.' },
-            { move: 'Nf3', comment: 'Le cavalier se développe avec gain de tempo.' },
-            { move: 'cxd4', comment: 'Korchnoi ouvre les lignes.' },
-            { move: 'Nxd4', comment: 'Centralisation excellente du cavalier.' },
-            { move: 'O-O', comment: 'Le roi noir cherche la sécurité.' },
-            { move: 'Bd3', comment: 'Développement du fou avec des idées d\'attaque sur h7.' },
-            { move: 'Nxd2', comment: 'Échange simplificateur.' },
-            { move: 'Qxd2', comment: 'Recapture, la dame se centralise.' },
-            { move: 'Re8', comment: 'Pression sur la colonne e semi-ouverte.' },
-            { move: 'O-O', comment: 'Karpov met son roi en sécurité, structure solide.' },
-            { move: 'Nc6', comment: 'Développement du cavalier dame.' },
-            { move: 'Nxc6', comment: 'Décision stratégique importante - échange de pièces.' },
-            { move: 'bxc6', comment: 'Doublement de pions, mais ouverture de la colonne b.' },
-            { move: 'Rfd1', comment: 'Activation de la tour sur la colonne d ouverte.' },
-            { move: 'Qc7', comment: 'La dame protège le pion e5 et reste active.' },
-            { move: 'Rac1', comment: 'Les deux tours sont maintenant actives - domination!' },
-            { move: 'Be6', comment: 'Développement du dernier fou.' },
-            { move: 'Qf4', comment: 'La dame blanche devient agressive, visant plusieurs faiblesses.' },
-            { move: 'Bd6', comment: 'Échange proposé.' },
-            { move: 'Qg3', comment: 'Karpov garde les pièces, maintenant la pression!' },
-            { move: 'Kh8', comment: 'Prophylaxie - le roi s\'éloigne de menaces potentielles.' },
-            { move: 'h4', comment: 'Début de l\'assaut sur le flanc roi! Typique de Karpov - attaque méthodique.' },
-            { move: 'Rab8', comment: 'Contre-jeu sur la colonne b.' },
-            { move: 'h5', comment: 'La poussée de pion continue inexorablement.' },
-            { move: 'Rb4', comment: 'Contre-attaque active cherchant du contre-jeu.' },
-            { move: 'h6', comment: 'Coup fort! Affaiblissement permanent de la structure noire.' },
-            { move: 'g6', comment: 'Forcé - blocage de l\'avancée h7.' },
-            { move: 'Qf4', comment: 'Retour tactique de la dame, multi-fonctions.' },
-            { move: 'Kg8', comment: 'Le roi doit bouger constamment.' },
-            { move: 'Qg5', comment: 'Pression maximale sur les cases affaiblies!' },
-            { move: 'Reb8', comment: 'Les Noirs tentent du contre-jeu désespéré.' },
-            { move: 'b3', comment: 'Prophylaxie parfaite! Karpov sécurise son flanc dame.' },
-            { move: 'R8b6', comment: 'Manœuvre de tour sans objectif clair.' },
-            { move: 'Ne2', comment: 'Regroupement magnifique! Le cavalier va à f4.' },
-            { move: 'a5', comment: 'Tentative d\'expansion sur le flanc dame.' },
-            { move: 'Nf4', comment: 'Le cavalier arrive avec puissance - visant d6 et e6!' },
-            { move: 'Rxf4', comment: 'Sacrifice d\'échange forcé pour éviter pire!' },
-            { move: 'Qxf4', comment: 'La dame domine l\'échiquier entier!' },
-            { move: 'Qd7', comment: 'Centralisation défensive de la dame.' },
-            { move: 'Rc5', comment: 'Invasion de la cinquième rangée! Position dominante totale.' },
-            { move: 'Rb4', comment: 'Contre-jeu limité.' },
-            { move: 'Qg5', comment: 'Multi-menaces: attaque sur g6, c5, d5...' },
-            { move: 'Kh8', comment: 'Le roi fuit les menaces.' },
-            { move: 'Rdc1', comment: 'Doublement de tours sur la colonne c - pression écrasante!' },
-            { move: 'Rg4', comment: 'Défense active de la tour, protégeant g6.' },
-            { move: 'Rxc6', comment: 'CAPTURE DÉCISIVE! La forteresse noire s\'effondre!' },
-            { move: 'Qxc6', comment: 'Forcé - échange de dames.' },
-            { move: 'Rxc6', comment: 'Finale de tour contre tour et deux fous - avantage blanc!' },
-            { move: 'Bf8', comment: 'Le fou recule pour défendre.' },
-            { move: 'Qf6+', comment: 'Échec dévastateur! La dame blanche domine.' },
-            { move: 'Kg8', comment: 'Le roi noir est forcé de fuir.' },
-            { move: 'Rc8', comment: 'INVASION TOTALE! Menace Txf8+ gagnante. Les Noirs abandonnent.' }
+            { move: 'c4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'e6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nc3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'd5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'd4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nf6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'cxd5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'exd5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Bg5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Be7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'e3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'O-O', comment: "Roque : le roi se met à l’abri et la tour entre en jeu." },
+            { move: 'Bd3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nbd7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nf3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Qc2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'c6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'O-O', comment: "Roque : le roi se met à l’abri et la tour entre en jeu." },
+            { move: 'Nf8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bxf6', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Bxf6', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'b4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bg4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nd2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rc8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bf5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bxf5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Qxf5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Qd7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Qxd7', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Nxd7', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'a4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Be7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rfb1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nf6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'a5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'a6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Na4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bf8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nc5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kf1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ne8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ke2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nd6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kd3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rce8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'g6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'f6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rae1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bh6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ndb3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bf8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nd2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bh6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'h3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kf7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'g4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bf8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'f3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rd8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ndb3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nb5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rf1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bh6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'f4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Bf8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nd2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nd6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rfe1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'h6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rf1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rb8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ra1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rbe8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rae1', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rb8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'e4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'dxe4+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Ndxe4', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Nb5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nc3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rxe2', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rxe2', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Bxc5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'bxc5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rd8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Nxb5', comment: "Korchnoi sacrifie son cavalier contre le pion b5 ; son pion c5 devient une ressource passée à surveiller." },
+            { move: 'axb5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'f5', comment: "La poussée f5 transforme la structure de pions et crée une autre cible sur l’aile roi." },
+            { move: 'gxf5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'gxf5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rg8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kc3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rd2', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Re4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kb4', comment: "Le roi blanc s’active vers les pions passés." },
+            { move: 'Ke8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'a6', comment: "Le pion a avance. Calculez la réponse ...bxa6 et l’idée de pousser ensuite le pion d." },
+            { move: 'bxa6', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Ka5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kd7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kb6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'b4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'd5', comment: "Le second pion passé s’avance pendant que le roi blanc soutient le premier." },
+            { move: 'cxd5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rxd5+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Kc8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rd3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'a5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rg3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'b3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kc6', comment: "Le roi blanc s’approche des pions noirs et soutient ses pions passés." },
+            { move: 'Kb8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rxb3+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Ka7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rb7+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Ka6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rb6+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Ka7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Kb5', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'a4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rxf6', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rf4', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rxh6', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'a3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Ra6+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Kb8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rxa3', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rxf5', comment: "Capture jouée : calcule la reprise possible et le bilan matériel après la réponse." },
+            { move: 'Rg3', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rf6', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rg8+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Kc7', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rg7+', comment: "Échec : recense les réponses légales et la menace suivante." },
+            { move: 'Kc8', comment: "Observe la pièce déplacée, les cases libérées et la meilleure réponse adverse." },
+            { move: 'Rh7', comment: "Dernier coup de la partie ; Karpov abandonne." }
         ];
 
         let currentMoveIndex = -1;

@@ -672,12 +672,17 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     { page: '/alphazero_sacrificial_masterpiece.html', pgn: '/data/games/alphazero_vs_stockfish8_sacrificial_masterpiece.pgn' },
     { page: '/carlsen_perfect_2004.html', pgn: '/data/games/carlsen_vs_deepan_2004.pgn' },
     { page: '/web/legendary-games/carlsen_modern.html', pgn: '/data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', download: '../../data/games/carlsen_karjakin_2016_tiebreak_game4.pgn', expectedPlies: 99 },
+    { page: '/karpov_positional_1978.html', pgn: '/data/games/korchnoi_karpov_1978_game31.pgn', download: 'data/games/korchnoi_karpov_1978_game31.pgn', expectedPlies: 141, heading: 'Korchnoi–Karpov · Partie 31 (1978)' },
     { page: '/scc_carlsen_vs_lazavik.html', pgn: '/data/games/carlsen_vs_lazavik_scc_2025.pgn' },
     { page: '/tcec_s28_best_game.html', pgn: '/data/games/tcec_s28_game83_stockfish_vs_lc0.pgn' }
   ];
   for (const item of sources) {
     await page.goto(item.page);
     if (item.download) await expect(page.locator('a[download]')).toHaveAttribute('href', item.download);
+    if (item.heading) {
+      await expect(page.getByRole('heading', { name: item.heading })).toBeVisible();
+      await expect(page.locator('body')).toContainText('1-0 (Korchnoi)');
+    }
     const audit = await page.evaluate(async (pgnPath) => {
       const pgnResponse = await fetch(pgnPath);
       if (!pgnResponse.ok) return { error: 'PGN source unavailable: ' + pgnResponse.status };

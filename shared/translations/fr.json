@@ -293,5 +293,6 @@
     "training_tactics_badge": "8 THÈMES",
     "training_daily_title": "Défi du jour",
     "training_daily_desc": "Un nouveau défi chaque jour ! Gardez votre série et progressez dans les niveaux.",
-    "training_daily_badge": "QUOTIDIEN"
+    "training_daily_badge": "QUOTIDIEN",
+    "footer_site_version": "Version du site :"
 }

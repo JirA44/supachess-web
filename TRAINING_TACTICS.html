@@ -1454,7 +1454,7 @@ let tacticGame = null;
 let tacticHintLevel = 0;
 let autoAdvanceTimer = null;
 
-const PIECES = { 'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
+const PIECES = { 'K':'♚','Q':'♛','R':'♜','B':'♝','N':'♞','P':'♟','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
 
 function parseBoard(str) {
     let cells = [];
@@ -1885,6 +1885,6 @@ if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(r
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
 <script src="shared/community.js?v=tactics-community-20261101"></script>
 
-<script defer src="shared/site-global.js?v=hub-back-link-20261101"></script>
+<script defer src="shared/site-global.js?v=solid-white-pieces-20261102"></script>
 </body>
 </html>

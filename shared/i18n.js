@@ -84,7 +84,8 @@
         if (toggleLabel) {
             toggleLabel.textContent = currentLang.toUpperCase();
         }
-        if (typeof window.ChessNovaPageTranslate === 'function') window.ChessNovaPageTranslate(currentLang);\n        var toggleFlag = document.querySelector('.cn-lang-flag');
+        if (typeof window.ChessNovaPageTranslate === 'function') window.ChessNovaPageTranslate(currentLang);
+        var toggleFlag = document.querySelector('.cn-lang-flag');
         if (toggleFlag) {
             toggleFlag.textContent = currentLang === 'fr' ? '\uD83C\uDDEB\uD83C\uDDF7' : '\uD83C\uDDEC\uD83C\uDDE7';
         }

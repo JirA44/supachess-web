@@ -41,7 +41,7 @@ test('every prescribed move is legal and matches its tactical result', () => {
   }
 });
 
-test('puzzle stays hidden until the learner plays the move and explains it', () => {
+test('puzzle stays hidden until the learner plays the move and explains it, then advances quickly', async () => {
   const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
   const { window } = dom;
   assert.equal(window.document.getElementById('stat-total').textContent, '40');
@@ -70,6 +70,9 @@ test('puzzle stays hidden until the learner plays the move and explains it', () 
   window.document.getElementById('btn-done').click();
   assert.deepEqual(JSON.parse(window.localStorage.getItem('supachess_tactics_v2')), ['knight-fork-A']);
   assert.equal(window.document.getElementById('stat-solved').textContent, '1');
+  assert.deepEqual(JSON.parse(window.localStorage.getItem('chessnova_training_tactics')).completedCategories, []);
+  await new Promise(resolve => setTimeout(resolve, 330));
+  assert.match(window.document.getElementById('modal-inner').textContent, /Fourchette de cavalier · B/);
   dom.window.close();
 });
 
@@ -94,5 +97,39 @@ test('wrong legal moves give a progressive hint, and replay keeps the original p
   assert.equal(window.document.querySelector('[data-square="b5"]').textContent, initialKnight);
   window.openPuzzle('knight-fork-A');
   assert.equal(window.document.querySelector('[data-square="b5"]').textContent, initialKnight);
+  dom.window.close();
+});
+
+test('existing solved tactical themes synchronize to profile progress without replay rewards', () => {
+  const existing = ['xray-A', 'xray-B', 'xray-C', 'xray-D'];
+  const dom = new JSDOM(html, {
+    url: 'https://supachess.test/TRAINING_TACTICS.html',
+    runScripts: 'dangerously',
+    beforeParse(window) {
+      window.Chess = Chess;
+      window.localStorage.setItem('supachess_tactics_v2', JSON.stringify(existing));
+    }
+  });
+  const { window } = dom;
+  const progress = JSON.parse(window.localStorage.getItem('chessnova_training_tactics'));
+  assert.deepEqual(progress.completedCategories, ['xray']);
+  assert.deepEqual(progress.solvedPuzzleIds, existing);
+  assert.equal(progress.totalPuzzles, 40);
+  assert.equal(window.document.getElementById('stat-solved').textContent, '4');
+  dom.window.close();
+});
+
+test('closing the puzzle modal cancels a pending automatic advance', async () => {
+  const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
+  const { window } = dom;
+  window.openPuzzle('knight-fork-A');
+  window.document.querySelector('[data-square="b5"]').click();
+  window.document.querySelector('[data-square="c7"]').click();
+  const correctChoice = [...window.document.querySelectorAll('.tactic-choice')].find(button => button.textContent.includes('Le roi et la tour'));
+  correctChoice.click();
+  window.document.getElementById('btn-done').click();
+  window.closeModal();
+  await new Promise(resolve => setTimeout(resolve, 330));
+  assert.equal(window.document.getElementById('modal-bg').classList.contains('open'), false);
   dom.window.close();
 });

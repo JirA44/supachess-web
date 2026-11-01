@@ -156,6 +156,13 @@
             box-shadow: 0 0 3px rgba(0,0,0,0.5);
         }
 
+        .square[data-col="0"]::before, .square[data-row="7"]::after {
+            position: absolute; z-index: 2; pointer-events: none;
+            font: 700 clamp(7px, 1.5vw, 12px)/1 Arial, sans-serif;
+            color: rgba(35, 28, 22, .78);
+        }
+        .square[data-col="0"]::before { content: attr(data-rank); top: 2px; left: 3px; }
+        .square[data-row="7"]::after { content: attr(data-file); right: 3px; bottom: 2px; }
         .square:hover {
             filter: brightness(1.2);
             transform: scale(1.05);
@@ -482,6 +489,10 @@
                     const square = document.createElement('div');
                     square.className = 'square';
                     square.className += (row + col) % 2 === 0 ? ' light' : ' dark';
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    square.dataset.rank = 8 - row;
+                    square.dataset.file = String.fromCharCode(97 + col);
 
                     const piece = board[row][col];
                     if (piece) {

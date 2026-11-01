@@ -38,7 +38,7 @@
   function ensureBoardRanks(rootNode) {
     if (!rootNode || !rootNode.querySelectorAll) return;
     var boards = [];
-    if (rootNode.matches && rootNode.matches('.board,.big-board,.board-b72b1')) boards.push(rootNode);
+    if (rootNode.matches && rootNode.matches('.board,.big-board,.board-b72b1,.complex-board,#analysisBoard')) boards.push(rootNode);
     boards = boards.concat(Array.prototype.slice.call(rootNode.querySelectorAll('.board,.big-board,.board-b72b1')));
     boards.forEach(function (board) {
       // Chessboard.js already has the rank gutter unless showNotation:false was set.
@@ -48,7 +48,7 @@
         cells = Array.prototype.slice.call(board.querySelectorAll('.square-55d63'));
       } else {
         cells = Array.prototype.slice.call(board.children).filter(function (el) {
-          return el.matches('.cell,.big-cell,.analysis-square');
+          return el.matches('.cell,.big-cell,.analysis-square,span');
         });
       }
       if (cells.length < 64) return;

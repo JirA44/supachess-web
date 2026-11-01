@@ -67,7 +67,8 @@ function evaluatePosition(game) {
     score += moves * 5;
 
     // Check bonus
-    if (game.isCheck()) {
+    const inCheck = typeof game.isCheck === 'function' ? game.isCheck() : typeof game.in_check === 'function' ? game.in_check() : typeof game.is_check === 'function' ? game.is_check() : false;
+    if (inCheck) {
         score += game.turn() === 'w' ? -50 : 50;
     }
 
@@ -149,6 +150,37 @@ function findBestZupMoveEnhanced() {
     return bestMove;
 }
 
+
+/**
+ * Classe les coups légaux avec l'évaluateur statique SupaChess.
+ * Scores en centipions, vus du camp qui a le trait. Aucun aléa ni mutation persistante.
+ */
+function rankSupaChessMoves(position, limit) {
+    if (!position || typeof position.moves !== 'function' || typeof position.move !== 'function') return [];
+    const moves = position.moves({ verbose: true });
+    const ranked = [];
+    for (const candidate of moves) {
+        const played = position.move(candidate);
+        if (!played) continue;
+        let score = -evaluatePosition(position);
+        const checkmate = typeof position.isCheckmate === 'function' ? position.isCheckmate() :
+            typeof position.in_checkmate === 'function' ? position.in_checkmate() :
+            typeof position.is_checkmate === 'function' ? position.is_checkmate() : false;
+        if (checkmate) score = 100000;
+        position.undo();
+        ranked.push({
+            uci: candidate.from + candidate.to + (candidate.promotion || ''),
+            san: candidate.san,
+            score: score,
+            capture: Boolean(candidate.captured),
+            check: /[+#]$/.test(candidate.san)
+        });
+    }
+    ranked.sort((a, b) => b.score - a.score || a.uci.localeCompare(b.uci));
+    return ranked.slice(0, Math.max(1, Number(limit) || ranked.length));
+}
+
 // Export for use
 window.evaluatePosition = evaluatePosition;
+window.rankSupaChessMoves = rankSupaChessMoves;
 window.findBestZupMoveEnhanced = findBestZupMoveEnhanced;

@@ -18,7 +18,7 @@ window.localStorage.setItem('chessnova_lang', 'en');
 window.XMLHttpRequest = class {
   open(method, url) { this.url = url; }
   send() {
-    const language = this.url.endsWith('/en.json') ? english : french;
+    const language = this.url.includes('/en.json') ? english : french;
     this.status = 200;
     this.responseText = JSON.stringify(language);
     this.readyState = 4;

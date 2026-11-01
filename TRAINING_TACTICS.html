@@ -212,7 +212,10 @@
         .challenge-button:hover,.challenge-button:focus-visible { border-color:#86efac; outline:2px solid #fff; outline-offset:2px; }
         .challenge-player { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
         .challenge-player input { min-height:42px; width:min(100%,260px); padding:8px 10px; border:1px solid rgba(255,255,255,.35); border-radius:8px; background:#10284a; color:#fff; font:inherit; }
-        .challenge-status { min-height:1.5em; margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(255,255,255,.09); line-height:1.4; }
+        .challenge-status { min-height:1.5em; margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(255,255,255,.09); line-height:1.4; font-variant-numeric:tabular-nums; }
+        .challenge-live-status { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; border:1px solid rgba(134,239,172,.65); border-radius:10px; background:#102d34; color:#f0fdf4; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+        .challenge-live-status.active { display:flex; }
+        .challenge-live-status .challenge-clock { color:#fde68a; font-size:1.25rem; }
         .challenge-rankings { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; margin-top:14px; }
         .challenge-ranking { padding:11px; border:1px solid rgba(255,255,255,.18); border-radius:10px; background:rgba(255,255,255,.06); }
         .challenge-ranking h3 { margin-bottom:7px; font-size:.98rem; color:#fde68a; }
@@ -264,7 +267,7 @@
 
     <section class="puzzle-challenge" aria-labelledby="challenge-title">
         <h2 id="challenge-title">Défis de problèmes</h2>
-        <p>Sprint 3 min ou 5 min, survie à trois erreurs, ou bataille chronométrée. Un problème compte seulement après le coup juste et l’explication du motif. Les classements affichés ici sont locaux à ce navigateur.</p>
+        <p>Sprint 3 min ou 5 min, survie à trois erreurs, ou bataille chronométrée. Le temps et le score restent visibles pendant le défi. Après le coup juste, le motif est expliqué automatiquement puis l’exercice suivant démarre sans validation supplémentaire. Les classements affichés ici sont locaux à ce navigateur.</p>
         <div class="challenge-controls">
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint3')">Sprint · 3 min</button>
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint5')">Sprint · 5 min</button>
@@ -1551,7 +1554,7 @@ function openPuzzle(id) {
     tacticGame = new Chess(currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1');
     const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
     document.getElementById('modal-inner').innerHTML = `
-        <h2>${currentPuzzle.title}</h2>
+        <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>\n        <h2>${currentPuzzle.title}</h2>
         <div class="modal-sub">Difficulté indicative : ⭐ ${currentPuzzle.rating}</div>
         <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl, currentPuzzle.turn)}</div>
         <div class="modal-desc">
@@ -1574,8 +1577,13 @@ function openPuzzle(id) {
     document.getElementById('modal-bg').classList.add('open');
     const stopChallengeButton=document.getElementById('btn-challenge-stop');
     const hintChallengeButton=document.getElementById('btn-tactic-hint');
+    const doneChallengeButton=document.getElementById('btn-done');
     if (stopChallengeButton) stopChallengeButton.hidden=!puzzleChallenge;
     if (hintChallengeButton) hintChallengeButton.hidden=!!puzzleChallenge;
+    if (doneChallengeButton) doneChallengeButton.hidden=!!puzzleChallenge;
+    const knowledgePanel=document.getElementById('tactic-knowledge');
+    if (knowledgePanel && puzzleChallenge) knowledgePanel.hidden=true;
+    challengeStatus();
     bindTacticBoard();
 }
 
@@ -1615,10 +1623,21 @@ function selectTacticSquare(square) {
         const toIndex=(8-Number(square[1]))*8+(square.charCodeAt(0)-97);
         document.querySelector('.big-board-wrap').innerHTML=renderBigBoard(solvedBoard,[fromIndex,toIndex],currentPuzzle.turn);
         bindTacticBoard();
-        feedback.textContent='Coup légal et motif trouvé. Explique maintenant pourquoi il fonctionne.';
-        document.getElementById('tactic-knowledge').hidden=false;
         document.querySelectorAll('.big-cell').forEach(cell=>cell.disabled=true);
         document.getElementById('btn-tactic-hint').disabled=true;
+        if (puzzleChallenge) {
+            currentPuzzle.session.conceptCorrect=true;
+            feedback.textContent='Motif trouvé — lis l’explication, le prochain problème arrive automatiquement.';
+            const explanation=document.getElementById('tactic-explanation');
+            explanation.textContent=currentPuzzle.explain;
+            explanation.hidden=false;
+            puzzleChallenge.score++;
+            challengeStatus();
+            autoAdvanceTimer=setTimeout(()=>{ autoAdvanceTimer=null; openNextChallengePuzzle(); },650);
+        } else {
+            feedback.textContent='Coup légal et motif trouvé. Explique maintenant pourquoi il fonctionne.';
+            document.getElementById('tactic-knowledge').hidden=false;
+        }
     } else {
         tacticGame.undo();
         currentPuzzle.session.mistakes++;
@@ -1771,12 +1790,26 @@ function saveChallengeRecord(challenge) {
 }
 function challengeStatus() {
     const root=document.getElementById('puzzle-challenge-status');
+    const live=document.getElementById('challenge-live-status');
     if (!root) return;
-    if (!puzzleChallenge) { root.textContent='Choisis un défi pour commencer. Les scores restent enregistrés sur cet appareil.'; return; }
+    if (!puzzleChallenge) {
+        root.textContent='Choisis un défi pour commencer. Les scores restent enregistrés sur cet appareil.';
+        if (live) { live.classList.remove('active'); live.textContent=''; }
+        return;
+    }
     const cfg=CHALLENGE_MODES[puzzleChallenge.mode];
-    const time=puzzleChallenge.remaining===null?'':(' · '+Math.floor(puzzleChallenge.remaining/60)+':'+String(puzzleChallenge.remaining%60).padStart(2,'0'));
+    const clockSeconds=puzzleChallenge.remaining===null
+        ? Math.max(0,Math.floor((Date.now()-puzzleChallenge.startedAt)/1000))
+        : puzzleChallenge.remaining;
+    const clock=Math.floor(clockSeconds/60)+':'+String(clockSeconds%60).padStart(2,'0');
+    const clockLabel=puzzleChallenge.remaining===null?'Écoulé':'Restant';
     const lives=puzzleChallenge.lives===null?'':' · erreurs restantes : '+puzzleChallenge.lives;
-    root.textContent=cfg.label+' · '+puzzleChallenge.score+' problème(s) validé(s)'+time+lives;
+    const summary=cfg.label+' · '+puzzleChallenge.score+' problème(s) réussi(s) · '+clockLabel+' '+clock+lives+' · erreurs : '+puzzleChallenge.mistakes;
+    root.textContent=summary;
+    if (live) {
+        live.classList.add('active');
+        live.innerHTML='<span>'+challengeEsc(cfg.label)+' · '+puzzleChallenge.score+' réussi(s)'+lives+'</span><span class="challenge-clock">'+clockLabel+' '+clock+'</span>';
+    }
 }
 function startPuzzleChallenge(mode) {
     if (!CHALLENGE_MODES[mode]) return;
@@ -1788,14 +1821,18 @@ function startPuzzleChallenge(mode) {
     }
     puzzleChallenge={mode:mode,score:0,mistakes:0,lives:cfg.lives,remaining:cfg.seconds,startedAt:Date.now(),endAt:cfg.seconds?Date.now()+cfg.seconds*1000:null,order:order,nextIndex:0};
     challengeStatus();
-    if (cfg.seconds) puzzleChallengeTimer=setInterval(tickPuzzleChallenge,1000);
+    puzzleChallengeTimer=setInterval(tickPuzzleChallenge,1000);
     openNextChallengePuzzle();
 }
 function tickPuzzleChallenge() {
-    if (!puzzleChallenge || !puzzleChallenge.endAt) return;
-    puzzleChallenge.remaining=Math.max(0,Math.ceil((puzzleChallenge.endAt-Date.now())/1000));
-    challengeStatus();
-    if (!puzzleChallenge.remaining) finishPuzzleChallenge(true);
+    if (!puzzleChallenge) return;
+    if (puzzleChallenge.endAt) {
+        puzzleChallenge.remaining=Math.max(0,Math.ceil((puzzleChallenge.endAt-Date.now())/1000));
+        challengeStatus();
+        if (!puzzleChallenge.remaining) { finishPuzzleChallenge(true); return; }
+    } else {
+        challengeStatus();
+    }
 }
 function noteChallengeMistake() {
     if (!puzzleChallenge) return;

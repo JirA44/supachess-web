@@ -16,7 +16,7 @@
   (document.head || document.documentElement).appendChild(style);\n
   // Outline white Unicode chess glyphs are replaced by solid matching glyphs.
   var whiteToSolid = { '♔':'♚', '♕':'♛', '♖':'♜', '♗':'♝', '♘':'♞', '♙':'♟' };
-  var whitePieceSelector = '.chess-piece.white,.piece.white,.white-piece,.piece[data-color="white"],[data-piece^="w"]';
+  var whitePieceSelector = '.chess-piece.white,.piece.white,.white-piece,.piece[data-color="white"],[data-piece^="w"],.piece-token:not(.black-piece),.analysis-square[aria-label*="blanc"],.complex-board span[aria-label*="blanc"]';
   function solidifyWhitePieces(rootNode) {
     if (!rootNode || (rootNode.nodeType !== 1 && rootNode.nodeType !== 9)) return;
     var nodes = [];

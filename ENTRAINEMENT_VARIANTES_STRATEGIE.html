@@ -18,6 +18,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 <h1>Calculer, choisir, maîtriser</h1>
 <p class="lead">Apprends à comparer les variantes et à prendre de bonnes décisions dans les ouvertures, le milieu de jeu et les finales. Chaque leçon donne une méthode, un exercice et une correction expliquée.</p>
 <div class="progress" aria-label="Progression"><div class="bar" id="bar"></div></div>
+<section class="card" id="mastery"><div class="eyebrow">Maîtrise vérifiée</div><h2>Suivi par compétence</h2><p class="muted">Chaque compétence est validée par ses exercices ciblés. Les indices ne valident pas une réponse ; tu peux réessayer, et tes réussites restent enregistrées sur cet appareil.</p><div id="masteryGrid" class="grid" aria-live="polite"></div></section>
 <p id="score" class="muted">Progression : 0 / 29 exercices réussis</p>
 </header>
 <section class="card" id="diagnostic"><div class="eyebrow">Avant de commencer · diagnostic</div><h2>Où en es-tu aujourd’hui ?</h2><p class="muted">Ce diagnostic fixe ne tire aucune question au sort. Il repère tes points d’appui et les deux compétences à travailler en priorité. Il ne bloque aucune leçon et ne prétend pas mesurer ton Elo.</p><button class="btn primary" id="startDiagnostic" type="button">Faire le diagnostic initial</button><div id="diagnosticQuiz" hidden>
@@ -373,9 +374,31 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 <script>
 (function(){
  const KEY='supachess_calcul_variantes_progress_v1', saved=JSON.parse(localStorage.getItem(KEY)||'{}');
- const total=17; let done=Object.values(saved).filter(Boolean).length;
+ const total=document.querySelectorAll('.options[data-q]').length; let done=Object.values(saved).filter(Boolean).length;
  const bar=document.getElementById('bar'),score=document.getElementById('score');
- function update(){bar.style.width=(done/total*100)+'%';score.textContent='Progression : '+done+' / '+total+' exercices réussis';document.getElementById('finish').hidden=done<total;document.dispatchEvent(new Event('course-progress'));}
+ function update(){done=Object.keys(saved).filter(k=>/^q\\d+$/.test(k)&&saved[k]).length;bar.style.width=(done/total*100)+'%';score.textContent='Progression : '+done+' / '+total+' exercices réussis';document.getElementById('finish').hidden=done<total;renderMastery();document.dispatchEvent(new Event('course-progress'));}
+ const skills=[
+  {name:'Calculer une variante',ids:[1,2,3,14,18,19,22,23,24]},
+  {name:'Choisir en ouverture',ids:[8,9,10,11,12,28]},
+  {name:'Construire un plan de milieu de jeu',ids:[4,17,25,26,29]},
+  {name:'Évaluer et comparer les positions',ids:[5,16,21,27]},
+  {name:'Jouer les finales de pions et de tours',ids:[6,7,20,22,28]},
+  {name:'Anticiper les réponses adverses',ids:[8,11,12,14,17,18]},
+  {name:'Gérer les positions difficiles',ids:[13,15,20,21,26]}
+ ];
+ const masteryGrid=document.getElementById('masteryGrid');
+ function renderMastery(){
+  masteryGrid.replaceChildren();
+  skills.forEach(skill=>{
+   const valid=skill.ids.filter(id=>document.querySelector('.options[data-q="q'+id+'"]')).length;
+   const count=skill.ids.filter(id=>saved['q'+id]).length;
+   const card=document.createElement('article');card.className='tile';
+   const title=document.createElement('h3');title.textContent=skill.name;
+   const status=document.createElement('p');status.className=count===valid&&valid?'tag':'muted';
+   status.textContent=valid?count+' / '+valid+' exercices ciblés validés'+(count===valid?' · compétence validée':' · à consolider'):'Exercices à associer';
+   card.append(title,status);masteryGrid.appendChild(card);
+  });
+ }
  document.querySelectorAll('.options[data-q]').forEach(group=>{
   const id=group.dataset.q,fb=group.parentElement.querySelector('.feedback');
   group.querySelectorAll('.option').forEach(btn=>{
@@ -387,6 +410,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
    });
   });
  });
+ renderMastery();
  const board=document.getElementById('complexBoard');
  const fen='r3k3/8/8/1N6/8/8/8/4K3';
  const glyph={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};

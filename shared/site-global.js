@@ -35,12 +35,47 @@
       if (outlineToSolid[glyph]) node.textContent = outlineToSolid[glyph];
     });
   }
-  normalizeChessGlyphs(document);
+  function ensureBoardRanks(rootNode) {
+    if (!rootNode || !rootNode.querySelectorAll) return;
+    var boards = [];
+    if (rootNode.matches && rootNode.matches('.board,.big-board,.board-b72b1')) boards.push(rootNode);
+    boards = boards.concat(Array.prototype.slice.call(rootNode.querySelectorAll('.board,.big-board,.board-b72b1')));
+    boards.forEach(function (board) {
+      // Chessboard.js already has the rank gutter unless showNotation:false was set.
+      if (board.classList.contains('board-b72b1') && board.querySelector('.numeric-fc462,.supachess-rank-label')) return;
+      var cells;
+      if (board.classList.contains('board-b72b1')) {
+        cells = Array.prototype.slice.call(board.querySelectorAll('.square-55d63'));
+      } else {
+        cells = Array.prototype.slice.call(board.children).filter(function (el) {
+          return el.matches('.cell,.big-cell,.analysis-square');
+        });
+      }
+      if (cells.length < 64) return;
+      for (var row = 0; row < 8; row++) {
+        var cell = cells[row * 8];
+        if (!cell || cell.querySelector('.supachess-rank-label')) continue;
+        var square = cell.getAttribute('data-square') || '';
+        var rank = /[1-8]$/.test(square) ? square.slice(-1) : String(8 - row);
+        cell.classList.add('supachess-rank-cell');
+        var label = document.createElement('span');
+        label.className = 'supachess-rank-label';
+        label.setAttribute('aria-hidden', 'true');
+        label.textContent = rank;
+        cell.appendChild(label);
+      }
+    });
+  }
+  var rankStyle = document.createElement('style');
+  rankStyle.id = 'supachess-board-ranks';
+  rankStyle.textContent = '.supachess-rank-cell{position:relative!important;overflow:visible!important}.supachess-rank-label{position:absolute;left:3px;top:1px;z-index:4;pointer-events:none;font:700 .65rem/1 system-ui,sans-serif;color:#101827;-webkit-text-stroke:.35px #fff;paint-order:stroke fill;text-shadow:0 0 2px #fff9}';
+  (document.head || document.documentElement).appendChild(rankStyle);
+  ensureBoardRanks(document);
   if (window.MutationObserver) {
     new MutationObserver(function (records) {
       records.forEach(function (record) {
         if (record.type === 'characterData') normalizeChessGlyphs(record.target.parentElement);
-        else Array.prototype.forEach.call(record.addedNodes, normalizeChessGlyphs);
+        else Array.prototype.forEach.call(record.addedNodes, normalizeChessGlyphs); ensureBoardRanks(record.target && record.target.nodeType === 1 ? record.target : record.target && record.target.parentElement);
       });
     }).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
   }

@@ -306,9 +306,19 @@
         }
 
         @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
+            .main-content { grid-template-columns: minmax(0, 1fr); }
+            .board-section, .moves-section { min-width: 0; }
+        }
+        @media (max-width: 560px) {
+            body { padding: 10px; }
+            .header { padding: 22px 14px; margin-bottom: 20px; }
+            .header h1 { font-size: clamp(1.45rem, 7vw, 2rem); }
+            .board-section { padding: 14px; }
+            .board-container { max-width: min(100%, 420px); }
+            .square { font-size: clamp(1.35rem, 8vw, 2.2rem); }
+            .piece-white, .piece-black { min-width: 0; min-height: 0; padding: 0; width: 88%; height: 88%; font-size: 1em; border-width: 2px; }
+            .controls { gap: 8px; }
+            .btn { padding: 10px 12px; font-size: .9rem; }
         }
 
         ::-webkit-scrollbar {

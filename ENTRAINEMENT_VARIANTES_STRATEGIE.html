@@ -71,7 +71,77 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 <section class="card"><div class="eyebrow">Module 7 · synthèse</div><h2>Choisir la variante qui correspond à la position</h2><p class="muted">La meilleure variante n’est pas toujours la plus spectaculaire. Elle doit résister à la meilleure défense adverse et mener à une position que tu peux expliquer.</p>
 <div class="question"><b>Exercice 8.</b> Tu as calculé deux lignes. Quelle méthode permet de trancher ?<div class="options" data-q="q8" data-hint="Compare les positions stables après les meilleures réponses et justifie le choix par le matériel, la sécurité et l’activité." data-explain="Cette synthèse réutilise les critères introduits dans les exercices précédents."><button class="option" data-correct="true">Comparer leurs positions finales avec des critères concrets et expliquer le plan suivant.</button><button class="option" data-correct="false">Choisir la ligne la plus longue, car elle gagne forcément.</button></div><div class="feedback" aria-live="polite"></div></div>
 <p class="tag" id="finish" hidden>Parcours terminé ! Rejoue les questions pour consolider, puis applique la méthode à une position de tes propres parties.</p></section>
-<footer class="foot">SupaChess · Entraînement pédagogique. Pour évaluer une position précise, ouvre-la sur un échiquier ou envoie son FEN/PGN au coach.</footer>
+<section class="card" id="acquis"><div class="eyebrow">Consolidation · rappel actif</div><h2>Renforcer et vérifier tes acquis</h2>
+<p class="muted">Une bonne réponse juste après la leçon ne prouve pas encore que tu sauras retrouver la méthode dans une autre partie. Quand les 17 exercices du parcours sont réussis, fais ce contrôle transversal sans relire les leçons. Il reprend les compétences dans un ordre fixe : calcul en branches, analyse des menaces, choix en ouverture, course de pions et défense. Il n’y a pas de tirage aléatoire.</p>
+<div class="grid"><article class="tile"><h3>Comment la validation fonctionne</h3><p>Le contrôle comporte 5 questions. La première réponse à chaque question compte ; il faut obtenir au moins 4/5. Si tu n’y arrives pas, relis la notion indiquée, puis retente le contrôle le lendemain.</p></article><article class="tile"><h3>Révisions espacées</h3><p>Après réussite, le même rappel revient à J+1, puis J+7, puis J+30. Réussir les trois vérifications confirme que tu retrouves les méthodes dans le temps. Les dates sont enregistrées dans ce navigateur ; aucun rappel ne sera envoyé en dehors de la page.</p></article></div>
+<p id="reviewStatus" class="tag" aria-live="polite"></p><button class="btn primary" id="reviewStart" type="button">Commencer la vérification</button>
+<div id="reviewQuiz" hidden>
+<div class="question review-q" data-rq="r1" data-skill="Calcul en branches" data-hint="Sépare les réponses adverses, puis recalcule la ligne choisie depuis la position actuelle."><b>1/5 · Calcul en branches.</b> Dans une position tendue, l’adversaire a deux réponses critiques. Comment calcules-tu ?
+<div class="options review-options"><button class="option" data-correct="true">Je traite chaque réponse séparément et compare les positions stables obtenues.</button><button class="option" data-correct="false">Je choisis sa réponse la plus probable et j’ignore l’autre.</button></div><div class="feedback" aria-live="polite"></div></div>
+<div class="question review-q" data-rq="r2" data-skill="Gestion des positions complexes" data-hint="Avant un plan lent, identifie exactement la menace immédiate sur ton roi et tes pièces."><b>2/5 · Position complexe.</b> Plusieurs pièces sont attaquées et ton roi semble exposé. Quelle est ta première vérification ?
+<div class="options review-options"><button class="option" data-correct="false">Chercher une attaque spectaculaire de l’autre côté du plateau.</button><button class="option" data-correct="true">Identifier la menace adverse la plus urgente, puis examiner les échecs, prises et menaces des deux camps.</button></div><div class="feedback" aria-live="polite"></div></div>
+<div class="question review-q" data-rq="r3" data-skill="Ouvertures" data-hint="Une bonne ouverture relie développement, centre, sécurité du roi et plan."><b>3/5 · Ouverture.</b> Tu hésites entre deux coups de développement. Comment les départager ?
+<div class="options review-options"><button class="option" data-correct="true">Comparer leur idée, les réponses adverses plausibles et la sécurité des rois.</button><button class="option" data-correct="false">Jouer le coup appris par cœur sans vérifier la position présente.</button></div><div class="feedback" aria-live="polite"></div></div>
+<div class="question review-q" data-rq="r4" data-skill="Finales" data-hint="Compte les temps de chaque camp jusqu’à la promotion et inclus les coups d’échec."><b>4/5 · Finale.</b> Les deux camps ont un pion passé. Que calcules-tu avant de pousser ?
+<div class="options review-options"><button class="option" data-correct="false">Seulement la distance de ton pion à la dernière rangée.</button><button class="option" data-correct="true">Les coups de chaque camp jusqu’à promotion, les échecs intermédiaires et l’activité des rois.</button></div><div class="feedback" aria-live="polite"></div></div>
+<div class="question review-q" data-rq="r5" data-skill="Défense pratique" data-hint="Quand tu es moins bien, cherche une ressource concrète de nulle ou de contre-jeu."><b>5/5 · Défense.</b> Tu es inférieur et tu ne vois pas de combinaison gagnante. Quel est ton objectif ?
+<div class="options review-options"><button class="option" data-correct="true">Réduire les menaces adverses et rechercher une répétition, une forteresse, un pat ou une finale défendable.</button><button class="option" data-correct="false">Refuser toute défense et lancer une attaque sans calculer la réponse.</button></div><div class="feedback" aria-live="polite"></div></div>
+<p id="reviewResult" class="feedback" aria-live="polite"></p></div></section>
+<script>
+(function(){
+ const mainKey='supachess_calcul_variantes_progress_v1';
+ const reviewKey='supachess_calcul_variantes_review_v1';
+ const main=JSON.parse(localStorage.getItem(mainKey)||'{}');
+ const total=17, status=document.getElementById('reviewStatus'), start=document.getElementById('reviewStart');
+ let state;
+ try{state=JSON.parse(localStorage.getItem(reviewKey)||'null')}catch(_){state=null}
+ if(!state)state={stage:0,dueAt:0};
+ const dateText=t=>new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+ function updateState(){
+   const completed=Object.keys(main).filter(k=>/^q\d+$/.test(k)&&main[k]).length>=total;
+   if(!completed){start.disabled=true;status.textContent='Termine d’abord les 17 exercices du parcours : ce contrôle vérifie leur rétention.';return false}
+   if(state.dueAt>Date.now()){start.disabled=true;status.textContent='Prochaine vérification prévue le '+dateText(state.dueAt)+'. Tu peux revenir sur cette page à cette date.';return false}
+   start.disabled=false;
+   status.textContent=state.stage===0?'Parcours terminé : première vérification prête.':state.stage===1?'Vérification initiale réussie : rappel à J+1 prêt.':state.stage===2?'Rappels à J+1 réussis : contrôle à J+7 prêt.':state.stage>=3?'Rappels à J+1 et J+7 réussis : contrôle d’entretien à J+30 prêt.':'';
+   return true;
+ }
+ updateState();
+ start.addEventListener('click',()=>{
+   if(!updateState())return;
+   const quiz=document.getElementById('reviewQuiz'), result=document.getElementById('reviewResult');
+   quiz.hidden=false; start.disabled=true; result.textContent='';
+   const questions=[...document.querySelectorAll('.review-q')];let index=0,firstScore=0,missed=[];
+   questions.forEach((q,i)=>{q.hidden=i!==0;q.dataset.first='';q.querySelector('.feedback').textContent='';q.querySelectorAll('button').forEach(b=>b.disabled=false)});
+   function next(){
+     index++;
+     if(index<questions.length){questions[index-1].hidden=true;questions[index].hidden=false;return}
+     const passed=firstScore>=4;
+     const now=Date.now();
+     if(passed){state.stage=Math.min((state.stage||0)+1,3);state.dueAt=now+(state.stage===1?86400000:state.stage===2?604800000:2592000000);}
+     else state.dueAt=now+86400000;
+     localStorage.setItem(reviewKey,JSON.stringify(state));
+     result.textContent=passed?'Réussi : '+firstScore+'/5. '+(missed.length?'À revoir : '+missed.join(', ')+'. ':'')+'Prochaine vérification : '+dateText(state.dueAt)+'.':'Résultat : '+firstScore+'/5. Relis '+(missed.join(', ')||'les notions concernées')+' puis réessaie demain.';
+     quiz.hidden=true;start.disabled=false;updateState();
+   }
+   questions.forEach((q,qi)=>q.querySelectorAll('.option').forEach(btn=>btn.addEventListener('click',()=>{
+     const fb=q.querySelector('.feedback');
+     if(!q.dataset.first){
+       q.dataset.first=btn.dataset.correct==='true'?'correct':'wrong';
+       if(btn.dataset.correct==='true')firstScore++;
+       else missed.push(q.dataset.skill);
+     }
+     if(btn.dataset.correct==='true'){
+       fb.textContent=q.dataset.first==='correct'?'✓ Bonne réponse du premier coup.':'✓ Maintenant c’est compris : '+q.dataset.hint;
+       q.querySelectorAll('button').forEach(b=>b.disabled=true);
+       setTimeout(next,650);
+     }else{
+       fb.textContent='Indice : '+q.dataset.hint+' Réessaie ; la première réponse reste celle qui compte pour la vérification.';
+     }
+   })));
+ });
+})();
+</script>
+<footer class="foot">SupaChess · Entraînement pédagogique. Pour évaluer une position précise, ouvre-la sur un échiquier ou envoie son FEN/PGN au coach.</footer>SupaChess · Entraînement pédagogique. Pour évaluer une position précise, ouvre-la sur un échiquier ou envoie son FEN/PGN au coach.</footer>
 </main>
 <script>
 (function(){

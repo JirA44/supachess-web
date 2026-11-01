@@ -458,7 +458,7 @@ function renderBoard(cells, lastMoves=[]) {
 
 function updateProgress() {
     const n = done.length;
-    document.getElementById('prog-lbl').textContent = `${n}/8 ouvertures maîtrisées`;
+    const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';\n    document.getElementById('prog-lbl').textContent = en ? `${n}/8 ${OPENING_EN.labels.progress}` : `${n}/8 ouvertures maîtrisées`;
     document.getElementById('prog-bar').style.width = `${(n/8)*100}%`;
 }
 
@@ -475,7 +475,7 @@ function renderGrid() {
             }).join(' ')} ...</div>
             <div class="badge-row">
                 ${o.tags.map(t=>`<span class="badge${isDone?' done-badge':''}">${t}</span>`).join('')}
-                ${isDone ? '<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ Maîtrisée</span>' : ''}
+                ${isDone ? '<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ ${en?'Mastered':'Maîtrisée'}</span>' : ''}
             </div>
         </button>`;
     }).join('');
@@ -505,7 +505,7 @@ function renderDetail() {
     const panel = document.getElementById('detail-panel');
     panel.innerHTML = `
         <div class="detail-header">
-            <h2> ${o.icon} ${tr?tr[0]:o.name}</h2>
+            <h2>${o.icon} ${tr?tr[0]:o.name}</h2>
             <button class="close-btn" onclick="closeDetail()">✕ ${en?L.close:'Fermer'}</button>
         </div>
         <div class="two-col">
@@ -536,7 +536,7 @@ function renderDetail() {
                     }).join('')}
                 </div>
                 <div class="theory-box">
-                    <h4>📚 Théorie</h4>
+                    <h4>${en?L.theory:'📚 Théorie'}</h4>
                     ${o.theory}
                 </div>
             </div>

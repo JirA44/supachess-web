@@ -14,7 +14,8 @@
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
-  (document.head || document.documentElement).appendChild(style);\n
+  (document.head || document.documentElement).appendChild(style);
+
   // Normalize outline Unicode chess symbols to solid glyphs; CSS determines side color.
   var outlineToSolid = { '♔':'♚', '♕':'♛', '♖':'♜', '♗':'♝', '♘':'♞', '♙':'♟' };
   var chessGlyphSelector = '.chess-piece.white,.chess-piece.black,.piece.white,.piece.black,.piece-white,.piece-black,.white-piece,.black-piece,.piece[data-color="white"],.piece[data-color="black"],[data-piece^="w"],[data-piece^="b"],.piece-token:not(.black-piece),.piece-token.black-piece,.analysis-square[aria-label*="blanc"],.analysis-square[aria-label*="noir"],.complex-board span[aria-label*="blanc"],.complex-board span[aria-label*="noir"]';

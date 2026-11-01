@@ -393,4 +393,5 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  fen.split('/').forEach((rank,ri)=>{let row=[];for(const ch of rank){if(/[0-9]/.test(ch)){for(let n=0;n<Number(ch);n++)row.push('');}else row.push(ch);}row.forEach((piece,fi)=>{const sq=document.createElement('span');sq.className=((ri+fi)%2===0?'light':'dark');sq.textContent=glyph[piece]||'';sq.setAttribute('aria-label',(piece?({K:'roi blanc',N:'cavalier blanc',k:'roi noir',r:'tour noire'}[piece]||piece):'case vide')+' '+String.fromCharCode(97+fi)+(8-ri));board.appendChild(sq);});});
  update();
 })();
-</script><script defer src="shared/site-global.js?v=solid-white-pieces-20261102"></script>\n</body></html>
+</script><script defer src="shared/site-global.js?v=solid-white-pieces-20261102"></script>
+</body></html>

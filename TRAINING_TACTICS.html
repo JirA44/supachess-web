@@ -1365,11 +1365,30 @@ const TACTIC_HINTS = {
 };
 
 const SK = 'supachess_tactics_v2';
+const TACTICS_PROGRESS_KEY = 'chessnova_training_tactics';
 function getSolved() {
     try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; }
 }
 function saveSolved(arr) {
     try { localStorage.setItem(SK, JSON.stringify(arr)); } catch(e) {}
+}
+function syncTacticsMastery() {
+    try {
+        const validSolved = Array.from(new Set(solved.filter(id => PUZZLES.some(puzzle => puzzle.id === id))));
+        const completedCategories = THEMES
+            .filter(theme => theme.id !== 'all')
+            .filter(theme => {
+                const themePuzzles = PUZZLES.filter(puzzle => puzzle.theme === theme.id);
+                return themePuzzles.length > 0 && themePuzzles.every(puzzle => validSolved.includes(puzzle.id));
+            })
+            .map(theme => theme.id);
+        const previous = JSON.parse(localStorage.getItem(TACTICS_PROGRESS_KEY) || '{}');
+        const progress = previous && typeof previous === 'object' && !Array.isArray(previous) ? previous : {};
+        progress.completedCategories = completedCategories;
+        progress.solvedPuzzleIds = validSolved;
+        progress.totalPuzzles = PUZZLES.length;
+        localStorage.setItem(TACTICS_PROGRESS_KEY, JSON.stringify(progress));
+    } catch(e) {}
 }
 
 let solved = getSolved();
@@ -1378,6 +1397,7 @@ let activeTheme = 'all';
 let currentPuzzle = null;
 let tacticGame = null;
 let tacticHintLevel = 0;
+let autoAdvanceTimer = null;
 
 const PIECES = { 'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
 
@@ -1470,6 +1490,7 @@ function renderGrid() {
 }
 
 function openPuzzle(id) {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     currentPuzzle = PUZZLES.find(p=>p.id===id);
     if (!currentPuzzle) return;
     currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null, mistakes:0 };
@@ -1589,16 +1610,38 @@ function markSolved(id) {
         streak++;
         if (window.ChessNovaProgress) {
             ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique maîtrisée');
-            ChessNovaProgress.checkTrainingBadges();
         }
     }
-    closeModal();
+    syncTacticsMastery();
+    if (window.ChessNovaProgress) ChessNovaProgress.checkTrainingBadges();
     updateStats();
     renderTabs();
     renderGrid();
+
+    const completedPuzzle = PUZZLES.find(puzzle => puzzle.id === id);
+    const preferred = activeTheme === 'all' ? PUZZLES : PUZZLES.filter(puzzle => puzzle.theme === activeTheme);
+    const startIndex = preferred.findIndex(puzzle => puzzle.id === id);
+    const orderedPreferred = startIndex < 0
+        ? preferred
+        : preferred.slice(startIndex + 1).concat(preferred.slice(0, startIndex));
+    const nextPuzzle = orderedPreferred.find(puzzle => !solved.includes(puzzle.id))
+        || PUZZLES.find(puzzle => !solved.includes(puzzle.id));
+
+    if (!nextPuzzle) {
+        document.getElementById('tactic-feedback').textContent = 'Parcours terminé : tous les puzzles ont été résolus.';
+        document.getElementById('btn-done').textContent = '✅ Parcours terminé';
+        document.getElementById('btn-done').disabled = true;
+        return;
+    }
+    document.getElementById('tactic-feedback').textContent = 'Puzzle validé. Le suivant arrive…';
+    autoAdvanceTimer = setTimeout(() => {
+        autoAdvanceTimer = null;
+        openPuzzle(nextPuzzle.id);
+    }, 300);
 }
 
 function closeModal() {
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     document.getElementById('modal-bg').classList.remove('open');
 }
 
@@ -1607,6 +1650,7 @@ document.getElementById('modal-bg').addEventListener('click', function(e) {
 });
 
 // Init
+syncTacticsMastery();
 updateStats();
 renderTabs();
 renderGrid();

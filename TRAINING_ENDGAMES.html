@@ -987,6 +987,7 @@
 
             // Setup chess game
             game = new Chess(currentEndgame.fen);
+            selectedTapSquare = null;
 
             // Create draggable board
             if (board) board.destroy();
@@ -1002,11 +1003,64 @@
             };
 
             board = Chessboard('board', boardConfig);
+            enableTapMoves();
             document.getElementById('board-label').textContent = 'Trait aux ' + (game.turn() === 'w' ? 'Blancs' : 'Noirs') + ' — trouvez le coup de référence.';
 
             // Update list highlight
             renderEndgameList();
         };
+
+        // Touch/click play: select a piece, then its destination. Dragging remains available.
+        var selectedTapSquare = null;
+        function enableTapMoves() {
+            var boardEl = document.getElementById('board');
+            if (!boardEl || boardEl.dataset.tapMovesBound === 'true') return;
+            boardEl.dataset.tapMovesBound = 'true';
+            boardEl.addEventListener('click', function(event) {
+                var squareEl = event.target.closest('.square-55d63');
+                if (!squareEl || positionSolved || !game || game.game_over()) return;
+                var square = squareEl.getAttribute('data-square');
+                if (!square) return;
+                var piece = game.get(square);
+                var side = game.turn();
+                if (!selectedTapSquare) {
+                    if (piece && piece.color === side) selectTapSquare(square);
+                    return;
+                }
+                if (square === selectedTapSquare) {
+                    clearTapSelection();
+                    return;
+                }
+                if (piece && piece.color === side) {
+                    selectTapSquare(square);
+                    return;
+                }
+                var from = selectedTapSquare;
+                clearTapSelection();
+                onDrop(from, square);
+                if (board && game) board.position(game.fen());
+            });
+        }
+
+        function selectTapSquare(square) {
+            clearTapSelection();
+            selectedTapSquare = square;
+            var fromEl = document.querySelector('#board [data-square="' + square + '"]');
+            if (fromEl) fromEl.style.boxShadow = 'inset 0 0 0 4px #facc15';
+            if (game && typeof game.moves === 'function') {
+                game.moves({square:square, verbose:true}).forEach(function(move) {
+                    var target = document.querySelector('#board [data-square="' + move.to + '"]');
+                    if (target) target.style.boxShadow = 'inset 0 0 0 4px rgba(34,197,94,.8)';
+                });
+            }
+        }
+
+        function clearTapSelection() {
+            selectedTapSquare = null;
+            document.querySelectorAll('#board [data-square]').forEach(function(square) {
+                square.style.boxShadow = '';
+            });
+        }
 
         // === DRAG START: only allow white pieces ===
         function onDragStart(source, piece) {

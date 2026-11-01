@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>SupaEngine — Hub SupaChess</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--card:#152238;--line:#31506b;--mint:#37e0a1;--blue:#5bbcff;--text:#f1f5f9;--muted:#b5c4d4}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at top,#173b4a 0,#0b1220 60%);color:var(--text)}
+main{max-width:1120px;margin:auto}
+header{padding:30px 18px;text-align:center;border:1px solid #31506b;border-radius:22px;background:linear-gradient(135deg,rgba(28,55,81,.9),rgba(14,25,41,.94));box-shadow:0 16px 50px #0005}
+h1{margin:8px 0;font-size:clamp(2rem,6vw,3.4rem);background:linear-gradient(90deg,#fff,var(--mint));color:transparent;background-clip:text}
+header p{max-width:760px;margin:10px auto;color:var(--muted);line-height:1.65}
+.back{display:inline-block;color:#a8ddff;text-decoration:none;font-weight:700}
+h2{margin:32px 4px 14px;color:var(--mint);font-size:1.35rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.card{display:block;padding:19px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#182a40,#101a2a);color:inherit;text-decoration:none;transition:transform .18s,border-color .18s;min-width:0}
+.card:hover,.card:focus-visible{transform:translateY(-2px);border-color:var(--mint);outline:none}
+.card h3{margin:0 0 8px;font-size:1.08rem;color:#fff}
+.card p{margin:0;color:var(--muted);line-height:1.5;font-size:.94rem}
+.tag{display:inline-block;margin-bottom:10px;padding:3px 9px;border-radius:999px;background:#37e0a122;color:var(--mint);font-size:.76rem;font-weight:700}
+footer{text-align:center;color:var(--muted);padding:30px 8px}
+@media(max-width:600px){body{padding:10px}header{padding:24px 14px}.card{padding:16px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<a class="back" href="index.html" data-i18n="supa_back">← Retour au hub</a>
+<div aria-hidden="true" style="font-size:2rem;margin-top:12px">♟️</div>
+<h1 data-i18n="supa_title">SupaEngine</h1>
+<p data-i18n="supa_intro">Tout l’univers SupaEngine au même endroit : moteur, entraînements, apprentissages, analyses et parties commentées.</p>
+</header>
+
+<section aria-labelledby="supa_engine_section">
+<h2 id="supa_engine_section" data-i18n="supa_section_engine">Moteur et entraînement</h2>
+<div class="grid">
+<a class="card" href="ENTRAINEMENT_VARIANTES_STRATEGIE.html"><span class="tag">SupaEngine</span><h3 data-i18n="supa_card_tool">Atelier de calcul et d’analyse</h3><p data-i18n="supa_card_tool_desc">Analyse une position, compare des variantes et travaille le calcul, les ouvertures et les finales.</p></a>
+<a class="card" href="TOURNAMENT_SIMULATOR.html"><span class="tag">SupaEngine</span><h3 data-i18n="supa_card_tournament">Tournoi simulé</h3><p data-i18n="supa_card_tournament_desc">Configure un tournoi avec SupaEngine et compare les participants.</p></a>
+<a class="card" href="engine_study_hub.html"><span class="tag">Analyse</span><h3 data-i18n="supa_card_study">Laboratoire d’étude des moteurs</h3><p data-i18n="supa_card_study_desc">Collections analysées, positions à étudier et leçons consacrées à SupaEngine.</p></a>
+</div>
+</section>
+
+<section aria-labelledby="supa_learning_section">
+<h2 id="supa_learning_section" data-i18n="supa_section_learning">Leçons et connaissances acquises</h2>
+<div class="grid">
+<a class="card" href="ENSEIGNEMENTS_ECHECS.html"><span class="tag">V1</span><h3 data-i18n="supa_card_lessons1">Premiers enseignements</h3><p data-i18n="supa_card_lessons1_desc">Les premiers principes tirés des parties de SupaEngine.</p></a>
+<a class="card" href="ENSEIGNEMENTS_V2.html"><span class="tag">V2.6</span><h3 data-i18n="supa_card_lessons2">Enseignements et tactiques</h3><p data-i18n="supa_card_lessons2_desc">Leçons sur les tactiques, les finales, le temps de réflexion et les décisions du moteur.</p></a>
+<a class="card" href="ENSEIGNEMENTS_V3.html"><span class="tag">V3</span><h3 data-i18n="supa_card_lessons3">Le saut quantique</h3><p data-i18n="supa_card_lessons3_desc">Leçons et analyses présentées autour de SupaEngine v3.0.</p></a>
+<a class="card" href="tactiques_apprises.html"><span class="tag">Bibliothèque</span><h3 data-i18n="supa_card_tactics">Tactiques apprises</h3><p data-i18n="supa_card_tactics_desc">Parcours les motifs tactiques enregistrés par SupaEngine.</p></a>
+</div>
+</section>
+
+<section aria-labelledby="supa_games_section">
+<h2 id="supa_games_section" data-i18n="supa_section_games">Parties et résultats</h2>
+<div class="grid">
+<a class="card" href="supaengine_vs_leela_v31.html"><span class="tag">Partie commentée</span><h3 data-i18n="supa_card_leela">SupaEngine v3.1 contre Leela</h3><p data-i18n="supa_card_leela_desc">Rejoue la partie et parcours les commentaires coup par coup.</p></a>
+<a class="card" href="supaengine_vs_stockfish_v31.html"><span class="tag">Partie commentée</span><h3 data-i18n="supa_card_stockfish">SupaEngine contre Stockfish 17</h3><p data-i18n="supa_card_stockfish_desc">Rejoue la partie et consulte les annotations associées.</p></a>
+<a class="card" href="supaengine_vs_stockfish_report.html"><span class="tag">Analyse</span><h3 data-i18n="supa_card_report">Rapport SupaEngine contre Stockfish</h3><p data-i18n="supa_card_report_desc">Ouvre le rapport de partie et son analyse détaillée.</p></a>
+<a class="card" href="victoire_vs_sf20.html"><span class="tag">Partie et PGN</span><h3 data-i18n="supa_card_victory">Victoire contre Stockfish Skill 20</h3><p data-i18n="supa_card_victory_desc">Rejoue la partie et télécharge son PGN.</p></a>
+<a class="card" href="data/games/supaengine_vs_stockfish17_skill20.pgn" download><span class="tag">PGN</span><h3 data-i18n="supa_card_pgn">Télécharger la partie PGN</h3><p data-i18n="supa_card_pgn_desc">Récupère le fichier de partie pour l’analyser dans un outil compatible.</p></a>
+</div>
+</section>
+
+<section aria-labelledby="supa_progress_section">
+<h2 id="supa_progress_section" data-i18n="supa_section_progress">Progression et suivi</h2>
+<div class="grid">
+<a class="card" href="journal_apprentissage.html"><span class="tag">Suivi</span><h3 data-i18n="supa_card_journal">Journal d’apprentissage</h3><p data-i18n="supa_card_journal_desc">Consulte la chronologie des sessions d’entraînement enregistrées.</p></a>
+<a class="card" href="progression_elo.html"><span class="tag">Statistiques</span><h3 data-i18n="supa_card_progress">Progression et résultats</h3><p data-i18n="supa_card_progress_desc">Explore les tableaux et historiques de progression disponibles.</p></a>
+<a class="card" href="https://github.com/JirA44/supachess-web/tree/main/packages/engine" target="_blank" rel="noopener noreferrer"><span class="tag">Code source</span><h3 data-i18n="supa_card_source">Paquet moteur SupaChess</h3><p data-i18n="supa_card_source_desc">Consulte le code TypeScript, l’évaluation, la recherche et les tests du paquet moteur.</p></a>
+</div>
+</section>
+<footer data-i18n="supa_footer">Les chiffres et résultats affichés sur les pages liées sont ceux de ces pages et ne constituent pas une évaluation FIDE.</footer>
+</main>
+<script src="shared/i18n.js?v=supaengine-hub-20261101"></script>
+</body>
+</html>

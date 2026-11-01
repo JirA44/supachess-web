@@ -458,7 +458,8 @@ function renderBoard(cells, lastMoves=[]) {
 
 function updateProgress() {
     const n = done.length;
-    const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';\n    document.getElementById('prog-lbl').textContent = en ? `${n}/8 ${OPENING_EN.labels.progress}` : `${n}/8 ouvertures maîtrisées`;
+    const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
+    document.getElementById('prog-lbl').textContent = en ? `${n}/8 ${OPENING_EN.labels.progress}` : `${n}/8 ouvertures maîtrisées`;
     document.getElementById('prog-bar').style.width = `${(n/8)*100}%`;
 }
 
@@ -475,7 +476,7 @@ function renderGrid() {
             }).join(' ')} ...</div>
             <div class="badge-row">
                 ${o.tags.map(t=>`<span class="badge${isDone?' done-badge':''}">${t}</span>`).join('')}
-                ${isDone ? '<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ ${en?'Mastered':'Maîtrisée'}</span>' : ''}
+                ${isDone ? `<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ ${en?'Mastered':'Maîtrisée'}</span>` : ''}
             </div>
         </button>`;
     }).join('');

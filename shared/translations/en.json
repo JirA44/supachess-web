@@ -293,5 +293,6 @@
     "training_tactics_badge": "8 THEMES",
     "training_daily_title": "Daily Challenge",
     "training_daily_desc": "A new challenge every day! Keep your streak going and climb the levels.",
-    "training_daily_badge": "DAILY"
+    "training_daily_badge": "DAILY",
+    "footer_site_version": "Site version:"
 }

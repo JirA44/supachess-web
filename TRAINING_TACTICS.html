@@ -1603,7 +1603,9 @@ function answerConcept(index) {
 }
 function markSolved(id) {
     const session=currentPuzzle&&currentPuzzle.id===id?currentPuzzle.session:null;
-    if (!session || !session.moveCorrect || !session.conceptCorrect) return;
+    if (!session || !session.moveCorrect || !session.conceptCorrect || session.completed) return;
+    session.completed = true;
+    document.getElementById('btn-done').disabled = true;
     if (!solved.includes(id)) {
         solved.push(id);
         saveSolved(solved);

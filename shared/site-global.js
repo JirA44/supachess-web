@@ -15,18 +15,20 @@
   (document.head || document.documentElement).appendChild(style);
   function addBackLinks() {
     if (!document.body || document.querySelector('.supachess-page-back')) return;
-    var previous = document.referrer;
-    var target = root.href + 'index.html';
-    try {
-      var ref = new URL(previous);
-      if (ref.origin === location.origin && ref.href !== location.href) target = ref.href;
-    } catch (_) {}
+    var target = document.body.getAttribute('data-page-back-url') || root.href + 'index.html';
+    if (!document.body.hasAttribute('data-page-back-url')) {
+      try {
+        var ref = new URL(document.referrer);
+        if (ref.origin === location.origin && ref.href !== location.href) target = ref.href;
+      } catch (_) {}
+    }
     function makeLink(position) {
       var link = document.createElement('a');
       link.className = 'supachess-page-back supachess-page-back--' + position;
       link.href = target;
-      link.textContent = '← Page précédente';
-      link.setAttribute('aria-label', 'Revenir à la page précédente');
+      var selectedLang = (localStorage.getItem('chessnova_lang') || document.documentElement.lang || navigator.language || 'en').slice(0, 2).toLowerCase();
+      link.textContent = selectedLang === 'fr' ? '← Page précédente' : '← Previous page';
+      link.setAttribute('aria-label', selectedLang === 'fr' ? 'Revenir à la page précédente' : 'Return to the hub');
       return link;
     }
     document.body.insertBefore(makeLink('top'), document.body.firstChild);

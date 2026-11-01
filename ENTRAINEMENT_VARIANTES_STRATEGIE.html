@@ -300,9 +300,10 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  function setStatus(text){status.textContent=text}
  function ensureEngine(){
   if(ready)return Promise.resolve();if(readyPromise)return readyPromise;
-  readyPromise=new Promise((resolve,reject)=>{const timer=setTimeout(()=>{readyPromise=null;reject(new Error('Stockfish ne répond pas'))},20000);
-   (async()=>{try{const url=new URL('stockfish.js',document.baseURI),res=await fetch(url);if(!res.ok)throw new Error('stockfish.js inaccessible');const src=await res.text();worker=new Worker(URL.createObjectURL(new Blob([src],{type:'application/javascript'})));
-    worker.onerror=()=>{clearTimeout(timer);readyPromise=null;reject(new Error('Le moteur n’a pas démarré'))};
+  readyPromise=new Promise((resolve,reject)=>{setStatus('Démarrage de Stockfish…');const timer=setTimeout(()=>{readyPromise=null;if(worker){worker.terminate();worker=null}ready=false;reject(new Error('Stockfish ne répond pas après 12 s'))},12000);
+   (async()=>{try{const url=new URL('stockfish.js',document.baseURI);worker=new Worker(url.href);
+    worker.onerror=event=>{clearTimeout(timer);readyPromise=null;ready=false;const detail=event&&event.message?' : '+event.message:'';if(worker){worker.terminate();worker=null}reject(new Error('Le worker Stockfish a échoué'+detail))};
+    worker.onmessageerror=()=>{clearTimeout(timer);readyPromise=null;ready=false;if(worker){worker.terminate();worker=null}reject(new Error('Réponse Stockfish illisible'))};
     worker.onmessage=ev=>{const line=String(ev.data||'').trim();
      if(line.includes('uciok')){worker.postMessage('setoption name Threads value 1');worker.postMessage('isready')}
      if(line.includes('readyok')&&!ready){ready=true;clearTimeout(timer);setStatus('Stockfish prêt · version fournie par le dépôt SupaChess.');resolve()}

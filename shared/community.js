@@ -1145,6 +1145,7 @@
             '</div>';
 
         document.body.appendChild(panel);
+        if (window.ChessNovaI18n && window.ChessNovaI18n.applyTranslations) window.ChessNovaI18n.applyTranslations();
 
         // Status button clicks
         var btns = panel.querySelectorAll('.cn-status-btn');

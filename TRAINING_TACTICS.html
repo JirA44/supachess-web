@@ -191,6 +191,30 @@
         .hint-feedback { color:#fef3c7; font-weight:600; }
         @media(max-width:700px) { body { padding:12px; } .modal-content { width:min(100%,620px); margin:2vh auto; padding:16px; } .big-board { width:min(100%,440px); aspect-ratio:1; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); } .big-cell { width:100%; height:100%; min-width:0; min-height:0; aspect-ratio:1; padding:0; font-size:clamp(1.1rem,8vw,2.1rem); } }
         @media(max-width:380px) { h1 { font-size:1.65rem; } .theme-tabs { gap:6px; } .theme-tab { padding:8px 10px; } .pz-card { padding:16px; } }
+
+        .puzzle-challenge { margin: 0 0 24px; padding: 18px; border: 1px solid rgba(134,239,172,.45); border-radius: 16px; background: rgba(0,0,0,.28); }
+        .puzzle-challenge h2 { margin-bottom: 6px; color: #bbf7d0; font-size: 1.25rem; }
+        .puzzle-challenge > p { opacity:.88; line-height:1.45; margin-bottom:12px; }
+        .challenge-controls { display:flex; flex-wrap:wrap; gap:9px; }
+        .challenge-button { min-height:44px; padding:9px 14px; border:1px solid rgba(255,255,255,.3); border-radius:10px; background:#173c68; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
+        .challenge-button:hover,.challenge-button:focus-visible { border-color:#86efac; outline:2px solid #fff; outline-offset:2px; }
+        .challenge-player { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+        .challenge-player input { min-height:42px; width:min(100%,260px); padding:8px 10px; border:1px solid rgba(255,255,255,.35); border-radius:8px; background:#10284a; color:#fff; font:inherit; }
+        .challenge-status { min-height:1.5em; margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(255,255,255,.09); line-height:1.4; }
+        .challenge-rankings { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; margin-top:14px; }
+        .challenge-ranking { padding:11px; border:1px solid rgba(255,255,255,.18); border-radius:10px; background:rgba(255,255,255,.06); }
+        .challenge-ranking h3 { margin-bottom:7px; font-size:.98rem; color:#fde68a; }
+        .challenge-ranking ol { padding-left:22px; }
+        .challenge-ranking li { padding:2px 0; overflow-wrap:anywhere; font-size:.86rem; }
+        .challenge-ranking .empty { opacity:.7; font-size:.83rem; }
+        .challenge-stop[hidden] { display:none; }
+        @media(max-width:700px) {
+            .puzzle-challenge { padding:13px; }
+            .challenge-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .challenge-button { padding:9px 7px; font-size:.92rem; }
+            .big-cell { font-size:clamp(1.65rem,10vw,3.2rem) !important; }
+        }
+
 </style>
 </head>
 <body>
@@ -226,6 +250,21 @@
         </div>
     </div>
 
+    <section class="puzzle-challenge" aria-labelledby="challenge-title">
+        <h2 id="challenge-title">Défis de problèmes</h2>
+        <p>Sprint 3 min ou 5 min, survie à trois erreurs, ou bataille chronométrée. Un problème compte seulement après le coup juste et l’explication du motif. Les classements affichés ici sont locaux à ce navigateur.</p>
+        <div class="challenge-controls">
+            <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint3')">Sprint · 3 min</button>
+            <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint5')">Sprint · 5 min</button>
+            <button class="challenge-button" type="button" onclick="startPuzzleChallenge('survival')">Survie · 3 erreurs</button>
+            <button class="challenge-button" type="button" onclick="startPuzzleChallenge('battle')">Bataille · 2 min</button>
+        </div>
+        <label class="challenge-player">Nom du classement
+            <input id="challenge-player-name" type="text" maxlength="24" autocomplete="nickname" placeholder="Joueur">
+        </label>
+        <div id="puzzle-challenge-status" class="challenge-status" role="status" aria-live="polite">Choisis un défi pour commencer.</div>
+        <div id="puzzle-challenge-rankings" class="challenge-rankings" aria-label="Classements locaux"></div>
+    </section>
     <div class="theme-tabs" id="theme-tabs"></div>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
@@ -1512,12 +1551,17 @@ function openPuzzle(id) {
         </section>
         <p id="tactic-explanation" class="tactic-explanation" hidden></p>
         <div class="modal-btn-row">
+            <button class="m-btn challenge-stop" id="btn-challenge-stop" type="button" onclick="stopPuzzleChallenge()" hidden>Terminer le défi</button>
             <button type="button" class="m-btn tactic-hint" id="btn-tactic-hint" onclick="showTacticHint()">💡 Indice</button>
             <button type="button" class="m-btn m-btn-done" id="btn-done" onclick="markSolved('${id}')" disabled>✅ Valider ma compréhension</button>
             <button class="m-btn m-btn-close" onclick="closeModal()">✕ Fermer</button>
         </div>
     `;
     document.getElementById('modal-bg').classList.add('open');
+    const stopChallengeButton=document.getElementById('btn-challenge-stop');
+    const hintChallengeButton=document.getElementById('btn-tactic-hint');
+    if (stopChallengeButton) stopChallengeButton.hidden=!puzzleChallenge;
+    if (hintChallengeButton) hintChallengeButton.hidden=!!puzzleChallenge;
     bindTacticBoard();
 }
 
@@ -1563,6 +1607,7 @@ function selectTacticSquare(square) {
     } else {
         tacticGame.undo();
         currentPuzzle.session.mistakes++;
+        noteChallengeMistake();
         feedback.textContent='Coup légal, mais il ne résout pas le motif de cet exercice.';
         showTacticHint();
     }
@@ -1573,6 +1618,7 @@ function bindTacticBoard() {
 }
 
 function showTacticHint() {
+    if (puzzleChallenge) return;
     if (!currentPuzzle || !currentPuzzle.session || currentPuzzle.session.conceptCorrect) return;
     tacticHintLevel++;
     const hints=TACTIC_HINTS[currentPuzzle.theme]||['Observe les pièces attaquées et cherche une réponse forcée.'];
@@ -1587,6 +1633,7 @@ function answerConcept(index) {
     const feedback=document.getElementById('tactic-feedback');
     if (!choice || !choice.correct) {
         currentPuzzle.session.mistakes++;
+        noteChallengeMistake();
         feedback.textContent='Pas encore. Reprends le motif créé par ton coup.';
         showTacticHint();
         return;
@@ -1620,6 +1667,13 @@ function markSolved(id) {
     renderTabs();
     renderGrid();
 
+    if (puzzleChallenge) {
+        puzzleChallenge.score++;
+        challengeStatus();
+        setTimeout(openNextChallengePuzzle, 180);
+        return;
+    }
+
     const completedPuzzle = PUZZLES.find(puzzle => puzzle.id === id);
     const preferred = activeTheme === 'all' ? PUZZLES : PUZZLES.filter(puzzle => puzzle.theme === activeTheme);
     const startIndex = preferred.findIndex(puzzle => puzzle.id === id);
@@ -1643,6 +1697,7 @@ function markSolved(id) {
 }
 
 function closeModal() {
+    if (puzzleChallenge) { finishPuzzleChallenge(true); return; }
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     document.getElementById('modal-bg').classList.remove('open');
 }
@@ -1651,8 +1706,122 @@ document.getElementById('modal-bg').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });
 
+
+const CHALLENGE_RECORDS_KEY = 'supachess_puzzle_challenge_records_v1';
+const CHALLENGE_NAME_KEY = 'supachess_puzzle_challenge_name_v1';
+const CHALLENGE_MODES = {
+    sprint3: { label:'Sprint · 3 min', seconds:180, lives:null },
+    sprint5: { label:'Sprint · 5 min', seconds:300, lives:null },
+    survival: { label:'Survie · 3 erreurs', seconds:null, lives:3 },
+    battle: { label:'Bataille · 2 min', seconds:120, lives:null }
+};
+let puzzleChallenge = null;
+let puzzleChallengeTimer = null;
+
+function challengeEsc(value) {
+    return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function getChallengeRecords() {
+    try {
+        const raw=JSON.parse(localStorage.getItem(CHALLENGE_RECORDS_KEY)||'{}');
+        return raw && typeof raw==='object' ? raw : {};
+    } catch(e) { return {}; }
+}
+function getChallengeName() {
+    try { return (localStorage.getItem(CHALLENGE_NAME_KEY)||'Joueur').trim().slice(0,24)||'Joueur'; }
+    catch(e) { return 'Joueur'; }
+}
+function renderChallengeRankings() {
+    const root=document.getElementById('puzzle-challenge-rankings');
+    if (!root) return;
+    const records=getChallengeRecords();
+    root.innerHTML=Object.keys(CHALLENGE_MODES).map(mode=>{
+        const rows=Array.isArray(records[mode])?records[mode]:[];
+        const title=CHALLENGE_MODES[mode].label;
+        const body=rows.length
+            ? '<ol>'+rows.slice(0,5).map(row=>'<li><strong>'+challengeEsc(row.name)+'</strong> · '+Number(row.score||0)+' pts · '+challengeEsc(row.date||'')+'</li>').join('')+'</ol>'
+            : '<p class="empty">Aucun score enregistré.</p>';
+        return '<section class="challenge-ranking"><h3>'+challengeEsc(title)+'</h3>'+body+'</section>';
+    }).join('');
+}
+function saveChallengeRecord(challenge) {
+    const records=getChallengeRecords();
+    const rows=Array.isArray(records[challenge.mode])?records[challenge.mode]:[];
+    const date=new Date().toLocaleDateString('fr-FR');
+    rows.push({name:getChallengeName(),score:challenge.score, mistakes:challenge.mistakes, date:date, elapsed:Math.max(0,Math.floor((Date.now()-challenge.startedAt)/1000))});
+    rows.sort((a,b)=>Number(b.score)-Number(a.score)||Number(a.elapsed)-Number(b.elapsed));
+    records[challenge.mode]=rows.slice(0,10);
+    try { localStorage.setItem(CHALLENGE_RECORDS_KEY,JSON.stringify(records)); } catch(e) {}
+    renderChallengeRankings();
+}
+function challengeStatus() {
+    const root=document.getElementById('puzzle-challenge-status');
+    if (!root) return;
+    if (!puzzleChallenge) { root.textContent='Choisis un défi pour commencer. Les scores restent enregistrés sur cet appareil.'; return; }
+    const cfg=CHALLENGE_MODES[puzzleChallenge.mode];
+    const time=puzzleChallenge.remaining===null?'':(' · '+Math.floor(puzzleChallenge.remaining/60)+':'+String(puzzleChallenge.remaining%60).padStart(2,'0'));
+    const lives=puzzleChallenge.lives===null?'':' · erreurs restantes : '+puzzleChallenge.lives;
+    root.textContent=cfg.label+' · '+puzzleChallenge.score+' problème(s) validé(s)'+time+lives;
+}
+function startPuzzleChallenge(mode) {
+    if (!CHALLENGE_MODES[mode]) return;
+    finishPuzzleChallenge(false);
+    const cfg=CHALLENGE_MODES[mode];
+    const order=PUZZLES.map(p=>p.id);
+    for (let i=order.length-1;i>0;i--) {
+        const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]];
+    }
+    puzzleChallenge={mode:mode,score:0,mistakes:0,lives:cfg.lives,remaining:cfg.seconds,startedAt:Date.now(),endAt:cfg.seconds?Date.now()+cfg.seconds*1000:null,order:order,nextIndex:0};
+    challengeStatus();
+    if (cfg.seconds) puzzleChallengeTimer=setInterval(tickPuzzleChallenge,1000);
+    openNextChallengePuzzle();
+}
+function tickPuzzleChallenge() {
+    if (!puzzleChallenge || !puzzleChallenge.endAt) return;
+    puzzleChallenge.remaining=Math.max(0,Math.ceil((puzzleChallenge.endAt-Date.now())/1000));
+    challengeStatus();
+    if (!puzzleChallenge.remaining) finishPuzzleChallenge(true);
+}
+function noteChallengeMistake() {
+    if (!puzzleChallenge) return;
+    puzzleChallenge.mistakes++;
+    if (puzzleChallenge.mode==='survival') {
+        puzzleChallenge.lives=Math.max(0,puzzleChallenge.lives-1);
+        challengeStatus();
+        if (!puzzleChallenge.lives) finishPuzzleChallenge(true);
+    }
+}
+function openNextChallengePuzzle() {
+    if (!puzzleChallenge) return;
+    if (puzzleChallenge.mode==='survival' && puzzleChallenge.lives<=0) { finishPuzzleChallenge(true); return; }
+    if (puzzleChallenge.nextIndex>=puzzleChallenge.order.length) { finishPuzzleChallenge(true); return; }
+    const id=puzzleChallenge.order[puzzleChallenge.nextIndex++];
+    openPuzzle(id);
+}
+function finishPuzzleChallenge(saveResult) {
+    if (puzzleChallengeTimer) { clearInterval(puzzleChallengeTimer); puzzleChallengeTimer=null; }
+    const completed=puzzleChallenge;
+    puzzleChallenge=null;
+    if (completed && saveResult) saveChallengeRecord(completed);
+    challengeStatus();
+    const modal=document.getElementById('modal-bg');
+    if (modal) modal.classList.remove('open');
+    const stop=document.getElementById('btn-challenge-stop');
+    if (stop) stop.hidden=true;
+    if (completed && saveResult) {
+        const root=document.getElementById('puzzle-challenge-status');
+        if (root) root.textContent=CHALLENGE_MODES[completed.mode].label+' terminé : '+completed.score+' problème(s) validé(s), '+completed.mistakes+' erreur(s). Score classé sur cet appareil.';
+    }
+    return completed;
+}
+function stopPuzzleChallenge() { finishPuzzleChallenge(true); }
+
 // Init
 syncTacticsMastery();
+const challengeNameInput=document.getElementById('challenge-player-name');
+if (challengeNameInput) { challengeNameInput.value=getChallengeName(); challengeNameInput.addEventListener('input',function(){ const name=this.value.trim().slice(0,24)||'Joueur'; try{localStorage.setItem(CHALLENGE_NAME_KEY,name);}catch(e){} renderChallengeRankings(); }); }
+renderChallengeRankings();
+challengeStatus();
 updateStats();
 renderTabs();
 renderGrid();

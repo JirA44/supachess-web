@@ -301,7 +301,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  function ensureEngine(){
   if(ready)return Promise.resolve();if(readyPromise)return readyPromise;
   readyPromise=new Promise((resolve,reject)=>{setStatus('Démarrage de Stockfish…');const timer=setTimeout(()=>{readyPromise=null;if(worker){worker.terminate();worker=null}ready=false;reject(new Error('Stockfish ne répond pas après 12 s'))},12000);
-   (async()=>{try{const url=new URL('stockfish.js',document.baseURI);worker=new Worker(url.href);
+   (async()=>{try{const url=new URL('js/supachess-engine.js',document.baseURI);worker=new Worker(url.href);
     worker.onerror=event=>{clearTimeout(timer);readyPromise=null;ready=false;const detail=event&&event.message?' : '+event.message:'';if(worker){worker.terminate();worker=null}reject(new Error('Le worker Stockfish a échoué'+detail))};
     worker.onmessageerror=()=>{clearTimeout(timer);readyPromise=null;ready=false;if(worker){worker.terminate();worker=null}reject(new Error('Réponse Stockfish illisible'))};
     worker.onmessage=ev=>{const line=String(ev.data||'').trim();

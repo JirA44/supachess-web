@@ -91,14 +91,14 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 (function(){
  const mainKey='supachess_calcul_variantes_progress_v1';
  const reviewKey='supachess_calcul_variantes_review_v1';
- const main=JSON.parse(localStorage.getItem(mainKey)||'{}');
  const total=17, status=document.getElementById('reviewStatus'), start=document.getElementById('reviewStart');
  let state;
  try{state=JSON.parse(localStorage.getItem(reviewKey)||'null')}catch(_){state=null}
  if(!state)state={stage:0,dueAt:0};
  const dateText=t=>new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
  function updateState(){
-   const completed=Object.keys(main).filter(k=>/^q\d+$/.test(k)&&main[k]).length>=total;
+   const latestMain=JSON.parse(localStorage.getItem(mainKey)||'{}');
+   const completed=Object.keys(latestMain).filter(k=>/^q\d+$/.test(k)&&latestMain[k]).length>=total;
    if(!completed){start.disabled=true;status.textContent='Termine d’abord les 17 exercices du parcours : ce contrôle vérifie leur rétention.';return false}
    if(state.dueAt>Date.now()){start.disabled=true;status.textContent='Prochaine vérification prévue le '+dateText(state.dueAt)+'. Tu peux revenir sur cette page à cette date.';return false}
    start.disabled=false;
@@ -106,6 +106,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
    return true;
  }
  updateState();
+ document.addEventListener('course-progress',updateState);
  start.addEventListener('click',()=>{
    if(!updateState())return;
    const quiz=document.getElementById('reviewQuiz'), result=document.getElementById('reviewResult');
@@ -148,7 +149,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  const KEY='supachess_calcul_variantes_progress_v1', saved=JSON.parse(localStorage.getItem(KEY)||'{}');
  const total=17; let done=Object.values(saved).filter(Boolean).length;
  const bar=document.getElementById('bar'),score=document.getElementById('score');
- function update(){bar.style.width=(done/total*100)+'%';score.textContent='Progression : '+done+' / '+total+' exercices réussis';document.getElementById('finish').hidden=done<total;}
+ function update(){bar.style.width=(done/total*100)+'%';score.textContent='Progression : '+done+' / '+total+' exercices réussis';document.getElementById('finish').hidden=done<total;document.dispatchEvent(new Event('course-progress'));}
  document.querySelectorAll('.options[data-q]').forEach(group=>{
   const id=group.dataset.q,fb=group.parentElement.querySelector('.feedback');
   group.querySelectorAll('.option').forEach(btn=>{

@@ -467,6 +467,8 @@ function renderGrid() {
     const grid = document.getElementById('opening-grid');
     grid.innerHTML = OPENINGS.map((o,i) => {
         const isDone = done.includes(o.id);
+        const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
+        const tr=en?OPENING_EN.openings[o.id]:null;
         return `<button type="button" class="card ${isDone?'done':''}" onclick="openDetail(${i})" aria-pressed="${isDone}">
             <h3>${o.icon} ${tr?tr[0]:o.name}</h3>
             <div class="sub">${tr?tr[1]:o.sub}</div>
@@ -500,6 +502,9 @@ function openDetail(idx) {
 
 function renderDetail() {
     const o = currentOpening;
+    const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
+    const tr=en?OPENING_EN.openings[o.id]:null;
+    const L=OPENING_EN.labels;
     const isDone = done.includes(o.id);
     const cells = parseFen(game ? game.fen() : START_BOARD);
 

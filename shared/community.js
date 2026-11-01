@@ -12,7 +12,7 @@
 (function () {
     'use strict';
 
-    var SITE_VERSION = '1.12';
+    var SITE_VERSION = '1.13.0';
     // Capture this script's URL now; init() may run after document.currentScript is cleared.
     var communityScriptUrl = document.currentScript ? document.currentScript.src : null;
 
@@ -63,6 +63,17 @@
             responseKey: 'autoresponse_levels'
         }
     ];
+
+    function ensureCommunityStylesheet() {
+        var existing = document.querySelector('link[rel="stylesheet"][href*="community.css"]');
+        if (existing) return;
+        var stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = communityScriptUrl
+            ? new URL('community.css?v=' + encodeURIComponent(SITE_VERSION), communityScriptUrl).href
+            : new URL('shared/community.css?v=' + encodeURIComponent(SITE_VERSION), document.baseURI).href;
+        document.head.appendChild(stylesheet);
+    }
 
     // --- Firebase Init (safe) ---
     function initFirebase() {
@@ -605,7 +616,7 @@
                 '<span class="cn-stat-value" id="cn-members-count">-</span>' +
             '</span>' +
             '<span class="cn-footer-brand" data-i18n="footer_brand">' + t('footer_brand') + '</span>' +
-            '<span class="cn-footer-stat" data-site-version>Version du site : <span class="cn-stat-value">' + SITE_VERSION + '</span></span>';
+            '<span class="cn-footer-stat" data-site-version><span data-i18n="footer_site_version">' + t('footer_site_version') + '</span> <span class="cn-stat-value">' + SITE_VERSION + '</span></span>';
         document.body.appendChild(footer);
 
         if (db) {
@@ -1504,6 +1515,7 @@
 
     // --- Init ---
     function init() {
+        ensureCommunityStylesheet();
         // The shared tracker is loaded after community.js on some legacy pages.
         // Loading it here keeps usage and practice counts available site-wide.
         if (!window.ChessNovaProgress && !document.querySelector('script[data-chessnova-progress]')) {

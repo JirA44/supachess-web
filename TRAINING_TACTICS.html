@@ -232,7 +232,7 @@
 
 </style>
 </head>
-<body>
+<body data-page-back-url="https://jira44.github.io/supachess/">
 <div class="container">
     <a class="back-btn" href="index.html">← Retour au Hub</a>
     <div class="header">
@@ -1882,8 +1882,8 @@ const requestedPuzzle = new URLSearchParams(location.search).get('puzzle');
 if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(requestedPuzzle);
 </script>
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
-<script src="shared/community.js"></script>
+<script src="shared/community.js?v=community-1.13.0"></script>
 
-<script defer src="shared/site-global.js"></script>
+<script defer src="shared/site-global.js?v=hub-back-link-20261101"></script>
 </body>
 </html>

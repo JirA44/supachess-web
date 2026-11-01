@@ -39,7 +39,7 @@
     if (!rootNode || !rootNode.querySelectorAll) return;
     var boards = [];
     if (rootNode.matches && rootNode.matches('.board,.big-board,.board-b72b1,.complex-board,#analysisBoard')) boards.push(rootNode);
-    boards = boards.concat(Array.prototype.slice.call(rootNode.querySelectorAll('.board,.big-board,.board-b72b1')));
+    boards = boards.concat(Array.prototype.slice.call(rootNode.querySelectorAll('.board,.big-board,.board-b72b1,.complex-board,#analysisBoard')));
     boards.forEach(function (board) {
       // Chessboard.js already has the rank gutter unless showNotation:false was set.
       if (board.classList.contains('board-b72b1') && board.querySelector('.numeric-fc462,.supachess-rank-label')) return;

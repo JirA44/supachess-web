@@ -73,8 +73,8 @@
             if (dict[key] !== undefined) {
                 var attr = elements[i].getAttribute('data-i18n-attr');
                 if (attr) {
-                    elements[i].setAttribute(attr, dict[key]);
-                } else {
+                    if (elements[i].getAttribute(attr) !== dict[key]) elements[i].setAttribute(attr, dict[key]);
+                } else if (elements[i].textContent !== dict[key]) {
                     elements[i].textContent = dict[key];
                 }
             }
@@ -154,6 +154,18 @@
         },
         applyTranslations: applyTranslations
     };
+
+    // Translate controls and panels added after the initial page pass (for example the online-players panel).
+    if (window.MutationObserver) {
+        new MutationObserver(function (records) {
+            var hasTranslatedContent = records.some(function (record) {
+                return Array.prototype.some.call(record.addedNodes, function (node) {
+                    return node.nodeType === 1 && (node.matches('[data-i18n]') || node.querySelector('[data-i18n]'));
+                });
+            });
+            if (hasTranslatedContent) applyTranslations();
+        }).observe(document.documentElement, { childList: true, subtree: true });
+    }
 
     // Init when DOM ready
     if (document.readyState === 'loading') {

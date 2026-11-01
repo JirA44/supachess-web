@@ -333,5 +333,7 @@
     "supa_card_progress_desc": "Explore available progress charts and histories.",
     "supa_card_source": "SupaChess engine package",
     "supa_card_source_desc": "View the package’s TypeScript code, evaluation, search and tests.",
-    "supa_footer": "Figures and results shown on linked pages are presented there and are not FIDE ratings."
+    "supa_footer": "Figures and results shown on linked pages are presented there and are not FIDE ratings.",
+    "supa_card_legacy": "Legacy engine hub",
+    "supa_card_legacy_desc": "Open the SupaChess Engine hub and its game visualization library."
 }

@@ -1554,7 +1554,8 @@ function openPuzzle(id) {
     tacticGame = new Chess(currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1');
     const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
     document.getElementById('modal-inner').innerHTML = `
-        <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>\n        <h2>${currentPuzzle.title}</h2>
+        <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>
+        <h2>${currentPuzzle.title}</h2>
         <div class="modal-sub">Difficulté indicative : ⭐ ${currentPuzzle.rating}</div>
         <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl, currentPuzzle.turn)}</div>
         <div class="modal-desc">

@@ -356,8 +356,9 @@ function renderBoard(boardStr, highlights=[]) {
             const isHl = highlights.includes(idx);
             const piece = cells[idx] !== '.' ? (PIECES[cells[idx]] || '') : '';
             const color = (cells[idx] === cells[idx]?.toUpperCase() && cells[idx] !== '.') ? 'style="color:#1a1a2e;text-shadow:0 1px 2px rgba(255,255,255,0.3)"' : 'style="color:#1a1a2e"';
-            const pieceClass = cells[idx] === cells[idx]?.toUpperCase() ? 'white' : 'black';
-            html += `<div class="cell ${isLight?'light':'dark'}${isHl?' highlight':''}" data-row="${r}" data-col="${c}" data-rank="${8-r}" data-file="${FILES[c]}"><span class="daily-piece ${pieceClass}" ${color}>${piece}</span></div>`;
+            const pieceClass = cells[idx] && cells[idx] !== '.' && cells[idx] === cells[idx].toUpperCase() ? 'white' : 'black';
+            const pieceHtml = piece ? `<span class="daily-piece ${pieceClass}" ${color}>${piece}</span>` : '';
+            html += `<div class="cell ${isLight?'light':'dark'}${isHl?' highlight':''}" data-row="${r}" data-col="${c}" data-rank="${8-r}" data-file="${FILES[c]}">${pieceHtml}</div>`;
         }
     }
     html += '</div></div>';

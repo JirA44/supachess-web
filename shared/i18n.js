@@ -41,7 +41,7 @@
             callback();
             return;
         }
-        var url = basePath + '/translations/' + lang + '.json';
+        var url = basePath + '/translations/' + lang + '.json?v=supaengine-hub-20261101';
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.onreadystatechange = function () {

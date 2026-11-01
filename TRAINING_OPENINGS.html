@@ -399,24 +399,47 @@ Object.values(OPENING_QUIZZES).flat().forEach(question => {
 });
 
 const DONE_KEY = 'supachess_openings_v1';
-function getDone() {
+const MASTERY_KEY = 'supachess_openings_mastery_v2';
+const DAY_MS = 86400000;
+function loadMastery() {
     try {
-        const saved = JSON.parse(localStorage.getItem(DONE_KEY) || '[]');
-        return Array.isArray(saved) ? saved.filter(id => OPENINGS.some(opening => opening.id === id)) : [];
-    } catch(e) { return []; }
+        const saved = JSON.parse(localStorage.getItem(MASTERY_KEY) || 'null');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) return saved;
+    } catch(e) {}
+    const migrated = {};
+    try {
+        const previous = JSON.parse(localStorage.getItem(DONE_KEY) || '[]');
+        if (Array.isArray(previous)) previous.forEach(id => {
+            if (OPENINGS.some(opening => opening.id === id)) migrated[id] = {passedAt:[],dueAt:0,mastered:false,legacy:true};
+        });
+    } catch(e) {}
+    try { localStorage.setItem(MASTERY_KEY, JSON.stringify(migrated)); } catch(e) {}
+    return migrated;
 }
-function saveDone(arr) {
-    try { localStorage.setItem(DONE_KEY, JSON.stringify(arr)); } catch(e) {}
+let masteryData = loadMastery();
+function saveMastery() { try { localStorage.setItem(MASTERY_KEY, JSON.stringify(masteryData)); } catch(e) {} }
+let done = OPENINGS.filter(o => masteryData[o.id] && masteryData[o.id].mastered === true).map(o => o.id);
+function refreshMastered() { done = OPENINGS.filter(o => masteryData[o.id] && masteryData[o.id].mastered === true).map(o => o.id); }
+function masteryLabel(id, en) {
+    const s = masteryData[id];
+    const count = s && Array.isArray(s.passedAt) ? s.passedAt.length : 0;
+    if (s && s.mastered) return en ? '✅ Mastered · spaced reviews passed' : '✅ Variante maîtrisée · rappels espacés validés';
+    if (s && s.legacy) return en ? 'Previous one-time check · confirmation required' : 'Ancienne validation · rappels à confirmer';
+    if (!count) return '';
+    const prefix = en ? 'Recall cycles: ' : 'Rappels réussis : ';
+    const due = s.dueAt > Date.now() ? (en ? ' · next ' : ' · prochain le ') + new Date(s.dueAt).toLocaleDateString(en?'en-GB':'fr-FR') : (en ? ' · review due' : ' · rappel dû');
+    return prefix + count + '/4' + due;
 }
-
-let done = getDone();
 let currentOpening = null;
 let currentMoveIdx = -1;
 let game = null;
 let quizIndex = 0;
 let quizMistakes = 0;
 let quizNotice = '';
-
+let recallMode = '';
+let recallInput = '';
+let recallQuizIndex = 0;
+let recallFailed = false;
 // Convert the current legal FEN into board cells for the lesson display.
 const START_BOARD = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 const PIECES = {
@@ -459,7 +482,7 @@ function renderBoard(cells, lastMoves=[]) {
 function updateProgress() {
     const n = done.length;
     const en=window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
-    document.getElementById('prog-lbl').textContent = en ? `${n}/8 ${OPENING_EN.labels.progress}` : `${n}/8 ouvertures maîtrisées`;
+    document.getElementById('prog-lbl').textContent = en ? `${n}/8 ${OPENING_EN.labels.progress}` : `${n}/8 variantes maîtrisées`;
     document.getElementById('prog-bar').style.width = `${(n/8)*100}%`;
 }
 
@@ -478,7 +501,7 @@ function renderGrid() {
             }).join(' ')} ...</div>
             <div class="badge-row">
                 ${o.tags.map(t=>`<span class="badge${isDone?' done-badge':''}">${t}</span>`).join('')}
-                ${isDone ? `<span style="margin-left:auto;color:#22c55e;font-size:0.85rem;">✅ ${en?'Mastered':'Maîtrisée'}</span>` : ''}
+                ${masteryLabel(o.id,en) ? `<span style="margin-left:auto;color:${isDone?'#22c55e':'#fbbf24'};font-size:0.78rem;">${masteryLabel(o.id,en)}</span>` : ''}
             </div>
         </button>`;
     }).join('');
@@ -494,7 +517,7 @@ function openDetail(idx) {
     game = new Chess();
     quizIndex = 0;
     quizMistakes = 0;
-    quizNotice = '';
+    quizNotice = ''; recallMode=''; recallInput=''; recallQuizIndex=0; recallFailed=false;
     document.getElementById('detail-panel').classList.add('visible');
     document.getElementById('detail-panel').scrollIntoView({behavior:'smooth'});
     renderDetail();
@@ -550,6 +573,7 @@ function renderDetail() {
         <div id="opening-quiz" class="theory-box" hidden></div>
     `;
     updatePosition();
+    if (recallMode) renderRecallStep();
 }
 
 function squareIndex(square) {
@@ -617,7 +641,11 @@ function renderQuiz() {
     }
     panel.hidden = false;
     if (quizIndex >= questions.length) {
-        panel.innerHTML = `<h3>✅ Vérification acquise · ${questions.length}/${questions.length}</h3><p>Tu as parcouru la ligne et répondu correctement aux deux questions.</p><button type="button" class="nav-btn done-btn" onclick="markDone('${currentOpening.id}')">Valider la maîtrise</button>`;
+        const state = masteryData[currentOpening.id];
+        const en = window.ChessNovaI18n && ChessNovaI18n.getLang() === 'en';
+        const due = state && state.dueAt > Date.now();
+        const dueText = due ? (en ? 'Next no-help review: ' : 'Prochain rappel sans aide : ') + new Date(state.dueAt).toLocaleDateString(en?'en-GB':'fr-FR') : '';
+        panel.innerHTML = `<h3>✅ ${en?'Guided study complete':'Étude guidée terminée'} · ${questions.length}/${questions.length}</h3><p>${en?'One guided pass is not mastery. Recall the complete line from memory, then pass spaced no-hint reviews at 1, 7 and 30 days.':'Un seul parcours guidé ne prouve pas la maîtrise. Rappelle toute la ligne de mémoire, puis réussis les rappels sans indice à J+1, J+7 et J+30.'}</p><p class="quiz-feedback">${dueText}</p><button type="button" class="nav-btn done-btn" onclick="startOpeningRecall('${currentOpening.id}')" ${due?'disabled':''}>${en?'Start no-help recall':'Commencer le rappel sans aide'}</button>`;
         return;
     }
     const question = questions[quizIndex];
@@ -642,30 +670,129 @@ function answerOpeningQuiz(choiceIndex) {
     renderQuiz();
 }
 
-function markDone(id) {
+function startOpeningRecall(id) {
     const questions = OPENING_QUIZZES[id] || [];
-    if (!currentOpening || currentOpening.id !== id || currentMoveIdx !== currentOpening.moves.length - 1 || quizIndex < questions.length) {
-        const feedback = document.getElementById('opening-feedback');
-        if (feedback) feedback.textContent = 'Parcours la ligne et réussis les deux questions avant de valider la maîtrise.';
-        return;
-    }
-    if (!done.includes(id)) {
-        done.push(id);
-        saveDone(done);
-        if (window.ChessNovaProgress) {
-            ChessNovaProgress.recordPractice('ouvertures', 20, 'Ouverture maîtrisée');
-            ChessNovaProgress.checkTrainingBadges();
-        }
-    }
-    closeDetail();
-    renderGrid();
-    updateProgress();
+    if (!currentOpening || currentOpening.id !== id || currentMoveIdx !== currentOpening.moves.length - 1 || quizIndex < questions.length) return;
+    const state = masteryData[id];
+    if (state && state.dueAt > Date.now()) return;
+    recallMode = 'line'; recallInput = ''; recallQuizIndex = 0; recallFailed = false;
+    game = new Chess(); currentMoveIdx = -1;
+    renderDetail();
 }
 
+function renderRecallStep() {
+    const panel = document.getElementById('opening-quiz');
+    if (!panel || !currentOpening) return;
+    const en = window.ChessNovaI18n && ChessNovaI18n.getLang() === 'en';
+    const moves = document.getElementById('moves-wrap');
+    const nav = document.querySelector('#detail-panel .nav-row');
+    const theory = document.querySelector('#detail-panel .two-col > div:nth-child(2) .theory-box');
+    if (moves) moves.hidden = true;
+    if (nav) nav.hidden = true;
+    if (theory) theory.hidden = true;
+    const counter = document.getElementById('move-counter');
+    if (counter) counter.textContent = en ? 'No-help recall · starting position' : 'Rappel sans aide · position initiale';
+    panel.hidden = false;
+    if (recallMode === 'line') {
+        const label = en ? 'Your remembered line' : 'Ta ligne rappelée';
+        const title = en ? 'Recall the complete line from memory' : 'Rappelle toute la ligne de mémoire';
+        const instruction = en ? 'Without opening the move list, enter every move for both sides in SAN notation. Example format: 1. e4 e5 2. Nf3 Nc6.' : 'Sans consulter la liste des coups, saisis toute la ligne pour les deux camps en notation SAN. Format : 1. e4 e5 2. Nf3 Nc6.';
+        panel.innerHTML = '<h3>' + title + '</h3><p>' + instruction + '</p><label for="openingRecallInput">' + label + '</label><textarea id="openingRecallInput" rows="4" style="width:100%;margin:8px 0;padding:12px;border-radius:10px;font:inherit" placeholder="' + (en ? 'Enter the complete line…' : 'Saisis toute la ligne…') + '">' + recallInput + '</textarea><button type="button" class="nav-btn done-btn" onclick="checkOpeningRecall()">' + (en ? 'Check the line' : 'Vérifier la ligne') + '</button><p class="quiz-feedback" id="recallFeedback" role="status" aria-live="polite"></p>';
+        const input = document.getElementById('openingRecallInput');
+        input.addEventListener('input', function(){ recallInput = input.value; });
+        return;
+    }
+    if (recallMode === 'quiz') { renderRecallQuiz(); return; }
+    if (recallMode === 'complete') {
+        const state = masteryData[currentOpening.id];
+        panel.innerHTML = state && state.mastered
+          ? '<h3>🏆 ' + (en ? 'Line mastered' : 'Variante étudiée maîtrisée') + '</h3><p>' + (en ? 'You recalled the full line and passed no-hint checks spaced over 1, 7 and 30 days.' : 'Tu as rappelé toute la ligne et réussi les contrôles sans indice, avec des rappels espacés à J+1, J+7 et J+30.') + '</p><button type="button" class="nav-btn" onclick="closeDetail()">' + (en ? 'Close' : 'Fermer') + '</button>'
+          : '<h3>✅ ' + (en ? 'Recall cycle passed' : 'Rappel validé') + ' · ' + state.passedAt.length + '/4</h3><p>' + (en ? 'The full line and both understanding questions were answered without help. Next review: ' : 'La ligne complète et les deux questions ont été réussies sans aide. Prochain rappel : ') + new Date(state.dueAt).toLocaleDateString(en?'en-GB':'fr-FR') + '.</p><button type="button" class="nav-btn" onclick="closeDetail()">' + (en ? 'Close' : 'Fermer') + '</button>';
+    }
+}
+
+function parseRecallTokens(value) {
+    return value.replace(/\{[^}]*\}/g,' ').replace(/\([^)]*\)/g,' ').replace(/;[^\n]*/g,' ').replace(/\d+\.(?:\.\.)?/g,' ').split(/\s+/).map(function(t){return t.replace(/^[,]+|[,]+$/g,'').replace(/[!?]+$/g,'');}).filter(function(t){return t && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t);});
+}
+function normalizeSan(san) { return String(san||'').replace(/[+#?!]+$/g,''); }
+function frenchSanCandidates(token) {
+    const map = {C:'N',F:'B',T:'R',D:'Q',R:'K'};
+    const first = token.charAt(0);
+    return map[first] ? [token,map[first]+token.slice(1)] : [token];
+}
+function checkOpeningRecall() {
+    if (!currentOpening || recallMode !== 'line') return;
+    const input = document.getElementById('openingRecallInput');
+    if (input) recallInput = input.value;
+    const tokens = parseRecallTokens(recallInput);
+    const expected = currentOpening.moves;
+    let replay = new Chess(), matched = 0;
+    for (let i=0; i<Math.min(tokens.length,expected.length); i++) {
+        let accepted = null;
+        const candidates = frenchSanCandidates(tokens[i]);
+        for (let j=0; j<candidates.length; j++) {
+            const probe = new Chess(replay.fen());
+            try {
+                const move = probe.move(candidates[j],{sloppy:true});
+                if (move && normalizeSan(move.san) === normalizeSan(expected[i].san)) { accepted = probe; break; }
+            } catch(e) {}
+        }
+        if (!accepted) break;
+        replay = accepted; matched++;
+    }
+    const feedback = document.getElementById('recallFeedback');
+    if (matched !== expected.length || tokens.length !== expected.length) {
+        const en = window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
+        if (feedback) feedback.textContent = (en ? 'Not yet: ' : 'Pas encore : ') + matched + '/' + expected.length + (en ? ' half-moves match. Review the line; the answer is not shown.' : ' demi-coups correspondent. Révise la ligne ; la solution n’est pas affichée.');
+        return;
+    }
+    recallMode = 'quiz'; recallQuizIndex = 0; recallFailed = false;
+    renderRecallStep();
+}
+function renderRecallQuiz() {
+    const panel = document.getElementById('opening-quiz');
+    const questions = OPENING_QUIZZES[currentOpening.id] || [];
+    const en = window.ChessNovaI18n && ChessNovaI18n.getLang()==='en';
+    if (recallFailed) {
+        panel.innerHTML = '<h3>↻ ' + (en ? 'Recall not passed' : 'Rappel non validé') + '</h3><p>' + (en ? 'At least one answer was wrong. Review the lesson, then try again without hints.' : 'Une réponse était incorrecte. Revois la leçon puis retente sans indice.') + '</p><button type="button" class="nav-btn" onclick="restartOpeningStudy()">' + (en ? 'Review the lesson' : 'Revoir la leçon') + '</button>';
+        return;
+    }
+    if (recallQuizIndex >= questions.length) { recordOpeningCycle(); return; }
+    const question = questions[recallQuizIndex];
+    const options = question.choices.map(function(choice,i){return '<button type="button" class="quiz-option" onclick="answerRecallQuiz(' + i + ')">' + choice + '</button>';}).join('');
+    panel.innerHTML = '<h3>' + (en ? 'No-help understanding check' : 'Vérification de compréhension sans indice') + ' · ' + (recallQuizIndex+1) + '/' + questions.length + '</h3><p>' + question.question + '</p>' + options + '<p class="muted">' + (en ? 'First answer counts. No hints or retries.' : 'La première réponse compte. Aucun indice ni nouvel essai dans ce contrôle.') + '</p>';
+}
+function answerRecallQuiz(index) {
+    if (recallFailed) return;
+    const question = (OPENING_QUIZZES[currentOpening.id] || [])[recallQuizIndex];
+    if (!question) return;
+    if (index !== question.answer) { recallFailed = true; renderRecallQuiz(); return; }
+    recallQuizIndex++; renderRecallQuiz();
+}
+function restartOpeningStudy() {
+    recallMode=''; recallInput=''; recallQuizIndex=0; recallFailed=false;
+    quizIndex=0; quizMistakes=0; quizNotice=''; currentMoveIdx=-1; game=new Chess();
+    renderDetail();
+}
+function recordOpeningCycle() {
+    const now = Date.now();
+    const previous = masteryData[currentOpening.id] || {passedAt:[]};
+    const passedAt = Array.isArray(previous.passedAt) ? previous.passedAt.slice() : [];
+    if (previous.dueAt > now) { recallMode='complete'; renderRecallStep(); return; }
+    passedAt.push(now);
+    const mastered = passedAt.length >= 4;
+    let dueAt = 0;
+    if (passedAt.length === 1) dueAt = now + DAY_MS;
+    else if (passedAt.length === 2) dueAt = now + 6*DAY_MS;
+    else if (passedAt.length === 3) dueAt = now + 23*DAY_MS;
+    masteryData[currentOpening.id] = {passedAt:passedAt.slice(-4),dueAt:mastered?0:dueAt,mastered:mastered,legacy:false};
+    saveMastery(); refreshMastered(); renderGrid(); updateProgress();
+    if (mastered && window.ChessNovaProgress) { ChessNovaProgress.recordPractice('ouvertures',20,'Variante étudiée maîtrisée'); ChessNovaProgress.checkTrainingBadges(); }
+    recallMode='complete'; renderRecallStep();
+}
 function closeDetail() {
     document.getElementById('detail-panel').classList.remove('visible');
-    currentOpening = null;
-    game = null;
+    currentOpening = null; game = null; recallMode=''; recallInput=''; recallQuizIndex=0; recallFailed=false;
 }
 
 // Keyboard navigation for the opening trainer.
@@ -684,7 +811,7 @@ document.addEventListener('keydown', function (e) {
 
 // Page-specific copy for the language switcher.
 const OPENING_EN = {
-  labels:{title:'📖 Opening Training',subtitle:'8 key lines to discover opening ideas. Each course ends with two comprehension questions.',back:'← Back to Hub',progress:'openings mastered',close:'✕ Close',prev:'← Previous',next:'Next →',initial:'Starting position',halfmoves:'half-moves',useNext:'Use Next or select a half-move to follow the line.',theory:'📚 Theory',mastered:'✅ Mastered',quiz:'🧠 Check your understanding',acquired:'✅ Check complete',completed:'You followed the line and answered both questions correctly.',validate:'Validate mastery',again:'Not yet. Hint',invalid:'Invalid line: ',unavailable:'Chessboard unavailable: reload the page.',mustFinish:'Follow the line and answer both questions correctly before validating mastery.'},
+  labels:{title:'📖 Opening Training',subtitle:'8 key lines to discover opening ideas. Each course ends with two comprehension questions.',back:'← Back to Hub',progress:'lines mastered',close:'✕ Close',prev:'← Previous',next:'Next →',initial:'Starting position',halfmoves:'half-moves',useNext:'Use Next or select a half-move to follow the line.',theory:'📚 Theory',mastered:'✅ Mastered',quiz:'🧠 Check your understanding',acquired:'✅ Check complete',completed:'You followed the line and answered both questions correctly.',validate:'Validate mastery',again:'Not yet. Hint',invalid:'Invalid line: ',unavailable:'Chessboard unavailable: reload the page.',mustFinish:'Follow the line and answer both questions correctly before validating mastery.'},
   openings:{sicilian:['Sicilian Defence','Najdorf Variation · 5...a6',['Aggressive','Complex','Top GM'],'The Sicilian is one of the most popular chess openings. After 1.e4 c5, Black fights for the centre asymmetrically. The Najdorf (5...a6), studied deeply by Fischer and Kasparov, prepares ...e5 or ...e6 depending on White’s setup.'],ruy:['Ruy Lopez (Spanish Game)','Classical opening 1.e4 e5',['Positional','Classical','Universal'],'The Ruy Lopez is one of the oldest analysed openings. The bishop on b5 pressures the knight defending e5, aiming for the bishop pair or central control. It often leads to rich strategic positions.'],'gambit-dame':['Queen’s Gambit','Queen’s pawn opening 1.d4',['Positional','Solid','Classical'],'The Queen’s Gambit (1.d4 d5 2.c4) is a major high-level opening. White temporarily offers the c-pawn to challenge the centre. If Black accepts, White seeks compensation and space; winning the pawn back is not automatic. The declined line with 2...e6 is solid.'],'king-indian':['King’s Indian Defence','Hypermodern system 1.d4 Nf6 2.c4 g6',['Dynamic','Counterplay','Kasparov'],'In the King’s Indian, Black often lets White occupy the centre, then challenges it with ...e5 or ...c5. The fianchettoed bishop on g7 pressures the long diagonal. Fischer and Kasparov both played this defence.'],french:['French Defence','Solid counterattacking line 1.e4 e6',['Solid','Counterplay','Endgames'],'The French Defence is known for its solidity. Black builds a pawn structure with ...e6 and ...d5, then often counterattacks with ...c5. The structure can restrict the c8 bishop, so Black seeks active counterplay.'],'caro-kann':['Caro-Kann Defence','Solid and classical 1.e4 c6',['Solid','Strategic','Carlsen'],'The Caro-Kann is valued for its sound pawn structure. Unlike in the French Defence, Black’s queen’s bishop is not blocked by ...e6. After 1.e4 c6 2.d4 d5, Black keeps a healthy structure and seeks active play. Petrosian and Karpov were great exponents.'],english:['English Opening','Hypermodern 1.c4',['Flexible','Hypermodern','Complex'],'The English Opening (1.c4) controls the centre from the flank. It can transpose into queen’s pawn openings and offers flexible plans. Kasparov and Botvinnik were experts.'],italian:['Italian Game','Giuoco Piano 1.e4 e5 2.Nf3 Nc6 3.Bc4',['Classical','Strategic','Top level'],'The Italian Game develops quickly and targets the sensitive f7-square. The Giuoco Piano often leads to open, strategic positions where central breaks and king safety matter.']}
 };
 function applyOpeningLanguage(lang){
@@ -702,8 +829,8 @@ window.ChessNovaPageTranslate=applyOpeningLanguage;
 updateProgress();
 renderGrid();
 </script>
-<script src="shared/i18n.js"></script>
-<script src="shared/community.js"></script>
+<script src="shared/i18n.js?v=dynamic-i18n-20261102"></script>
+<script src="shared/community.js?v=translated-players-20261102"></script>
 
 <script defer src="shared/site-global.js?v=solid-pieces-20261102"></script>
 </body>

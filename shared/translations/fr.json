@@ -333,5 +333,7 @@
     "supa_card_progress_desc": "Explore les tableaux et historiques de progression disponibles.",
     "supa_card_source": "Paquet moteur SupaChess",
     "supa_card_source_desc": "Consulte le code TypeScript, l’évaluation, la recherche et les tests du paquet moteur.",
-    "supa_footer": "Les chiffres et résultats affichés sur les pages liées sont ceux de ces pages et ne constituent pas une évaluation FIDE."
+    "supa_footer": "Les chiffres et résultats affichés sur les pages liées sont ceux de ces pages et ne constituent pas une évaluation FIDE.",
+    "supa_card_legacy": "Hub moteur historique",
+    "supa_card_legacy_desc": "Retrouve le hub SupaChess Engine et sa bibliothèque de visualisations."
 }

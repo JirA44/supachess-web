@@ -31,7 +31,7 @@
       var white = node.matches(whiteSideSelector), black = !white && node.matches(blackSideSelector);
       if (white) node.classList.add('supachess-filled-white-piece');
       if (black) node.classList.add('supachess-filled-black-piece');
-      var glyph = (node.textContent || '').trim();
+      var glyph = (node.textContent || '').trim().replace(/[\uFE0E\uFE0F]/g, '');
       if (outlineToSolid[glyph]) node.textContent = outlineToSolid[glyph];
     });
   }

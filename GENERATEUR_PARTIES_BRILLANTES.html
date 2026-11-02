@@ -39,6 +39,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread</option><option value="full">Full mono-thread</option></select></div>
 <div class="field"><label for="engine-js">Fichier JavaScript</label><a id="engine-js-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.js" target="_blank" rel="noopener">Télécharger le fichier JS Lite</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
 <div class="field"><label for="engine-wasm">Réseau WASM</label><a id="engine-wasm-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.wasm" target="_blank" rel="noopener">Télécharger le réseau WASM Lite</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
+<div class="field hidden" id="engine-nnue-field"><label for="engine-nnue">Réseau NNUE (SF16)</label><a id="engine-nnue-link" target="_blank" rel="noopener">Télécharger le réseau NNUE SF16</a><input id="engine-nnue" type="file" accept=".nnue,application/octet-stream"></div>
 </div>
 <p class="muted">Sélectionne les deux fichiers du même build. Les noms et tailles officielles de SF18/19 sont contrôlés. Pour SF16/17, les noms des fichiers peuvent varier : choisis le JS et le WASM de la même version; l’identifiant UCI est contrôlé au démarrage.</p>
 </div>
@@ -87,28 +88,34 @@ function setProgress(percent){document.getElementById("progress-fill").style.wid
 const STOCKFISH_RELEASES={19:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}},18:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-18-lite-single.js",wasmName:"stockfish-18-lite-single.wasm",jsBytes:20670,wasmBytes:7295411},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-18-single.js",wasmName:"stockfish-18-single.wasm",jsBytes:20569,wasmBytes:112992459}}};
 function selectedEngineVersion(){return document.getElementById("engine-version").value;}
 function selectedEngineBuild(){const version=selectedEngineVersion(),flavor=document.getElementById("engine-build").value;return (STOCKFISH_RELEASES[version]&&STOCKFISH_RELEASES[version][flavor])||{id:"custom",label:"Build local Stockfish "+version,version};}
-function updateEngineLinks(clearSelection=false){const build=selectedEngineBuild(),release=STOCKFISH_RELEASES[selectedEngineVersion()],jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link");if(release){jsLink.href=release.url+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=release.url+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";}else{jsLink.removeAttribute("href");wasmLink.removeAttribute("href");jsLink.textContent="Fichier JS Stockfish "+selectedEngineVersion()+" à sélectionner";wasmLink.textContent="Fichier WASM Stockfish "+selectedEngineVersion()+" à sélectionner";}if(clearSelection){document.getElementById("engine-js").value="";document.getElementById("engine-wasm").value="";}}
+function updateEngineLinks(clearSelection=false){const version=selectedEngineVersion(),selector=document.getElementById("engine-build"),options=selector.options,jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link"),nnueField=document.getElementById("engine-nnue-field"),nnueLink=document.getElementById("engine-nnue-link"),release=STOCKFISH_RELEASES[version];if(version==="16"){selector.value="full";options[0].disabled=true;options[1].disabled=false;options[1].textContent="Full mono-thread · réseau NNUE 38 Mo";jsLink.href="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16-single.js";jsLink.textContent="Télécharger Stockfish 16 JS";wasmLink.href="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16-single.wasm";wasmLink.textContent="Télécharger Stockfish 16 WASM";nnueLink.href="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/nn-5af11540bbfe.nnue";nnueLink.textContent="Télécharger le réseau NNUE 16";nnueField.classList.remove("hidden");}else if(version==="17"){selector.value="lite";options[0].disabled=false;options[1].disabled=true;options[0].textContent="Lite mono-thread · WASM ≈ 7 Mo";jsLink.href="https://cdn.jsdelivr.net/npm/stockfish@17.1.0/src/stockfish-nnue-17.1-lite-single-03e3232.js";jsLink.textContent="Télécharger Stockfish 17.1 Lite JS";wasmLink.href="https://cdn.jsdelivr.net/npm/stockfish@17.1.0/src/stockfish-nnue-17.1-lite-single-03e3232.wasm";wasmLink.textContent="Télécharger Stockfish 17.1 Lite WASM";nnueField.classList.add("hidden");}else{options[0].disabled=false;options[1].disabled=false;options[0].textContent="Lite mono-thread";options[1].textContent="Full mono-thread";nnueField.classList.add("hidden");const build=selectedEngineBuild();jsLink.href=release.url+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=release.url+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";}if(clearSelection){for(const id of ["engine-js","engine-wasm","engine-nnue"])document.getElementById(id).value="";}}
 function normalizeEngineFileName(name){return name.replace(/ \(\d+\)(?=\.(?:js|wasm)$)/i,"");}
 function validateEngineFiles(){
  const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];
  if(!js||!wasm)throw new Error("Sélectionne les fichiers JavaScript et WASM du même build Stockfish "+selectedEngineVersion()+".");
  const version=selectedEngineVersion(),normalizedJs=normalizeEngineFileName(js.name),normalizedWasm=normalizeEngineFileName(wasm.name),release=STOCKFISH_RELEASES[version];
- if(!release){if(!/\.js$/i.test(js.name)||!/\.wasm$/i.test(wasm.name))throw new Error("Pour SF"+version+", sélectionne un fichier JavaScript .js et son réseau .wasm. Leurs noms peuvent varier; la version sera vérifiée par UCI au démarrage.");return {build:selectedEngineBuild(),js,wasm};}
+ if(!release){if(!/\.js$/i.test(js.name)||!/\.wasm$/i.test(wasm.name))throw new Error("Pour SF"+version+", sélectionne un fichier .js et son fichier .wasm.");const nnue=version==="16"?document.getElementById("engine-nnue").files[0]:null;if(version==="16"&&(!nnue||!/\.nnue$/i.test(nnue.name)))throw new Error("Stockfish 16 requiert aussi le fichier réseau .nnue téléchargé ci-dessus.");return {build:selectedEngineBuild(),js,wasm,nnue};}
  const build=release[document.getElementById("engine-build").value];
  if(!build||normalizedJs!==build.jsName||normalizedWasm!==build.wasmName)throw new Error("Mauvaise paire de fichiers : choisis les fichiers "+version+" "+document.getElementById("engine-build").value+" correspondants.");
  if(js.size!==build.jsBytes||wasm.size!==build.wasmBytes)throw new Error("Fichier incomplet ou altéré pour Stockfish "+version+" "+build.label+" : JS "+js.size.toLocaleString("fr-FR")+"/"+build.jsBytes.toLocaleString("fr-FR")+" octets, WASM "+wasm.size.toLocaleString("fr-FR")+"/"+build.wasmBytes.toLocaleString("fr-FR")+" octets.");return {build,js,wasm};
 }
 function releaseEngineObjectUrls(){for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];}
-function makeEngineWorker(){
- const {js,wasm}=validateEngineFiles();
- const jsUrl=URL.createObjectURL(js),wasmUrl=URL.createObjectURL(wasm);
- engineObjectUrls.push(jsUrl,wasmUrl);
- // Stockfish.js reads the matching WASM URL from the worker URL fragment.
- // This is the upstream browser loading mechanism; no custom init message is needed.
+async function makeEngineWorker(){
+ const {js,wasm,nnue}=validateEngineFiles();
+ const wasmUrl=URL.createObjectURL(wasm);engineObjectUrls.push(wasmUrl);
+ if(selectedEngineVersion()==="16"){
+  const nnueUrl=URL.createObjectURL(nnue);engineObjectUrls.push(nnueUrl);
+  let source=await js.text();
+  source=source.replace(/stockfish-nnue-16-single\.wasm/g,wasmUrl).replace(/nn-[a-f0-9]+\.nnue/g,nnueUrl);
+  if(!source.includes(nnueUrl))throw new Error("Le fichier JS SF16 ne référence pas le réseau NNUE fourni.");
+  const jsUrl=URL.createObjectURL(new Blob([source],{type:"text/javascript"}));engineObjectUrls.push(jsUrl);
+  return new Worker(jsUrl,{type:"module"});
+ }
+ const jsUrl=URL.createObjectURL(js);engineObjectUrls.push(jsUrl);
  return new Worker(jsUrl+"#"+wasmUrl);
 }
 function resetEngineForSelection(){if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(new Error("La version du moteur a changé."));activeSearch=null;}if(worker){worker.terminate();worker=null;}rejectUciWaiters(new Error("La sélection du moteur a changé."));readyPromise=null;engineReady=false;detectedEngineVersion=null;releaseEngineObjectUrls();}
-function setEngineInputsDisabled(disabled){for(const id of ["engine-version","engine-build","engine-js","engine-wasm","generate"])document.getElementById(id).disabled=disabled;}
+function setEngineInputsDisabled(disabled){for(const id of ["engine-version","engine-build","engine-js","engine-wasm","engine-nnue","generate"])document.getElementById(id).disabled=disabled;}
 function waitFor(token,timeoutMs){
  return new Promise((resolve,reject)=>{
   const waiter={token,resolve,reject};
@@ -152,7 +159,7 @@ function ensureEngine(){
  readyPromise=(async()=>{
   const {build}=validateEngineFiles();activeEngineBuild=build.label;activeEngineVersion=selectedEngineVersion();detectedEngineVersion=null;
   engineReady=false;
-  worker=makeEngineWorker();worker.onmessage=onEngineMessage;
+  worker=await makeEngineWorker();worker.onmessage=onEngineMessage;
   const startupTimeoutMs=build.id==="lite"?300000:900000;
   worker.onerror=event=>{
    const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");
@@ -357,7 +364,7 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  document.getElementById("engine-version").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Stockfish "+selectedEngineVersion()+" sélectionné. Choisis les deux fichiers de cette version avant de générer ou vérifier.");});
   document.getElementById("engine-build").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
  updateEngineLinks();
- for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Paire locale sélectionnée; la version SF"+selectedEngineVersion()+" sera vérifiée par UCI au démarrage. Tu peux générer.");}catch(error){status(error.message);}});
+ for(const id of ["engine-js","engine-wasm","engine-nnue"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les fichiers JS et WASM "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Fichiers Stockfish "+selectedEngineVersion()+" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.129"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.130"></script>
 </body></html>

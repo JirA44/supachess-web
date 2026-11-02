@@ -42,7 +42,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <p class="muted">Sélectionne les deux fichiers du même build. Leur nom et leur taille officielle sont vérifiés avant compilation. Choisis Full si tu veux le réseau complet et si le navigateur dispose de suffisamment de mémoire.</p>
 </div>
 <div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
-<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. Le suivi donne le temps restant et le pourcentage pour le transfert, le protocole UCI, les coups et la génération. Pendant la compilation WASM, il affiche le temps et le délai maximal restant : le moteur ne fournit pas de progression réelle. Utilise le bouton d’annulation si l’attente bloque.</p>
+<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers du build Stockfish 19 choisi. Les tailles sont vérifiées avant compilation; Lite est sélectionné par défaut pour les navigateurs à mémoire limitée.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
 <section id="results-panel" class="panel hidden">
@@ -65,6 +65,12 @@ const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
 function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?seconds+" s (~"+Math.floor(seconds/60)+" min "+(seconds%60)+" s)":seconds+" s";}
 function setProgress(percent){document.getElementById("progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";}
+const STOCKFISH_RELEASE="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/";
+const STOCKFISH_BUILDS={lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}};
+function selectedEngineBuild(){return STOCKFISH_BUILDS[document.getElementById("engine-build").value]||STOCKFISH_BUILDS.lite;}
+function updateEngineLinks(clearSelection=false){const build=selectedEngineBuild();const jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link");jsLink.href=STOCKFISH_RELEASE+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=STOCKFISH_RELEASE+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";if(clearSelection){document.getElementById("engine-js").value="";document.getElementById("engine-wasm").value="";}}
+function validateEngineFiles(){const build=selectedEngineBuild(),js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm)throw new Error("Sélectionne les deux fichiers Stockfish 19 "+build.label+".");if(js.name!==build.jsName||wasm.name!==build.wasmName)throw new Error("Les fichiers sélectionnés ne correspondent pas au build "+build.label+". Choisis les deux fichiers indiqués.");if(js.size!==build.jsBytes)throw new Error("Le fichier "+js.name+" est incomplet ou modifié : "+js.size+" octets reçus, "+build.jsBytes+" attendus.");if(wasm.size!==build.wasmBytes)throw new Error("Le fichier "+wasm.name+" est incomplet ou modifié : "+wasm.size.toLocaleString("fr-FR")+" octets reçus, "+build.wasmBytes.toLocaleString("fr-FR")+" attendus.");return {build,js,wasm};}
+function releaseEngineObjectUrls(){for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];}
 function waitFor(line,timeout=180000){
  const startedAt=performance.now();
  return new Promise((resolve,reject)=>{
@@ -131,28 +137,27 @@ function readWasmFile(file){
  });
 }
 function makeEngineWorker(){
- const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];
- if(!js||!wasm)throw new Error("Sélectionne les fichiers stockfish-19-single.js et stockfish-19-single.wasm ci-dessus.");
- if(!/stockfish-19-single\.js$/i.test(js.name)||!/stockfish-19-single\.wasm$/i.test(wasm.name))throw new Error("Choisis bien les deux fichiers Stockfish 19 full single-threaded indiqués.");
+ const {build,js,wasm}=validateEngineFiles();
  const jsUrl=URL.createObjectURL(js),wasmUrl=URL.createObjectURL(wasm);
  engineObjectUrls.push(jsUrl,wasmUrl);
- const bootstrap='self.onmessage=function(event){var data=event.data||{};if(data.type!=="init")return;self.onmessage=null;postMessage({type:"engine-loading",message:"Réseau lu. Compilation de Stockfish 19 full…"});self.Module=self.Module||{};self.Module.wasmBinary=data.wasmBinary;self.Module.locateFile=function(){return '+JSON.stringify(wasmUrl)+';};self.Module.onAbort=function(reason){postMessage({type:"engine-error",message:"Stockfish a interrompu la compilation WebAssembly : "+String(reason||"cause inconnue")});};var originalRuntimeHook=null,runtimeNotified=false;Object.defineProperty(self.Module,"onRuntimeInitialized",{configurable:true,enumerable:true,get:function(){return function(){try{if(typeof originalRuntimeHook==="function")originalRuntimeHook.apply(this,arguments);}finally{if(!runtimeNotified){runtimeNotified=true;postMessage({type:"engine-runtime-ready"});}}};},set:function(fn){originalRuntimeHook=fn;}});try{importScripts('+JSON.stringify(jsUrl)+');}catch(error){postMessage({type:"engine-error",message:"Chargement du fichier moteur impossible : "+String(error&&error.message||error)});}};';
+ const bootstrap='self.onmessage=function(event){var data=event.data||{};if(data.type!=="init")return;self.onmessage=null;postMessage({type:"engine-loading",message:"Réseau lu. Compilation de Stockfish 19…"});self.Module=self.Module||{};self.Module.wasmBinary=data.wasmBinary;self.Module.locateFile=function(){return '+JSON.stringify(wasmUrl)+';};self.Module.onAbort=function(reason){postMessage({type:"engine-error",message:"Stockfish a interrompu la compilation WebAssembly : "+String(reason||"cause inconnue")});};var originalRuntimeHook=null,runtimeNotified=false;Object.defineProperty(self.Module,"onRuntimeInitialized",{configurable:true,enumerable:true,get:function(){return function(){try{if(typeof originalRuntimeHook==="function")originalRuntimeHook.apply(this,arguments);}finally{if(!runtimeNotified){runtimeNotified=true;postMessage({type:"engine-runtime-ready"});}}};},set:function(fn){originalRuntimeHook=fn;}});try{importScripts('+JSON.stringify(jsUrl)+');}catch(error){postMessage({type:"engine-error",message:"Chargement du fichier moteur impossible : "+String(error&&error.message||error)});}};';
  const workerUrl=URL.createObjectURL(new Blob([bootstrap],{type:"text/javascript"}));
- try{const instance=new Worker(workerUrl);return instance;}finally{URL.revokeObjectURL(workerUrl);}
+ engineObjectUrls.push(workerUrl);
+ return new Worker(workerUrl);
 }
 function ensureEngine(){
  if(readyPromise)return readyPromise;
  readyPromise=(async()=>{
-  const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];
-  if(!js||!wasm)throw new Error("Sélectionne les deux fichiers Stockfish 19 full avant de lancer la génération.");
-  status("Lecture du réseau Stockfish 19 full (~99 Mo) depuis le fichier sélectionné…");
+  const {build,js,wasm}=validateEngineFiles();
+  status("Lecture du réseau WASM Stockfish 19 "+build.label+" ("+wasm.size.toLocaleString("fr-FR")+" octets) depuis le fichier sélectionné…");
   const wasmBinary=await readWasmFile(wasm);
   if(cancelRequested)throw new Error("Initialisation annulée.");
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
   const compileStartedAt=performance.now();
-  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=900,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly : aucun signal de fin depuis "+elapsed+" s · ≈ "+formatDuration(remaining)+" avant l’arrêt automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). Le moteur peut encore compiler; son pourcentage réel n’est pas fourni."+(elapsed>=180?" Si l’attente continue, vérifie que les deux fichiers sont complets et que le navigateur a assez de mémoire.":""));setProgress(percent);},1000);
-  const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish n’a pas terminé la compilation WebAssembly après 15 minutes. Vérifie que les deux fichiers sont complets et réessaie dans un navigateur avec assez de mémoire.")),900000);});
+  const bootTimeoutMs=build.id==="lite"?120000:900000,bootTimeoutSeconds=bootTimeoutMs/1000;
+  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=bootTimeoutSeconds,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly ("+build.label+") : aucun signal de fin depuis "+elapsed+" s · ≈ "+formatDuration(remaining)+" avant l’arrêt automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). Le moteur ne fournit pas de progression réelle."+(elapsed>=60?(build.id==="full"?" Le build Full utilise un WASM de 99,1 Mo ; sélectionne Lite si ton navigateur manque de mémoire.":"Vérifie les tailles officielles des fichiers et la mémoire disponible."):""));setProgress(percent);},1000);
+  const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish 19 "+build.label+" n’a pas terminé l’initialisation WebAssembly après "+formatDuration(bootTimeoutSeconds)+". Vérifie les tailles affichées; pour le build Full (99,1 Mo), essaie Lite (1,8 Mo WASM) si le navigateur manque de mémoire.")),bootTimeoutMs);});
   worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){activeSearch.reject(error);activeSearch=null;}};
   worker.postMessage({type:"init",wasmBinary},[wasmBinary]);
   status("Réseau lu (100 %). Compilation WebAssembly de Stockfish en cours…");
@@ -163,8 +168,9 @@ function ensureEngine(){
   worker.postMessage("isready");await waitFor("readyok",180000);
   setProgress(100);
   engineReady=true;
-  status("Stockfish 19 full est prêt. Génération des parties candidates…");return worker;
- })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];throw error;});
+  releaseEngineObjectUrls();
+  status("Stockfish 19 "+build.label+" est prêt. Génération des parties candidates…");return worker;
+ })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;releaseEngineObjectUrls();throw error;});
  return readyPromise;
 }
 function setEngineElo(elo){worker.postMessage("setoption name UCI_LimitStrength value true");worker.postMessage("setoption name UCI_Elo value "+elo);}
@@ -261,7 +267,9 @@ document.getElementById("next").addEventListener("click",()=>{const record=curre
 document.getElementById("download-pgn").addEventListener("click",()=>{const record=currentGames[selectedGame];if(!record)return;const blob=new Blob([pgnFor(record)],{type:"application/x-chess-pgn"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="supachess-brilliant-candidate-"+(selectedGame+1)+".pgn";a.click();URL.revokeObjectURL(url);});
 document.getElementById("white-elo").addEventListener("change",()=>clampElo("white-elo"));
 document.getElementById("black-elo").addEventListener("change",()=>clampElo("black-elo"));
-for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const ready=!!document.getElementById("engine-js").files[0]&&!!document.getElementById("engine-wasm").files[0];status(ready?"Les deux fichiers sont sélectionnés. Tu peux lancer les parties Stockfish UCI 2800+.":"Sélectionne le fichier JavaScript et le réseau WASM Stockfish 19 full.");});
+ document.getElementById("engine-build").addEventListener("change",()=>{updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
+ updateEngineLinks();
+ for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
 <script defer src="shared/site-global.js?v=piece-contrast-20261102d"></script>
 </body></html>

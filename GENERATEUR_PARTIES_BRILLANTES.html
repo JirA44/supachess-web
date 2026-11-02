@@ -143,6 +143,7 @@ function ensureEngine(){
   status("Compilation terminée. Vérification du protocole UCI…");
   worker.postMessage("uci");await waitFor("uciok",180000);
   worker.postMessage("isready");await waitFor("readyok",180000);
+  engineReady=true;
   status("Stockfish 19 full est prêt. Génération des parties candidates…");return worker;
  })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];throw error;});
  return readyPromise;

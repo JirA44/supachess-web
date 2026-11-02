@@ -117,6 +117,30 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    // Public, privacy-limited puzzle ratings. The document ID is the account UID;
+    // the document contains only a display name, Elo, solve count, and timestamp.
+    match /puzzle_leaderboard/{uid} {
+      allow read: if true;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'displayName', 'puzzleElo', 'puzzlesSolved', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'displayName', 'puzzleElo', 'puzzlesSolved', 'updatedAt'
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 40
+        && !request.resource.data.displayName.matches('.*@.*')
+        && request.resource.data.puzzleElo is int
+        && request.resource.data.puzzleElo >= 400
+        && request.resource.data.puzzleElo <= 4000
+        && request.resource.data.puzzlesSolved is int
+        && request.resource.data.puzzlesSolved >= 0
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
     // All other collections remain denied until their access patterns are
     // separately reviewed and given least-privilege rules.
   }

@@ -39,8 +39,8 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="engine-wasm">Stockfish 19 · réseau WASM (~99 Mo)</label><a href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-single.wasm" target="_blank" rel="noopener">Télécharger stockfish-19-single.wasm</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
 </div>
 </div>
-<div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Arrêter la génération après le demi-coup en cours</button></div>
-<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. Au lancement, la page indique la progression de lecture du réseau (~99 Mo), puis confirme la compilation et le protocole UCI.</p>
+<div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
+<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. La compilation WebAssembly peut dépasser 3 minutes : le temps écoulé reste affiché, mais son pourcentage n’est pas mesurable. Utilise le bouton d’annulation si tu veux l’interrompre.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
 <section id="results-panel" class="panel hidden">

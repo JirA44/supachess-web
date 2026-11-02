@@ -26,7 +26,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 <header>
   <h1>🛡️ Défendre contre les tactiques</h1>
   <p>Ne cherche pas seulement le coup brillant : apprends à repérer la menace adverse avant qu’elle arrive, puis à l’empêcher. Cette première série travaille l’enfilade sur le roi et la dame, sur plusieurs horizons.</p>
-  <span class="pill">9 positions · 3 niveaux Elo · 3 horizons · les deux camps</span>
+  <span class="pill">15 positions · 5 niveaux Elo · 3 horizons · jusqu’à 30 pièces sur l’échiquier</span>
 </header>
 <section class="panel method" aria-labelledby="method-title">
   <h2 id="method-title">Ta routine de défense en 4 étapes</h2>
@@ -40,7 +40,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 </section>
 <section class="panel"><h2>Défi avancé : plusieurs coups brillants ou précis</h2><p>Pour les positions très chargées et les combinaisons longues, résous les puzzles séquencés : tu dois trouver chaque coup clé et poursuivre après la première tactique.</p><a class="nav-link" href="TACTICAL_SEQUENCES.html">Lancer les puzzles de combinaisons longues →</a></section><section class="panel method" aria-labelledby="progression-title"><h2 id="progression-title">Parcours progressif : défendre, prévoir, contre-attaquer</h2><p>Commence par reconnaître la menace immédiate, puis calcule les coups de préparation et les réponses forcées. Les Elo sont indicatifs : ils décrivent la complexité de l’exercice, pas une note de joueur.</p><div class="steps"><div class="step"><b>900 · Repérer</b>Vois l’alignement roi-dame et trouve le coup simple qui retire la cible.</div><div class="step"><b>1 400 · Prévenir</b>Détecte la pièce qui prépare l’enfilade et neutralise le plan avant qu’il soit prêt.</div><div class="step"><b>1 900 · Calculer</b>Lis la séquence complète, vérifie les coups forcés et compare plusieurs parades.</div><div class="step"><b>2 300+ · Trouver une ressource</b>Quand la défense directe échoue, cherche un échange, une menace plus forte ou une contre-attaque qui gagne un tempo.</div></div><p class="horizon-note"><strong>Réflexe stratégique :</strong> après chaque défense, demande-toi si l’adversaire garde son plan, s’il a une menace plus urgente, et si tu peux créer une contre-menace. Un coup brillant de défense peut être un échec intermédiaire, une attaque sur la dame, une pièce sacrifiée pour ouvrir une fuite ou une contre-attaque forcée.</p></section>
 <section class="panel" aria-labelledby="practice-title">
-  <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 9 réussis</div></div>
+  <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 15 réussis</div></div>
   <div class="controls" role="group" aria-label="Filtrer par horizon de menace">
     <button class="horizon-btn" type="button" data-filter="all" aria-pressed="true" onclick="filterHorizon('all')">Tous</button>
     <button class="horizon-btn" type="button" data-filter="1" aria-pressed="false" onclick="filterHorizon('1')">Prochain demi-coup adverse</button>
@@ -87,6 +87,22 @@ const BASE_EXERCISES = [
     prompt:"Tu défends. Repère le plan avant le 3e coup adverse.",
     threat:"Le cavalier puis le fou peuvent dégager la colonne de la tour. Celle-ci cherchera ensuite à donner échec et à atteindre la dame située derrière le roi.",
     explanation:"Sors la dame de l’alignement avant le début du déblayage. Même si les deux pièces dégagent la colonne, la tour ne pourra plus gagner ta dame par l’enfilade."
+  },
+  {
+    id:"skewer-h4",horizon:3,rating:2400,fen:"rq1k2r1/pppppp2/p4b1p/6n1/2B3b1/Q3K3/PPPPPPPP/RNB2B1R w - - 0 1",
+    blackPlan:["g5h7","g4h3","g8g3"],whiteReplies:["e3d3","d3c3"],
+    planLabel:"Position dense : cavalier et fou libèrent la colonne de la tour",
+    prompt:"Position très chargée · 30 pièces. Calcule la séquence noire complète et trouve une défense qui tient malgré les pièces autour du roi.",
+    threat:"La colonne g semble bloquée, mais le cavalier puis le fou peuvent s’écarter. Après ces deux préparatifs, la tour donne échec et vise la dame derrière le roi. Les autres pièces limitent les cases de fuite et rendent le calcul plus délicat.",
+    explanation:"Ne te fie pas au nombre de défenseurs autour du roi : calcule la ligne jusqu’au bout. Retire la dame de l’alignement ou supprime une pièce clé du plan, puis vérifie que la tour ne peut plus la gagner avec échec."
+  },
+  {
+    id:"skewer-h5",horizon:3,rating:2800,fen:"r2qk1r1/ppp1pp2/p1n2b1p/1p4n1/2B3b1/Q3K3/PPPPPPPP/RNB2B1R w - - 0 1",
+    blackPlan:["g5h7","g4h3","g8g3"],whiteReplies:["e3d3","d3c3"],
+    planLabel:"Défense de calcul profond dans une position presque pleine",
+    prompt:"Défi expert · 30 pièces. Compare les parades candidates et vérifie chaque échec, capture et menace jusqu’au 3e coup adverse.",
+    threat:"Le cavalier g5 et le fou g4 peuvent libérer la tour g8. Les pièces supplémentaires couvrent des cases de fuite, contrôlent des lignes et créent des contre-menaces : une défense qui paraît naturelle peut laisser la dame en prise après l’échec.",
+    explanation:"Dans cette position, compte les réponses légales après chaque échec et ne valide pas une défense sur son apparence. La bonne ressource doit casser l’enfilade ou rendre son résultat défavorable, même après le déplacement du roi."
   }
 ];
 const PIECES={p:"♟",n:"♞",b:"♝",r:"♜",q:"♛",k:"♚"};
@@ -219,6 +235,6 @@ function nextExercise(){
 function start(){resetExercise();}
 start();
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.116"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.124"></script>
 </body>
 </html>

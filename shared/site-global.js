@@ -41,7 +41,7 @@
       var type = chessGlyphType[glyph];
       if (type && (white || black)) {
         var side = white ? 'w' : 'b';
-        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=horse-profile-20261102l', root).href;
+        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=c-burnett-knight-20261102a', root).href;
         if (node.getAttribute('data-supachess-vector-src') !== vector) {
           node.setAttribute('data-supachess-vector-src', vector);
           var artwork = new Image();

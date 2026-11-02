@@ -100,106 +100,35 @@ function validateEngineFiles(){
  return {build,js,wasm};
 }
 function releaseEngineObjectUrls(){for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];}
-function waitFor(line,timeout=180000){
- const startedAt=performance.now();
- return new Promise((resolve,reject)=>{
-  const entry={line,resolve,reject,timer:null,progressTimer:null};
-  entry.progressTimer=setInterval(()=>{
-   const elapsed=Math.floor((performance.now()-startedAt)/1000),remaining=Math.max(0,Math.ceil(timeout/1000)-elapsed),percent=Math.min(100,Math.floor(elapsed/(timeout/1000)*100));
-   status("Protocole UCI · attente de "+line+" · ≈ "+formatDuration(remaining)+" avant expiration · délai écoulé "+percent+" % ("+(100-percent)+" % restant).");
-   setProgress(percent);
-  },1000);
-  entry.timer=setTimeout(()=>{clearInterval(entry.progressTimer);uciWaiters=uciWaiters.filter(x=>x!==entry);reject(new Error("Stockfish n’a pas répondu à « "+line+" » avant le délai de "+formatDuration(timeout/1000)+". Vérifie les fichiers JS/WASM et réessaie."));},timeout);
-  uciWaiters.push(entry);
- });
-}
-function rejectUciWaiters(error){
- const pending=uciWaiters.splice(0);
- for(const item of pending){clearTimeout(item.timer);clearInterval(item.progressTimer);item.reject(error);}
-}
-function onEngineMessage(event){
- const data=event.data;
- if(data&&typeof data==="object"){
-  if(data.type==="engine-loading"){status(data.message);return;}
-  if(data.type==="engine-runtime-ready"){
-   if(runtimeReadyResolve){runtimeReadyResolve();runtimeReadyResolve=null;runtimeReadyReject=null;}
-   return;
-  }
-  if(data.type==="engine-error"){
-   const error=new Error(data.message||"Erreur pendant l’initialisation du moteur.");
-   status(error.message);
-   if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}
-   rejectUciWaiters(error);
-   if(activeSearch){clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}return;
-  }
-  return;
- }
- const line=String(data||"").trim();
- if(activeSearch&&line.startsWith("info ")){const match=line.match(/score (?:cp|mate) (-?\d+)/);if(match)activeSearch.score=Number(match[1]);}
- for(const item of [...uciWaiters])if(line.includes(item.line)){clearTimeout(item.timer);clearInterval(item.progressTimer);uciWaiters=uciWaiters.filter(x=>x!==item);item.resolve(line);}
- if(activeSearch&&line.startsWith("bestmove ")){const pending=activeSearch;clearTimeout(pending.timer);clearInterval(pending.progressTimer);activeSearch=null;const match=line.match(/^bestmove\s+(\S+)(?:\s+ponder\s+(\S+))?/);pending.resolve(match?match[1]:null);}
-}
-function readWasmFile(file){
- return new Promise((resolve,reject)=>{
-  const reader=new FileReader(),startedAt=performance.now();
-  reader.onprogress=event=>{
-   if(!event.lengthComputable)return;
-   const percent=Math.min(100,Math.round(event.loaded/event.total*100)),remainingPercent=Math.max(0,100-percent);
-   const elapsedSeconds=Math.max(.2,(performance.now()-startedAt)/1000),bytesPerSecond=event.loaded/elapsedSeconds;
-   const remainingSeconds=bytesPerSecond>0?Math.ceil((event.total-event.loaded)/bytesPerSecond):0;
-   status("Lecture du réseau WASM local : "+percent+" % ("+(event.loaded/1048576).toFixed(0)+" / "+(event.total/1048576).toFixed(0)+" Mo) · temps restant estimé : ≈ "+remainingSeconds+" sec · "+remainingPercent+" % restant.");
-   document.getElementById("progress-fill").style.width=percent+"%";
-  };
-  reader.onerror=()=>reject(new Error("Impossible de lire le fichier WASM. Réessaie de le sélectionner ou retélécharge-le."));
-  reader.onabort=()=>reject(new Error("La lecture du fichier WASM a été interrompue."));
-  reader.onload=()=>{
-   const buffer=reader.result;
-   if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<8)return reject(new Error("Le fichier WASM est vide ou incomplet."));
-   const magic=new Uint8Array(buffer,0,4);
-   if(magic[0]!==0||magic[1]!==97||magic[2]!==115||magic[3]!==109)return reject(new Error("Ce fichier n’est pas un réseau WebAssembly valide. Télécharge stockfish-19-single.wasm."));
-   document.getElementById("progress-fill").style.width="100%";
-   setProgress(0);
-  status("Fichier lu à 100 %. Compilation WebAssembly : estimation du temps et du délai maximal en cours…");
-   resolve(buffer);
-  };
-  reader.readAsArrayBuffer(file);
- });
-}
 function makeEngineWorker(){
- const {build,js,wasm}=validateEngineFiles();
+ const {js,wasm}=validateEngineFiles();
  const jsUrl=URL.createObjectURL(js),wasmUrl=URL.createObjectURL(wasm);
  engineObjectUrls.push(jsUrl,wasmUrl);
- const bootstrap='self.onmessage=function(event){var data=event.data||{};if(data.type!=="init")return;self.onmessage=null;postMessage({type:"engine-loading",message:"Réseau lu. Compilation de Stockfish 19…"});self.Module=self.Module||{};self.Module.wasmBinary=data.wasmBinary;self.Module.locateFile=function(){return '+JSON.stringify(wasmUrl)+';};self.Module.onAbort=function(reason){postMessage({type:"engine-error",message:"Stockfish a interrompu la compilation WebAssembly : "+String(reason||"cause inconnue")});};var originalRuntimeHook=null,runtimeNotified=false;Object.defineProperty(self.Module,"onRuntimeInitialized",{configurable:true,enumerable:true,get:function(){return function(){try{if(typeof originalRuntimeHook==="function")originalRuntimeHook.apply(this,arguments);}finally{if(!runtimeNotified){runtimeNotified=true;postMessage({type:"engine-runtime-ready"});}}};},set:function(fn){originalRuntimeHook=fn;}});try{importScripts('+JSON.stringify(jsUrl)+');}catch(error){postMessage({type:"engine-error",message:"Chargement du fichier moteur impossible : "+String(error&&error.message||error)});}};';
- const workerUrl=URL.createObjectURL(new Blob([bootstrap],{type:"text/javascript"}));
- engineObjectUrls.push(workerUrl);
- return new Worker(workerUrl);
+ // Stockfish.js reads the matching WASM URL from the worker URL fragment.
+ // This is the upstream browser loading mechanism; no custom init message is needed.
+ return new Worker(jsUrl+"#"+wasmUrl);
 }
 function ensureEngine(){
  if(readyPromise)return readyPromise;
  readyPromise=(async()=>{
-  const {build,wasm}=validateEngineFiles();activeEngineBuild=build.label;
-  status("Lecture du réseau WASM Stockfish 19 "+build.label+" ("+wasm.size.toLocaleString("fr-FR")+" octets) depuis le fichier sélectionné…");
-  const wasmBinary=await readWasmFile(wasm);
-  if(cancelRequested)throw new Error("Initialisation annulée.");
+  const {build}=validateEngineFiles();activeEngineBuild=build.label;
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
-  const compileStartedAt=performance.now();
-  const bootTimeoutMs=build.id==="lite"?120000:900000,bootTimeoutSeconds=bootTimeoutMs/1000;
-  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=bootTimeoutSeconds,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly ("+build.label+") : aucun signal de fin depuis "+elapsed+" s · ≈ "+formatDuration(remaining)+" avant l’arrêt automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). Le moteur ne fournit pas de progression réelle."+(elapsed>=60?(build.id==="full"?" Le build Full utilise un WASM de 99,1 Mo ; sélectionne Lite si ton navigateur manque de mémoire.":"Vérifie les tailles officielles des fichiers et la mémoire disponible."):""));setProgress(percent);},1000);
-  const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish 19 "+build.label+" n’a pas terminé l’initialisation WebAssembly après "+formatDuration(bootTimeoutSeconds)+". Vérifie les tailles affichées; pour le build Full (99,1 Mo), essaie Lite (1,8 Mo WASM) si le navigateur manque de mémoire.")),bootTimeoutMs);});
-  worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){activeSearch.reject(error);activeSearch=null;}};
-  worker.postMessage({type:"init",wasmBinary},[wasmBinary]);
-  status("Réseau lu (100 %). Compilation WebAssembly de Stockfish en cours…");
-  await runtimeReady;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;runtimeReadyResolve=null;runtimeReadyReject=null;
-  setProgress(100);
-  status("Compilation WebAssembly terminée à 100 %. Vérification du protocole UCI…");
-  worker.postMessage("uci");await waitFor("uciok",180000);
+  const startupTimeoutMs=build.id==="lite"?300000:900000;
+  worker.onerror=event=>{
+   const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");
+   status(error.message);rejectUciWaiters(error);
+   if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}
+  };
+  status("Stockfish 19 "+build.label+" démarre. Vérification de la réponse UCI…");
+  worker.postMessage("uci");
+  await waitFor("uciok",startupTimeoutMs);
   worker.postMessage("isready");await waitFor("readyok",180000);
   setProgress(100);
   engineReady=true;
   releaseEngineObjectUrls();
   status("Stockfish 19 "+build.label+" est prêt. Génération des parties candidates…");return worker;
- })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;releaseEngineObjectUrls();throw error;});
+ })().catch(error=>{readyPromise=null;engineReady=false;if(worker){worker.terminate();worker=null;}releaseEngineObjectUrls();throw error;});
  return readyPromise;
 }
 function setEngineElo(elo){worker.postMessage("setoption name UCI_LimitStrength value true");worker.postMessage("setoption name UCI_Elo value "+elo);}
@@ -355,10 +284,9 @@ document.getElementById("cancel").addEventListener("click",()=>{
  cancelRequested=true;document.getElementById("cancel").disabled=true;
  if(readyPromise&&!engineReady){
   const error=new Error("Initialisation annulée.");
-  if(runtimeReadyReject){const reject=runtimeReadyReject;runtimeReadyResolve=null;runtimeReadyReject=null;reject(error);}
   rejectUciWaiters(error);
   if(worker){worker.terminate();worker=null;}
-  status("Annulation de la compilation Stockfish…");
+  status("Annulation du démarrage Stockfish…");
   return;
  }
  status("Arrêt demandé ; fin du demi-coup en cours…");
@@ -372,5 +300,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.117"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.118"></script>
 </body></html>

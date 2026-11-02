@@ -32,7 +32,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="move-time">Temps de calcul par demi-coup</label><select id="move-time"><option value="120">120 ms · rapide</option><option value="250" selected>250 ms · équilibré</option><option value="500">500 ms · approfondi</option></select></div>
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
 </div>
-<div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Arrêter après la partie en cours</button></div>
+<div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Arrêter la génération après le demi-coup en cours</button></div>
 <p id="status" class="status" role="status" aria-live="polite">Le moteur complet (environ 94 Mo) se télécharge uniquement au démarrage. La première génération peut prendre du temps.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
@@ -134,7 +134,7 @@ async function generate(){
  try{
   await ensureEngine();
   for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies);currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
-  status(cancelRequested?"Génération arrêtée à la fin de la partie en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
+  status(cancelRequested?"Génération interrompue après le demi-coup en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
  }catch(error){status("Erreur moteur : "+error.message);}
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
 }

@@ -278,6 +278,7 @@
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint5')">Sprint · 5 min</button>
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('survival')">Survie · 3 erreurs</button>
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('battle')">Bataille · 2 min</button>
+            <a class="challenge-button" href="PARTIES_BRILLANTES_ENTRAINEMENT.html">♟️ Parties brillantes · combinaisons</a>
         </div>
         <label class="challenge-player">Nom du classement
             <input id="challenge-player-name" type="text" maxlength="24" autocomplete="nickname" placeholder="Joueur">
@@ -5788,8 +5789,9 @@ function openPuzzle(id) {
 function selectTacticSquare(square) {
     if (!currentPuzzle || !currentPuzzle.session || currentPuzzle.session.moveCorrect) return;
     const index=(8-Number(square[1]))*8+(square.charCodeAt(0)-97);
-    const piece=parseBoard(currentPuzzle.board)[index];
-    const ownPiece=currentPuzzle.turn==='w'?/[A-Z]/.test(piece):/[a-z]/.test(piece);
+    const livePlacement=tacticGame.fen().split(' ')[0];
+    const piece=parseBoard(livePlacement)[index];
+    const ownPiece=tacticGame.turn()==='w'?/[A-Z]/.test(piece):/[a-z]/.test(piece);
     const feedback=document.getElementById('tactic-feedback');
     if (!currentPuzzle.session.selected) {
         if (!piece||piece==='.'||!ownPiece) { feedback.textContent='Choisis une de tes pièces à déplacer.'; return; }
@@ -5807,7 +5809,9 @@ function selectTacticSquare(square) {
     }
     currentPuzzle.session.selected=null;
     document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.remove('selected-square'));
-    const expectedLine=currentPuzzle.solutionMoves;\n    const expectedUci=expectedLine&&expectedLine[currentPuzzle.session.solutionIndex] || currentPuzzle.answer;\n    const move = tacticGame && tacticGame.move({ from:from, to:square, promotion:(expectedUci&&expectedUci[4])||'q' });
+    const expectedLine=currentPuzzle.solutionMoves;
+    const expectedUci=(expectedLine&&expectedLine[currentPuzzle.session.solutionIndex])||currentPuzzle.answer;
+    const move=tacticGame&&tacticGame.move({from:from,to:square,promotion:(expectedUci&&expectedUci[4])||'q'});
     if (!move) {
         if (puzzleChallenge) { currentPuzzle.session.mistakes++; noteChallengeMistake(); }
         feedback.textContent='Ce déplacement est illégal dans cette position. Vérifie la pièce et la case d’arrivée.';
@@ -5815,17 +5819,38 @@ function selectTacticSquare(square) {
         return;
     }
     if (from+square===expectedUci.slice(0,4)) {
+        currentPuzzle.session.lastUserMove=from+square;
+        if (expectedLine) {
+            currentPuzzle.session.solutionIndex++;
+            while (currentPuzzle.session.solutionIndex<expectedLine.length && tacticGame.turn()!==currentPuzzle.turn) {
+                const reply=expectedLine[currentPuzzle.session.solutionIndex];
+                const replyMove=tacticGame.move({from:reply.slice(0,2),to:reply.slice(2,4),promotion:reply[4]||'q'});
+                if (!replyMove) break;
+                currentPuzzle.session.solutionIndex++;
+            }
+            if (currentPuzzle.session.solutionIndex<expectedLine.length) {
+                const boardNow=tacticGame.fen().split(' ')[0];
+                const last=currentPuzzle.session.lastUserMove;
+                const fromIndex=(8-Number(last[1]))*8+(last.charCodeAt(0)-97);
+                const toIndex=(8-Number(last[3]))*8+(last.charCodeAt(2)-97);
+                document.querySelector('.big-board-wrap').innerHTML=renderBigBoard(boardNow,[fromIndex,toIndex],currentPuzzle.turn);
+                bindTacticBoard();
+                feedback.textContent='Bon coup. La réponse adverse a été jouée automatiquement : trouve la suite de ta combinaison.';
+                return;
+            }
+        }
         currentPuzzle.session.moveCorrect=true;
         const solvedBoard=tacticGame.fen().split(' ')[0];
-        const fromIndex=(8-Number(from[1]))*8+(from.charCodeAt(0)-97);
-        const toIndex=(8-Number(square[1]))*8+(square.charCodeAt(0)-97);
+        const lastUser=currentPuzzle.session.lastUserMove||from+square;
+        const fromIndex=(8-Number(lastUser[1]))*8+(lastUser.charCodeAt(0)-97);
+        const toIndex=(8-Number(lastUser[3]))*8+(lastUser.charCodeAt(2)-97);
         document.querySelector('.big-board-wrap').innerHTML=renderBigBoard(solvedBoard,[fromIndex,toIndex],currentPuzzle.turn);
         bindTacticBoard();
         document.querySelectorAll('.big-cell').forEach(cell=>cell.disabled=true);
         document.getElementById('btn-tactic-hint').disabled=true;
         if (puzzleChallenge) {
             currentPuzzle.session.conceptCorrect=true;
-            feedback.textContent='Motif trouvé — lis l’explication, le prochain problème arrive automatiquement.';
+            feedback.textContent='Combinaison trouvée — lis l’explication, le prochain problème arrive automatiquement.';
             const explanation=document.getElementById('tactic-explanation');
             explanation.textContent=currentPuzzle.explain+(currentPuzzle.line?' Variante principale : '+currentPuzzle.line+'.':'');
             explanation.hidden=false;
@@ -5833,18 +5858,17 @@ function selectTacticSquare(square) {
             challengeStatus();
             autoAdvanceTimer=setTimeout(()=>{ autoAdvanceTimer=null; openNextChallengePuzzle(); },650);
         } else {
-            feedback.textContent='Coup légal et motif trouvé. Explique maintenant pourquoi il fonctionne.';
+            feedback.textContent='Combinaison trouvée. Explique maintenant le motif.';
             document.getElementById('tactic-knowledge').hidden=false;
         }
     } else {
         tacticGame.undo();
         currentPuzzle.session.mistakes++;
         noteChallengeMistake();
-        feedback.textContent='Coup légal, mais il ne résout pas le motif de cet exercice.';
+        feedback.textContent='Coup légal, mais il ne correspond pas à la suite précise de cet exercice.';
         showTacticHint();
     }
 }
-
 function bindTacticBoard() {
     document.querySelectorAll('.big-cell').forEach(cell=>cell.addEventListener('click',function(){selectTacticSquare(this.dataset.square);}));
 }

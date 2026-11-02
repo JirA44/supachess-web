@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.127';
+  var SITE_VERSION = '1.13.128';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -132,7 +132,7 @@
     var label = document.createElement('small');
     label.className = 'supachess-site-version';
     label.setAttribute('data-supachess-version-label', '');
-    label.setAttribute('aria-label', 'SupaChess site version 1.13.127');
+    label.setAttribute('aria-label', 'SupaChess site version 1.13.128');
     var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr');
     label.textContent = (french ? 'Version du site : ' : 'Site version: ') + SITE_VERSION;
     label.style.cssText = 'display:block;margin:12px auto;padding:8px 12px;text-align:center;color:#9aa9bd;font:500 12px/1.4 system-ui,sans-serif;opacity:.9;overflow-wrap:anywhere';

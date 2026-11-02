@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Black Knight">
 <g stroke="#f7f7f7" stroke-linejoin="round" stroke-linecap="round">
-  <path fill="#171b24" stroke-width="3.4" d="M18 82h64l-5-10-13-6-11-10 8-8 11-4 6-7-7-6-4-9-7 4-4-12-7 12-6-4-6 9-8 5-4 11 5 8-3 10-9 6z"/>
-  <path fill="none" stroke-width="2.1" d="M57 27q-5 12 3 21"/>
-  <circle cx="67" cy="33" r="2.5" fill="#f7f7f7" stroke="none"/>
+  <path fill="#171b24" stroke-width="3.4" d="M18 82h64l-5-10-14-6-10-11-5-12 4-8-9 2-8-2-8-6-8 4-1 6 8 5 9-1-2 9-8 12-8 8z"/>
+  <path fill="none" stroke-width="2.2" d="M49 27q-2 12 4 23"/>
+  <circle cx="30" cy="35" r="2.4" fill="#171b24" stroke="none"/>
 </g>
 </svg>

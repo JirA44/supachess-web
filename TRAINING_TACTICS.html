@@ -5727,7 +5727,7 @@ function renderGrid() {
     grid.innerHTML = filtered.map(p => {
         const isSolved = solved.includes(p.id);
         const theme = THEMES.find(t=>t.id===p.theme);
-        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title}, ${p.rating} Elo, ${isSolved?'résolu':'à résoudre'}">
+        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title || p.themeLabel || ('Puzzle ' + p.id)}, ${p.rating} Elo, ${isSolved?'résolu':'à résoudre'}">
             <div class="pz-top">
                 <span class="pz-title">${isSolved?'✅ ':''} ${p.title}</span>
                 <span class="pz-rating">⭐ ${p.rating}</span>

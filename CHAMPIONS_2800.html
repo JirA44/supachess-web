@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Les joueurs ayant dépassé 2 800 Elo FIDE classique dans une liste mensuelle officielle, avec leur meilleur classement publié.">
+  <title>Les 2 800+ — SupaChess</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#141d32;--line:#2b3955;--gold:#ffd166;--text:#f4f7ff;--muted:#b5c0d4;--accent:#8dc7ff}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1c3153 0,#0b1020 55%);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+    .wrap{max-width:1100px;margin:auto;padding:24px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px}
+    a{color:var(--accent)}.back{color:var(--text);text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:9px 13px}
+    header{text-align:center;padding:36px 16px 24px}h1{font-size:clamp(2rem,6vw,3.6rem);line-height:1.1;margin:0 0 12px}header p{max-width:760px;margin:0 auto;color:var(--muted)}
+    .summary{display:flex;justify-content:center;align-items:center;gap:12px;margin:22px auto 8px;color:var(--gold);font-weight:700}.summary strong{font-size:2rem}
+    .tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:28px 0 16px}
+    input{width:min(100%,360px);padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#0b1020;color:var(--text);font:inherit}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px}
+    .card{background:linear-gradient(145deg,#18243c,#11192b);border:1px solid var(--line);border-radius:16px;padding:18px;position:relative;overflow:hidden}
+    .rank{color:var(--gold);font-size:.85rem;font-weight:800;letter-spacing:.08em}.card h2{font-size:1.2rem;margin:8px 0 2px}.peak{font-size:2rem;font-weight:800;letter-spacing:-.04em}.peak small{font-size:.9rem;color:var(--muted);font-weight:500;letter-spacing:0}
+    .meta{color:var(--muted);font-size:.92rem;margin-top:2px}.note{margin:28px 0;padding:18px;border-left:3px solid var(--gold);background:#141d32;border-radius:0 12px 12px 0;color:var(--muted)}
+    footer{border-top:1px solid var(--line);padding:20px 0 34px;color:var(--muted);font-size:.9rem}footer ul{padding-left:20px}
+    .empty{grid-column:1/-1;color:var(--muted);padding:20px}
+    @media(max-width:560px){.wrap{padding:16px}.top{align-items:flex-start}.card{padding:16px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <nav class="top" aria-label="Navigation"><a class="back" href="hub.html">← Retour au hub SupaChess</a><span>🏆 Champions</span></nav>
+  <header>
+    <h1>Le club des 2 800+</h1>
+    <p>Les joueurs qui ont franchi la barre des 2 800 Elo en <strong>échecs classiques</strong>, sur une liste mensuelle officielle de la FIDE. Le pic affiché est le meilleur classement publié, pas un Elo rapide, blitz ou une estimation en direct.</p>
+    <div class="summary"><strong>15</strong><span>joueurs répertoriés<br>au 2 novembre 2026</span></div>
+  </header>
+  <div class="tools"><label for="search">Rechercher un joueur</label><input id="search" type="search" placeholder="Nom du joueur…" autocomplete="off"></div>
+  <section class="grid" id="players" aria-label="Joueurs ayant dépassé 2 800 Elo">
+    <article class="card" data-name="Magnus Carlsen"><div class="rank">01 · NORVÈGE</div><h2>Magnus Carlsen</h2><div class="peak">2882 <small>Elo</small></div><div class="meta">Pic publié : mai 2014</div></article>
+    <article class="card" data-name="Garry Kasparov"><div class="rank">02 · RUSSIE</div><h2>Garry Kasparov</h2><div class="peak">2851 <small>Elo</small></div><div class="meta">Pic publié : juillet 1999</div></article>
+    <article class="card" data-name="Fabiano Caruana"><div class="rank">03 · ÉTATS-UNIS</div><h2>Fabiano Caruana</h2><div class="peak">2844 <small>Elo</small></div><div class="meta">Pic publié : octobre 2014</div></article>
+    <article class="card" data-name="Levon Aronian"><div class="rank">04 · ARMÉNIE</div><h2>Levon Aronian</h2><div class="peak">2830 <small>Elo</small></div><div class="meta">Pic publié : mars 2014</div></article>
+    <article class="card" data-name="Wesley So"><div class="rank">05 · ÉTATS-UNIS</div><h2>Wesley So</h2><div class="peak">2822 <small>Elo</small></div><div class="meta">Pic publié : février 2017</div></article>
+    <article class="card" data-name="Shakhriyar Mamedyarov"><div class="rank">06 · AZERBAÏDJAN</div><h2>Shakhriyar Mamedyarov</h2><div class="peak">2820 <small>Elo</small></div><div class="meta">Pic publié : septembre 2018</div></article>
+    <article class="card" data-name="Maxime Vachier-Lagrave"><div class="rank">07 · FRANCE</div><h2>Maxime Vachier-Lagrave</h2><div class="peak">2819 <small>Elo</small></div><div class="meta">Pic publié : août 2016</div></article>
+    <article class="card" data-name="Viswanathan Anand"><div class="rank">08 · INDE</div><h2>Viswanathan Anand</h2><div class="peak">2817 <small>Elo</small></div><div class="meta">Pic publié : mars 2011</div></article>
+    <article class="card" data-name="Vladimir Kramnik"><div class="rank">09 · RUSSIE</div><h2>Vladimir Kramnik</h2><div class="peak">2817 <small>Elo</small></div><div class="meta">Pic publié : octobre 2016</div></article>
+    <article class="card" data-name="Veselin Topalov"><div class="rank">10 · BULGARIE</div><h2>Veselin Topalov</h2><div class="peak">2816 <small>Elo</small></div><div class="meta">Pic publié : juillet 2015</div></article>
+    <article class="card" data-name="Hikaru Nakamura"><div class="rank">11 · ÉTATS-UNIS</div><h2>Hikaru Nakamura</h2><div class="peak">2816 <small>Elo</small></div><div class="meta">Pic publié : octobre 2015</div></article>
+    <article class="card" data-name="Ding Liren"><div class="rank">12 · CHINE</div><h2>Ding Liren</h2><div class="peak">2816 <small>Elo</small></div><div class="meta">Pic publié : novembre 2018</div></article>
+    <article class="card" data-name="Alexander Grischuk"><div class="rank">13 · RUSSIE</div><h2>Alexander Grischuk</h2><div class="peak">2810 <small>Elo</small></div><div class="meta">Pic publié : décembre 2014</div></article>
+    <article class="card" data-name="Alireza Firouzja"><div class="rank">14 · FRANCE"><h2>Alireza Firouzja</h2><div class="peak">2804 <small>Elo</small></div><div class="meta">Pic publié : décembre 2021</div></article>
+    <article class="card" data-name="Arjun Erigaisi"><div class="rank">15 · INDE</div><h2>Arjun Erigaisi</h2><div class="peak">2801 <small>Elo</small></div><div class="meta">Pic publié : décembre 2024</div></article>
+  </section>
+  <aside class="note"><strong>Comment lire cette liste ?</strong><br>« Dépasser 2 800 » signifie ici atteindre au moins 2 801 sur une liste mensuelle FIDE publiée. Les performances en direct non encore validées par une liste officielle ne sont pas comptées. Ainsi, un joueur à 2 800 exactement ou avec un pic inférieur n’entre pas dans ce décompte.</aside>
+  <footer>
+    <strong>Sources et méthode</strong>
+    <ul>
+      <li><a href="https://ratings.fide.com/" target="_blank" rel="noopener noreferrer">FIDE Ratings</a> — organisme officiel et archives des classements.</li>
+      <li><a href="https://ratings.fide.com/download_lists.phtml" target="_blank" rel="noopener noreferrer">Téléchargements des listes FIDE</a> — listes mensuelles.</li>
+      <li><a href="https://en.wikipedia.org/wiki/List_of_chess_players_by_peak_FIDE_rating" target="_blank" rel="noopener noreferrer">Tableau des pics Elo FIDE</a> — compilation avec mois et année des pics publiés, recoupée avec les listes FIDE.</li>
+    </ul>
+    <p>Données consultées le 2 novembre 2026. Les pics et dates concernent le classement classique publié.</p>
+  </footer>
+</main>
+<script>
+  const search = document.getElementById('search');
+  const cards = [...document.querySelectorAll('.card')];
+  search.addEventListener('input', () => {
+    const query = search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    let visible = 0;
+    cards.forEach(card => {
+      const name = card.dataset.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      card.hidden = !name.includes(query);
+      if (!card.hidden) visible++;
+    });
+    document.getElementById('no-results')?.remove();
+    if (!visible) {
+      const empty = document.createElement('p');
+      empty.id = 'no-results'; empty.className = 'empty'; empty.textContent = 'Aucun joueur trouvé.';
+      document.getElementById('players').append(empty);
+    }
+  });
+</script>
+</body>
+</html>

@@ -40,7 +40,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 </div>
 </div>
 <div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
-<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. La compilation WebAssembly peut dépasser 3 minutes : le temps écoulé reste affiché, mais son pourcentage n’est pas mesurable. Utilise le bouton d’annulation si tu veux l’interrompre.</p>
+<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. Le suivi donne le temps restant et le pourcentage pour le transfert, le protocole UCI, les coups et la génération. Pendant la compilation WASM, il affiche le temps et le délai maximal restant : le moteur ne fournit pas de progression réelle. Utilise le bouton d’annulation si l’attente bloque.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
 <section id="results-panel" class="panel hidden">

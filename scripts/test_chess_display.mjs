@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 const bubbles = readFileSync('supa-move-bubbles.js', 'utf8');
 const dots = readFileSync('supa-dots-widget.js', 'utf8');
@@ -21,3 +22,20 @@ assert.match(chessnova, /const signedEvalDisplay = \(evaluation >= 0 \? '\+' : '
 assert.match(chessnova, /evalValue\.textContent = signedEvalDisplay;/, 'each evaluation refresh updates the persistent bar score');
 
 console.log('Chess display checks passed');
+
+function collectHtmlFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const filePath = join(directory, entry.name);
+    if (entry.isDirectory()) return collectHtmlFiles(filePath);
+    return entry.isFile() && entry.name.endsWith('.html') ? [filePath] : [];
+  });
+}
+
+const boardMarkers = /(?:chess-piece|white-piece|black-piece|piece-token|data-square|class=["'][^"']*(?:board|square|chessboard))/i;
+const boardPages = collectHtmlFiles('.').filter(file => boardMarkers.test(readFileSync(file, 'utf8')));
+for (const file of boardPages) {
+  assert.match(readFileSync(file, 'utf8'), /shared\/site-global\.js/, `${file} loads the shared piece-contrast and board audit`);
+}
+assert.ok(boardPages.length > 0, 'site-wide board audit finds chessboard pages');
+assert.match(readFileSync('shared/site-global.js', 'utf8'), /replace\(\/\[\\uFE0E\\uFE0F\]\/g, ''\)/, 'piece normalizer strips Unicode variation selectors before applying filled glyphs');
+console.log(`Site-wide chessboard contrast audit passed (${boardPages.length} board pages)`);

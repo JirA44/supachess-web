@@ -183,7 +183,7 @@ function planStillWins(ex,afterDefense){
     if(!q)return false;
     const capture=afterReply.move({from:rookSquare,to:q,promotion:"q"});
     if(!capture)return false;
-    const recaptures=afterReply.moves({verbose:true}).some(m=>m.color===ex.defenderColor&&m.to===rookSquare&&m.captured==="r");
+    const recaptures=afterReply.moves({verbose:true}).some(m=>m.color===ex.defenderColor&&m.to===q&&m.captured==="r");
     if(recaptures)return false;
   }
   return true;
@@ -196,7 +196,7 @@ function explainSuccess(ex,move){
   setStatus("Menace neutralisée. La dame ne peut plus être gagnée par l’enfilade annoncée.","good");
 }
 function clickSquare(square){
-  const ex=activeExercise();if(solved.has(ex.id))return;
+  const ex=activeExercise();
   const p=game.get(square),feedback=document.getElementById("status");
   if(!selected){
     if(!p||p.color!==ex.defenderColor){setStatus("Sélectionne une de tes pièces à déplacer.");return;}

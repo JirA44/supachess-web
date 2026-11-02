@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parties brillantes — SupaChess</title>
+<meta name="description" content="Rejoue des combinaisons célèbres, calcule les réponses forcées et enchaîne les coups clés dans des parties d’échecs historiques.">
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#18263d;--text:#f5f7fb;--muted:#b6c2d4;--gold:#f4c95d;--green:#83e0ae;--line:rgba(255,255,255,.13)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#18345a 0,#0b1220 42rem);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:inline-flex;margin-bottom:18px;text-decoration:none;color:#eaf2ff}.hero,.panel{border:1px solid var(--line);border-radius:18px;background:rgba(18,29,48,.94);box-shadow:0 20px 55px rgba(0,0,0,.2)}
+.hero{padding:26px;margin-bottom:18px}.hero h1{margin:0 0 8px;font-size:clamp(1.7rem,4vw,2.7rem)}.hero p{margin:5px 0;color:var(--muted);max-width:850px}
+.note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--gold);background:rgba(244,201,93,.09);border-radius:8px;color:#f9e9ba;font-size:.92rem}
+.layout{display:grid;grid-template-columns:minmax(230px,290px) minmax(0,1fr);gap:18px;align-items:start}.panel{padding:18px}.panel h2{margin:0 0 12px;font-size:1.1rem}
+.game-list{display:grid;gap:9px}.game-item{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);padding:11px 12px;text-align:left;font:inherit;cursor:pointer}.game-item:hover,.game-item.active{border-color:var(--gold);background:#24334c}.game-item strong{display:block}.game-item small{display:block;color:var(--muted);margin-top:3px}
+.session-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.session-top h2{margin-bottom:4px}.meta{color:var(--muted);font-size:.9rem}
+.board-area{display:grid;grid-template-columns:minmax(280px, min(68vh,620px)) minmax(210px,1fr);gap:16px;align-items:start;margin-top:16px}
+.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));border:3px solid #d7e0ef;border-radius:5px;overflow:hidden;touch-action:manipulation}
+.square{border:0;padding:0;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;cursor:pointer;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(1.55rem,6.5vw,3.55rem);line-height:1}
+.square.light{background:#f0d9b5}.square.dark{background:#b58863}.square.last{box-shadow:inset 0 0 0 4px rgba(250,204,21,.7)}.square.selected{box-shadow:inset 0 0 0 4px #facc15;z-index:1}.square:focus-visible{outline:3px solid #fff;outline-offset:-4px;z-index:2}
+.white-piece{-webkit-text-fill-color:#fff;-webkit-text-stroke:1px #172033;paint-order:stroke fill;text-shadow:0 1px 1px #172033}.black-piece{-webkit-text-fill-color:#171717;-webkit-text-stroke:1px #fff;paint-order:stroke fill;text-shadow:0 1px 1px #fff}
+.side{display:grid;gap:12px}.status{min-height:80px;border:1px solid var(--line);border-radius:12px;background:#0e1727;padding:12px;color:#e6edf7}.status strong{display:block;color:var(--gold);margin-bottom:4px}
+.progress{height:8px;border-radius:9px;background:#29364a;overflow:hidden}.progress>span{display:block;height:100%;background:linear-gradient(90deg,#66d79a,#f4c95d);width:0;transition:width .2s}
+.moves{min-height:90px;max-height:190px;overflow:auto;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1727;color:#dce7f6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.controls{display:flex;flex-wrap:wrap;gap:8px}.btn{min-height:44px;border-radius:9px;padding:9px 13px;border:1px solid rgba(255,255,255,.22);background:#23446e;color:#fff;font:inherit;font-weight:700;cursor:pointer}.btn:hover,.btn:focus-visible{border-color:var(--gold);outline:2px solid rgba(244,201,93,.4);outline-offset:2px}.btn.secondary{background:#263142}.btn.gold{background:#74561b;border-color:#d7aa3a}.source{font-size:.86rem;color:var(--muted);overflow-wrap:anywhere}.source a{color:#c7dcff}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.game-list{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.board-area{grid-template-columns:minmax(0,1fr)}.board{max-width:min(100%,620px);margin:auto}.page{padding:13px}.hero{padding:19px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<div class="page">
+<a class="back" href="TRAINING_TACTICS.html">← Retour à l’entraînement tactique</a>
+<header class="hero">
+<h1>♟️ Parties brillantes : calculer les combinaisons</h1>
+<p>Rejoue des séquences tirées de parties réelles. Tu joues chaque coup clé de ton camp ; les réponses de l’adversaire se jouent automatiquement. Le but est de calculer plusieurs coups de suite, pas seulement de reconnaître le premier sacrifice.</p>
+<p class="note">Les positions et variantes proviennent des PGN du dépôt et suivent les coups effectivement joués. « Brillant » est ici un thème d’entraînement : les coups ne sont pas tous étiquetés « brilliant » par un moteur. Pour attribuer cette étiquette avec rigueur, il faudrait analyser chaque position avec une version et des réglages Stockfish fixés.</p>
+</header>
+<div class="layout">
+<aside class="panel"><h2>Séquences à rejouer</h2><div id="game-list" class="game-list"></div></aside>
+<main class="panel">
+<div class="session-top"><div><h2 id="study-title">Choisis une partie</h2><div id="study-meta" class="meta">Les coups et le camp à jouer apparaîtront ici.</div></div><div id="turn-label" class="meta"></div></div>
+<div class="progress" aria-label="Progression de la combinaison"><span id="progress-fill"></span></div>
+<div class="board-area">
+<div id="board" class="board" role="group" aria-label="Échiquier interactif"></div>
+<div class="side">
+<div id="status" class="status" role="status" aria-live="polite"><strong>À toi de jouer</strong>Sélectionne une partie dans la liste.</div>
+<div class="controls"><button class="btn" type="button" onclick="showHint()">Indice</button><button class="btn secondary" type="button" onclick="revealLine()">Voir la variante</button><button class="btn gold" type="button" onclick="nextStudy()">Séquence suivante</button></div>
+<div id="moves" class="moves" aria-label="Coups déjà joués">Aucun coup joué.</div>
+<div id="lesson" class="source"></div>
+<div id="source" class="source"></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<script src="training_games/chess.0.10.3.js"></script>
+<script>
+const STUDIES=[{"id":"study-1","title":"Sacrifice de qualité et attaques forcées","lesson":"Rxd4 ouvre une suite où les échecs successifs coordonnent les pièces blanches.","playerColor":"w","startFen":"b2r3r/k4p1p/p2q1np1/NppP4/3p1Q2/P4PPB/1PP4P/1K1RR3 w - - 1 24","lineUci":["d1d4","c5d4","e1e7","a7b6","f4d4","b6a5","b2b4","a5a4"],"lineSan":["Rxd4","cxd4","Re7+","Kb6","Qxd4+","Kxa5","b4+","Ka4"],"white":"Garry Kasparov","black":"Veselin Topalov","event":"Hoogovens Group A","date":"1999.01.20","source":"","sourcePath":"data/games/kasparov_topalov_1999_immortal.pgn","moveCount":4},{"id":"study-2","title":"Sacrifice de dame et initiative","lesson":"Qxf6 provoque une séquence forcée ; rejoue les réponses exactes puis poursuis l’attaque.","playerColor":"w","startFen":"r1b2rk1/pp1ppp1p/5bp1/q7/3nP2Q/1BN1B3/PPP2PPP/R4RK1 w - - 4 12","lineUci":["h4f6","d4e2","c3e2","e7f6","e2c3","f8e8","c3d5","e8e6","e3d4","g8g7"],"lineSan":["Qxf6","Ne2+","Nxe2","exf6","Nc3","Re8","Nd5","Re6","Bd4","Kg7"],"white":"Rashid Nezhmetdinov","black":"Oleg Chernikov","event":"RSFSR Team Championship","date":"1962.??.??","source":"https://www.lifemasteraj.com/old_af-dl/nezh-cher_r62.html","sourcePath":"data/games/nezhmetdinov_vs_chernikov_1962.pgn","moveCount":5},{"id":"study-3","title":"Attaque de Tal contre le roi","lesson":"Une série de coups forcing transforme l’attaque en initiative durable.","playerColor":"w","startFen":"r1bb1rk1/p2n1ppp/q1p5/5NQn/2p5/5N2/PPPB1PPP/2KR3R w - - 2 16","lineUci":["f5h6","g8h8","g5h5","a6a2","d2c3","d7f6","h5f7","a2a1","c1d2","f8f7"],"lineSan":["Nh6+","Kh8","Qxh5","Qxa2","Bc3","Nf6","Qxf7","Qa1+","Kd2","Rxf7"],"white":"Mikhail Tal","black":"Vasily Smyslov","event":"Candidates Tournament","date":"1959.09.18","source":"ChessBox; 1959 Candidates round report","sourcePath":"data/games/tal_smyslov_candidates_1959_round8.pgn","moveCount":5},{"id":"study-4","title":"Combinaison d’Anand","lesson":"Les échanges sur d5 préparent le coup tactique final.","playerColor":"w","startFen":"r2r2k1/5p1p/2n1p1p1/qN1pn3/4P2P/PP2Q3/3RBPP1/3R2K1 w - - 0 25","lineUci":["e4d5","d8d5","d2d5","e6d5","b3b4","a5a4","d1d5"],"lineSan":["exd5","Rxd5","Rxd5","exd5","b4","Qa4","Rxd5"],"white":"Anand, Viswanathan","black":"Kasparov, Gary","event":"PCA/Intel-GP","date":"1995.04.30","source":"365Chess, PCA/Intel-GP 1995","sourcePath":"data/games/anand_vs_kasparov_moscow_1995.pgn","moveCount":4},{"id":"study-5","title":"Combinaison de Kasparov avec gain de dame","lesson":"Après 33.Rf4, joue ...Ne4, puis trouve les coups forcing qui conduisent à la capture de la dame blanche.","playerColor":"b","startFen":"2r1r3/5pk1/5nbp/8/Np1q1RP1/1P1n2P1/3Q2BP/1N1R3K b - - 4 33","lineUci":["f6e4","d2d3","e4f2","f4f2","g6d3","f2d2","d4e3"],"lineSan":["Ne4","Qxd3","Nf2+","Rxf2","Bxd3","Rfd2","Qe3"],"white":"Anatoly Karpov","black":"Garry Kasparov","event":"World Championship Match","date":"1985.10.15","source":"Chess Trap Guide, game 16 record","sourcePath":"data/games/karpov_kasparov_1985_game16.pgn","moveCount":4},{"id":"study-6","title":"Sacrifice d’ouverture de Deep Blue","lesson":"Un sacrifice de pièce force les réponses noires et laisse les pièces blanches actives.","playerColor":"w","startFen":"r1bqkb1r/pp1n1pp1/2p1pn1p/6N1/3P4/3B1N2/PPP2PPP/R1BQK2R w KQkq - 0 8","lineUci":["g5e6","d8e7","e1g1","f7e6","d3g6","e8d8","c1f4","b7b5"],"lineSan":["Nxe6","Qe7","O-O","fxe6","Bg6+","Kd8","Bf4","b5"],"white":"Deep Blue","black":"Garry Kasparov","event":"IBM Man-Machine Rematch","date":"1997.05.11","source":"IBM Deep Blue history; game score checked against published PGN","sourcePath":"data/games/deep_blue_kasparov_1997_game6.pgn","moveCount":4}];
+let currentIndex=-1,game=null,cursor=0,selected=null,played=[],lastMove=null;
+const whitePieces={k:"♔︎",q:"♕︎",r:"♖︎",b:"♗︎",n:"♘︎",p:"♙︎"};
+const blackPieces={k:"♚︎",q:"♛︎",r:"♜︎",b:"♝︎",n:"♞︎",p:"♟︎"};
+function renderList(){
+ const root=document.getElementById("game-list");root.innerHTML="";
+ STUDIES.forEach((study,index)=>{
+  const button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
+  const title=document.createElement("strong");title.textContent=(index+1)+". "+study.title;
+  const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" coups à trouver";
+  button.appendChild(title);button.appendChild(sub);button.onclick=function(){loadStudy(index);};root.appendChild(button);
+ });
+}
+function label(text,strong){
+ const root=document.getElementById("status");root.innerHTML="<strong>"+strong+"</strong>"+text;
+}
+function loadStudy(index){
+ currentIndex=index;const study=STUDIES[index];game=new Chess(study.startFen);cursor=0;selected=null;played=[];lastMove=null;
+ document.getElementById("study-title").textContent=study.title;
+ document.getElementById("study-meta").textContent=study.event+" · "+study.date+" · "+study.white+" — "+study.black;
+ document.getElementById("turn-label").textContent=(study.playerColor==="w"?"⬜ Blancs jouent":"⬛ Noirs jouent")+" · séquence de "+study.lineUci.length+" demi-coups";
+ document.getElementById("lesson").textContent=study.lesson;
+ document.getElementById("source").innerHTML="Source PGN : <a href=\"https://github.com/JirA44/supachess-web/blob/main/"+study.sourcePath+"\" target=\"_blank\" rel=\"noopener noreferrer\">ouvrir la partie</a>";
+ document.getElementById("moves").textContent="Aucun coup joué.";
+ label("Trouve le premier coup clé, puis continue la variante après chaque réponse automatique.","Calcul de la suite");
+ updateProgress();drawBoard();renderList();
+}
+function symbol(piece){if(!piece)return "";return (piece.color==="w"?whitePieces:blackPieces)[piece.type]||"";}
+function squareName(index){return String.fromCharCode(97+(index%8))+(8-Math.floor(index/8));}
+function drawBoard(){
+ if(!game)return;
+ const root=document.getElementById("board"),pieces=game.board(),study=STUDIES[currentIndex];let html="";
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+  const i=study.playerColor==="b"?(7-r)*8+(7-c):r*8+c,sq=squareName(i),piece=pieces[Math.floor(i/8)][i%8],light=((r+c)%2===0);
+  const classes="square "+(light?"light":"dark")+(lastMove&&(sq===lastMove.from||sq===lastMove.to)?" last":"")+(selected===sq?" selected":"");
+  const labelText=sq+(piece?" "+(piece.color==="w"?"blanche ":"noire ")+piece.type:" vide");
+  html+='<button type="button" class="'+classes+'" data-square="'+sq+'" aria-label="'+labelText+'">'+symbol(piece)+'</button>';
+ }
+ root.innerHTML=html;
+ root.querySelectorAll(".square").forEach(button=>button.addEventListener("click",function(){clickSquare(this.dataset.square);}));
+}
+function updateProgress(){const total=STUDIES[currentIndex]?.lineUci.length||1;const pct=currentIndex<0?0:Math.round(cursor/total*100);document.getElementById("progress-fill").style.width=pct+"%";}
+function updateMoves(){document.getElementById("moves").textContent=played.length?played.map((m,i)=>((Math.floor(i/2)+1)+(i%2===0?". ":"... ")+m)).join("  "):"Aucun coup joué.";}
+function clickSquare(square){
+ if(!game||currentIndex<0||cursor>=STUDIES[currentIndex].lineUci.length)return;
+ const study=STUDIES[currentIndex],board=game.board(),index=(8-Number(square[1]))*8+(square.charCodeAt(0)-97),piece=board[Math.floor(index/8)][index%8];
+ if(!selected){
+  if(!piece||piece.color!==study.playerColor){label("Sélectionne une pièce de ton camp.","À toi de jouer");return;}
+  selected=square;drawBoard();return;
+ }
+ if(selected===square){selected=null;drawBoard();return;}
+ const uci=study.lineUci[cursor],move=game.move({from:selected,to:square,promotion:(uci&&uci[4])||"q"});
+ if(!move){selected=null;label("Coup illégal : choisis une autre destination.","Essaie encore");drawBoard();return;}
+ selected=null;
+ if(move.from+move.to!==uci.slice(0,4)){game.undo();label("Coup légal, mais il ne correspond pas à la suite de la partie. Cherche une réponse forcing.","Recalcule");drawBoard();return;}
+ lastMove={from:move.from,to:move.to};played.push(move.san);cursor++;
+ while(cursor<study.lineUci.length&&game.turn()!==study.playerColor){
+  const reply=study.lineUci[cursor],auto=game.move({from:reply.slice(0,2),to:reply.slice(2,4),promotion:reply[4]||"q"});
+  if(!auto){label("La variante enregistrée s’interrompt sur un coup illégal.","Données de partie à corriger");return;}
+  lastMove={from:auto.from,to:auto.to};played.push(auto.san);cursor++;
+ }
+ updateMoves();updateProgress();drawBoard();
+ if(cursor>=study.lineUci.length)label("Tu as rejoué toute la séquence. Compare les coups de la partie et relance-la pour refaire le calcul.","Séquence trouvée");
+ else label("Bon coup. L’adversaire a répondu : trouve le prochain coup de la combinaison.","Continue le calcul");
+}
+function showHint(){
+ if(currentIndex<0)return;const study=STUDIES[currentIndex],san=study.lineSan[cursor];
+ label(san?"Indice : le coup attendu est "+san+".":"La séquence est terminée.","Indice");
+}
+function revealLine(){
+ if(currentIndex<0)return;const study=STUDIES[currentIndex];
+ while(cursor<study.lineUci.length){const u=study.lineUci[cursor],m=game.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"});if(!m)break;lastMove={from:m.from,to:m.to};played.push(m.san);cursor++;}
+ updateMoves();updateProgress();drawBoard();label("Variante révélée. Relance la séquence pour la résoudre sans aide.","Solution");
+}
+function nextStudy(){if(currentIndex<0)loadStudy(0);else loadStudy((currentIndex+1)%STUDIES.length);}
+renderList();loadStudy(0);
+</script>
+</body>
+</html>

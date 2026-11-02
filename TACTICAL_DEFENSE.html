@@ -315,6 +315,7 @@ function nextExercise(){
   const index=items.findIndex(x=>x.id===currentId);currentId=items[(index+1)%items.length].id;resetExercise();
 }
 function start(){resetExercise();}
+savePuzzleElo();
 start();
 </script>
 <script defer src="shared/site-global.js?v=site-version-1.13.126"></script>

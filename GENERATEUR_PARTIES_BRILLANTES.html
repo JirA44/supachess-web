@@ -84,11 +84,26 @@ function onEngineMessage(event){
 }
 function readWasmFile(file){
  return new Promise((resolve,reject)=>{
-  const reader=new FileReader();
-  reader.onprogress=event=>{if(event.lengthComputable)status("Lecture du réseau WASM local : "+Math.round(event.loaded/event.total*100)+" % ("+(event.loaded/1048576).toFixed(0)+" / "+(event.total/1048576).toFixed(0)+" Mo).");};
+  const reader=new FileReader(),startedAt=performance.now();
+  reader.onprogress=event=>{
+   if(!event.lengthComputable)return;
+   const percent=Math.min(100,Math.round(event.loaded/event.total*100)),remainingPercent=Math.max(0,100-percent);
+   const elapsedSeconds=Math.max(.2,(performance.now()-startedAt)/1000),bytesPerSecond=event.loaded/elapsedSeconds;
+   const remainingSeconds=bytesPerSecond>0?Math.ceil((event.total-event.loaded)/bytesPerSecond):0;
+   status("Lecture du réseau WASM local : "+percent+" % ("+(event.loaded/1048576).toFixed(0)+" / "+(event.total/1048576).toFixed(0)+" Mo) · temps restant estimé : ≈ "+remainingSeconds+" sec · "+remainingPercent+" % restant.");
+   document.getElementById("progress-fill").style.width=percent+"%";
+  };
   reader.onerror=()=>reject(new Error("Impossible de lire le fichier WASM. Réessaie de le sélectionner ou retélécharge-le."));
   reader.onabort=()=>reject(new Error("La lecture du fichier WASM a été interrompue."));
-  reader.onload=()=>{const buffer=reader.result;if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<8) return reject(new Error("Le fichier WASM est vide ou incomplet."));const magic=new Uint8Array(buffer,0,4);if(magic[0]!==0||magic[1]!==97||magic[2]!==115||magic[3]!==109)return reject(new Error("Ce fichier n’est pas un réseau WebAssembly valide. Télécharge stockfish-19-single.wasm."));resolve(buffer);};
+  reader.onload=()=>{
+   const buffer=reader.result;
+   if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<8)return reject(new Error("Le fichier WASM est vide ou incomplet."));
+   const magic=new Uint8Array(buffer,0,4);
+   if(magic[0]!==0||magic[1]!==97||magic[2]!==115||magic[3]!==109)return reject(new Error("Ce fichier n’est pas un réseau WebAssembly valide. Télécharge stockfish-19-single.wasm."));
+   document.getElementById("progress-fill").style.width="100%";
+   status("Lecture du réseau terminée · temps restant : ≈ 0 sec · 0 % restant. Compilation de Stockfish en cours…");
+   resolve(buffer);
+  };
   reader.readAsArrayBuffer(file);
  });
 }

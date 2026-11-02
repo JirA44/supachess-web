@@ -145,16 +145,21 @@
         .tactic-choice:disabled { cursor: default; opacity: .75; }
         .tactic-explanation { margin-top: 10px; padding: 12px; border-left: 3px solid #22c55e; background: rgba(34,197,94,.12); border-radius: 8px; }
         .piece-token {
-            display: block; line-height: 1; opacity: 1; font-weight: 700;
-            -webkit-text-fill-color: #fff; -webkit-text-stroke: 1.25px #111827;
+            display: block; line-height: 1; opacity: 1; font-weight: 900;
+            font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif;
+            -webkit-text-fill-color: #fff; -webkit-text-stroke: 2.8px #111827;
             paint-order: stroke fill;
-            text-shadow: 0 0 1px #111827, 1px 0 #111827, -1px 0 #111827,
-                         0 1px #111827, 0 -1px #111827;
+            filter: drop-shadow(0 1.5px 1px rgba(0,0,0,.8));
+            text-shadow: 0 0 2px #111827, 1px 0 #111827, -1px 0 #111827,
+                         0 1px #111827, 0 -1px #111827, 1px 1px #111827, -1px -1px #111827,
+                         1px -1px #111827, -1px 1px #111827;
         }
         .piece-token.black-piece {
-            -webkit-text-fill-color: #171717; -webkit-text-stroke: 1px #f8fafc;
-            text-shadow: 0 0 1px #f8fafc, 1px 0 #f8fafc, -1px 0 #f8fafc,
-                         0 1px #f8fafc, 0 -1px #f8fafc;
+            -webkit-text-fill-color: #171717; -webkit-text-stroke: 2.6px #f8fafc;
+            filter: drop-shadow(0 1.5px 1px rgba(255,255,255,.75));
+            text-shadow: 0 0 2px #f8fafc, 1px 0 #f8fafc, -1px 0 #f8fafc,
+                         0 1px #f8fafc, 0 -1px #f8fafc, 1px 1px #f8fafc, -1px -1px #f8fafc,
+                         1px -1px #f8fafc, -1px 1px #f8fafc;
         }
         .big-cell.light { background: #f0d9b5; }
         .big-cell.dark  { background: #b58863; }
@@ -6106,6 +6111,6 @@ if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(r
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
 <script src="shared/community.js?v=tactics-community-20261101"></script>
 
-<script defer src="shared/site-global.js?v=piece-contrast-20261102c"></script>
+<script defer src="shared/site-global.js?v=piece-contrast-20261102d"></script>
 </body>
 </html>

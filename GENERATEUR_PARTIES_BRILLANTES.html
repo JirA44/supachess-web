@@ -58,7 +58,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script>
-let worker=null, readyPromise=null, engineReady=false, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null;
+let worker=null, readyPromise=null, engineReady=false, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
 function waitFor(line,timeout=180000){return new Promise((resolve,reject)=>{const entry={line,resolve,reject,timer:setTimeout(()=>{uciWaiters=uciWaiters.filter(x=>x!==entry);reject(new Error("Stockfish n’a pas répondu à « "+line+" ». Vérifie que les fichiers JS et WASM sont complets et proviennent de la même release, puis réessaie."));},timeout)};uciWaiters.push(entry);});}
@@ -133,18 +133,18 @@ function ensureEngine(){
   if(cancelRequested)throw new Error("Initialisation annulée.");
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
-  let bootTimer;const compileStartedAt=performance.now();
+  const compileStartedAt=performance.now();
   engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000);const note=elapsed>=180?" · Elle peut dépasser 3 minutes sur les appareils plus lents.":"";status("Compilation WebAssembly toujours active · "+elapsed+" sec écoulées · progression non mesurable pendant cette étape."+note);},5000);
-  const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;bootTimer=setTimeout(()=>reject(new Error("Stockfish n’a pas terminé la compilation WebAssembly après 15 minutes. Vérifie que les deux fichiers sont complets et réessaie dans un navigateur avec assez de mémoire.")),900000);});
+  const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish n’a pas terminé la compilation WebAssembly après 15 minutes. Vérifie que les deux fichiers sont complets et réessaie dans un navigateur avec assez de mémoire.")),900000);});
   worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){activeSearch.reject(error);activeSearch=null;}};
   worker.postMessage({type:"init",wasmBinary},[wasmBinary]);
   status("Réseau lu (100 %). Compilation WebAssembly de Stockfish en cours…");
-  await runtimeReady;clearTimeout(bootTimer);clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;runtimeReadyResolve=null;runtimeReadyReject=null;
+  await runtimeReady;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;runtimeReadyResolve=null;runtimeReadyReject=null;
   status("Compilation terminée. Vérification du protocole UCI…");
   worker.postMessage("uci");await waitFor("uciok",180000);
   worker.postMessage("isready");await waitFor("readyok",180000);
   status("Stockfish 19 full est prêt. Génération des parties candidates…");return worker;
- })().catch(error=>{readyPromise=null;engineReady=false;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];throw error;});
+ })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];throw error;});
  return readyPromise;
 }
 function setEngineElo(elo){worker.postMessage("setoption name UCI_LimitStrength value true");worker.postMessage("setoption name UCI_Elo value "+elo);}

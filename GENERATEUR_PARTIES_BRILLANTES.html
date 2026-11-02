@@ -372,7 +372,23 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  document.getElementById("engine-version").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Stockfish "+selectedEngineVersion()+" sélectionné. Télécharge et choisis les fichiers affichés avant de générer ou vérifier.");});
   document.getElementById("engine-build").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
  updateEngineLinks();
+async function downloadEngineAsset(url){
+ const filename=decodeURIComponent(new URL(url,location.href).pathname.split("/").pop());
+ try{
+  status("Téléchargement de "+filename+"…");
+  const response=await fetch(url,{mode:"cors",cache:"force-cache"});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  const blob=await response.blob(),objectUrl=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=objectUrl;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+  status(filename+" téléchargé. Sélectionne-le ensuite dans le champ de fichier correspondant.");
+ }catch(error){
+  status("Téléchargement direct bloqué par le CDN ("+error.message+"). Le lien va s’ouvrir : utilise Ctrl+S puis conserve le nom du fichier.");
+  window.open(url,"_blank","noopener");
+ }
+}
+for(const id of ["engine-js-link","engine-wasm-link","engine-nnue-link"])document.getElementById(id).addEventListener("click",event=>{event.preventDefault();downloadEngineAsset(event.currentTarget.href);});
  for(const id of ["engine-js","engine-wasm","engine-nnue"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les fichiers JS et WASM "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Fichiers Stockfish "+selectedEngineVersion()+" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.133"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.134"></script>
 </body></html>

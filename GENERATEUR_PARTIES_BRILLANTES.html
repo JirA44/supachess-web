@@ -58,13 +58,27 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script>
-let worker=null, readyPromise=null, engineReady=false, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null;
+let worker=null, readyPromise=null, engineReady=false, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
-function waitFor(line,timeout=180000){return new Promise((resolve,reject)=>{const entry={line,resolve,reject,timer:setTimeout(()=>{uciWaiters=uciWaiters.filter(x=>x!==entry);reject(new Error("Stockfish n’a pas répondu à « "+line+" ». Vérifie que les fichiers JS et WASM sont complets et proviennent de la même release, puis réessaie."));},timeout)};uciWaiters.push(entry);});}
+function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?Math.floor(seconds/60)+" min "+(seconds%60)+" s":seconds+" s";}
+function setProgress(percent){document.getElementById("progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";}
+function waitFor(line,timeout=180000){
+ const startedAt=performance.now();
+ return new Promise((resolve,reject)=>{
+  const entry={line,resolve,reject,timer:null,progressTimer:null};
+  entry.progressTimer=setInterval(()=>{
+   const elapsed=Math.floor((performance.now()-startedAt)/1000),remaining=Math.max(0,Math.ceil(timeout/1000)-elapsed),percent=Math.min(100,Math.floor(elapsed/(timeout/1000)*100));
+   status("Protocole UCI · attente de "+line+" · ≈ "+formatDuration(remaining)+" avant expiration · délai écoulé "+percent+" % ("+(100-percent)+" % restant).");
+   setProgress(percent);
+  },1000);
+  entry.timer=setTimeout(()=>{clearInterval(entry.progressTimer);uciWaiters=uciWaiters.filter(x=>x!==entry);reject(new Error("Stockfish n’a pas répondu à « "+line+" » avant le délai de "+formatDuration(timeout/1000)+". Vérifie les fichiers JS/WASM et réessaie."));},timeout);
+  uciWaiters.push(entry);
+ });
+}
 function rejectUciWaiters(error){
  const pending=uciWaiters.splice(0);
- for(const item of pending){clearTimeout(item.timer);item.reject(error);}
+ for(const item of pending){clearTimeout(item.timer);clearInterval(item.progressTimer);item.reject(error);}
 }
 function onEngineMessage(event){
  const data=event.data;
@@ -79,14 +93,14 @@ function onEngineMessage(event){
    status(error.message);
    if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}
    rejectUciWaiters(error);
-   if(activeSearch){activeSearch.reject(error);activeSearch=null;}return;
+   if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}return;
   }
   return;
  }
  const line=String(data||"").trim();
  if(activeSearch&&line.startsWith("info ")){const match=line.match(/score (?:cp|mate) (-?\d+)/);if(match)activeSearch.score=Number(match[1]);}
- for(const item of [...uciWaiters])if(line.includes(item.line)){clearTimeout(item.timer);uciWaiters=uciWaiters.filter(x=>x!==item);item.resolve(line);}
- if(activeSearch&&line.startsWith("bestmove ")){const pending=activeSearch;clearTimeout(pending.timer);activeSearch=null;const match=line.match(/^bestmove\s+(\S+)(?:\s+ponder\s+(\S+))?/);pending.resolve(match?match[1]:null);}
+ for(const item of [...uciWaiters])if(line.includes(item.line)){clearTimeout(item.timer);clearInterval(item.progressTimer);uciWaiters=uciWaiters.filter(x=>x!==item);item.resolve(line);}
+ if(activeSearch&&line.startsWith("bestmove ")){const pending=activeSearch;clearTimeout(pending.timer);clearInterval(pending.progressTimer);activeSearch=null;const match=line.match(/^bestmove\s+(\S+)(?:\s+ponder\s+(\S+))?/);pending.resolve(match?match[1]:null);}
 }
 function readWasmFile(file){
  return new Promise((resolve,reject)=>{
@@ -107,7 +121,8 @@ function readWasmFile(file){
    const magic=new Uint8Array(buffer,0,4);
    if(magic[0]!==0||magic[1]!==97||magic[2]!==115||magic[3]!==109)return reject(new Error("Ce fichier n’est pas un réseau WebAssembly valide. Télécharge stockfish-19-single.wasm."));
    document.getElementById("progress-fill").style.width="100%";
-   status("Lecture du fichier terminée : 0 % restant pour le transfert. Compilation de Stockfish en cours…");
+   setProgress(0);
+  status("Fichier lu à 100 %. Compilation WebAssembly : estimation du temps et du délai maximal en cours…");
    resolve(buffer);
   };
   reader.readAsArrayBuffer(file);
@@ -134,25 +149,36 @@ function ensureEngine(){
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
   const compileStartedAt=performance.now();
-  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000);const note=elapsed>=180?" · La compilation peut dépasser 3 minutes sur un appareil lent.":"";status("Compilation WebAssembly toujours active · "+elapsed+" sec écoulées · progression non mesurable."+note);},5000);
+  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=900,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly · "+elapsed+" s écoulées · ≈ "+formatDuration(remaining)+" avant interruption automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). La compilation ne fournit pas de pourcentage réel.");setProgress(percent);},1000);
   const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish n’a pas terminé la compilation WebAssembly après 15 minutes. Vérifie que les deux fichiers sont complets et réessaie dans un navigateur avec assez de mémoire.")),900000);});
-  worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){activeSearch.reject(error);activeSearch=null;}};
+  worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}};
   worker.postMessage({type:"init",wasmBinary},[wasmBinary]);
   status("Réseau lu (100 %). Compilation WebAssembly de Stockfish en cours…");
   await runtimeReady;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;runtimeReadyResolve=null;runtimeReadyReject=null;
-  status("Compilation terminée. Vérification du protocole UCI…");
+  setProgress(100);
+  status("Compilation WebAssembly terminée à 100 %. Vérification du protocole UCI…");
   worker.postMessage("uci");await waitFor("uciok",180000);
   worker.postMessage("isready");await waitFor("readyok",180000);
+  setProgress(100);
   engineReady=true;
   status("Stockfish 19 full est prêt. Génération des parties candidates…");return worker;
  })().catch(error=>{readyPromise=null;engineReady=false;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;if(worker){worker.terminate();worker=null;}runtimeReadyResolve=null;runtimeReadyReject=null;for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];throw error;});
  return readyPromise;
 }
 function setEngineElo(elo){worker.postMessage("setoption name UCI_LimitStrength value true");worker.postMessage("setoption name UCI_Elo value "+elo);}
-function bestMove(fen,elo,movetime){
+function bestMove(fen,elo,movetime,estimate){
  return new Promise((resolve,reject)=>{if(activeSearch){reject(new Error("Une recherche moteur est déjà en cours."));return;}
-  activeSearch={resolve,reject,score:null};setEngineElo(elo);worker.postMessage("position fen "+fen);worker.postMessage("go movetime "+movetime);
-  activeSearch.timer=setTimeout(()=>{if(activeSearch){activeSearch=null;reject(new Error("Stockfish n’a pas répondu à temps."));}},Math.max(30000,movetime*30));
+  const timeout=Math.max(30000,movetime*30),startedAt=performance.now();
+  searchStartedAt=startedAt;
+  activeSearch={resolve,reject,score:null,startedAt,timeout,estimate};
+  setEngineElo(elo);worker.postMessage("position fen "+fen);worker.postMessage("go movetime "+movetime);
+  activeSearch.progressTimer=setInterval(()=>{
+   if(!activeSearch)return;
+   const elapsed=Math.floor((performance.now()-startedAt)/1000),deadlineRemaining=Math.max(0,Math.ceil(timeout/1000)-elapsed),deadlinePercent=Math.min(100,Math.floor(elapsed/(timeout/1000)*100));
+   const e=activeSearch.estimate||{};
+   status("Stockfish calcule le demi-coup · "+elapsed+" s écoulées · ≈ "+formatDuration(deadlineRemaining)+" avant délai de réponse · "+deadlinePercent+" % du délai écoulé ("+(100-deadlinePercent)+" % restant) · génération estimée : ≈ "+formatDuration(e.remainingSeconds||0)+" restantes ("+(e.remainingPercent||0)+" %).");
+  },1000);
+  activeSearch.timer=setTimeout(()=>{if(activeSearch){clearInterval(activeSearch.progressTimer);activeSearch=null;reject(new Error("Stockfish n’a pas répondu avant le délai de "+formatDuration(timeout/1000)+"."));}},timeout);
  });
 }
 function clampElo(id){const input=document.getElementById(id);let value=Number(input.value)||2800;value=Math.max(2800,Math.min(3190,Math.round(value/10)*10));input.value=value;return value;}
@@ -190,15 +216,16 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
  for(let ply=0;ply<maxPlies&&!game.game_over();ply++){
   if(cancelRequested)break;
   const elo=game.turn()==="w"?whiteElo:blackElo;
-  status("Partie "+(index+1)+"/"+total+" · demi-coup "+(ply+1)+"/"+maxPlies+" · Stockfish "+elo+" Elo UCI…");
-  const token=await bestMove(game.fen(),elo,movetime);if(!token||token==="(none)")break;
+  const plannedTotal=total*maxPlies,completed=index*maxPlies+ply,remainingPlies=Math.max(1,plannedTotal-completed),progressPercent=Math.min(99,Math.floor(completed/plannedTotal*100)),remainingPercent=100-progressPercent,secondsPerPly=moveTimeSamples.length?moveTimeSamples.reduce((a,b)=>a+b,0)/moveTimeSamples.length:movetime*1.25,remainingSeconds=Math.ceil(remainingPlies*secondsPerPly/1000);
+  status("Partie "+(index+1)+"/"+total+" · demi-coup "+(ply+1)+"/"+maxPlies+" · progression des demi-coups planifiés "+progressPercent+" % · reste "+remainingPercent+" % · temps estimé ≈ "+formatDuration(remainingSeconds)+" · Stockfish "+elo+" Elo UCI.");
+  const token=await bestMove(game.fen(),elo,movetime,{remainingSeconds,remainingPercent});if(!token||token==="(none)")break;
   const movingPiece=game.get(token.slice(0,2)),movingType=movingPiece&&movingPiece.type;
   const move=game.move({from:token.slice(0,2),to:token.slice(2,4),promotion:token[4]||"q"});if(!move)throw new Error("Stockfish a renvoyé un coup illégal : "+token);
-  uci.push(token);san.push(move.san);
+  uci.push(token);san.push(move.san);moveTimeSamples.push(performance.now()-searchStartedAt);if(moveTimeSamples.length>20)moveTimeSamples.shift();
   if(inspectSacrifice(game,move,movingType)){
    candidatePlies.push(ply);if(ply-lastCandidatePly<=3)chain+=1;else{chain=1;chainStart=ply;}bestChain=Math.max(bestChain,ply-chainStart+1);lastCandidatePly=ply;
   }
-  document.getElementById("progress-fill").style.width=Math.round(((index+(ply+1)/maxPlies)/total)*100)+"%";
+  setProgress(((index+(ply+1)/maxPlies)/total)*100);
   await new Promise(resolve=>setTimeout(resolve,0));
  }
  return {uci,san,candidatePlies,candidateCount:candidatePlies.length,bestChain,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening};
@@ -211,7 +238,7 @@ async function generate(){
   await ensureEngine();
   for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies);currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
   status(cancelRequested?"Génération interrompue après le demi-coup en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
- }catch(error){status("Erreur moteur : "+error.message);}
+ }catch(error){status(cancelRequested&&error.message==="Initialisation annulée."?"Compilation Stockfish annulée.":"Erreur moteur : "+error.message);}
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
 }
 document.getElementById("generate").addEventListener("click",generate);

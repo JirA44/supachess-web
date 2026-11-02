@@ -33,11 +33,13 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
 </div>
 <div class="notice">
-<strong>Préparation du moteur complet :</strong> télécharge ces deux fichiers officiels, puis sélectionne-les. Le téléchargement direct depuis un CDN est bloqué par certains navigateurs.
+<strong>Choix du moteur :</strong> Lite est sélectionné par défaut pour éviter de bloquer les navigateurs avec le réseau complet de 99 Mo. Le réglage Elo demandé reste appliqué par UCI, mais ce n’est pas une mesure indépendante de la force réelle du build.
 <div class="controls" style="margin-top:10px">
-<div class="field"><label for="engine-js">Stockfish 19 · fichier JavaScript</label><a href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-single.js" target="_blank" rel="noopener">Télécharger stockfish-19-single.js</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
-<div class="field"><label for="engine-wasm">Stockfish 19 · réseau WASM (~99 Mo)</label><a href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-single.wasm" target="_blank" rel="noopener">Télécharger stockfish-19-single.wasm</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
+<div class="field"><label for="engine-build">Build Stockfish 19</label><select id="engine-build"><option value="lite" selected>Lite mono-thread · WASM 1,8 Mo</option><option value="full">Full mono-thread · WASM 99,1 Mo</option></select></div>
+<div class="field"><label for="engine-js">Fichier JavaScript</label><a id="engine-js-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.js" target="_blank" rel="noopener">Télécharger le fichier JS Lite</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
+<div class="field"><label for="engine-wasm">Réseau WASM</label><a id="engine-wasm-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.wasm" target="_blank" rel="noopener">Télécharger le réseau WASM Lite</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
 </div>
+<p class="muted">Sélectionne les deux fichiers du même build. Leur nom et leur taille officielle sont vérifiés avant compilation. Choisis Full si tu veux le réseau complet et si le navigateur dispose de suffisamment de mémoire.</p>
 </div>
 <div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
 <p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers officiels Stockfish 19 full, puis sélectionne-les. Le suivi donne le temps restant et le pourcentage pour le transfert, le protocole UCI, les coups et la génération. Pendant la compilation WASM, il affiche le temps et le délai maximal restant : le moteur ne fournit pas de progression réelle. Utilise le bouton d’annulation si l’attente bloque.</p>
@@ -54,7 +56,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="move-controls"><button id="prev" class="btn secondary">← Demi-coup précédent</button><button id="next" class="btn">Demi-coup suivant →</button><button id="download-pgn" class="btn secondary">Télécharger le PGN</button></div>
 </div></div>
 </section>
-<p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 19.0.1, build complet mono-thread, via les fichiers séparés de la release GitHub. Le moteur fonctionne dans ton navigateur ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
+<p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 19, build Lite ou Full mono-thread de la release GitHub. Le réglage UCI Elo ne certifie pas la force réelle du build ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script>

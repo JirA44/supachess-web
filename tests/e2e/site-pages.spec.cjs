@@ -820,6 +820,10 @@ test('brilliant candidate generator enforces Elo 2800 minimum and loads the engi
   await expect(page.locator('#game-count')).toHaveValue('3');
   expect(await page.evaluate(() => clampElo('white-elo'))).toBe(2800);
   expect(await page.evaluate(() => typeof worker === 'undefined' || worker === null)).toBe(true);
+  await expect(page.locator('#engine-js')).toHaveCount(1);
+  await expect(page.locator('#engine-wasm')).toHaveCount(1);
+  await page.locator('#generate').click();
+  await expect(page.locator('#status')).toContainText('Sélectionne les fichiers stockfish-19-single.js');
   await expect(page.locator('#generate')).toBeEnabled();
   expect(errors).toEqual([]);
 });

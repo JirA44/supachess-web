@@ -19,7 +19,7 @@
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
-  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}';
+  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}}';
   (document.head || document.documentElement).appendChild(style);
 
   // Normalize outline Unicode chess symbols to solid glyphs; CSS determines side color.

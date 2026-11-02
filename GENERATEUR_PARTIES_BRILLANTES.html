@@ -108,6 +108,43 @@ function makeEngineWorker(){
  // This is the upstream browser loading mechanism; no custom init message is needed.
  return new Worker(jsUrl+"#"+wasmUrl);
 }
+function waitFor(token,timeoutMs){
+ return new Promise((resolve,reject)=>{
+  const waiter={token,resolve,reject};
+  uciWaiters.push(waiter);
+  waiter.timer=setTimeout(()=>{
+   uciWaiters=uciWaiters.filter(item=>item!==waiter);
+   reject(new Error("Stockfish n’a pas répondu à "+token+" après "+formatDuration(timeoutMs/1000)+"."));
+  },timeoutMs);
+ });
+}
+function rejectUciWaiters(error){
+ const pending=uciWaiters.splice(0);
+ for(const waiter of pending){clearTimeout(waiter.timer);waiter.reject(error);}
+}
+function onEngineMessage(event){
+ const line=String(event.data||"").trim();
+ if(!line)return;
+ for(let i=uciWaiters.length-1;i>=0;i--){
+  const waiter=uciWaiters[i];
+  if(line===waiter.token){
+   uciWaiters.splice(i,1);clearTimeout(waiter.timer);waiter.resolve(line);
+  }
+ }
+ if(line.startsWith("info ")&&activeSearch){
+  const cp=line.match(/\\bscore cp (-?\\d+)/),mate=line.match(/\\bscore mate (-?\\d+)/);
+  if(cp)activeSearch.score=Number(cp[1]);
+  else if(mate)activeSearch.score=Number(mate[1])>0?100000:-100000;
+  return;
+ }
+ const best=line.match(/^bestmove\\s+(\\S+)/);
+ if(best&&activeSearch){
+  const search=activeSearch;activeSearch=null;
+  clearTimeout(search.timer);clearInterval(search.progressTimer);
+  search.resolve(best[1]);
+ }
+}
+
 function ensureEngine(){
  if(readyPromise)return readyPromise;
  readyPromise=(async()=>{
@@ -303,5 +340,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.123"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.124"></script>
 </body></html>

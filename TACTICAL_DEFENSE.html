@@ -66,26 +66,26 @@ const BASE_EXERCISES = [
   {
     id:"skewer-h1",horizon:1,fen:"3k2r1/8/8/8/8/Q3K3/8/8 w - - 0 1",
     blackPlan:["g8g3"],whiteReplies:[],
-    planLabel:"…Rg3+",
-    prompt:"Blancs jouent. Protège la dame avant le prochain coup noir.",
-    threat:"La tour g8 peut descendre en g3+ : elle donnera échec au roi e3 et la dame a3 se trouvera derrière lui.",
-    explanation:"La dame devait sortir de la 3e rangée avant …Rg3+. En l’éloignant de la ligne du roi, tu empêches la tour de gagner la dame après l’échec."
+    planLabel:"Tour donne échec sur la ligne du roi",
+    prompt:"Tu défends. Protège la dame avant le prochain coup adverse.",
+    threat:"La tour peut donner échec sur la ligne du roi ; la dame est placée derrière le roi et risque d’être capturée après son déplacement.",
+    explanation:"Éloigne la dame de la ligne visée avant l’échec. En la sortant de l’alignement, tu empêches la tour de la gagner après le déplacement du roi."
   },
   {
     id:"skewer-h2",horizon:2,fen:"3k2r1/8/8/6n1/8/Q3K3/8/8 w - - 0 1",
     blackPlan:["g5h7","g8g3"],whiteReplies:["e3d3"],
-    planLabel:"…Nh7 — (ton coup) — …Rg3+",
-    prompt:"Blancs jouent. Trouve la défense avant le 2e coup noir.",
-    threat:"Le cavalier g5 peut libérer la colonne g en allant en h7. Après un coup blanc, …Rg3+ enfile le roi et la dame.",
-    explanation:"La dame doit quitter la 3e rangée dès maintenant. La ligne noire …Nh7, puis …Rg3+ reste jouable, mais ne gagne plus la dame."
+    planLabel:"Cavalier libère la colonne → tour donne échec",
+    prompt:"Tu défends. Trouve la parade avant le 2e coup adverse.",
+    threat:"Un cavalier adverse peut libérer la colonne de la tour. Après ton coup, la tour pourra donner échec sur la ligne du roi et viser la dame derrière lui.",
+    explanation:"Sors la dame de l’alignement avant le coup de préparation. La tour pourra encore donner échec, mais elle ne gagnera plus la dame derrière le roi."
   },
   {
     id:"skewer-h3",horizon:3,fen:"3k2r1/8/8/6n1/6b1/Q3K3/8/8 w - - 0 1",
     blackPlan:["g5h7","g4h3","g8g3"],whiteReplies:["e3d3","d3c3"],
-    planLabel:"…Nh7 — (ton coup) — …Bh3 — (ton coup) — …Rg3+",
-    prompt:"Blancs jouent. Détecte le plan noir avant son 3e demi-coup de tour.",
-    threat:"Le cavalier puis le fou peuvent dégager la colonne g. La tour voudrait conclure par …Rg3+ et attaquer la dame derrière le roi.",
-    explanation:"Sors la dame de la rangée visée avant le début du déblayage. Même après …Nh7 et …Bh3, …Rg3+ ne peut plus enchaîner sur ta dame."
+    planLabel:"Cavalier puis fou dégagent la colonne → tour donne échec",
+    prompt:"Tu défends. Repère le plan avant le 3e coup adverse.",
+    threat:"Le cavalier puis le fou peuvent dégager la colonne de la tour. Celle-ci cherchera ensuite à donner échec et à atteindre la dame située derrière le roi.",
+    explanation:"Sors la dame de l’alignement avant le début du déblayage. Même si les deux pièces dégagent la colonne, la tour ne pourra plus gagner ta dame par l’enfilade."
   }
 ];
 const PIECES={p:"♟",n:"♞",b:"♝",r:"♜",q:"♛",k:"♚"};
@@ -104,7 +104,7 @@ function transformFen(fen,mode){
     let f=0;
     for(const ch of row){if(/\d/.test(ch)){f+=Number(ch);continue;}let rr=r,ff=f;
       if(mode==="mirror")ff=7-f;
-      if(mode==="swap"){rr=7-r;ch;}
+      if(mode==="swap")rr=7-r;
       const piece=mode==="swap"?(ch===ch.toUpperCase()?ch.toLowerCase():ch.toUpperCase()):ch;
       board[rr][ff]=piece;f++;
     }
@@ -133,9 +133,9 @@ function renderBoard(){
   const ex=activeExercise(),board=document.getElementById("board"),rows=game.board(),order=[];
   for(let r=0;r<8;r++)for(let f=0;f<8;f++){const rr=ex.turn==="b"?7-r:r,ff=ex.turn==="b"?7-f:f;order.push({r:rr,f:ff});}
   board.innerHTML=order.map(({r,f})=>{
-    const square=String.fromCharCode(97+f)+(8-r),p=rows[r][f],isLight=(r+f)%2===1;
+    const square=String.fromCharCode(97+f)+(8-r),p=rows[r][f],isLight=(r+f)%2===0;
     const glyph=p?PIECES[p.type]:"",white=p&&p.color==="w";
-    const label=(ex.turn==="b"?String.fromCharCode(104-f):String.fromCharCode(97+f))+(ex.turn==="b"?r+1:8-r);
+    const label=square;
     return '<button type="button" class="square '+(isLight?"light":"dark")+(selected===square?" selected":"")+(lastMove&&(lastMove.from===square||lastMove.to===square)?" last":"")+'" data-square="'+square+'" aria-label="'+label+(p?" "+(p.color==="w"?"pièce blanche ":"pièce noire ")+p.type:" case vide")+'" onclick="clickSquare(\''+square+'\')">'+(glyph?'<span class="piece-token'+(white?"":" black-piece")+'">'+glyph+'</span>':"")+'<span class="square-label" aria-hidden="true">'+label[0]+(square[1])+'</span></button>';
   }).join("");
 }

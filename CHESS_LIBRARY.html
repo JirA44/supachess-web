@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Bibliothèque SupaChess : entraînements tactiques, défense, combinaisons, ouvertures, finales et encyclopédie des échecs.">
+<title>Bibliothèque & encyclopédie des échecs | SupaChess</title>
+<style>
+:root{color-scheme:dark;--bg:#09111f;--panel:#121d30;--line:#2a3b55;--gold:#f1c96b;--text:#eef2f8;--muted:#a8b5c8;--blue:#9bd4f1}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#20395b 0,transparent 55%),var(--bg);color:var(--text);font:16px/1.6 system-ui,sans-serif}a{color:var(--gold)}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}header{padding:18px 0;border-bottom:1px solid var(--line)}header a{text-decoration:none}.hero{padding:52px 0 28px}.eyebrow{color:var(--blue);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.75rem}.hero h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.08;color:var(--gold);margin:.5rem 0}.hero p{color:var(--muted);max-width:760px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:22px 0}.card{border:1px solid var(--line);border-radius:16px;padding:20px;background:linear-gradient(145deg,#17253b,var(--panel))}.card h2,.card h3{margin:0 0 8px}.card p{color:var(--muted);margin:.35rem 0 1rem}.button{display:inline-block;padding:9px 13px;border:1px solid #967a3d;border-radius:9px;background:#382f1c;color:#ffe5a0;text-decoration:none;font-weight:700}.count{font-size:2rem;color:var(--gold);font-weight:800}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}.toolbar input,.toolbar select{background:#0d1727;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:11px 13px;font:inherit}.toolbar input{flex:1;min-width:230px}.terms{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px}.term{border:1px solid var(--line);border-radius:12px;padding:14px;background:#111b2c}.term h3{font-size:1rem;margin:0 0 5px;color:var(--blue)}.term p{margin:0;color:var(--muted);font-size:.92rem}.section{padding:20px 0}.note{padding:14px 16px;border-left:3px solid var(--blue);background:#101a2a;color:var(--muted);border-radius:0 10px 10px 0}footer{margin:40px 0 22px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}.empty{display:none;color:var(--muted);padding:18px}@media(max-width:600px){.hero{padding-top:36px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a href="hub.html">← Retour au hub SupaChess</a></div></header>
+<main class="wrap">
+<section class="hero"><span class="eyebrow">Apprendre · s’entraîner · retrouver</span><h1>Bibliothèque & encyclopédie des échecs</h1><p>Un point d’entrée pour résoudre des exercices, travailler une compétence précise et retrouver rapidement les notions d’échecs. La bibliothèque rassemble les entraînements déjà disponibles ; son compteur de positions vérifiées se met à jour depuis le fichier de données du dépôt.</p></section>
+<section class="grid" aria-label="Bibliothèques d'entraînement">
+<article class="card"><h2>🧩 Banque tactique</h2><p><span class="count" id="puzzle-count">…</span><br>positions présentes dans la banque JSON vérifiable, avec thèmes et niveaux indicatifs.</p><a class="button" href="TRAINING_TACTICS.html">Résoudre des puzzles →</a></article>
+<article class="card"><h2>🛡️ Défense tactique</h2><p>Apprends à repérer les menaces, trouver une parade, calculer la suite et chercher une contre-attaque.</p><a class="button" href="TACTICAL_DEFENSE.html">Travailler la défense →</a></article>
+<article class="card"><h2>♟ Combinaisons longues</h2><p>Entraîne-toi à poursuivre la variante après le premier coup clé : sacrifices, réponses forcées et ressources défensives.</p><a class="button" href="TACTICAL_SEQUENCES.html">Lancer une séquence →</a></article>
+<article class="card"><h2>📚 Ouvertures et finales</h2><p>Retrouve des parcours guidés sur le début de partie et les finales, avec des exercices à jouer.</p><a class="button" href="TRAINING_OPENINGS.html">Ouvertures</a> <a class="button" href="TRAINING_ENDGAMES.html">Finales</a></article>
+<article class="card"><h2>🗂️ Parties commentées</h2><p>Étudie les décisions, plans et moments tactiques à partir de parties historiques.</p><a class="button" href="hub.html#legendary-games">Bibliothèque des parties →</a></article>
+<article class="card"><h2>⚙️ Générateur et analyse</h2><p>Utilise les outils de création et d’analyse comme compléments à la bibliothèque d’exercices.</p><a class="button" href="TACTICAL_PUZZLES_GENERATOR.html">Ouvrir le générateur →</a></article>
+</section>
+<section class="section" aria-labelledby="encyclopedia-title"><h2 id="encyclopedia-title">Encyclopédie pratique</h2><p class="note">Définitions courtes pour réviser un motif avant de passer aux exercices. La recherche filtre immédiatement les entrées.</p>
+<div class="toolbar"><label class="visually-hidden" for="term-search">Rechercher une notion</label><input id="term-search" type="search" placeholder="Rechercher : fourchette, zugzwang, roque…"><select id="term-category" aria-label="Filtrer par catégorie"><option value="">Toutes les catégories</option><option>Tactique</option><option>Stratégie</option><option>Ouverture</option><option>Finale</option><option>Règles</option></select></div>
+<div class="terms" id="terms">
+<article class="term" data-category="Tactique"><h3>Fourchette</h3><p>Un coup attaque simultanément plusieurs pièces ou menaces ; l’adversaire ne peut souvent en sauver qu’une.</p></article>
+<article class="term" data-category="Tactique"><h3>Clouage</h3><p>Une pièce ne peut pas bouger sans exposer une pièce plus importante ou son roi à une attaque.</p></article>
+<article class="term" data-category="Tactique"><h3>Enfilade</h3><p>Une pièce de valeur est attaquée et, lorsqu’elle s’écarte, une autre pièce située derrière devient vulnérable.</p></article>
+<article class="term" data-category="Tactique"><h3>Attaque à la découverte</h3><p>Le déplacement d’une pièce révèle l’attaque d’une autre pièce, souvent avec une menace supplémentaire.</p></article>
+<article class="term" data-category="Tactique"><h3>Déviation</h3><p>On éloigne une pièce de sa fonction défensive afin de rendre possible une combinaison.</p></article>
+<article class="term" data-category="Tactique"><h3>Élimination du défenseur</h3><p>On échange ou capture la pièce qui protège une case, une pièce ou une menace décisive.</p></article>
+<article class="term" data-category="Tactique"><h3>Échec intermédiaire</h3><p>Au lieu de reprendre immédiatement, on intercale une menace forcée, souvent un échec, qui change le calcul.</p></article>
+<article class="term" data-category="Tactique"><h3>Zugzwang</h3><p>Le joueur au trait préférerait passer : toute action légale détériore sa position.</p></article>
+<article class="term" data-category="Stratégie"><h3>Avant-poste</h3><p>Case avancée, souvent protégée par un pion, où une pièce peut s’installer sans être facilement chassée.</p></article>
+<article class="term" data-category="Stratégie"><h3>Colonne ouverte</h3><p>Colonne sans pion ; les tours peuvent l’occuper pour pénétrer dans le camp adverse.</p></article>
+<article class="term" data-category="Stratégie"><h3>Faiblesse de cases</h3><p>Ensemble de cases difficiles à défendre, souvent autour de pions avancés ou de cases de couleur donnée.</p></article>
+<article class="term" data-category="Stratégie"><h3>Amélioration de pièce</h3><p>Manœuvre qui place une pièce sur une case plus active ou mieux coordonnée, même sans menace immédiate.</p></article>
+<article class="term" data-category="Ouverture"><h3>Développement</h3><p>Mise en jeu des pièces depuis leur case initiale vers des cases utiles, en préparant la sécurité du roi.</p></article>
+<article class="term" data-category="Ouverture"><h3>Roque</h3><p>Coup spécial du roi et d’une tour qui rapproche le roi d’un abri et active la tour, sous conditions légales.</p></article>
+<article class="term" data-category="Ouverture"><h3>Centre</h3><p>Les cases centrales contrôlent des itinéraires importants ; leur occupation ou leur contrôle aide la mobilité des pièces.</p></article>
+<article class="term" data-category="Finale"><h3>Opposition</h3><p>En finale de rois, les rois se font face avec une case entre eux ; le joueur qui n’a pas le trait peut parfois gagner l’accès.</p></article>
+<article class="term" data-category="Finale"><h3>ケース clés</h3><p>Cases dont le contrôle détermine si un roi peut soutenir la promotion d’un pion. Compare toujours la position concrète.</p></article>
+<article class="term" data-category="Finale"><h3>Pion passé</h3><p>Pion qu’aucun pion adverse ne peut arrêter sur sa colonne ou les colonnes voisines avant la promotion.</p></article>
+<article class="term" data-category="Règles"><h3>Pat</h3><p>Le joueur au trait n’a aucun coup légal et son roi n’est pas en échec : la partie est nulle.</p></article>
+<article class="term" data-category="Règles"><h3>Échec et mat</h3><p>Le roi est en échec et son camp ne dispose d’aucun coup légal pour supprimer l’échec.</p></article>
+</div><p class="empty" id="empty">Aucune notion ne correspond à cette recherche.</p></section>
+<footer>Bibliothèque SupaChess · Version détaillée <strong>1.13.113</strong> · Les cotes et catégories de puzzles sont indicatives ; la qualité de chaque variante doit être vérifiée.</footer>
+</main>
+<script>
+(async()=>{try{const r=await fetch("training_games/tactical-training-puzzles.json");if(!r.ok)throw Error("data indisponible");const d=await r.json();document.getElementById("puzzle-count").textContent=Array.isArray(d.puzzles)?d.puzzles.length:"—"}catch{document.getElementById("puzzle-count").textContent="—";document.querySelector("#puzzle-count").nextSibling.textContent=" positions vérifiables indisponibles hors connexion."}})();
+const search=document.getElementById("term-search"),category=document.getElementById("term-category"),cards=[...document.querySelectorAll(".term")],empty=document.getElementById("empty");
+function filter(){const q=search.value.trim().toLocaleLowerCase("fr"),c=category.value;let n=0;for(const card of cards){const show=(!c||card.dataset.category===c)&&card.textContent.toLocaleLowerCase("fr").includes(q);card.hidden=!show;if(show)n++}empty.style.display=n?"none":"block"}
+search.addEventListener("input",filter);category.addEventListener("change",filter);
+</script>
+</body></html>

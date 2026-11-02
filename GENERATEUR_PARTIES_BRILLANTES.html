@@ -227,7 +227,7 @@ async function buildDefensePuzzles(){
  const candidates=[];
  currentGames.forEach((record,gameIndex)=>record.candidatePlies.slice(0,4).forEach(ply=>{const fen=record.fensAfter[ply];if(fen)candidates.push({record,gameIndex,ply,fen});}));
  const selected=candidates.slice(0,8);
- if(!selected.length){statusEl.textContent="Aucune tactique candidate n’a été détectée dans les parties. Génère d’autres parties ou augmente leur longueur.";button.disabled=false;return;}
+ if(!selected.length){refreshCustomPuzzlePool();statusEl.textContent="Aucune tactique candidate n’a été détectée dans les parties. Génère d’autres parties ou augmente leur longueur.";button.disabled=false;return;}
  try{
   for(let n=0;n<selected.length;n++){
    const item=selected[n],game=new Chess(item.fen),line=[],userColor=game.turn();
@@ -244,8 +244,8 @@ async function buildDefensePuzzles(){
   }
   refreshCustomPuzzlePool();saveDefensePuzzles();
   document.getElementById("defense-panel").classList.remove("hidden");
-  statusEl.textContent=defensePuzzles.length+" puzzle(s) défensif(s) généré(s) depuis "+candidates.length+" position(s) tactique(s) candidate(s). Le premier coup de la ligne est la défense à trouver.";
-  if(defensePuzzles.length)selectDefensePuzzle(0);
+  statusEl.textContent=generatedDefensePuzzles.length+" puzzle(s) défensif(s) généré(s) depuis "+candidates.length+" position(s) tactique(s) candidate(s). Le premier coup de la ligne est la défense à trouver.";
+  if(generatedDefensePuzzles.length)selectDefensePuzzle(tacticalTrainingPuzzles.length);
  }catch(error){statusEl.textContent="Impossible d’analyser les positions : "+error.message;}
  finally{button.disabled=false;}
 }
@@ -303,5 +303,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.119"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.120"></script>
 </body></html>

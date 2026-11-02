@@ -36,6 +36,13 @@
       if (white) node.classList.add('supachess-filled-white-piece');
       if (black) node.classList.add('supachess-filled-black-piece');
       var glyph = (node.textContent || '').trim().replace(/[\uFE0E\uFE0F]/g, '');
+      var type = chessGlyphType[glyph];
+      if (type && (white || black)) {
+        var side = white ? 'w' : 'b';
+        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=engraved-20261102', root).href;
+        node.classList.add('supachess-vector-piece');
+        node.style.backgroundImage = 'url("' + vector + '")';
+      }
       if (outlineToSolid[glyph]) node.textContent = outlineToSolid[glyph];
     });
   }

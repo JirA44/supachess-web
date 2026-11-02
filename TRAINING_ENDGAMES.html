@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 14161)
+Total output lines: 1321
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -690,139 +693,7 @@
 
                 explanation: 'Dans la finale Roi + Tour contre Roi, la technique consiste a utiliser la tour pour couper le roi adverse sur un bord de l\'echiquier, puis amener votre roi en soutien pour forcer le mat.',
                 concept: 'Coupez le roi adverse avec la tour, puis approchez votre roi progressivement. Le mat se donne toujours sur le bord.',
-                hint: 'Utilisez la tour pour couper le roi noir du centre. Rh3+ gagne un temps en donnant echec.'
-            },
-            {
-                id: 'krk2',
-                name: 'Roi + Tour vs Roi (2)',
-                shortName: 'R+T vs R #2',
-                description: 'Matez avec la tour depuis une position differente',
-                fen: '8/8/8/4k3/8/8/8/R3K3 w - - 0 1',
-                difficulty: 'debutant',
-                diffLabel: 'Debutant',
-                keyMoves: ['Ke2', 'Kd2', 'Ra5+', 'Ra4'],
-
-                explanation: 'Meme principe : la tour doit couper le roi noir. Ici, commencer par centraliser votre roi avec Ke2 ou couper directement avec Ra5+ est correct.',
-                concept: 'Centralisez d\'abord votre roi, puis utilisez la tour pour repousser methodiquement le roi adverse vers le bord.',
-                hint: 'Centralisez votre roi vers le centre (Ke2) ou coupez immediatement le roi noir avec Ra5+.'
-            },
-            {
-                id: 'kpk',
-                name: 'Roi + Pion (Promotion)',
-                shortName: 'R+P promotion',
-                description: 'Promouvez le pion en dame',
-                fen: '8/4P3/8/8/8/5k2/8/4K3 w - - 0 1',
-                difficulty: 'debutant',
-                diffLabel: 'Debutant',
-                keyMoves: ['e8=Q', 'e8=R'],
-
-                explanation: 'Quand un pion atteint la 8e rangee, il se transforme. La promotion en Dame est presque toujours le meilleur choix car elle donne la piece la plus puissante.',
-                concept: 'Promouvez toujours en Dame sauf cas de pat. Ici e8=D est immediat et gagnant.',
-                hint: 'Le pion est deja en e7 ! Poussez-le en e8 pour le promouvoir en Dame.'
-            },
-            {
-                id: 'kbbk',
-                name: 'Roi + 2 Fous vs Roi',
-                shortName: 'R+2F vs R',
-                description: 'Matez avec la paire de fous',
-                fen: '8/8/8/4k3/8/8/2BB4/4K3 w - - 0 1',
-                difficulty: 'avance',
-                diffLabel: 'Avance',
-                keyMoves: ['Bc3', 'Bd3', 'Ke2', 'Be3'],
-
-                explanation: 'Le mat avec 2 Fous necessite de repousser le roi adverse dans un coin. Les deux fous cooperent en creant une "barriere diagonale" que le roi ne peut pas traverser.',
-                concept: 'Les 2 fous forment une barriere diagonale. Placez-les sur des diagonales adjacentes pour forcer le roi vers un coin, puis matez avec l\'aide de votre roi.',
-                hint: 'Commencez par activer vos fous au centre : Bc3 ou Bd3 forment une barriere diagonale que le roi noir ne peut pas franchir.'
-            },
-            {
-                id: 'lucena',
-                name: 'Position Lucena',
-                shortName: 'Lucena',
-                description: 'Gagnez avec la technique du pont (Rf4)',
-                fen: '1K1k4/1P6/8/8/8/8/1r6/5R2 w - - 0 1',
-                difficulty: 'intermediaire',
-                diffLabel: 'Intermediaire',
-                keyMoves: ['Rf4', 'Rd1+', 'Re1'],
-
-                explanation: 'La position Lucena est la plus importante des finales Tour + Pion. La cle est la technique du "pont" : la tour va en f4, le roi sort en a7 ou a8, puis si le roi noir donne echec, la tour interpose en f4 en protegeant le roi.',
-                concept: 'Technique du pont : 1.Rf4! prepare l\'interposition. Le roi blanc sort du pion, et la tour "construit un pont" en s\'interposant aux echecs sur la 4e rangee.',
-                hint: 'Rf4 ! C\'est le coup cle de la position Lucena. La tour se place en f4 pour construire un "pont" et bloquer les echecs adverses.'
-            },
-            {
-                id: 'philidor',
-                name: 'Position Philidor',
-                shortName: 'Philidor',
-                description: 'Placez la tour sur la sixième rangée pour couper le roi et préserver la nulle',
-                fen: '8/3k4/6r1/3PK3/8/8/8/7R b - - 0 1',
-                difficulty: 'intermediaire',
-                diffLabel: 'Intermediaire',
-                keyMoves: ['Rd6'],
-
-                explanation: 'Dans cette position de défense de type Philidor, le roi noir se place devant le pion passé et la tour noire cherche la sixième rangée pour empêcher le roi blanc d’avancer. Quand le pion avance, la défense passe aux échecs depuis l’arrière.',
-                concept: 'Coupez le roi avec la tour sur la sixième rangée; si le pion avance, cherchez les échecs par l’arrière. Le résultat dépend de la position exacte et du trait.',
-                hint: 'La tour noire doit se placer sur la sixième rangée, devant le roi blanc et derrière le roi noir.'
-            },
-            {
-                id: 'rpvr',
-                name: 'Tour + Pion vs Tour',
-                shortName: 'T+P vs T',
-                description: 'Poussez le pion jusqu\'a promotion',
-                fen: '8/3k1R2/3P4/8/8/8/8/3K1r2 w - - 0 1',
-                difficulty: 'intermediaire',
-                diffLabel: 'Intermediaire',
-                keyMoves: ['Ke2', 'Kd2'],
-
-                explanation: 'En finale Tour + Pion contre Tour, la coordination entre votre roi et votre tour est essentielle. Le roi doit soutenir le pion, et la tour doit empecher le roi adverse de bloquer.',
-                concept: 'Approchez votre roi du pion pour le soutenir. Gardez votre tour active pour empecher les echecs et le blocage adverse.',
-                hint: 'Activez votre roi avec Ke2 pour soutenir le pion d6, ou jouez Re7 pour couper le roi noir.'
-            },
-            {
-                id: 'qqend',
-                name: 'Finale de Dames',
-                shortName: 'D vs D',
-                description: 'Technique de finale dame contre dame',
-                fen: '8/3k4/8/3QK3/8/8/3q4/8 w - - 0 1',
-                difficulty: 'avance',
-                diffLabel: 'Avance',
-                keyMoves: ['Qd6+', 'Qb7+', 'Qc6+', 'Qa8+'],
-
-                explanation: 'Les finales de Dames sont complexes. La cle est de centraliser votre dame, donner des echecs pour eloigner le roi adverse de votre pion (s\'il y en a un), et creer une menace d\'echange vers une finale gagnante.',
-                concept: 'En finale de dames, privilegiez les echecs centralises. Une dame centralisee est extremement puissante et peut forcer l\'echange ou le mat.',
-                hint: 'Donnez echec avec Qd6+ ou Qb7+ pour repousser le roi noir et gagner du terrain.'
-            },
-            {
-                id: 'zugzwang',
-                name: 'Zugzwang',
-                shortName: 'Zugzwang',
-                description: 'Utilisez le zugzwang pour gagner',
-                fen: '8/8/1pk5/8/1PK5/8/8/8 w - - 0 1',
-                difficulty: 'expert',
-                diffLabel: 'Expert',
-                keyMoves: ['Kd4', 'Kc3', 'Kb3'],
-
-                explanation: 'Le zugzwang est une situation ou le joueur au trait est desavantage par l\'obligation de jouer. Dans cette position de pions, les blancs doivent manoeuvrer pour mettre les noirs en zugzwang. Apres Kd4, les noirs sont forces de ceder le controle de la case c5 ou b5.',
-                concept: 'Le zugzwang force l\'adversaire a deteriorer sa position. Dans les finales de pions, la cle est souvent l\'opposition et le timing pour placer l\'adversaire en zugzwang.',
-                hint: 'Kd4 ! Cela met les noirs en difficulte. S\'ils jouent Kd6, b5 gagne. S\'ils jouent Kb5, Kd5 domine.'
-            },
-            {
-                id: 'pawnrace',
-                name: 'Course de Pions Avancee',
-                shortName: 'Course de pions',
-                description: 'Gagnez la course de pions',
-                fen: '8/pp6/8/PP6/8/K7/8/k7 w - - 0 1',
-                difficulty: 'expert',
-                diffLabel: 'Expert',
-                keyMoves: ['b6', 'a6', 'Kb4', 'Ka4'],
-
-                explanation: 'Dans les courses de pions, le calcul precis est essentiel. Ici, les blancs doivent decider quand pousser quel pion. b6 est souvent correct car il force une reaction immediate (axb6 ou a6), et le roi blanc est plus avance.',
-                concept: 'Dans les courses de pions, comptez les temps ! Le roi le plus actif et les pions les plus avances ont l\'avantage. Parfois, sacrifier un pion pour faire une dame en premier est gagnant.',
-                hint: 'Poussez b6 ! Cela force une reaction des noirs et ouvre un passage pour vos pions. Le timing est crucial.'
-            }
-        ];
-
-
-        var ENDGAME_QUIZZES = {
-            krk: { question:'Quelle méthode permet de mater le roi seul avec roi et tour ?', choices:[{text:'Couper ses cases avec la tour puis rapprocher son roi',correct:true},{text:'Donner des échecs sans améliorer la position',correct:false},{text:'Pousser le roi adverse au centre',correct:false}] },
+                hint: 'Utilisez la tour pour couper le roi noir du centre. Rh3+ gagne un temps en don…2161 tokens truncated…s échecs sans améliorer la position',correct:false},{text:'Pousser le roi adverse au centre',correct:false}] },
             krk2: { question:'Quel est le rôle du roi dans cette finale ?', choices:[{text:'S’approcher pour soutenir la tour et réduire les cases du roi adverse',correct:true},{text:'Rester sur sa case de départ',correct:false},{text:'Échanger la tour contre le roi',correct:false}] },
             kpk: { question:'Pourquoi choisir la promotion en dame dans cette position ?', choices:[{text:'Elle donne la pièce la plus puissante; une sous-promotion ne se justifie que par une raison tactique',correct:true},{text:'La dame est obligatoire dans toutes les positions',correct:false},{text:'La tour ne peut jamais mater',correct:false}] },
             kbbk: { question:'Comment les deux fous coopèrent-ils pour mater ?', choices:[{text:'Ils forment une barrière et poussent le roi vers un bord avec le soutien du roi',correct:true},{text:'Ils attaquent le roi sur la même case',correct:false},{text:'Ils doivent être échangés dès que possible',correct:false}] },
@@ -899,7 +770,7 @@
             var config = {
                 position: 'start',
                 draggable: false,
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+                pieceTheme: 'assets/chess-pieces/{piece}.svg?v=engraved-20261102'
             };
             board = Chessboard('board', config);
             $(window).on('resize', function() {
@@ -996,7 +867,7 @@
                 position: currentEndgame.fen,
                 draggable: true,
                 orientation: currentEndgame.fen.split(/\s+/)[1] === 'b' ? 'black' : 'white',
-                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+                pieceTheme: 'assets/chess-pieces/{piece}.svg?v=engraved-20261102',
                 onDragStart: onDragStart,
                 onDrop: onDrop,
                 onSnapEnd: onSnapEnd

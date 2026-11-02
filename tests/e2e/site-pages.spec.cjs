@@ -474,7 +474,7 @@ test('tactics training rejects a legal wrong move, gives a hint and requires the
   await isolateExternalServices(page);
   await page.goto('/TRAINING_TACTICS.html');
   await page.setViewportSize({ width: 320, height: 800 });
-  await expect(page.locator('#stat-total')).toHaveText('40');
+  await expect(page.locator('#stat-total')).toHaveText('158');
   await page.evaluate(() => window.openPuzzle('knight-fork-A'));
   await expect(page.locator('#modal-bg')).toHaveClass(/open/);
   await page.locator('[data-square="b5"]').click();

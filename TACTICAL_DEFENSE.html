@@ -6,7 +6,12 @@
 <meta name="description" content="Entraînement SupaChess pour repérer et neutraliser les menaces tactiques avant qu'elles ne se réalisent.">
 <title>Défense tactique — SupaChess</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-<script src="shared/progress.js?v=site-version-1.13.125"></script>
+<script src="shared/progress.js?v=site-version-1.13.126"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="shared/profiles.js?v=site-version-1.13.126"></script>
+<script src="shared/community.js?v=site-version-1.13.126"></script>
 <style>
 :root{color-scheme:dark;--bg:#0b1324;--panel:#15243b;--panel2:#1b2d49;--line:#34506f;--text:#f6f8fc;--muted:#c0cbd9;--gold:#facc15;--green:#86efac;--red:#fca5a5;--blue:#93c5fd}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#193860 0,#0b1324 60%);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{width:min(1120px,100% - 28px);margin:auto;padding:22px 0 48px}
@@ -14,7 +19,7 @@ nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bo
 header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.08;margin:0 0 12px}header p{max-width:800px;margin:0 auto;color:var(--muted)}.pill{display:inline-block;margin:16px 4px 0;padding:5px 12px;border:1px solid #52708f;border-radius:999px;background:#102037;color:#e7effa}
 .panel{background:linear-gradient(145deg,rgba(24,42,68,.97),rgba(14,28,47,.97));border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0;box-shadow:0 14px 38px #0003}.method h2,.exercise-head h2{margin:0 0 8px}.muted{color:var(--muted)}.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px;margin-top:14px}.step{padding:12px;border-radius:12px;background:#0c1b30;border:1px solid #263f5e}.step b{display:block;color:var(--gold);margin-bottom:4px}.motifs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.motifs span{padding:6px 10px;border-radius:8px;background:#233956;color:#e8f1ff;font-size:.9rem}
 .controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:16px 0}.horizon-btn,.action-btn{min-height:44px;padding:9px 14px;border:1px solid #617998;border-radius:10px;background:#193657;color:#fff;font:inherit;font-weight:750;cursor:pointer}.horizon-btn[aria-pressed=true]{background:#6c4f0b;border-color:#facc15;color:#fff8d5}.action-btn.primary{background:#146c43;border-color:#4ade80}.action-btn:hover,.horizon-btn:hover{filter:brightness(1.15)}button:focus-visible{outline:3px solid #facc15;outline-offset:2px}
-.exercise-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:10px;margin:14px 0}.exercise-card{display:block;text-align:left;width:100%;padding:13px;background:#0d1c30;border:1px solid var(--line);border-radius:12px;color:var(--text);font:inherit;cursor:pointer}.exercise-card[aria-current=true]{border:2px solid var(--gold);padding:12px;background:#24344a}.exercise-card small{display:block;color:var(--muted)}.exercise-card strong{display:block}.exercise-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.tag{font-size:.82rem;color:#fde68a;border:1px solid #79601a;border-radius:999px;padding:3px 9px;background:#332808}
+.exercise-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:10px;margin:14px 0}.exercise-card{display:block;text-align:left;width:100%;padding:13px;background:#0d1c30;border:1px solid var(--line);border-radius:12px;color:var(--text);font:inherit;cursor:pointer}.exercise-card[aria-current=true]{border:2px solid var(--gold);padding:12px;background:#24344a}.exercise-card small{display:block;color:var(--muted)}.exercise-card strong{display:block}.rating-pill{display:inline-flex;margin:7px 0;padding:3px 8px;border:1px solid #657d99;border-radius:999px;background:#152b43;color:#dbeafe;font-size:.78rem;font-weight:800}.elo-summary{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:14px auto 0;max-width:900px}.elo-card{min-width:190px;padding:10px 15px;border:1px solid #45617f;border-radius:12px;background:#102037;text-align:left}.elo-card span{display:block;color:var(--muted);font-size:.8rem}.elo-card strong{font-size:1.1rem;color:#facc15}.elo-summary p{flex-basis:100%;margin:0;color:var(--muted);font-size:.86rem}.exercise-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.tag{font-size:.82rem;color:#fde68a;border:1px solid #79601a;border-radius:999px;padding:3px 9px;background:#332808}
 .play-area{display:grid;grid-template-columns:minmax(250px,430px) minmax(240px,1fr);gap:22px;align-items:center;margin-top:18px}.board-wrap{display:flex;justify-content:center}.board{width:min(100%,430px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #c4a477;border-radius:7px;overflow:hidden;box-shadow:0 14px 35px #0007}.square{position:relative;display:flex;align-items:center;justify-content:center;border:0;padding:0;min-width:0;min-height:0;aspect-ratio:1;font-size:clamp(1.6rem,6vw,3.1rem);cursor:pointer}.square.light{background:#f0d9b5}.square.dark{background:#b58863}.square.selected{box-shadow:inset 0 0 0 4px #facc15;z-index:1}.square.last{box-shadow:inset 0 0 0 4px rgba(34,197,94,.7)}.square-label{position:absolute;left:3px;top:1px;font:700 .58rem/1 system-ui,sans-serif;color:#1f2937;pointer-events:none}.piece-token{display:block;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",sans-serif;font-weight:900;paint-order:stroke fill;-webkit-text-fill-color:#fff;-webkit-text-stroke:2.8px #101827;text-shadow:0 0 2px #101827,1px 0 #101827,-1px 0 #101827,0 1px #101827,0 -1px #101827,1px 1px #101827,-1px -1px #101827,1px -1px #101827,-1px 1px #101827;filter:drop-shadow(0 1px 1px #000b)}.piece-token.black-piece{-webkit-text-fill-color:#171717;-webkit-text-stroke:2.7px #f8fafc;text-shadow:0 0 2px #f8fafc,1px 0 #f8fafc,-1px 0 #f8fafc,0 1px #f8fafc,0 -1px #f8fafc,1px 1px #f8fafc,-1px -1px #f8fafc,1px -1px #f8fafc,-1px 1px #f8fafc;filter:drop-shadow(0 1px 1px #fff9)}
 .turn{font-weight:800;color:var(--gold);margin-bottom:7px}.prompt{font-size:1.1rem;font-weight:700}.threat{margin-top:12px;padding:12px;border-left:4px solid #fb7185;border-radius:0 10px 10px 0;background:#321a2a}.status{min-height:3.1em;padding:12px;border-radius:10px;background:#0c1a2d;border:1px solid #2b4666;margin:14px 0}.status.good{border-color:#22c55e;color:#dcfce7}.status.bad{border-color:#fb7185;color:#ffe4e6}.explain{display:none;margin:12px 0;padding:14px;background:#102f28;border:1px solid #37875d;border-radius:12px}.explain.show{display:block}.plan{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#fef3c7;word-break:break-word}.horizon-note{font-size:.92rem;padding:12px;border-radius:10px;background:#0f2035;color:var(--muted)}
 [hidden]{display:none!important}
@@ -27,7 +32,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 <header>
   <h1>🛡️ Défendre contre les tactiques</h1>
   <p>Ne cherche pas seulement le coup brillant : apprends à repérer la menace adverse avant qu’elle arrive, puis à l’empêcher. Cette première série travaille l’enfilade sur le roi et la dame, sur plusieurs horizons.</p>
-  <span class="pill">15 positions · 5 niveaux Elo · 3 horizons · jusqu’à 32 pièces sur l’échiquier</span>
+  <span class="pill">15 positions · 5 niveaux Elo · 3 horizons · jusqu’à 32 pièces sur l’échiquier</span><div class="elo-summary"><div class="elo-card"><span>Ton Elo puzzle</span><strong id="player-puzzle-elo">1200</strong></div><div class="elo-card"><span>Classement puzzle</span><strong id="player-puzzle-rank">Connexion requise</strong></div><p id="puzzle-rank-detail">Les cotes des problèmes sont indicatives. Le rang mondial s’affiche quand le service de classement SupaChess est accessible.</p></div>
 </header>
 <section class="panel method" aria-labelledby="method-title">
   <h2 id="method-title">Ta routine de défense en 4 étapes</h2>
@@ -133,11 +138,55 @@ function transformFen(fen,mode){
 const EXERCISES=BASE_EXERCISES.flatMap(base=>["original","mirror","swap"].map(mode=>{
   const transform=mode==="mirror"?"mirror":mode==="swap"?"swap":"original";
   const titleSuffix=mode==="original"?"Vue standard":mode==="mirror"?"Aile opposée":"Camp noir";
-  return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Elo "+base.rating+" · Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
+  return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
 }));
 const DEFENSE_SOLVED_KEY="supachess_tactical_defense_solved_v1";
 function loadSolvedExercises(){try{const value=JSON.parse(localStorage.getItem(DEFENSE_SOLVED_KEY)||"[]");return new Set(Array.isArray(value)?value.filter(id=>EXERCISES.some(ex=>ex.id===id)):[]);}catch(e){return new Set();}}
 function saveSolvedExercises(){try{localStorage.setItem(DEFENSE_SOLVED_KEY,JSON.stringify(Array.from(solved)));}catch(e){}}
+const PUZZLE_ELO_KEY="puzzle_elo";
+let puzzleElo=loadPuzzleElo(),activePuzzleUser=null;
+function loadPuzzleElo(){try{const value=Number(localStorage.getItem(PUZZLE_ELO_KEY));return Number.isFinite(value)&&value>=400?Math.round(value):1200;}catch(e){return 1200;}}
+function savePuzzleElo(){try{localStorage.setItem(PUZZLE_ELO_KEY,String(puzzleElo));}catch(e){}const el=document.getElementById("player-puzzle-elo");if(el)el.textContent=String(puzzleElo);}
+function calculatePuzzleEloDelta(rating,puzzleRating){const expected=1/(1+Math.pow(10,(puzzleRating-rating)/400));return Math.round(32*(1-expected));}
+function applyPuzzleElo(ex){const before=puzzleElo,delta=calculatePuzzleEloDelta(before,ex.rating);puzzleElo=Math.max(400,before+delta);savePuzzleElo();return{before,after:puzzleElo,delta};}
+function setRankMessage(message){const el=document.getElementById("player-puzzle-rank");if(el)el.textContent=message;}
+function renderPuzzleRank(user){
+  if(!user){setRankMessage("Connexion requise");return;}
+  if(typeof firebase==="undefined"||!firebase.firestore||!window.SupaProfiles){setRankMessage("Classement indisponible");return;}
+  const db=firebase.firestore();window.SupaProfiles.init(firebase.auth(),db);
+  Promise.all([
+    db.collection("users").where("stats.puzzle.rating",">",puzzleElo).get(),
+    db.collection("site_stats").doc("counters").get()
+  ]).then(([higher,count])=>{
+    const registered=count.exists?Number(count.data().registered_users):0;
+    const rank=higher.size+1;
+    if(registered>0)setRankMessage(rank+" / "+registered+" inscrits");
+    else setRankMessage("Rang "+rank+" · total indisponible");
+    const detail=document.getElementById("puzzle-rank-detail");
+    if(detail)detail.textContent="Elo puzzle "+puzzleElo+" · rang calculé parmi les comptes avec une cote puzzle enregistrée.";
+  }).catch(()=>{
+    setRankMessage("Classement non accessible");
+    const detail=document.getElementById("puzzle-rank-detail");
+    if(detail)detail.textContent="Ton Elo local reste disponible ; les règles Firebase ne renvoient pas encore les scores du classement.";
+  });
+}
+function syncPuzzleElo(user,recordSolve){
+  if(!user||typeof firebase==="undefined"||!firebase.firestore)return;
+  const patch={stats:{puzzle:{rating:puzzleElo}}};
+  if(recordSolve){patch.stats.puzzle.played=firebase.firestore.FieldValue.increment(1);patch.stats.puzzle.wins=firebase.firestore.FieldValue.increment(1);}
+  firebase.firestore().collection("users").doc(user.uid).set(patch,{merge:true}).then(()=>renderPuzzleRank(user)).catch(()=>renderPuzzleRank(user));
+}
+window.addEventListener("chessnova:auth-state",event=>{
+  activePuzzleUser=event.detail&&event.detail.user||null;
+  if(!activePuzzleUser){renderPuzzleRank(null);return;}
+  if(window.SupaProfiles&&typeof window.SupaProfiles.ensureUserProfile==="function"){
+    window.SupaProfiles.init(firebase.auth(),firebase.firestore());
+    window.SupaProfiles.ensureUserProfile(activePuzzleUser).then(()=>window.SupaProfiles.getProfile(activePuzzleUser.uid)).then(profile=>{
+      const cloudElo=Number(profile&&profile.stats&&profile.stats.puzzle&&profile.stats.puzzle.rating)||1200;
+      puzzleElo=Math.max(puzzleElo,cloudElo);savePuzzleElo();syncPuzzleElo(activePuzzleUser,false);
+    }).catch(()=>renderPuzzleRank(activePuzzleUser));
+  }else renderPuzzleRank(activePuzzleUser);
+});
 function awardDefensePuzzleXP(){
   const amount=10,reason="Puzzle de défense tactique résolu";
   try{
@@ -176,7 +225,7 @@ function setStatus(text,tone=""){const el=document.getElementById("status");el.t
 function renderExerciseList(){
   const list=document.getElementById("exercise-list");
   const items=EXERCISES.filter(x=>filter==="all"||String(x.horizon)===filter);
-  list.innerHTML=items.map(x=>'<button type="button" class="exercise-card" aria-current="'+(x.id===currentId)+'" onclick="chooseExercise(\''+x.id+'\')"><strong>'+(solved.has(x.id)?"✅ ":"")+x.title+'</strong><small>'+x.prompt+'</small></button>').join("");
+  list.innerHTML=items.map(x=>'<button type="button" class="exercise-card" aria-current="'+(x.id===currentId)+'" onclick="chooseExercise(\''+x.id+'\')"><strong>'+(solved.has(x.id)?"✅ ":"")+x.title+'</strong><span class="rating-pill">Elo puzzle indicatif · '+x.rating+'</span><small>'+x.prompt+'</small></button>').join("");
   document.getElementById("progress").textContent=solved.size+" / "+EXERCISES.length+" réussis";
 }
 function renderBoard(){
@@ -238,12 +287,12 @@ function planStillWins(ex,afterDefense){
   }
   return true;
 }
-function explainSuccess(ex,move,firstSolve){
+function explainSuccess(ex,move,firstSolve,eloResult){
   const box=document.getElementById("explanation");box.className="explain show";
   const moveText=move.san;
-  box.innerHTML="<strong>Bonne défense : "+moveText+".</strong> "+ex.explanation+"<p><strong>À retenir :</strong> recalculer la menace après chaque demi-coup ; si le plan adverse est encore possible, chercher une autre parade.</p><p><strong>Récompense :</strong> "+(firstSolve?"+10 XP ajoutés à ta progression.":"XP déjà attribuée pour ce puzzle.")+"</p>";
+  box.innerHTML="<strong>Bonne défense : "+moveText+".</strong> "+ex.explanation+"<p><strong>À retenir :</strong> recalculer la menace après chaque demi-coup ; si le plan adverse est encore possible, chercher une autre parade.</p><p><strong>Récompense :</strong> "+(firstSolve?"+10 XP · Elo puzzle "+eloResult.after+(eloResult.delta>=0?" (+"+eloResult.delta+")":" ("+eloResult.delta+")"):"XP et Elo déjà attribués pour ce puzzle.")+"</p>";
   document.getElementById("next-button").hidden=false;
-  setStatus(firstSolve?"Menace neutralisée : +10 XP.":"Puzzle déjà validé : aucun nouvel XP.", "good");
+  setStatus(firstSolve?"Menace neutralisée : +10 XP et Elo "+eloResult.after+".":"Puzzle déjà validé : aucun nouvel XP ni Elo.", "good");
 }
 function clickSquare(square){
   const ex=activeExercise();
@@ -259,7 +308,7 @@ function clickSquare(square){
   if(planStillWins(ex,game)){
     game.undo();renderBoard();setStatus("Ce coup est légal, mais l’enfilade annoncée reste gagnante. Éloigne la dame de la ligne ou neutralise la tour.", "bad");return;
   }
-  lastMove={from,to:square};const firstSolve=!solved.has(ex.id);if(firstSolve){solved.add(ex.id);saveSolvedExercises();awardDefensePuzzleXP();}renderExerciseList();renderBoard();explainSuccess(ex,move,firstSolve);
+  lastMove={from,to:square};const firstSolve=!solved.has(ex.id),eloResult=firstSolve?applyPuzzleElo(ex):null;if(firstSolve){solved.add(ex.id);saveSolvedExercises();awardDefensePuzzleXP();syncPuzzleElo(activePuzzleUser,true);}renderExerciseList();renderBoard();explainSuccess(ex,move,firstSolve,eloResult);
 }
 function nextExercise(){
   const items=EXERCISES.filter(x=>filter==="all"||String(x.horizon)===filter);
@@ -268,6 +317,6 @@ function nextExercise(){
 function start(){resetExercise();}
 start();
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.125"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.126"></script>
 </body>
 </html>

@@ -39,7 +39,7 @@
       var type = chessGlyphType[glyph];
       if (type && (white || black)) {
         var side = white ? 'w' : 'b';
-        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=engraved-20261102b', root).href;
+        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=engraved-20261102c', root).href;
         if (node.getAttribute('data-supachess-vector-src') !== vector) {
           node.setAttribute('data-supachess-vector-src', vector);
           var artwork = new Image();

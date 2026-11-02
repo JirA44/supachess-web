@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Générateur de parties brillantes 2800+ — SupaChess</title>
-<meta name="description" content="Génère et classe des parties Stockfish 19 contre Stockfish 19, avec Elo UCI réglé à 2800 minimum et repérage transparent des sacrifices candidats.">
+<meta name="description" content="Génère et vérifie des exercices avec Stockfish 16, 17, 18 et 19 : puzzles, tactiques, plans et défenses.">
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#18263d;--text:#f5f7fb;--muted:#b6c2d4;--gold:#f4c95d;--green:#83e0ae;--line:rgba(255,255,255,.13);--red:#ff7d7d}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#18345a 0,#0b1220 42rem);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -34,16 +34,16 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
 </div>
 <div class="notice">
-<strong>Choix du moteur :</strong> Lite est sélectionné par défaut pour éviter de bloquer les navigateurs avec le réseau complet de 99 Mo. Le réglage Elo demandé reste appliqué par UCI, mais ce n’est pas une mesure indépendante de la force réelle du build.
+<strong>Choix du moteur :</strong> sélectionne Stockfish 16, 17, 18 ou 19. Lite évite les grands réseaux. Les builds 18/19 ont des téléchargements vérifiés; pour 16/17, importe les fichiers JS/WASM de la version voulue. Le réglage Elo UCI ne mesure pas indépendamment la force réelle du build.
 <div class="controls" style="margin-top:10px">
-<div class="field"><label for="engine-build">Build Stockfish 19</label><select id="engine-build"><option value="lite" selected>Lite mono-thread · WASM 1,8 Mo</option><option value="full">Full mono-thread · WASM 99,1 Mo</option></select></div>
+<div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread · WASM 1,8 Mo</option><option value="full">Full mono-thread · WASM 99,1 Mo</option></select></div>
 <div class="field"><label for="engine-js">Fichier JavaScript</label><a id="engine-js-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.js" target="_blank" rel="noopener">Télécharger le fichier JS Lite</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
 <div class="field"><label for="engine-wasm">Réseau WASM</label><a id="engine-wasm-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.wasm" target="_blank" rel="noopener">Télécharger le réseau WASM Lite</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
 </div>
-<p class="muted">Sélectionne les deux fichiers du même build. Leur nom et leur taille officielle sont vérifiés avant compilation. Choisis Full si tu veux le réseau complet et si le navigateur dispose de suffisamment de mémoire.</p>
+<p class="muted">Sélectionne les deux fichiers du même build. Les noms et tailles officielles de SF18/19 sont contrôlés. Pour SF16/17, le nom des fichiers et l’identifiant UCI du moteur doivent correspondre à la version sélectionnée.</p>
 </div>
 <div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
-<p id="status" class="status" role="status" aria-live="polite">Télécharge les deux fichiers du build Stockfish 19 choisi. Les tailles sont vérifiées avant compilation; Lite est sélectionné par défaut pour les navigateurs à mémoire limitée.</p>
+<p id="status" class="status" role="status" aria-live="polite">Choisis SF16, SF17, SF18 ou SF19. Les builds 18/19 sont vérifiés par taille; SF16/17 utilisent une paire JS/WASM locale dont l’identifiant UCI est contrôlé.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
 <section id="results-panel" class="panel hidden">
@@ -51,8 +51,8 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div id="results" class="results"></div>
 </section>
 <section id="defense-panel" class="panel">
-<h2>Puzzles de défense créés à partir des parties</h2>
-<p class="muted">Chaque puzzle part d’une tactique candidate générée par Stockfish 19 à 2 800 Elo ou plus. Tu joues le camp qui doit se défendre ; le moteur calcule une ligne de réponses et de contre-attaques avec les réglages Elo et le temps choisis. Ces lignes sont des recommandations du moteur pour cette analyse, pas des solutions universelles certifiées.</p>
+<h2>Problèmes, puzzles, plans, tactiques et défenses</h2>
+<p class="muted">Les parties et puzzles sont générés par la version Stockfish sélectionnée (Elo UCI réglé à 2 800 ou plus). Les lignes légales sont contrôlées et l’identifiant UCI de la version est vérifié. Tu joues le camp qui doit se défendre ; le moteur calcule une ligne de réponses et de contre-attaques avec les réglages Elo et le temps choisis. Ces lignes sont des recommandations du moteur pour cette analyse, pas des solutions universelles certifiées.</p>
 <div class="actions"><button id="build-defense" class="btn">Créer les puzzles défensifs</button></div>
 <p id="defense-status" class="status" role="status" aria-live="polite">Génère d’abord au moins une partie contenant un sacrifice tactique candidat.</p>
 <div id="defense-results" class="results"></div>
@@ -75,30 +75,28 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="move-controls"><button id="prev" class="btn secondary">← Demi-coup précédent</button><button id="next" class="btn">Demi-coup suivant →</button><button id="download-pgn" class="btn secondary">Télécharger le PGN</button></div>
 </div></div>
 </section>
-<p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 19, build Lite ou Full mono-thread de la release GitHub. Le réglage UCI Elo ne certifie pas la force réelle du build ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
+<p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 16, 17, 18 ou 19, selon la version sélectionnée. Le réglage UCI Elo ne certifie pas la force réelle du build ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script>
-let worker=null, readyPromise=null, engineReady=false, activeEngineBuild="Lite mono-thread", uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
+let worker=null, readyPromise=null, engineReady=false, activeEngineBuild="Lite mono-thread", activeEngineVersion="19", detectedEngineVersion=null, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
 function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?seconds+" s (~"+Math.floor(seconds/60)+" min "+(seconds%60)+" s)":seconds+" s";}
 function setProgress(percent){document.getElementById("progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";}
-const STOCKFISH_RELEASE="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/";
-const STOCKFISH_BUILDS={lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}};
-function selectedEngineBuild(){return STOCKFISH_BUILDS[document.getElementById("engine-build").value]||STOCKFISH_BUILDS.lite;}
-function updateEngineLinks(clearSelection=false){const build=selectedEngineBuild();const jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link");jsLink.href=STOCKFISH_RELEASE+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=STOCKFISH_RELEASE+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";if(clearSelection){document.getElementById("engine-js").value="";document.getElementById("engine-wasm").value="";}}
+const STOCKFISH_RELEASES={19:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}},18:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-18-lite-single.js",wasmName:"stockfish-18-lite-single.wasm",jsBytes:20670,wasmBytes:7295411},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-18-single.js",wasmName:"stockfish-18-single.wasm",jsBytes:20569,wasmBytes:112992459}}};
+function selectedEngineVersion(){return document.getElementById("engine-version").value;}
+function selectedEngineBuild(){const version=selectedEngineVersion(),flavor=document.getElementById("engine-build").value;return (STOCKFISH_RELEASES[version]&&STOCKFISH_RELEASES[version][flavor])||{id:"custom",label:"Build local Stockfish "+version,version};}
+function updateEngineLinks(clearSelection=false){const build=selectedEngineBuild(),release=STOCKFISH_RELEASES[selectedEngineVersion()],jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link");if(release){jsLink.href=release.url+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=release.url+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";}else{jsLink.removeAttribute("href");wasmLink.removeAttribute("href");jsLink.textContent="Fichier JS Stockfish "+selectedEngineVersion()+" à sélectionner";wasmLink.textContent="Fichier WASM Stockfish "+selectedEngineVersion()+" à sélectionner";}if(clearSelection){document.getElementById("engine-js").value="";document.getElementById("engine-wasm").value="";}}
 function normalizeEngineFileName(name){return name.replace(/ \(\d+\)(?=\.(?:js|wasm)$)/i,"");}
 function validateEngineFiles(){
  const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];
- if(!js||!wasm)throw new Error("Sélectionne le fichier JavaScript et le WASM du même build Stockfish 19.");
- const normalizedJs=normalizeEngineFileName(js.name),normalizedWasm=normalizeEngineFileName(wasm.name);
- const build=Object.values(STOCKFISH_BUILDS).find(item=>item.jsName===normalizedJs&&item.wasmName===normalizedWasm);
- if(!build)throw new Error("Paire de fichiers inconnue : "+js.name+" ("+js.size.toLocaleString("fr-FR")+" octets) et "+wasm.name+" ("+wasm.size.toLocaleString("fr-FR")+" octets). Télécharge les deux fichiers du même build Stockfish 19.");
- if(js.size!==build.jsBytes||wasm.size!==build.wasmBytes)throw new Error("Fichier incomplet ou altéré pour "+build.label+" : JS "+js.size.toLocaleString("fr-FR")+"/"+build.jsBytes.toLocaleString("fr-FR")+" octets, WASM "+wasm.size.toLocaleString("fr-FR")+"/"+build.wasmBytes.toLocaleString("fr-FR")+" octets.");
- const selector=document.getElementById("engine-build");
- if(selector.value!==build.id){selector.value=build.id;updateEngineLinks(false);status("Build "+build.label+" détecté automatiquement à partir des fichiers choisis.");}
- return {build,js,wasm};
+ if(!js||!wasm)throw new Error("Sélectionne les fichiers JavaScript et WASM du même build Stockfish "+selectedEngineVersion()+".");
+ const version=selectedEngineVersion(),normalizedJs=normalizeEngineFileName(js.name),normalizedWasm=normalizeEngineFileName(wasm.name),release=STOCKFISH_RELEASES[version];
+ if(!release){const versionPattern=new RegExp("stockfish(?:-nnue)?-"+version+"(?:\\.\\d+)?","i");if(!versionPattern.test(normalizedJs)||!versionPattern.test(normalizedWasm))throw new Error("Les deux noms doivent contenir Stockfish "+version+". L’identifiant UCI sera aussi contrôlé au démarrage.");return {build:selectedEngineBuild(),js,wasm};}
+ const build=release[document.getElementById("engine-build").value];
+ if(!build||normalizedJs!==build.jsName||normalizedWasm!==build.wasmName)throw new Error("Mauvaise paire de fichiers : choisis les fichiers "+version+" "+document.getElementById("engine-build").value+" correspondants.");
+ if(js.size!==build.jsBytes||wasm.size!==build.wasmBytes)throw new Error("Fichier incomplet ou altéré pour Stockfish "+version+" "+build.label+" : JS "+js.size.toLocaleString("fr-FR")+"/"+build.jsBytes.toLocaleString("fr-FR")+" octets, WASM "+wasm.size.toLocaleString("fr-FR")+"/"+build.wasmBytes.toLocaleString("fr-FR")+" octets.");return {build,js,wasm};
 }
 function releaseEngineObjectUrls(){for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];}
 function makeEngineWorker(){
@@ -132,6 +130,7 @@ function onEngineMessage(event){
    uciWaiters.splice(i,1);clearTimeout(waiter.timer);waiter.resolve(line);
   }
  }
+ const idMatch=line.match(/^id name .*?Stockfish(?:\s+NNUE)?\s+(\d+)(?:\.\d+)?/i);if(idMatch)detectedEngineVersion=idMatch[1];
  if(line.startsWith("info ")&&activeSearch){
   const cp=line.match(/\bscore cp (-?\d+)/),mate=line.match(/\bscore mate (-?\d+)/);
   if(cp)activeSearch.score=Number(cp[1]);
@@ -149,7 +148,7 @@ function onEngineMessage(event){
 function ensureEngine(){
  if(readyPromise)return readyPromise;
  readyPromise=(async()=>{
-  const {build}=validateEngineFiles();activeEngineBuild=build.label;
+  const {build}=validateEngineFiles();activeEngineBuild=build.label;activeEngineVersion=selectedEngineVersion();detectedEngineVersion=null;
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
   const startupTimeoutMs=build.id==="lite"?300000:900000;
@@ -158,14 +157,15 @@ function ensureEngine(){
    status(error.message);rejectUciWaiters(error);
    if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}
   };
-  status("Stockfish 19 "+build.label+" démarre. Vérification de la réponse UCI…");
+  status("Stockfish "+activeEngineVersion+" "+build.label+" démarre. Vérification de la réponse UCI…");
   worker.postMessage("uci");
   await waitFor("uciok",startupTimeoutMs);
+  if(detectedEngineVersion!==activeEngineVersion)throw new Error("Version moteur refusée : SF"+activeEngineVersion+" demandé, UCI annonce "+(detectedEngineVersion?"SF"+detectedEngineVersion:"un moteur non identifié")+".");
   worker.postMessage("isready");await waitFor("readyok",180000);
   setProgress(100);
   engineReady=true;
   releaseEngineObjectUrls();
-  status("Stockfish 19 "+build.label+" est prêt. Génération des parties candidates…");return worker;
+  status("Stockfish "+activeEngineVersion+" "+build.label+" est prêt. Génération des parties candidates…");return worker;
  })().catch(error=>{readyPromise=null;engineReady=false;if(worker){worker.terminate();worker=null;}releaseEngineObjectUrls();throw error;});
  return readyPromise;
 }
@@ -215,7 +215,7 @@ function precisionSummary(record){
 }
 function renderResults(){
  const panel=document.getElementById("results-panel"),root=document.getElementById("results");panel.classList.remove("hidden");root.innerHTML="";
- currentGames.forEach((record,index)=>{const item=document.createElement("div");item.className="candidate"+(index===selectedGame?" selected":"");const button=document.createElement("button");button.type="button";button.innerHTML="<strong>"+(index+1)+". "+record.candidateCount+" sacrifice(s) candidat(s) · séquence max "+record.bestChain+" demi-coups</strong><small>"+record.result+" · "+record.uci.length+" demi-coups générés · "+precisionSummary(record)+" · Stockfish 19 "+record.engineBuild+" · Elo demandés "+record.whiteElo+" / "+record.blackElo+" · "+record.opening+"</small>";button.addEventListener("click",()=>{selectedGame=index;replayIndex=0;renderResults();renderReplay();});item.appendChild(button);root.appendChild(item);});
+ currentGames.forEach((record,index)=>{const item=document.createElement("div");item.className="candidate"+(index===selectedGame?" selected":"");const button=document.createElement("button");button.type="button";button.innerHTML="<strong>"+(index+1)+". "+record.candidateCount+" sacrifice(s) candidat(s) · séquence max "+record.bestChain+" demi-coups</strong><small>"+record.result+" · "+record.uci.length+" demi-coups générés · "+precisionSummary(record)+" · Stockfish "+record.engineVersion+" "+record.engineBuild+" · Elo demandés "+record.whiteElo+" / "+record.blackElo+" · "+record.opening+"</small>";button.addEventListener("click",()=>{selectedGame=index;replayIndex=0;renderResults();renderReplay();});item.appendChild(button);root.appendChild(item);});
  document.getElementById("study-panel").classList.remove("hidden");renderReplay();renderStudySummary();
 }
 function renderStudySummary(){const record=currentGames[selectedGame];if(!record)return;document.getElementById("study-title").textContent="Partie candidate "+(selectedGame+1);document.getElementById("study-summary").textContent=record.candidateCount+" sacrifices tactiques candidats détectés ; meilleure séquence rapprochée : "+record.bestChain+" demi-coups. Build "+record.engineBuild+" · Elo demandés : Blancs "+record.whiteElo+" · Noirs "+record.blackElo+" · "+precisionSummary(record)+".";document.getElementById("study-eval").textContent="Coups candidats : "+record.candidatePlies.map(p=>p+1).join(", ")||"Aucun sacrifice candidat détecté.";}
@@ -224,7 +224,7 @@ function pgnFor(record){
  const result=record.result;
  const whiteLabel=record.precisionMode==="p1"||record.precisionMode==="both"?"P1 · Stockfish top-1":"UCI demandé "+record.whiteElo;
  const blackLabel=record.precisionMode==="p2"||record.precisionMode==="both"?"P2 · Stockfish top-1":"UCI demandé "+record.blackElo;
- const headers='[Event "SupaChess 2800+ Brilliant Candidate"]\n[Site "SupaChess browser generator"]\n[Date "'+new Date().toISOString().slice(0,10).replace(/-/g,".")+'"]\n[White "Stockfish 19 '+record.engineBuild+' · '+whiteLabel+'"]\n[Black "Stockfish 19 '+record.engineBuild+' · '+blackLabel+'"]\n[Result "'+result+'"]\n[SupaChessPrecisionMode "'+record.precisionMode+'"]\n[SupaChessPrecisionDefinition "Top-1 Stockfish au temps de recherche choisi"]\n[Annotator "SupaChess sacrifice-candidate heuristic"]\n\n';
+ const headers='[Event "SupaChess 2800+ Brilliant Candidate"]\n[Site "SupaChess browser generator"]\n[Date "'+new Date().toISOString().slice(0,10).replace(/-/g,".")+'"]\n[White "Stockfish '+record.engineVersion+" '+record.engineBuild+' · '+whiteLabel+'"]\n[Black "Stockfish '+record.engineVersion+" '+record.engineBuild+' · '+blackLabel+'"]\n[Result "'+result+'"]\n[SupaChessPrecisionMode "'+record.precisionMode+'"]\n[SupaChessPrecisionDefinition "Top-1 Stockfish au temps de recherche choisi"]\n[Annotator "SupaChess sacrifice-candidate heuristic"]\n\n';
  return headers+temp.pgn({maxWidth:80,newline:"\n"})+" "+result+"\n";
 }
 async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies,precisionMode){
@@ -245,7 +245,7 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
   setProgress(((index+(ply+1)/maxPlies)/total)*100);
   await new Promise(resolve=>setTimeout(resolve,0));
  }
- return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening,precisionMode,top1PliesP1:precisionMode==="p1"||precisionMode==="both"?Math.ceil(uci.length/2):null,top1PliesP2:precisionMode==="p2"||precisionMode==="both"?Math.floor(uci.length/2):null};
+ return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,engineVersion:activeEngineVersion,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening,precisionMode,top1PliesP1:precisionMode==="p1"||precisionMode==="both"?Math.ceil(uci.length/2):null,top1PliesP2:precisionMode==="p2"||precisionMode==="both"?Math.floor(uci.length/2):null};
 }
 async function generate(){
  if(typeof Chess!=="function"){status("La bibliothèque d’échecs ne s’est pas chargée.");return;}
@@ -273,7 +273,7 @@ async function loadTacticalPuzzleBank(){try{const response=await fetch("training
 function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
 async function buildDefensePuzzles(){
  const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
- if(!engineReady||!currentGames.length){statusEl.textContent="Génère d’abord des parties avec Stockfish 19.";return;}
+ if(!engineReady||!currentGames.length){statusEl.textContent="Génère d’abord des parties avec la version Stockfish sélectionnée.";return;}
  button.disabled=true;generatedDefensePuzzles=[];statusEl.textContent="Extraction des positions tactiques candidates…";
  const candidates=[];
  currentGames.forEach((record,gameIndex)=>record.candidatePlies.slice(0,4).forEach(ply=>{const fen=record.fensAfter[ply];if(fen)candidates.push({record,gameIndex,ply,fen});}));
@@ -350,9 +350,10 @@ document.getElementById("next").addEventListener("click",()=>{const record=curre
 document.getElementById("download-pgn").addEventListener("click",()=>{const record=currentGames[selectedGame];if(!record)return;const blob=new Blob([pgnFor(record)],{type:"application/x-chess-pgn"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="supachess-brilliant-candidate-"+(selectedGame+1)+".pgn";a.click();URL.revokeObjectURL(url);});
 document.getElementById("white-elo").addEventListener("change",()=>clampElo("white-elo"));
 document.getElementById("black-elo").addEventListener("change",()=>clampElo("black-elo"));
- document.getElementById("engine-build").addEventListener("change",()=>{updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
+ document.getElementById("engine-version").addEventListener("change",()=>{updateEngineLinks(true);status("Stockfish "+selectedEngineVersion()+" sélectionné. Choisis les deux fichiers de cette version avant de générer ou vérifier.");});
+  document.getElementById("engine-build").addEventListener("change",()=>{updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
  updateEngineLinks();
- for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
+ for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Paire locale sélectionnée; la version SF"+selectedEngineVersion()+" sera vérifiée au démarrage. Tu peux générer.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.125"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.126"></script>
 </body></html>

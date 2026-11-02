@@ -70,6 +70,7 @@
   rankStyle.id = 'supachess-board-ranks';
   rankStyle.textContent = '.supachess-rank-cell{position:relative!important;overflow:visible!important}.supachess-rank-label{position:absolute;left:3px;top:1px;z-index:4;pointer-events:none;display:block!important;font:700 .65rem/1 system-ui,sans-serif!important;color:#101827;-webkit-text-stroke:.35px #fff;paint-order:stroke fill;text-shadow:0 0 2px #fff9}';
   (document.head || document.documentElement).appendChild(rankStyle);
+  normalizeChessGlyphs(document);
   ensureBoardRanks(document);
   if (window.MutationObserver) {
     new MutationObserver(function (records) {

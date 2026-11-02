@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="shared/profiles.js?v=site-version-1.13.126"></script>
 <script src="shared/community.js?v=site-version-1.13.126"></script>
 <style>
 :root{color-scheme:dark;--bg:#0b1324;--panel:#15243b;--panel2:#1b2d49;--line:#34506f;--text:#f6f8fc;--muted:#c0cbd9;--gold:#facc15;--green:#86efac;--red:#fca5a5;--blue:#93c5fd}
@@ -152,10 +151,10 @@ function applyPuzzleElo(ex){const before=puzzleElo,delta=calculatePuzzleEloDelta
 function setRankMessage(message){const el=document.getElementById("player-puzzle-rank");if(el)el.textContent=message;}
 function renderPuzzleRank(user){
   if(!user){setRankMessage("Connexion requise");return;}
-  if(typeof firebase==="undefined"||!firebase.firestore||!window.SupaProfiles){setRankMessage("Classement indisponible");return;}
-  const db=firebase.firestore();window.SupaProfiles.init(firebase.auth(),db);
+  if(typeof firebase==="undefined"||!firebase.firestore){setRankMessage("Classement indisponible");return;}
+  const db=firebase.firestore();
   Promise.all([
-    db.collection("users").where("stats.puzzle.rating",">",puzzleElo).get(),
+    db.collection("puzzle_leaderboard").where("puzzleElo",">",puzzleElo).get(),
     db.collection("site_stats").doc("counters").get()
   ]).then(([higher,count])=>{
     const registered=count.exists?Number(count.data().registered_users):0;
@@ -163,7 +162,7 @@ function renderPuzzleRank(user){
     if(registered>0)setRankMessage(rank+" / "+registered+" inscrits");
     else setRankMessage("Rang "+rank+" · total indisponible");
     const detail=document.getElementById("puzzle-rank-detail");
-    if(detail)detail.textContent="Elo puzzle "+puzzleElo+" · rang calculé parmi les comptes avec une cote puzzle enregistrée.";
+    if(detail)detail.textContent="Elo puzzle "+puzzleElo+" · rang calculé parmi les cotes enregistrées ; les comptes sans score commencent à 1200 Elo.";
   }).catch(()=>{
     setRankMessage("Classement non accessible");
     const detail=document.getElementById("puzzle-rank-detail");
@@ -172,20 +171,20 @@ function renderPuzzleRank(user){
 }
 function syncPuzzleElo(user,recordSolve){
   if(!user||typeof firebase==="undefined"||!firebase.firestore)return;
-  const patch={stats:{puzzle:{rating:puzzleElo}}};
-  if(recordSolve){patch.stats.puzzle.played=firebase.firestore.FieldValue.increment(1);patch.stats.puzzle.wins=firebase.firestore.FieldValue.increment(1);}
-  firebase.firestore().collection("users").doc(user.uid).set(patch,{merge:true}).then(()=>renderPuzzleRank(user)).catch(()=>renderPuzzleRank(user));
+  const rawName=String(user.displayName||"").trim();
+  const displayName=rawName&&!rawName.includes("@")?rawName.slice(0,40):"Joueur-"+String(user.uid).slice(0,6);
+  const progress=window.ChessNovaProgress?ChessNovaProgress.load():{};
+  const puzzlesSolved=Math.max(Number(progress.puzzlesSolved)||0,solved.size);
+  const patch={displayName,puzzleElo,puzzlesSolved,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  firebase.firestore().collection("puzzle_leaderboard").doc(user.uid).set(patch,{merge:true}).then(()=>renderPuzzleRank(user)).catch(()=>renderPuzzleRank(user));
 }
 window.addEventListener("chessnova:auth-state",event=>{
   activePuzzleUser=event.detail&&event.detail.user||null;
   if(!activePuzzleUser){renderPuzzleRank(null);return;}
-  if(window.SupaProfiles&&typeof window.SupaProfiles.ensureUserProfile==="function"){
-    window.SupaProfiles.init(firebase.auth(),firebase.firestore());
-    window.SupaProfiles.ensureUserProfile(activePuzzleUser).then(()=>window.SupaProfiles.getProfile(activePuzzleUser.uid)).then(profile=>{
-      const cloudElo=Number(profile&&profile.stats&&profile.stats.puzzle&&profile.stats.puzzle.rating)||1200;
-      puzzleElo=Math.max(puzzleElo,cloudElo);savePuzzleElo();syncPuzzleElo(activePuzzleUser,false);
-    }).catch(()=>renderPuzzleRank(activePuzzleUser));
-  }else renderPuzzleRank(activePuzzleUser);
+  firebase.firestore().collection("puzzle_leaderboard").doc(activePuzzleUser.uid).get().then(doc=>{
+    const cloudElo=Number(doc.exists&&doc.data().puzzleElo)||1200;
+    puzzleElo=Math.max(puzzleElo,cloudElo);savePuzzleElo();syncPuzzleElo(activePuzzleUser,false);
+  }).catch(()=>renderPuzzleRank(activePuzzleUser));
 });
 function awardDefensePuzzleXP(){
   const amount=10,reason="Puzzle de défense tactique résolu";

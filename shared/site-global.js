@@ -11,6 +11,7 @@
     '.piece.black,.piece[data-color="black"],.piece[data-piece^="b"]{opacity:1!important;visibility:visible!important;filter:drop-shadow(0 0 1.6px #f8fafc) drop-shadow(0 0 1px #f8fafc)!important}',
     '.supachess-filled-white-piece{color:#fff!important;-webkit-text-fill-color:#fff!important;fill:#fff!important;-webkit-text-stroke:2.9px #101827!important;paint-order:stroke fill;opacity:1!important;font-weight:900!important;filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))!important;text-shadow:0 0 2px #101827,1px 0 #101827,-1px 0 #101827,0 1px #101827,0 -1px #101827,1px 1px #101827,-1px -1px #101827,1px -1px #101827,-1px 1px #101827!important}',
     '.supachess-filled-black-piece{color:#171717!important;-webkit-text-fill-color:#171717!important;fill:#171717!important;-webkit-text-stroke:2.7px #f8fafc!important;paint-order:stroke fill;opacity:1!important;font-weight:900!important;filter:drop-shadow(0 1px 1px rgba(255,255,255,.8))!important;text-shadow:0 0 2px #f8fafc,1px 0 #f8fafc,-1px 0 #f8fafc,0 1px #f8fafc,0 -1px #f8fafc,1px 1px #f8fafc,-1px -1px #f8fafc,1px -1px #f8fafc,-1px 1px #f8fafc!important}',
+    '.supachess-vector-piece{color:transparent!important;-webkit-text-fill-color:transparent!important;-webkit-text-stroke:0!important;text-shadow:none!important;background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important}'
     '.supachess-page-back{display:block;width:max-content;max-width:100%;margin:12px auto;padding:10px 18px;border:1px solid currentColor;border-radius:999px;background:#12354a;color:#fff!important;font:600 15px/1.3 system-ui,sans-serif;text-decoration:none;box-shadow:0 2px 8px #0003}',
     '.supachess-page-back:hover{background:#1b526f;text-decoration:underline}',
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
@@ -20,6 +21,7 @@
 
   // Normalize outline Unicode chess symbols to solid glyphs; CSS determines side color.
   var outlineToSolid = { '♔':'♚', '♕':'♛', '♖':'♜', '♗':'♝', '♘':'♞', '♙':'♟' };
+  var chessGlyphType = { '♔':'K','♚':'K','♕':'Q','♛':'Q','♖':'R','♜':'R','♗':'B','♝':'B','♘':'N','♞':'N','♙':'P','♟':'P' };
   var chessGlyphSelector = '.chess-piece.white,.chess-piece.black,.piece.white,.piece.black,.piece-white,.piece-black,.white-piece,.black-piece,.piece[data-color="white"],.piece[data-color="black"],[data-piece^="w"],[data-piece^="b"],.piece-token:not(.black-piece),.piece-token.black-piece,.analysis-square[aria-label*="blanc"],.analysis-square[aria-label*="noir"],.complex-board span[aria-label*="blanc"],.complex-board span[aria-label*="noir"]';
   var whiteSideSelector = '.chess-piece.white,.piece.white,.piece-white,.white-piece,.piece[data-color="white"],[data-piece^="w"],.piece-token:not(.black-piece),[aria-label*="blanc"]';
   var blackSideSelector = '.chess-piece.black,.piece.black,.piece-black,.black-piece,.piece[data-color="black"],[data-piece^="b"],.piece-token.black-piece,[aria-label*="noir"]';

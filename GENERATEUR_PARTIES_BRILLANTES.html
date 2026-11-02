@@ -33,7 +33,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="move-time">Temps de calcul par demi-coup</label><select id="move-time"><option value="120">120 ms · rapide</option><option value="250" selected>250 ms · équilibré</option><option value="500">500 ms · approfondi</option></select></div>
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
 </div>
-<div class="notice">
+<div class="notice" id="engine-settings">
 <strong>Choix du moteur :</strong> choisis Stockfish 16, 17, 18 ou 19 et télécharge les fichiers proposés. SF16 utilise le build complet et nécessite JS, WASM et réseau NNUE; SF17 utilise le build Lite mono-thread. SF18/19 proposent Lite ou Full. Le réglage Elo UCI ne mesure pas indépendamment la force réelle du build.
 <div class="controls" style="margin-top:10px">
 <div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread</option><option value="full">Full mono-thread</option></select></div>
@@ -393,6 +393,8 @@ document.getElementById("white-elo").addEventListener("change",()=>clampElo("whi
 document.getElementById("black-elo").addEventListener("change",()=>clampElo("black-elo"));
  document.getElementById("engine-version").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Stockfish "+selectedEngineVersion()+" sélectionné. Télécharge et choisis les fichiers affichés avant de générer ou vérifier.");});
   document.getElementById("engine-build").addEventListener("change",()=>{resetEngineForSelection();updateEngineLinks(true);status("Build "+selectedEngineBuild().label+" sélectionné. Télécharge puis choisis les deux fichiers correspondants.");});
+ const requestedEngine = new URLSearchParams(location.search).get("engine");
+ if (["16","17","18","19"].includes(requestedEngine)) document.getElementById("engine-version").value = requestedEngine;
  updateEngineLinks();
 async function downloadEngineAsset(url){
  const filename=decodeURIComponent(new URL(url,location.href).pathname.split("/").pop());

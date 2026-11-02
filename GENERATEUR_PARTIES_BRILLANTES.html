@@ -28,6 +28,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="controls">
 <div class="field"><label for="white-elo">Blancs · Elo moteur (minimum 2 800)</label><input id="white-elo" type="number" min="2800" max="3190" step="10" value="2800"></div>
 <div class="field"><label for="black-elo">Noirs · Elo moteur (minimum 2 800)</label><input id="black-elo" type="number" min="2800" max="3190" step="10" value="2800"></div>
+<div class="field"><label for="precision-player">Camp(s) P1/P2 à 100 % top‑1</label><select id="precision-player"><option value="none">Aucun · Elo UCI réglé</option><option value="p1">P1 · Blancs</option><option value="p2">P2 · Noirs</option><option value="both">P1 et P2</option></select><small class="muted">Le camp choisi joue le premier coup Stockfish à chaque position, en pleine puissance. « 100 % » signifie top‑1 au temps de calcul choisi; ce n’est pas une note standard d’analyse ni une garantie absolue.</small></div>
 <div class="field"><label for="game-count">Parties candidates</label><select id="game-count"><option value="1">1 partie</option><option value="3" selected>3 parties</option><option value="5">5 parties</option></select></div>
 <div class="field"><label for="move-time">Temps de calcul par demi-coup</label><select id="move-time"><option value="120">120 ms · rapide</option><option value="250" selected>250 ms · équilibré</option><option value="500">500 ms · approfondi</option></select></div>
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
@@ -168,13 +169,16 @@ function ensureEngine(){
  })().catch(error=>{readyPromise=null;engineReady=false;if(worker){worker.terminate();worker=null;}releaseEngineObjectUrls();throw error;});
  return readyPromise;
 }
-function setEngineElo(elo){worker.postMessage("setoption name UCI_LimitStrength value true");worker.postMessage("setoption name UCI_Elo value "+elo);}
-function bestMove(fen,elo,movetime,estimate){
+function setEngineElo(elo,strictTop1=false){
+ worker.postMessage("setoption name UCI_LimitStrength value "+(strictTop1?"false":"true"));
+ if(!strictTop1)worker.postMessage("setoption name UCI_Elo value "+elo);
+}
+function bestMove(fen,elo,movetime,estimate,strictTop1=false){
  return new Promise((resolve,reject)=>{if(activeSearch){reject(new Error("Une recherche moteur est déjà en cours."));return;}
   const timeout=Math.max(30000,movetime*30),startedAt=performance.now();
   searchStartedAt=startedAt;
   activeSearch={resolve,reject,score:null,startedAt,timeout,estimate};
-  setEngineElo(elo);worker.postMessage("position fen "+fen);worker.postMessage("go movetime "+movetime);
+  setEngineElo(elo,strictTop1);worker.postMessage("position fen "+fen);worker.postMessage("go movetime "+movetime);
   activeSearch.progressTimer=setInterval(()=>{
    if(!activeSearch)return;
    const elapsed=Math.floor((performance.now()-startedAt)/1000),deadlineRemaining=Math.max(0,Math.ceil(timeout/1000)-elapsed),deadlinePercent=Math.min(100,Math.floor(elapsed/(timeout/1000)*100));
@@ -203,25 +207,35 @@ function renderReplay(){
  document.getElementById("moves").textContent=record.san.slice(0,replayIndex).map((san,i)=>((Math.floor(i/2)+1)+(i%2===0?". ":"... ")+san+(record.candidatePlies.includes(i)?" ✦":""))).join("  ")||"Position initiale.";
  document.getElementById("prev").disabled=replayIndex===0;document.getElementById("next").disabled=replayIndex>=record.uci.length;
 }
+function precisionSummary(record){
+ const labels=[];
+ if(record.top1PliesP1!==null)labels.push("P1 Blancs : "+(record.top1PliesP1?"100 % top-1 Stockfish ("+record.top1PliesP1+" demi-coups)":"aucun demi-coup joué"));
+ if(record.top1PliesP2!==null)labels.push("P2 Noirs : "+(record.top1PliesP2?"100 % top-1 Stockfish ("+record.top1PliesP2+" demi-coups)":"aucun demi-coup joué"));
+ return labels.join(" · ")||"Précision libre selon les Elo réglés";
+}
 function renderResults(){
  const panel=document.getElementById("results-panel"),root=document.getElementById("results");panel.classList.remove("hidden");root.innerHTML="";
- currentGames.forEach((record,index)=>{const item=document.createElement("div");item.className="candidate"+(index===selectedGame?" selected":"");const button=document.createElement("button");button.type="button";button.innerHTML="<strong>"+(index+1)+". "+record.candidateCount+" sacrifice(s) candidat(s) · séquence max "+record.bestChain+" demi-coups</strong><small>"+record.result+" · "+record.uci.length+" demi-coups générés · Stockfish 19 "+record.engineBuild+" · réglages UCI demandés "+record.whiteElo+" / "+record.blackElo+" · "+record.opening+"</small>";button.addEventListener("click",()=>{selectedGame=index;replayIndex=0;renderResults();renderReplay();});item.appendChild(button);root.appendChild(item);});
+ currentGames.forEach((record,index)=>{const item=document.createElement("div");item.className="candidate"+(index===selectedGame?" selected":"");const button=document.createElement("button");button.type="button";button.innerHTML="<strong>"+(index+1)+". "+record.candidateCount+" sacrifice(s) candidat(s) · séquence max "+record.bestChain+" demi-coups</strong><small>"+record.result+" · "+record.uci.length+" demi-coups générés · "+precisionSummary(record)+" · Stockfish 19 "+record.engineBuild+" · Elo demandés "+record.whiteElo+" / "+record.blackElo+" · "+record.opening+"</small>";button.addEventListener("click",()=>{selectedGame=index;replayIndex=0;renderResults();renderReplay();});item.appendChild(button);root.appendChild(item);});
  document.getElementById("study-panel").classList.remove("hidden");renderReplay();renderStudySummary();
 }
-function renderStudySummary(){const record=currentGames[selectedGame];if(!record)return;document.getElementById("study-title").textContent="Partie candidate "+(selectedGame+1);document.getElementById("study-summary").textContent=record.candidateCount+" sacrifices tactiques candidats détectés ; meilleure séquence rapprochée : "+record.bestChain+" demi-coups. Build "+record.engineBuild+" · réglages UCI demandés : Blancs "+record.whiteElo+" · Noirs "+record.blackElo+".";document.getElementById("study-eval").textContent="Coups candidats : "+record.candidatePlies.map(p=>p+1).join(", ")||"Aucun sacrifice candidat détecté.";}
+function renderStudySummary(){const record=currentGames[selectedGame];if(!record)return;document.getElementById("study-title").textContent="Partie candidate "+(selectedGame+1);document.getElementById("study-summary").textContent=record.candidateCount+" sacrifices tactiques candidats détectés ; meilleure séquence rapprochée : "+record.bestChain+" demi-coups. Build "+record.engineBuild+" · Elo demandés : Blancs "+record.whiteElo+" · Noirs "+record.blackElo+" · "+precisionSummary(record)+".";document.getElementById("study-eval").textContent="Coups candidats : "+record.candidatePlies.map(p=>p+1).join(", ")||"Aucun sacrifice candidat détecté.";}
 function pgnFor(record){
  const temp=new Chess();record.uci.forEach(u=>temp.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"}));
- const result=record.result;const headers='[Event "SupaChess 2800+ Brilliant Candidate"]\n[Site "SupaChess browser generator"]\n[Date "'+new Date().toISOString().slice(0,10).replace(/-/g,".")+'"]\n[White "Stockfish 19 '+record.engineBuild+' · UCI demandé '+record.whiteElo+'"]\n[Black "Stockfish 19 '+record.engineBuild+' · UCI demandé '+record.blackElo+'"]\n[Result "'+result+'"]\n[Annotator "SupaChess sacrifice-candidate heuristic"]\n\n';
+ const result=record.result;
+ const whiteLabel=record.precisionMode==="p1"||record.precisionMode==="both"?"P1 · Stockfish top-1":"UCI demandé "+record.whiteElo;
+ const blackLabel=record.precisionMode==="p2"||record.precisionMode==="both"?"P2 · Stockfish top-1":"UCI demandé "+record.blackElo;
+ const headers='[Event "SupaChess 2800+ Brilliant Candidate"]\n[Site "SupaChess browser generator"]\n[Date "'+new Date().toISOString().slice(0,10).replace(/-/g,".")+'"]\n[White "Stockfish 19 '+record.engineBuild+' · '+whiteLabel+'"]\n[Black "Stockfish 19 '+record.engineBuild+' · '+blackLabel+'"]\n[Result "'+result+'"]\n[SupaChessPrecisionMode "'+record.precisionMode+'"]\n[SupaChessPrecisionDefinition "Top-1 Stockfish au temps de recherche choisi"]\n[Annotator "SupaChess sacrifice-candidate heuristic"]\n\n';
  return headers+temp.pgn({maxWidth:80,newline:"\n"})+" "+result+"\n";
 }
-async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies){
+async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies,precisionMode){
  const game=new Chess(),uci=[],san=[],candidatePlies=[],fensAfter=[];let chain=0,bestChain=0,chainStart=-1,lastCandidatePly=-10,opening="Partie ouverte";
  for(let ply=0;ply<maxPlies&&!game.game_over();ply++){
   if(cancelRequested)break;
-  const elo=game.turn()==="w"?whiteElo:blackElo;
+  const side=game.turn(),elo=side==="w"?whiteElo:blackElo;
+  const strictTop1=precisionMode==="both"||(precisionMode==="p1"&&side==="w")||(precisionMode==="p2"&&side==="b");
   const plannedTotal=total*maxPlies,completed=index*maxPlies+ply,remainingPlies=Math.max(1,plannedTotal-completed),progressPercent=Math.min(99,Math.floor(completed/plannedTotal*100)),remainingPercent=100-progressPercent,secondsPerPly=moveTimeSamples.length?moveTimeSamples.reduce((a,b)=>a+b,0)/moveTimeSamples.length:movetime*1.25,remainingSeconds=Math.ceil(remainingPlies*secondsPerPly/1000);
-  status("Partie "+(index+1)+"/"+total+" · demi-coup "+(ply+1)+"/"+maxPlies+" · progression des demi-coups planifiés "+progressPercent+" % · reste "+remainingPercent+" % · temps estimé ≈ "+formatDuration(remainingSeconds)+" · "+activeEngineBuild+" · réglage Elo UCI demandé "+elo+" (non mesuré).");
-  const token=await bestMove(game.fen(),elo,movetime,{remainingSeconds,remainingPercent});if(!token||token==="(none)")break;
+  status("Partie "+(index+1)+"/"+total+" · demi-coup "+(ply+1)+"/"+maxPlies+" · progression des demi-coups planifiés "+progressPercent+" % · reste "+remainingPercent+" % · temps estimé ≈ "+formatDuration(remainingSeconds)+" · "+activeEngineBuild+" · "+(strictTop1?(side==="w"?"P1 Blancs":"P2 Noirs")+" top-1 à pleine puissance":"réglage Elo UCI demandé "+elo+" (non mesuré)")+".");
+  const token=await bestMove(game.fen(),elo,movetime,{remainingSeconds,remainingPercent},strictTop1);if(!token||token==="(none)")break;
   const movingPiece=game.get(token.slice(0,2)),movingType=movingPiece&&movingPiece.type;
   const move=game.move({from:token.slice(0,2),to:token.slice(2,4),promotion:token[4]||"q"});if(!move)throw new Error("Stockfish a renvoyé un coup illégal : "+token);
   uci.push(token);san.push(move.san);fensAfter.push(game.fen());moveTimeSamples.push(performance.now()-searchStartedAt);if(moveTimeSamples.length>20)moveTimeSamples.shift();
@@ -231,15 +245,15 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
   setProgress(((index+(ply+1)/maxPlies)/total)*100);
   await new Promise(resolve=>setTimeout(resolve,0));
  }
- return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening};
+ return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening,precisionMode,top1PliesP1:precisionMode==="p1"||precisionMode==="both"?Math.ceil(uci.length/2):null,top1PliesP2:precisionMode==="p2"||precisionMode==="both"?Math.floor(uci.length/2):null};
 }
 async function generate(){
  if(typeof Chess!=="function"){status("La bibliothèque d’échecs ne s’est pas chargée.");return;}
  const button=document.getElementById("generate");button.disabled=true;document.getElementById("cancel").disabled=false;cancelRequested=false;currentGames=[];document.getElementById("progress-fill").style.width="0%";
- const total=Number(document.getElementById("game-count").value),whiteElo=clampElo("white-elo"),blackElo=clampElo("black-elo"),movetime=Number(document.getElementById("move-time").value),maxPlies=Number(document.getElementById("max-plies").value);
+ const total=Number(document.getElementById("game-count").value),whiteElo=clampElo("white-elo"),blackElo=clampElo("black-elo"),movetime=Number(document.getElementById("move-time").value),maxPlies=Number(document.getElementById("max-plies").value),precisionMode=document.getElementById("precision-player").value;
  try{
   await ensureEngine();
-  for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies);record.engineBuild=activeEngineBuild;currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
+  for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies,precisionMode);record.engineBuild=activeEngineBuild;currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
   status(cancelRequested?"Génération interrompue après le demi-coup en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
  }catch(error){status("Erreur moteur : "+error.message);}
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
@@ -340,5 +354,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.124"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.125"></script>
 </body></html>

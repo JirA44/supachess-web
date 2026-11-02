@@ -810,3 +810,16 @@ test('published PGN source lines match their replay pages', async ({ page }) => 
     if (item.expectedPlies) expect(audit.pageMoves, item.page + ' has the complete expected ply count').toHaveLength(item.expectedPlies);
   }
 });
+
+test('brilliant candidate generator enforces Elo 2800 minimum and loads the engine on demand', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/GENERATEUR_PARTIES_BRILLANTES.html');
+  await expect(page.locator('#white-elo')).toHaveValue('2800');
+  await expect(page.locator('#black-elo')).toHaveValue('2800');
+  await expect(page.locator('#game-count')).toHaveValue('3');
+  expect(await page.evaluate(() => clampElo('white-elo'))).toBe(2800);
+  expect(await page.evaluate(() => typeof worker === 'undefined' || worker === null)).toBe(true);
+  await expect(page.locator('#generate')).toBeEnabled();
+  expect(errors).toEqual([]);
+});

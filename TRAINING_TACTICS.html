@@ -214,7 +214,10 @@
         .challenge-player { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
         .challenge-player input { min-height:42px; width:min(100%,260px); padding:8px 10px; border:1px solid rgba(255,255,255,.35); border-radius:8px; background:#10284a; color:#fff; font:inherit; }
         .challenge-status { min-height:1.5em; margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(255,255,255,.09); line-height:1.4; font-variant-numeric:tabular-nums; }
-        .difficulty-filter { display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto 18px; color:#fff; font-weight:700; }\n        .difficulty-filter select { min-height:42px; max-width:100%; padding:8px 12px; border:1px solid rgba(255,255,255,.4); border-radius:9px; background:#173c68; color:#fff; font:inherit; }\n        .difficulty-filter select:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }\n        .challenge-live-status { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; border:1px solid rgba(134,239,172,.65); border-radius:10px; background:#102d34; color:#f0fdf4; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+        .difficulty-filter { display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto 18px; color:#fff; font-weight:700; }
+        .difficulty-filter select { min-height:42px; max-width:100%; padding:8px 12px; border:1px solid rgba(255,255,255,.4); border-radius:9px; background:#173c68; color:#fff; font:inherit; }
+        .difficulty-filter select:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }
+        .challenge-live-status { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; border:1px solid rgba(134,239,172,.65); border-radius:10px; background:#102d34; color:#f0fdf4; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
         .challenge-live-status.active { display:flex; }
         .challenge-live-status .challenge-clock { color:#fde68a; font-size:1.25rem; }
         .challenge-rankings { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; margin-top:14px; }
@@ -225,7 +228,8 @@
         .challenge-ranking .empty { opacity:.7; font-size:.83rem; }
         .challenge-stop[hidden] { display:none; }
         @media(max-width:700px) {
-            .difficulty-filter { align-items:stretch; flex-direction:column; }\n            .puzzle-challenge { padding:13px; }
+            .difficulty-filter { align-items:stretch; flex-direction:column; }
+            .puzzle-challenge { padding:13px; }
             .challenge-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
             .challenge-button { padding:9px 7px; font-size:.92rem; }
             .big-cell { font-size:clamp(1.65rem,10vw,3.2rem) !important; }
@@ -281,7 +285,8 @@
         <div id="puzzle-challenge-status" class="challenge-status" role="status" aria-live="polite">Choisis un défi pour commencer.</div>
         <div id="puzzle-challenge-rankings" class="challenge-rankings" aria-label="Classements locaux"></div>
     </section>
-    <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200+</option></select></div>\n    <div class="theme-tabs" id="theme-tabs"></div>
+    <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200+</option></select></div>
+    <div class="theme-tabs" id="theme-tabs"></div>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
 
@@ -2949,7 +2954,15 @@ function syncTacticsMastery() {
 
 let solved = getSolved();
 let streak = 0;
-let activeTheme = 'all';\nlet activeDifficulty = 'all';\nfunction getDifficultyPuzzles() {\n    if (activeDifficulty==='all') return PUZZLES;\n    const ranges={'high':p=>p.rating>=1800&&p.rating<2000,'very-high':p=>p.rating>=2000&&p.rating<2200,'very-very-high':p=>p.rating>=2200};\n    return PUZZLES.filter(p=>ranges[activeDifficulty]&&ranges[activeDifficulty](p));\n}\nfunction getFilteredPuzzles() { const pool=getDifficultyPuzzles(); return activeTheme==='all'?pool:pool.filter(p=>p.theme===activeTheme); }\nfunction setDifficulty(value) { activeDifficulty=value; renderTabs(); renderGrid(); }
+let activeTheme = 'all';
+let activeDifficulty = 'all';
+function getDifficultyPuzzles() {
+    if (activeDifficulty==='all') return PUZZLES;
+    const ranges={'high':p=>p.rating>=1800&&p.rating<2000,'very-high':p=>p.rating>=2000&&p.rating<2200,'very-very-high':p=>p.rating>=2200};
+    return PUZZLES.filter(p=>ranges[activeDifficulty]&&ranges[activeDifficulty](p));
+}
+function getFilteredPuzzles() { const pool=getDifficultyPuzzles(); return activeTheme==='all'?pool:pool.filter(p=>p.theme===activeTheme); }
+function setDifficulty(value) { activeDifficulty=value; renderTabs(); renderGrid(); }
 let currentPuzzle = null;
 let tacticGame = null;
 let tacticHintLevel = 0;
@@ -3318,7 +3331,8 @@ function startPuzzleChallenge(mode) {
     if (!CHALLENGE_MODES[mode]) return;
     finishPuzzleChallenge(true);
     const cfg=CHALLENGE_MODES[mode];
-    const challengePool=getFilteredPuzzles();\n    const order=(challengePool.length?challengePool:PUZZLES).map(p=>p.id);
+    const challengePool=getFilteredPuzzles();
+    const order=(challengePool.length?challengePool:PUZZLES).map(p=>p.id);
     for (let i=order.length-1;i>0;i--) {
         const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]];
     }

@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Black Knight"><g fill="#171b24" stroke="#f7f7f7" stroke-linejoin="round" stroke-linecap="round"><path stroke-width="3" d="M17 85 C22 76 28 68 34 61 C39 55 42 50 41 45 C36 43 31 42 26 40 C20 39 15 39 12 37 C10 35 12 32 16 32 C20 32 24 34 29 34 C32 33 34 30 35 26 C36 23 34 20 34 17 C34 14 36 11 40 9 C43 13 45 17 45 21 C49 21 52 18 55 15 C58 12 61 12 63 15 C66 18 67 22 67 27 C67 34 63 40 59 45 C56 50 58 56 62 62 C67 69 75 75 84 79 L85 85 Z"/><path fill="none" stroke-width="2.2" d="M54 37 C49 43 48 49 50 55 C52 61 58 67 65 71"/><circle cx="39" cy="31 r="2.2" fill="#f7f7f7" stroke="none"/><ellipse cx="15.5" cy="35" rx="1.2" ry="0.9" fill="#171b24" stroke="none"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" role="img" aria-label="Black Knight">
+<g fill="none" fill-rule="evenodd" stroke="#f7f7f7" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+  <path fill="#171b24" d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21"/>
+  <path fill="#171b24" d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.04-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-1-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-1.99 2.5-3c1 0 1 3 1 3"/>
+  <path fill="#f7f7f7" stroke="none" d="M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 1 1 1 0"/>
+  <path fill="none" stroke-width="1.3" d="M24 10c5 1 9 3 11 8"/>
+</g>
+</svg>

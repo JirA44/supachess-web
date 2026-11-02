@@ -8,7 +8,7 @@
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#18263d;--text:#f5f7fb;--muted:#b6c2d4;--gold:#f4c95d;--green:#83e0ae;--line:rgba(255,255,255,.13);--red:#ff7d7d}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#18345a 0,#0b1220 42rem);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:inline-flex;margin:0 0 14px;color:#eaf2ff;text-decoration:none}.hero,.panel{border:1px solid var(--line);border-radius:16px;background:rgba(18,29,48,.95);padding:20px;margin-bottom:16px}.hero h1{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.4rem)}.muted{color:var(--muted)}.notice{padding:12px 14px;border-left:3px solid var(--gold);background:#f4c95d14;border-radius:8px;color:#f8e9bd;margin-top:12px;font-size:.92rem}
+a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:inline-flex;margin:0 0 14px;color:#eaf2ff;text-decoration:none}.hero,.panel{border:1px solid var(--line);border-radius:16px;background:rgba(18,29,48,.95);padding:20px;margin-bottom:16px}.hero h1{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.4rem)}.custom-problems{margin:18px 0;padding:18px;border:1px solid rgba(255,215,0,.35);border-radius:14px;background:rgba(255,215,0,.045)}.custom-problems h3{margin-bottom:8px}.theme-options{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}.theme-option{display:inline-flex;gap:7px;align-items:center;padding:8px 11px;border:1px solid #475569;border-radius:999px}.theme-option input{accent-color:#ffd700}.muted{color:var(--muted)}.notice{padding:12px 14px;border-left:3px solid var(--gold);background:#f4c95d14;border-radius:8px;color:#f8e9bd;margin-top:12px;font-size:.92rem}
 .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;align-items:end}.field{display:grid;gap:5px}.field label{font-weight:700;font-size:.9rem}.field input,.field select{width:100%;min-height:43px;border-radius:8px;border:1px solid #53647b;background:#0d1728;color:#fff;padding:8px 10px;font:inherit}.btn{min-height:44px;border-radius:9px;padding:9px 14px;border:1px solid #f4c95d;background:#74561b;color:#fff;font:inherit;font-weight:750;cursor:pointer}.btn.secondary{background:#263142;border-color:#68788e}.btn:disabled{opacity:.55;cursor:wait}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .status{padding:12px;border-radius:10px;background:#0d1728;border:1px solid var(--line);min-height:48px}.progress{height:8px;background:#29364a;border-radius:8px;overflow:hidden;margin:10px 0}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#66d79a,#f4c95d);transition:width .2s}.results{display:grid;gap:10px}.candidate{border:1px solid var(--line);border-radius:11px;background:var(--panel2);padding:12px}.candidate.selected{border-color:var(--gold)}.candidate button{width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer}.candidate strong{display:block}.candidate small{color:var(--muted)}
 .study-grid{display:grid;grid-template-columns:minmax(260px, min(66vw,620px)) minmax(220px,1fr);gap:16px}.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:3px solid #d7e0ef;border-radius:5px;overflow:hidden}.square{display:flex;align-items:center;justify-content:center;font:clamp(1.5rem,6vw,3.5rem)/1 "DejaVu Sans","Segoe UI Symbol",serif;min-width:0}.square.light{background:#f0d9b5}.square.dark{background:#b58863}.white-piece{-webkit-text-fill-color:#fff;-webkit-text-stroke:2px #111;paint-order:stroke fill}.black-piece{-webkit-text-fill-color:#171717;-webkit-text-stroke:1.8px #fff;paint-order:stroke fill}.square.last{box-shadow:inset 0 0 0 4px #facc15}.moves{min-height:100px;max-height:300px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:9px;background:#0d1728;overflow-wrap:anywhere}.move-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.summary{font-size:.95rem}.hidden{display:none!important}
@@ -55,6 +55,16 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="actions"><button id="build-defense" class="btn">Créer les puzzles défensifs</button></div>
 <p id="defense-status" class="status" role="status" aria-live="polite">Génère d’abord au moins une partie contenant un sacrifice tactique candidat.</p>
 <div id="defense-results" class="results"></div>
+<div class="custom-problems" id="custom-problems"><h3>Problèmes personnalisés</h3>
+<p class="muted">Choisis une plage de classement moteur et les motifs réellement présents dans tes puzzles générés. Entraînement libre : aucun classement joueur ne bouge. Les Elo sont les réglages UCI demandés à Stockfish, pas une cote FIDE mesurée.</p>
+<div class="fields">
+<div class="field"><label for="custom-elo-min">Elo minimum</label><input id="custom-elo-min" type="number" min="2800" max="3190" step="10" value="2800"></div>
+<div class="field"><label for="custom-elo-max">Elo maximum</label><input id="custom-elo-max" type="number" min="2800" max="3190" step="10" value="3190"></div>
+</div>
+<strong>Thèmes</strong><p class="muted">Laisse tout décoché pour tous les thèmes disponibles.</p>
+<div id="custom-theme-options" class="theme-options"></div>
+<div class="actions"><button id="start-custom-problem" class="btn">C’est parti !</button></div>
+<p id="custom-problem-status" class="status" role="status" aria-live="polite">Génère puis crée des puzzles pour remplir ce parcours.</p></div>
 <div id="defense-play" class="study-grid hidden"><div><h3 id="defense-title"></h3><div id="defense-board" class="board" role="grid" aria-label="Échiquier du puzzle de défense"></div><div class="move-controls"><button id="defense-reset" class="btn secondary">Recommencer ce puzzle</button><button id="defense-next" class="btn">Puzzle suivant →</button></div></div><div><p id="defense-prompt" class="summary"></p><p id="defense-feedback" class="status" aria-live="polite"></p><div id="defense-moves" class="moves"></div></div></div>
 </section>
 <section id="study-panel" class="panel hidden">
@@ -269,7 +279,14 @@ async function generate(){
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
 }
 
+const DEFENSE_PUZZLE_STORAGE_KEY="supachess-generated-defense-puzzles-v1";
 let defensePuzzles=[],activeDefenseIndex=0,defenseGame=null,defenseSelected=null,defenseLineIndex=0,defensePlayed=[];
+function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(defensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,themes:p.themes,record:{san:p.record.san,engineBuild:p.record.engineBuild,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
+function customPuzzleMatches(p){const min=Math.max(2800,Number(document.getElementById("custom-elo-min").value)||2800),max=Math.min(3190,Number(document.getElementById("custom-elo-max").value)||3190);if(min>max)return false;if(p.rating<min||p.rating>max)return false;const selected=[...document.querySelectorAll("#custom-theme-options input:checked")].map(x=>x.value);return !selected.length||selected.some(tag=>p.themes.includes(tag));}
+function renderCustomProblemOptions(){const root=document.getElementById("custom-theme-options");if(!root)return;const counts=new Map();defensePuzzles.forEach(p=>p.themes.forEach(tag=>counts.set(tag,(counts.get(tag)||0)+1)));root.innerHTML=[...counts].map(([tag,count])=>'<label class="theme-option"><input type="checkbox" value="'+tag+'"> '+tag+' ('+count+')</label>').join("")||"<em>Les thèmes apparaîtront après la création de puzzles.</em>";}
+function filterCustomProblems(){const min=document.getElementById("custom-elo-min"),max=document.getElementById("custom-elo-max");if(min&&max&&Number(min.value)>Number(max.value)){document.getElementById("custom-problem-status").textContent="L’Elo minimum doit être inférieur ou égal à l’Elo maximum.";renderDefensePuzzleList();return;}renderCustomProblemOptions();renderDefensePuzzleList();const count=defensePuzzles.filter(customPuzzleMatches).length;document.getElementById("custom-problem-status").textContent=count?count+" problème(s) correspondent aux critères. Entraînement libre, classement inchangé.":"Aucun problème dans cette plage et ces thèmes. Crée d’autres puzzles Stockfish ou élargis les filtres.";}
+function startCustomProblem(){const matches=defensePuzzles.map((p,i)=>({p,i})).filter(x=>customPuzzleMatches(x.p));if(!matches.length){filterCustomProblems();return;}const chosen=matches[Math.floor(Math.random()*matches.length)];selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent="Problème lancé · Elo moteur demandé "+chosen.p.rating+" · "+chosen.p.themes.join(" / ")+". Ton classement ne bouge pas.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function restoreDefensePuzzles(){try{const saved=JSON.parse(localStorage.getItem(DEFENSE_PUZZLE_STORAGE_KEY)||"[]");if(!Array.isArray(saved))return;defensePuzzles=saved.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&p.line.length&&p.record).map((p,i)=>({...p,id:p.id||"saved-defense-"+i,rating:Number(p.rating)||Math.min(Number(p.record.whiteElo)||2800,Number(p.record.blackElo)||2800),themes:Array.isArray(p.themes)?p.themes:["Défense tactique","Sacrifice candidat"]}));if(defensePuzzles.length){renderDefensePuzzleList();document.getElementById("defense-status").textContent=defensePuzzles.length+" puzzle(s) Stockfish restauré(s) depuis cet appareil.";filterCustomProblems();}}catch(_e){}}
 function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
 async function buildDefensePuzzles(){
  const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
@@ -291,7 +308,7 @@ async function buildDefensePuzzles(){
     if(!move)break;
     line.push({color:move.color,from:move.from,to:move.to,san:move.san});
    }
-   if(line.some(m=>m.color===userColor))defensePuzzles.push({...item,line,userColor,id:"generated-defense-"+n});
+   if(line.some(m=>m.color===userColor))defensePuzzles.push({...item,line,userColor,id:"generated-defense-"+n,rating:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
   }
   renderDefensePuzzleList();
   document.getElementById("defense-panel").classList.remove("hidden");
@@ -302,7 +319,7 @@ async function buildDefensePuzzles(){
 }
 function renderDefensePuzzleList(){
  const root=document.getElementById("defense-results");root.innerHTML="";
- defensePuzzles.forEach((p,i)=>{const button=document.createElement("button");button.type="button";button.className="candidate";button.innerHTML="<strong>Puzzle "+(i+1)+" · Partie "+(p.gameIndex+1)+" · après "+p.record.san[p.ply]+"</strong><small>Position défensive · "+p.line.filter(m=>m.color===p.userColor).length+" coup(s) à trouver · "+
+ defensePuzzles.forEach((p,i)=>{if(!customPuzzleMatches(p))return;const button=document.createElement("button");button.type="button";button.className="candidate";button.innerHTML="<strong>Puzzle "+(i+1)+" · Partie "+(p.gameIndex+1)+" · après "+((p.record.san||[])[p.ply]||"la tactique")+"</strong><small>"+p.themes.join(" · ")+" · position défensive · "+p.line.filter(m=>m.color===p.userColor).length+" coup(s) à trouver · "+
  (p.userColor==="w"?"Blancs":"Noirs")+" défendent · Stockfish 19 "+p.record.engineBuild+" · Elo UCI "+p.record.whiteElo+"/"+p.record.blackElo+"</small>";
  button.addEventListener("click",()=>selectDefensePuzzle(i));root.appendChild(button);});
 }
@@ -324,6 +341,11 @@ function playDefenseSquare(square){const p=defensePuzzles[activeDefenseIndex];if
  if(defenseLineIndex>=p.line.length){defenseStatus("Séquence défensive terminée. Ligne Stockfish : "+defensePlayed.join(" "), "good");}
  else defenseStatus("Bonne défense : "+move.san+". Continue le calcul.", "good");
 }
+document.getElementById("custom-elo-min").addEventListener("change",filterCustomProblems);
+document.getElementById("custom-elo-max").addEventListener("change",filterCustomProblems);
+document.getElementById("custom-theme-options").addEventListener("change",filterCustomProblems);
+document.getElementById("start-custom-problem").addEventListener("click",startCustomProblem);
+restoreDefensePuzzles();
 document.getElementById("build-defense").addEventListener("click",buildDefensePuzzles);
 document.getElementById("defense-reset").addEventListener("click",()=>selectDefensePuzzle(activeDefenseIndex));
 document.getElementById("defense-next").addEventListener("click",()=>selectDefensePuzzle((activeDefenseIndex+1)%defensePuzzles.length));
@@ -349,5 +371,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.115"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.116"></script>
 </body></html>

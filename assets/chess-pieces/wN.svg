@@ -1,24 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="White Knight">
 <g fill="#ffffff" stroke="#171b24" stroke-linejoin="round" stroke-linecap="round">
-  <path stroke-width="3.1" d="M19 84
-    C22 76 30 69 36 62
-    C41 56 43 51 42 46
-    C37 46 32 45 27 43
-    C20 42 14 40 11 37
-    C9 35 10 32 13 31
-    C17 30 22 33 27 34
-    C33 34 38 30 41 25
-    L39 19
-    C38 15 39 12 42 11
-    C45 14 47 18 50 22
-    C53 23 56 22 58 20
-    L62 12
-    C65 11 68 15 69 19
-    C71 27 68 35 63 41
-    C59 45 58 50 60 55
-    C64 63 72 70 80 75
-    L84 84 Z"/>
-  <path fill="none" stroke-width="2.4" d="M53 39 C49 45 48 51 51 57 C53 62 58 67 64 71"/>
-  <circle cx="31" cy="33" r="2.1" fill="#171b24" stroke="none"/>
+  <path stroke-width="3.1" d="M17 85 C21 76 27 68 33 61 C38 55 41 50 40 45 C35 43 30 42 25 40 L16 38 C12 37 11 35 12 33 C13 30 17 30 21 32 L28 34 C31 33 33 30 34 26 L32 20 C31 16 32 12 35 10 C39 13 41 17 43 21 C47 21 50 19 53 16 L57 11 C61 11 64 15 65 20 C68 28 64 37 59 43 C56 48 57 55 61 61 C66 68 74 74 83 78 L85 85 Z"/>
+  <path fill="none" stroke-width="2.3" d="M53 37 C48 43 47 50 50 56 C52 61 57 66 63 70"/>
+  <circle cx="27" cy="32" r="2.1" fill="#171b24" stroke="none"/>
 </g>
 </svg>

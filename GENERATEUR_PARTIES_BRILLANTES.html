@@ -69,7 +69,18 @@ const STOCKFISH_RELEASE="https://github.com/nmrugg/stockfish.js/releases/downloa
 const STOCKFISH_BUILDS={lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}};
 function selectedEngineBuild(){return STOCKFISH_BUILDS[document.getElementById("engine-build").value]||STOCKFISH_BUILDS.lite;}
 function updateEngineLinks(clearSelection=false){const build=selectedEngineBuild();const jsLink=document.getElementById("engine-js-link"),wasmLink=document.getElementById("engine-wasm-link");jsLink.href=STOCKFISH_RELEASE+build.jsName;jsLink.textContent="Télécharger "+build.jsName+" ("+build.jsBytes.toLocaleString("fr-FR")+" octets)";wasmLink.href=STOCKFISH_RELEASE+build.wasmName;wasmLink.textContent="Télécharger "+build.wasmName+" ("+build.wasmBytes.toLocaleString("fr-FR")+" octets)";if(clearSelection){document.getElementById("engine-js").value="";document.getElementById("engine-wasm").value="";}}
-function validateEngineFiles(){const build=selectedEngineBuild(),js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm)throw new Error("Sélectionne les deux fichiers Stockfish 19 "+build.label+".");if(js.name!==build.jsName||wasm.name!==build.wasmName)throw new Error("Les fichiers sélectionnés ne correspondent pas au build "+build.label+". Choisis les deux fichiers indiqués.");if(js.size!==build.jsBytes)throw new Error("Le fichier "+js.name+" est incomplet ou modifié : "+js.size+" octets reçus, "+build.jsBytes+" attendus.");if(wasm.size!==build.wasmBytes)throw new Error("Le fichier "+wasm.name+" est incomplet ou modifié : "+wasm.size.toLocaleString("fr-FR")+" octets reçus, "+build.wasmBytes.toLocaleString("fr-FR")+" attendus.");return {build,js,wasm};}
+function normalizeEngineFileName(name){return name.replace(/ \(\d+\)(?=\.(?:js|wasm)$)/i,"");}
+function validateEngineFiles(){
+ const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];
+ if(!js||!wasm)throw new Error("Sélectionne le fichier JavaScript et le WASM du même build Stockfish 19.");
+ const normalizedJs=normalizeEngineFileName(js.name),normalizedWasm=normalizeEngineFileName(wasm.name);
+ const build=Object.values(STOCKFISH_BUILDS).find(item=>item.jsName===normalizedJs&&item.wasmName===normalizedWasm);
+ if(!build)throw new Error("Paire de fichiers inconnue : "+js.name+" ("+js.size.toLocaleString("fr-FR")+" octets) et "+wasm.name+" ("+wasm.size.toLocaleString("fr-FR")+" octets). Télécharge les deux fichiers du même build Stockfish 19.");
+ if(js.size!==build.jsBytes||wasm.size!==build.wasmBytes)throw new Error("Fichier incomplet ou altéré pour "+build.label+" : JS "+js.size.toLocaleString("fr-FR")+"/"+build.jsBytes.toLocaleString("fr-FR")+" octets, WASM "+wasm.size.toLocaleString("fr-FR")+"/"+build.wasmBytes.toLocaleString("fr-FR")+" octets.");
+ const selector=document.getElementById("engine-build");
+ if(selector.value!==build.id){selector.value=build.id;updateEngineLinks(false);status("Build "+build.label+" détecté automatiquement à partir des fichiers choisis.");}
+ return {build,js,wasm};
+}
 function releaseEngineObjectUrls(){for(const url of engineObjectUrls)URL.revokeObjectURL(url);engineObjectUrls=[];}
 function waitFor(line,timeout=180000){
  const startedAt=performance.now();
@@ -271,5 +282,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status("Fichiers Stockfish 19 "+build.label+" complets et de taille attendue. Tu peux lancer la génération.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=piece-contrast-20261102d"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.114"></script>
 </body></html>

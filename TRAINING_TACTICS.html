@@ -214,7 +214,7 @@
         .challenge-player { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
         .challenge-player input { min-height:42px; width:min(100%,260px); padding:8px 10px; border:1px solid rgba(255,255,255,.35); border-radius:8px; background:#10284a; color:#fff; font:inherit; }
         .challenge-status { min-height:1.5em; margin-top:12px; padding:9px 11px; border-radius:8px; background:rgba(255,255,255,.09); line-height:1.4; font-variant-numeric:tabular-nums; }
-        .challenge-live-status { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; border:1px solid rgba(134,239,172,.65); border-radius:10px; background:#102d34; color:#f0fdf4; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+        .difficulty-filter { display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto 18px; color:#fff; font-weight:700; }\n        .difficulty-filter select { min-height:42px; max-width:100%; padding:8px 12px; border:1px solid rgba(255,255,255,.4); border-radius:9px; background:#173c68; color:#fff; font:inherit; }\n        .difficulty-filter select:focus-visible { outline:3px solid #fbbf24; outline-offset:3px; }\n        .challenge-live-status { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; border:1px solid rgba(134,239,172,.65); border-radius:10px; background:#102d34; color:#f0fdf4; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
         .challenge-live-status.active { display:flex; }
         .challenge-live-status .challenge-clock { color:#fde68a; font-size:1.25rem; }
         .challenge-rankings { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; margin-top:14px; }
@@ -225,7 +225,7 @@
         .challenge-ranking .empty { opacity:.7; font-size:.83rem; }
         .challenge-stop[hidden] { display:none; }
         @media(max-width:700px) {
-            .puzzle-challenge { padding:13px; }
+            .difficulty-filter { align-items:stretch; flex-direction:column; }\n            .puzzle-challenge { padding:13px; }
             .challenge-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
             .challenge-button { padding:9px 7px; font-size:.92rem; }
             .big-cell { font-size:clamp(1.65rem,10vw,3.2rem) !important; }
@@ -238,7 +238,7 @@
     <a class="back-btn" href="index.html">← Retour au Hub</a>
     <div class="header">
         <h1>🎯 Patterns Tactiques</h1>
-        <p style="opacity:0.8; margin-top:8px;">40 puzzles organisés par thème — maîtrisez les patterns essentiels</p>
+        <p style="opacity:0.8; margin-top:8px;">Puzzles tactiques du niveau débutant au niveau maître, avec des parcours par difficulté et par motif</p>
     </div>
 
     <div class="stats-row">
@@ -268,7 +268,7 @@
 
     <section class="puzzle-challenge" aria-labelledby="challenge-title">
         <h2 id="challenge-title">Défis de problèmes</h2>
-        <p>Sprint 3 min ou 5 min, survie à trois erreurs, ou bataille chronométrée. Le temps et le score restent visibles pendant le défi. Après le coup juste, le motif est expliqué automatiquement puis l’exercice suivant démarre sans validation supplémentaire. Les classements affichés ici sont locaux à ce navigateur.</p>
+        <p>Sprint 3 min ou 5 min, survie à trois erreurs, ou bataille chronométrée. Le temps et le score restent visibles pendant le défi. Après le coup juste, le motif est expliqué automatiquement puis l’exercice suivant démarre sans validation supplémentaire. Les classements affichés ici sont locaux à ce navigateur. Les puzzles avancés proviennent de la base Lichess publiée sous licence CC0 ; leur cote est une cote de puzzle, pas l’Elo d’un joueur. <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noopener noreferrer">Source des puzzles</a>.</p>
         <div class="challenge-controls">
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint3')">Sprint · 3 min</button>
             <button class="challenge-button" type="button" onclick="startPuzzleChallenge('sprint5')">Sprint · 5 min</button>
@@ -281,7 +281,7 @@
         <div id="puzzle-challenge-status" class="challenge-status" role="status" aria-live="polite">Choisis un défi pour commencer.</div>
         <div id="puzzle-challenge-rankings" class="challenge-rankings" aria-label="Classements locaux"></div>
     </section>
-    <div class="theme-tabs" id="theme-tabs"></div>
+    <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200+</option></select></div>\n    <div class="theme-tabs" id="theme-tabs"></div>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
 
@@ -304,6 +304,7 @@ const THEMES = [
     { id:'smothered', name:'🥊 Mat étouffé', color:'#f59e0b' },
     { id:'doublecheck', name:'♟️ Double échec', color:'#ec4899' },
     { id:'xray', name:'🔮 Rayon X', color:'#14b8a6' },
+    { id:'master', name:'♟️ Puzzles avancés', color:'#facc15' },
 ]
 
 const PUZZLES = [
@@ -1386,7 +1387,1507 @@ const PUZZLES = [
         "board": "3k4/6r1/8/8/8/Q3K3/8/8",
         "answer": "g7g3",
         "hl": []
-    }
+    },
+{
+    id: "lichess-q2cun",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2134,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Défense précise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/8/8/5Kp1/2R4k/r6P/8",
+    fen: "8/8/8/8/5Kp1/2R4k/r6P/8 b - - 1 56",
+    answer: "h3h4",
+    line: "Kh4 Rc6 Rf2+ Ke3 Rxh2",
+    sourceId: "q2cun",
+    hl: []
+},
+{
+    id: "lichess-IGs0J",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2313,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/p3k2p/4n3/2R5/2PnR1PK/1P1r4/P6P/8",
+    fen: "8/p3k2p/4n3/2R5/2PnR1PK/1P1r4/P6P/8 b - - 4 35",
+    answer: "d4f3",
+    line: "Nf3+ Kh5 Ng5",
+    sourceId: "IGs0J",
+    hl: []
+},
+{
+    id: "lichess-9brtS",
+    theme: "master",
+    themeLabel: "Mat en deux",
+    rating: 2135,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Mat en deux. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Mat en deux",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2k2b1r/pp3ppp/2p1pnb1/8/Q4BP1/2N4P/PPP1Bq2/2KR4",
+    fen: "2k2b1r/pp3ppp/2p1pnb1/8/Q4BP1/2N4P/PPP1Bq2/2KR4 w - - 0 18",
+    answer: "a4c6",
+    line: "Qxc6+ bxc6 Ba6#",
+    sourceId: "9brtS",
+    hl: []
+},
+{
+    id: "lichess-QCPaS",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 1925,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3r1r1k/b4Pp1/7q/1p1B4/p3PN2/P2p3R/1P1B3P/7K",
+    fen: "3r1r1k/b4Pp1/7q/1p1B4/p3PN2/P2p3R/1P1B3P/7K w - - 9 37",
+    answer: "f4g6",
+    line: "Ng6+ Kh7 Nxf8+ Rxf8 Bxh6",
+    sourceId: "QCPaS",
+    hl: []
+},
+{
+    id: "lichess-fEz5o",
+    theme: "master",
+    themeLabel: "Mat en deux",
+    rating: 1965,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Mat en deux. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Mat en deux",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2b5/6rk/p2q1P1p/8/2QN3r/2P2R2/PP4P1/5RK1",
+    fen: "2b5/6rk/p2q1P1p/8/2QN3r/2P2R2/PP4P1/5RK1 b - - 2 38",
+    answer: "g7g2",
+    line: "Rxg2+ Kxg2 Qh2#",
+    sourceId: "fEz5o",
+    hl: []
+},
+{
+    id: "lichess-YS5D6",
+    theme: "master",
+    themeLabel: "Mat en deux",
+    rating: 2132,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Mat en deux. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Mat en deux",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "R7/pp4k1/6pp/3B1b2/nPK5/P2r4/3N4/5R2",
+    fen: "R7/pp4k1/6pp/3B1b2/nPK5/P2r4/3N4/5R2 b - - 2 37",
+    answer: "a4b6",
+    line: "Nb6+ Kc5 Rxd5#",
+    sourceId: "YS5D6",
+    hl: []
+},
+{
+    id: "lichess-7nrsg",
+    theme: "master",
+    themeLabel: "Pion passé avancé",
+    rating: 2318,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Pion passé avancé. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Pion passé avancé",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r3k1/4b2p/PB4p1/4p3/4Pp2/7P/P1p1K1P1/2R5",
+    fen: "2r3k1/4b2p/PB4p1/4p3/4Pp2/7P/P1p1K1P1/2R5 w - - 1 42",
+    answer: "e2d3",
+    line: "Kd3 Ra8 a7",
+    sourceId: "7nrsg",
+    hl: []
+},
+{
+    id: "lichess-187ff",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2182,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5rk1/4b1rp/1Q1p2qp/1N1PN3/2P1P3/7P/PP2K3/4RR2",
+    fen: "5rk1/4b1rp/1Q1p2qp/1N1PN3/2P1P3/7P/PP2K3/4RR2 b - - 2 28",
+    answer: "g6e4",
+    line: "Qxe4+ Kd2 Rg2+",
+    sourceId: "187ff",
+    hl: []
+},
+{
+    id: "lichess-vLDbN",
+    theme: "master",
+    themeLabel: "Sacrifice tactique",
+    rating: 2249,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Sacrifice tactique. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Sacrifice tactique",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2rr2k1/5ppp/pp1bq3/8/4P3/1P3R1P/PQ1B2P1/4R2K",
+    fen: "2rr2k1/5ppp/pp1bq3/8/4P3/1P3R1P/PQ1B2P1/4R2K b - - 2 30",
+    answer: "d6e5",
+    line: "Be5 Bc3 Rxc3 Rxc3 Qf6",
+    sourceId: "vLDbN",
+    hl: []
+},
+{
+    id: "lichess-3i59Q",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2277,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Défense précise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "k3rr2/pp6/2nQ4/3P4/4q1pp/2P1B3/PP3PPP/R4RK1",
+    fen: "k3rr2/pp6/2nQ4/3P4/4q1pp/2P1B3/PP3PPP/R4RK1 b - - 0 22",
+    answer: "h4h3",
+    line: "h3 Qg3 Ne5",
+    sourceId: "3i59Q",
+    hl: []
+},
+{
+    id: "lichess-7X01V",
+    theme: "master",
+    themeLabel: "Déviation",
+    rating: 1982,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Déviation. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Déviation",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1b2rk1/1p4p1/p1n2qQ1/4p3/P3P3/3B4/1p3PP1/3RK2R",
+    fen: "r1b2rk1/1p4p1/p1n2qQ1/4p3/P3P3/3B4/1p3PP1/3RK2R w K - 1 20",
+    answer: "d3c4",
+    line: "Bc4+ Rf7 Bxf7+ Qxf7 Rh8+ Kxh8 Qxf7",
+    sourceId: "7X01V",
+    hl: []
+},
+{
+    id: "lichess-dXBu7",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2106,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Défense précise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1r3k1/2q2pp1/7p/p7/5b2/P1p2N1P/1PQ2PP1/1BR3K1",
+    fen: "r1r3k1/2q2pp1/7p/p7/5b2/P1p2N1P/1PQ2PP1/1BR3K1 w - - 0 30",
+    answer: "c2h7",
+    line: "Qh7+ Kf8 Re1",
+    sourceId: "dXBu7",
+    hl: []
+},
+{
+    id: "lichess-guaMZ",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2020,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Défense précise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2QR4/6pk/p1b5/2p3r1/8/5PK1/PPq3P1/8",
+    fen: "2QR4/6pk/p1b5/2p3r1/8/5PK1/PPq3P1/8 w - - 4 38",
+    answer: "g3h4",
+    line: "Kh4 Re5 Rh8+ Kg6 Qxc6+",
+    sourceId: "guaMZ",
+    hl: []
+},
+{
+    id: "lichess-cNvFC",
+    theme: "master",
+    themeLabel: "Pièce piégée",
+    rating: 2149,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Pièce piégée. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Pièce piégée",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r3r1k1/pp1bbppp/1q1p1n2/2p2PB1/4P3/2N2B2/PPP3PP/R2Q1R1K",
+    fen: "r3r1k1/pp1bbppp/1q1p1n2/2p2PB1/4P3/2N2B2/PPP3PP/R2Q1R1K w - - 7 15",
+    answer: "e4e5",
+    line: "e5 dxe5 Bxf6 Bxf6 Qxd7",
+    sourceId: "cNvFC",
+    hl: []
+},
+{
+    id: "lichess-XKbrl",
+    theme: "master",
+    themeLabel: "Pièce en prise",
+    rating: 2236,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Pièce en prise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Pièce en prise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/1b3p2/p3pp1b/1pR1P2Q/1P1p4/P6R/q2N2PP/7K",
+    fen: "r4rk1/1b3p2/p3pp1b/1pR1P2Q/1P1p4/P6R/q2N2PP/7K w - - 0 25",
+    answer: "h5h6",
+    line: "Qxh6 Qa1+ Nb1 Qxb1+ Rc1",
+    sourceId: "XKbrl",
+    hl: []
+},
+{
+    id: "lichess-mMcCS",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 2232,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r2B1k1/p5pp/8/5p1q/1Q1Rn3/1NP1Pb2/PP3PPP/5RK1",
+    fen: "1r2B1k1/p5pp/8/5p1q/1Q1Rn3/1NP1Pb2/PP3PPP/5RK1 b - - 0 25",
+    answer: "h5g4",
+    line: "Qg4 Bf7+ Kxf7",
+    sourceId: "mMcCS",
+    hl: []
+},
+{
+    id: "lichess-W6B8s",
+    theme: "master",
+    themeLabel: "Gain décisif",
+    rating: 2231,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Gain décisif. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Gain décisif",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r2q1rk1/pp1bb2p/2p3P1/3p4/8/2pBP3/PP3P1P/R2QK2R",
+    fen: "r2q1rk1/pp1bb2p/2p3P1/3p4/8/2pBP3/PP3P1P/R2QK2R w KQ - 0 16",
+    answer: "d1h5",
+    line: "Qh5 Kg7 Qxh7+",
+    sourceId: "W6B8s",
+    hl: []
+},
+{
+    id: "lichess-HtVST",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2238,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Mat en trois. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5r2/1p3kn1/2rQ2p1/q5P1/b3P3/5P1B/PP6/1K5R",
+    fen: "5r2/1p3kn1/2rQ2p1/q5P1/b3P3/5P1B/PP6/1K5R w - - 1 26",
+    answer: "h3e6",
+    line: "Be6+ Nxe6 Qd7+ Kg8 Qh7#",
+    sourceId: "HtVST",
+    hl: []
+},
+{
+    id: "lichess-1o3Ma",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 1934,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3r1rk1/pbq2pp1/2p5/4b1P1/7Q/P5P1/B3N2P/4R1K1",
+    fen: "3r1rk1/pbq2pp1/2p5/4b1P1/7Q/P5P1/B3N2P/4R1K1 w - - 1 26",
+    answer: "g5g6",
+    line: "g6 Rfe8 gxf7+ Qxf7 Bxf7+",
+    sourceId: "1o3Ma",
+    hl: []
+},
+{
+    id: "lichess-khWSV",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2183,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1b5/ppp1k1pp/2n5/3pp1NQ/2q5/4K1P1/PPPP4/RNB4R",
+    fen: "r1b5/ppp1k1pp/2n5/3pp1NQ/2q5/4K1P1/PPPP4/RNB4R b - - 5 13",
+    answer: "c4d4",
+    line: "Qd4+ Kf3 Bg4+ Qxg4 Rf8+ Kg2 Qxg4",
+    sourceId: "khWSV",
+    hl: []
+},
+{
+    id: "lichess-bvOgR",
+    theme: "master",
+    themeLabel: "Déviation",
+    rating: 1972,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Déviation. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Déviation",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r5k1/6p1/2p3Q1/2Pp2P1/p4Pnq/P4R2/6P1/2R3K1",
+    fen: "r5k1/6p1/2p3Q1/2Pp2P1/p4Pnq/P4R2/6P1/2R3K1 b - - 0 30",
+    answer: "h4h2",
+    line: "Qh2+ Kf1 Qh1+ Ke2 Qxg2+",
+    sourceId: "bvOgR",
+    hl: []
+},
+{
+    id: "lichess-MIeCJ",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2273,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Défense précise. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1r3k1/pb2ppbp/1p4p1/1B1q4/Q2n4/4BN2/PP3PPP/2RR2K1",
+    fen: "r1r3k1/pb2ppbp/1p4p1/1B1q4/Q2n4/4BN2/PP3PPP/2RR2K1 w - - 2 20",
+    answer: "c1c8",
+    line: "Rxc8+ Rxc8 Bxd4 Bxd4 Rxd4 Rc1+ Bf1",
+    sourceId: "MIeCJ",
+    hl: []
+},
+{
+    id: "lichess-VYrkz",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2148,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r3k1/p1r2pp1/3q3p/4NQ2/2R2P2/P3n3/6PP/1R4K1",
+    fen: "2r3k1/p1r2pp1/3q3p/4NQ2/2R2P2/P3n3/6PP/1R4K1 w - - 0 30",
+    answer: "f5c8",
+    line: "Qxc8+ Rxc8 Rxc8+ Kh7 Rh8+ Kxh8 Nxf7+ Kh7 Nxd6",
+    sourceId: "VYrkz",
+    hl: []
+},
+{
+    id: "lichess-Sxa0M",
+    theme: "master",
+    themeLabel: "Gain décisif",
+    rating: 2266,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Gain décisif. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Gain décisif",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/ppqbppbp/2np2p1/8/N1PNn3/4BP2/PP2B1PP/R2Q1R1K",
+    fen: "r4rk1/ppqbppbp/2np2p1/8/N1PNn3/4BP2/PP2B1PP/R2Q1R1K w - - 0 13",
+    answer: "d4b5",
+    line: "Nb5 Ng3+ hxg3",
+    sourceId: "Sxa0M",
+    hl: []
+},
+{
+    id: "lichess-EradF",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 1961,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2R2Q2/p2k1p1p/4p3/4B3/8/6P1/bP1q1P1P/6K1",
+    fen: "2R2Q2/p2k1p1p/4p3/4B3/8/6P1/bP1q1P1P/6K1 b - - 0 32",
+    answer: "d2d1",
+    line: "Qd1+ Kg2 Bd5+ f3 Qxf3+ Kh3 Qh5#",
+    sourceId: "EradF",
+    hl: []
+},
+{
+    id: "lichess-NGle0",
+    theme: "master",
+    themeLabel: "Gain décisif",
+    rating: 2201,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Gain décisif. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Gain décisif",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5bk1/1R1r2pp/3pNn2/p3pP2/3pP3/3q3P/5PQ1/6K1",
+    fen: "5bk1/1R1r2pp/3pNn2/p3pP2/3pP3/3q3P/5PQ1/6K1 w - - 6 41",
+    answer: "b7b8",
+    line: "Rb8 Qb1+ Rxb1",
+    sourceId: "NGle0",
+    hl: []
+},
+{
+    id: "lichess-MHb6y",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2207,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/8/6p1/3k1p1P/4pP2/4K1P1/8",
+    fen: "8/8/8/6p1/3k1p1P/4pP2/4K1P1/8 w - - 1 58",
+    answer: "h4g5",
+    line: "hxg5 Ke5 g3 Kf5 gxf4 Kxf4 g6",
+    sourceId: "MHb6y",
+    hl: []
+},
+{
+    id: "lichess-ocezv",
+    theme: "master",
+    themeLabel: "Sacrifice tactique",
+    rating: 2230,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Sacrifice tactique. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Sacrifice tactique",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/R2nq1pn/1p2p2p/1Pp1P3/2PpNP2/3Q2B1/6PP/R5K1",
+    fen: "r4rk1/R2nq1pn/1p2p2p/1Pp1P3/2PpNP2/3Q2B1/6PP/R5K1 b - - 5 29",
+    answer: "d7e5",
+    line: "Nxe5 Rxe7 Rxa1+ Qf1 Rxf1+",
+    sourceId: "ocezv",
+    hl: []
+},
+{
+    id: "lichess-ZHsnA",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 1968,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/p6k/7p/8/PPBp1PP1/K1b5/1rb4R/8",
+    fen: "8/p6k/7p/8/PPBp1PP1/K1b5/1rb4R/8 w - - 0 48",
+    answer: "h2c2",
+    line: "Rxc2 Rxc2 Bd3+ Kg8 Bxc2",
+    sourceId: "ZHsnA",
+    hl: []
+},
+{
+    id: "lichess-1eFKW",
+    theme: "master",
+    themeLabel: "Coup calme",
+    rating: 2324,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Coup calme. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Coup calme",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/p5k1/1pRPK2p/1r6/8/8/8",
+    fen: "8/8/p5k1/1pRPK2p/1r6/8/8/8 w - - 0 57",
+    answer: "d5d6",
+    line: "d6 Kf7 Rc8 Rb1 d7",
+    sourceId: "1eFKW",
+    hl: []
+},
+{
+    id: "lichess-6ZGuS",
+    theme: "master",
+    themeLabel: "Calcul long",
+    rating: 2223,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Calcul long. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Calcul long",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r1q1k1/pp3R1p/4p1pb/1b1p4/n2P4/1NP2Q2/P4RPP/6K1",
+    fen: "2r1q1k1/pp3R1p/4p1pb/1b1p4/n2P4/1NP2Q2/P4RPP/6K1 w - - 8 22",
+    answer: "f3f6",
+    line: "Qf6 Nxc3 Re7 Qxe7 Qxe7",
+    sourceId: "6ZGuS",
+    hl: []
+},
+{
+    id: "lichess-WSIph",
+    theme: "master",
+    themeLabel: "Zugzwang",
+    rating: 2342,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Zugzwang. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Zugzwang",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/4p3/1p1p4/1PpP2kP/2P5/5K2/8",
+    fen: "8/8/4p3/1p1p4/1PpP2kP/2P5/5K2/8 w - - 1 45",
+    answer: "f2e3",
+    line: "Ke3 Kf5 Kf3 e5 dxe5",
+    sourceId: "WSIph",
+    hl: []
+},
+{
+    id: "lichess-Kirkc",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 1972,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/ppq1bp1k/1n2p2p/3pP3/3P2N1/1P5P/P2Q1PP1/6K1",
+    fen: "8/ppq1bp1k/1n2p2p/3pP3/3P2N1/1P5P/P2Q1PP1/6K1 w - - 0 25",
+    answer: "d2h6",
+    line: "Qxh6+ Kg8 Nf6+ Bxf6 exf6 Qc1+ Qxc1",
+    sourceId: "Kirkc",
+    hl: []
+},
+{
+    id: "lichess-ZFMme",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 2213,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r5k1/p3P1b1/1q5r/1P2p3/P3Pp2/B1N2PpB/8/R4QRK",
+    fen: "r5k1/p3P1b1/1q5r/1P2p3/P3Pp2/B1N2PpB/8/R4QRK b - - 2 28",
+    answer: "b6e6",
+    line: "Qe6 Rxg3 fxg3 Kg1 Rxh3",
+    sourceId: "ZFMme",
+    hl: []
+},
+{
+    id: "lichess-lY6ai",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2120,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r1k1/5p2/p1q2bp1/P2P3p/1Q5P/5PP1/6K1/1R1R4",
+    fen: "4r1k1/5p2/p1q2bp1/P2P3p/1Q5P/5PP1/6K1/1R1R4 b - - 0 34",
+    answer: "e8e2",
+    line: "Re2+ Kf1 Qc2",
+    sourceId: "lY6ai",
+    hl: []
+},
+{
+    id: "lichess-bB7b1",
+    theme: "master",
+    themeLabel: "Calcul long",
+    rating: 2174,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Calcul long. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Calcul long",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3r1rk1/pbq1bpp1/1p2pn1p/2p5/3P1n2/2PQ1NNP/PPBB1PP1/R3R1K1",
+    fen: "3r1rk1/pbq1bpp1/1p2pn1p/2p5/3P1n2/2PQ1NNP/PPBB1PP1/R3R1K1 w - - 7 18",
+    answer: "d2f4",
+    line: "Bxf4 Qxf4 Nh5 Qf5 Qxf5",
+    sourceId: "bB7b1",
+    hl: []
+},
+{
+    id: "lichess-RG6Kr",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 2162,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2q3k1/1br3b1/p3n1p1/1p1BPpP1/1P1P1P1Q/P6R/2rnNK2/7R",
+    fen: "2q3k1/1br3b1/p3n1p1/1p1BPpP1/1P1P1P1Q/P6R/2rnNK2/7R w - - 3 35",
+    answer: "h4h8",
+    line: "Qh8+ Kf7 Qxg7+ Kxg7 Rh7+ Kf8 Rh8+ Ke7 R1h7+ Ng7 Rxg7#",
+    sourceId: "RG6Kr",
+    hl: []
+},
+{
+    id: "lichess-GYhZa",
+    theme: "master",
+    themeLabel: "Sacrifice tactique",
+    rating: 2197,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Sacrifice tactique. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Sacrifice tactique",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r3/pp2r3/2pb4/3p4/3P1pR1/P1N1PK1k/1P2R3/8",
+    fen: "4r3/pp2r3/2pb4/3p4/3P1pR1/P1N1PK1k/1P2R3/8 w - - 0 34",
+    answer: "e2h2",
+    line: "Rh2+ Kxh2 Rh4+ Kg1 Ne2+ Kf1 Rh1#",
+    sourceId: "GYhZa",
+    hl: []
+},
+{
+    id: "lichess-jVWzt",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 2217,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/ppP3p1/4pq2/2b1p2p/3nN1n1/2NP4/PPPQ1PPP/R1B2RK1",
+    fen: "r4rk1/ppP3p1/4pq2/2b1p2p/3nN1n1/2NP4/PPPQ1PPP/R1B2RK1 b - - 5 14",
+    answer: "f6h4",
+    line: "Qh4 h3 Nf3+ Kh1 Nxd2",
+    sourceId: "jVWzt",
+    hl: []
+},
+{
+    id: "lichess-2faAV",
+    theme: "master",
+    themeLabel: "Attaque découverte",
+    rating: 1939,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Attaque découverte. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Attaque découverte",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r2qk2r/ppp1ppbp/6p1/8/4N3/3Q1nP1/PPP2PP1/2KR3R",
+    fen: "r2qk2r/ppp1ppbp/6p1/8/4N3/3Q1nP1/PPP2PP1/2KR3R w kq - 0 13",
+    answer: "d3b5",
+    line: "Qb5+ c6 Rxd8+",
+    sourceId: "2faAV",
+    hl: []
+},
+{
+    id: "lichess-rQcwG",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 1921,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/R5pk/1p3r1p/4Q3/4P3/7P/5qPK/8",
+    fen: "8/R5pk/1p3r1p/4Q3/4P3/7P/5qPK/8 b - - 4 29",
+    answer: "f6g6",
+    line: "Rg6 Rxg7+ Rxg7 Qf5+ Qxf5",
+    sourceId: "rQcwG",
+    hl: []
+},
+{
+    id: "lichess-Ut0kC",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2258,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r5/5Rp1/1p5k/7P/p5B1/P1Nb4/KP1n1P2/8",
+    fen: "2r5/5Rp1/1p5k/7P/p5B1/P1Nb4/KP1n1P2/8 b - - 4 38",
+    answer: "c8c3",
+    line: "Rxc3 bxc3 Bc4+ Kb2 Bxf7",
+    sourceId: "Ut0kC",
+    hl: []
+},
+{
+    id: "lichess-rBQEt",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2220,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r1r4/3PQ3/p1B5/4pppp/5q1k/5P2/P4P1P/6RK",
+    fen: "1r1r4/3PQ3/p1B5/4pppp/5q1k/5P2/P4P1P/6RK w - - 0 41",
+    answer: "g1g3",
+    line: "Rg3 Qxg3 fxg3+",
+    sourceId: "rBQEt",
+    hl: []
+},
+{
+    id: "lichess-JxJWL",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2130,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1br2rk1/p4ppp/2p1p3/3pNqB1/3Pb3/2P3QP/PP3PP1/R4RK1",
+    fen: "1br2rk1/p4ppp/2p1p3/3pNqB1/3Pb3/2P3QP/PP3PP1/R4RK1 b - - 0 18",
+    answer: "f7f6",
+    line: "f6 Bh6 Rf7 Nxf7 Bxg3",
+    sourceId: "JxJWL",
+    hl: []
+},
+{
+    id: "lichess-AAAFw",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2298,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Technique de finale. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/2p4p/2pk2p1/1p1P2P1/2P1K1P1/1P6/8/8",
+    fen: "8/2p4p/2pk2p1/1p1P2P1/2P1K1P1/1P6/8/8 b - - 0 42",
+    answer: "c6d5",
+    line: "cxd5+ cxd5 Kc5",
+    sourceId: "AAAFw",
+    hl: []
+},
+{
+    id: "lichess-2sQdR",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 1979,
+    turn: "b",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Clouage. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1kr3b1/p7/5p2/1p2pp2/qrP5/2NP1Q2/PP3PP1/1K1R3R",
+    fen: "1kr3b1/p7/5p2/1p2pp2/qrP5/2NP1Q2/PP3PP1/1K1R3R b - - 1 29",
+    answer: "a4a3",
+    line: "Qa3 Qe2 Qxc3",
+    sourceId: "2sQdR",
+    hl: []
+},
+{
+    id: "lichess-9ZyfB",
+    theme: "master",
+    themeLabel: "Fourchette",
+    rating: 2116,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Fourchette. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Fourchette",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r6/4kp2/p1p1p3/3pR3/5q1r/P4P2/1PP5/1K2R1Q1",
+    fen: "1r6/4kp2/p1p1p3/3pR3/5q1r/P4P2/1PP5/1K2R1Q1 w - - 4 33",
+    answer: "g1a7",
+    line: "Qa7+ Kd8 Qxb8+",
+    sourceId: "9ZyfB",
+    hl: []
+},
+{
+    id: "lichess-PJSER",
+    theme: "master",
+    themeLabel: "Attaque découverte",
+    rating: 2215,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Attaque découverte. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Attaque découverte",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r7/p6p/R2P1pp1/3rk3/8/8/5PPP/3R2K1",
+    fen: "r7/p6p/R2P1pp1/3rk3/8/8/5PPP/3R2K1 w - - 1 30",
+    answer: "f2f4",
+    line: "f4+ Ke6 d7+ Kxd7 Rxd5+",
+    sourceId: "PJSER",
+    hl: []
+},
+{
+    id: "lichess-XL5Sv",
+    theme: "master",
+    themeLabel: "Sacrifice tactique",
+    rating: 2219,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Sacrifice tactique. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Sacrifice tactique",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r3qrk1/ppp2ppp/2npb1n1/b2N2B1/3PP3/3B1N2/PP3PPP/R1Q2RK1",
+    fen: "r3qrk1/ppp2ppp/2npb1n1/b2N2B1/3PP3/3B1N2/PP3PPP/R1Q2RK1 w - - 13 13",
+    answer: "d5f6",
+    line: "Nf6+ gxf6 Bxf6",
+    sourceId: "XL5Sv",
+    hl: []
+},
+{
+    id: "lichess-Owzrv",
+    theme: "master",
+    themeLabel: "Enfilade",
+    rating: 2297,
+    turn: "w",
+    desc: "Trouve le coup précis. Calcule les réponses forcées avant de jouer.",
+    explain: "Motif principal : Enfilade. Vérifie les réponses adverses avant de conclure.",
+    question: "Quel est le motif principal de cette solution ?",
+    choices: [
+        {
+            text: "Enfilade",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r2k2/5pp1/1p1P4/4n1q1/1P6/5Q2/5PPP/3R2K1",
+    fen: "2r2k2/5pp1/1p1P4/4n1q1/1P6/5Q2/5PPP/3R2K1 w - - 1 34",
+    answer: "f3h3",
+    line: "Qh3 f5 Qh8+ Kf7 Qxc8",
+    sourceId: "Owzrv",
+    hl: []
+}
 ]
 
 
@@ -1448,7 +2949,7 @@ function syncTacticsMastery() {
 
 let solved = getSolved();
 let streak = 0;
-let activeTheme = 'all';
+let activeTheme = 'all';\nlet activeDifficulty = 'all';\nfunction getDifficultyPuzzles() {\n    if (activeDifficulty==='all') return PUZZLES;\n    const ranges={'high':p=>p.rating>=1800&&p.rating<2000,'very-high':p=>p.rating>=2000&&p.rating<2200,'very-very-high':p=>p.rating>=2200};\n    return PUZZLES.filter(p=>ranges[activeDifficulty]&&ranges[activeDifficulty](p));\n}\nfunction getFilteredPuzzles() { const pool=getDifficultyPuzzles(); return activeTheme==='all'?pool:pool.filter(p=>p.theme===activeTheme); }\nfunction setDifficulty(value) { activeDifficulty=value; renderTabs(); renderGrid(); }
 let currentPuzzle = null;
 let tacticGame = null;
 let tacticHintLevel = 0;
@@ -1526,7 +3027,7 @@ function setTheme(id) {
 
 function renderGrid() {
     const grid = document.getElementById('puzzle-grid');
-    const filtered = activeTheme==='all' ? PUZZLES : PUZZLES.filter(p=>p.theme===activeTheme);
+    const filtered = getFilteredPuzzles();
     grid.innerHTML = filtered.map(p => {
         const isSolved = solved.includes(p.id);
         const theme = THEMES.find(t=>t.id===p.theme);
@@ -1535,7 +3036,7 @@ function renderGrid() {
                 <span class="pz-title">${isSolved?'✅ ':''} ${p.title}</span>
                 <span class="pz-rating">⭐ ${p.rating}</span>
             </div>
-            <span class="pz-theme-badge">${theme?.name||''}</span>
+            <span class="pz-theme-badge">${p.themeLabel||theme?.name||''}</span>
             ${renderMiniBoard(p.board, p.hl)}
             <div class="pz-desc">${p.desc}</div>
             <div class="pz-bottom">
@@ -1552,7 +3053,7 @@ function openPuzzle(id) {
     if (!currentPuzzle) return;
     currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null, mistakes:0 };
     tacticHintLevel = 0;
-    tacticGame = new Chess(currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1');
+    tacticGame = new Chess(currentPuzzle.fen || (currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1'));
     const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
     document.getElementById('modal-inner').innerHTML = `
         <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>
@@ -1631,7 +3132,7 @@ function selectTacticSquare(square) {
             currentPuzzle.session.conceptCorrect=true;
             feedback.textContent='Motif trouvé — lis l’explication, le prochain problème arrive automatiquement.';
             const explanation=document.getElementById('tactic-explanation');
-            explanation.textContent=currentPuzzle.explain;
+            explanation.textContent=currentPuzzle.explain+(currentPuzzle.line?' Variante principale : '+currentPuzzle.line+'.':'');
             explanation.hidden=false;
             puzzleChallenge.score++;
             challengeStatus();
@@ -1817,7 +3318,7 @@ function startPuzzleChallenge(mode) {
     if (!CHALLENGE_MODES[mode]) return;
     finishPuzzleChallenge(true);
     const cfg=CHALLENGE_MODES[mode];
-    const order=PUZZLES.map(p=>p.id);
+    const challengePool=getFilteredPuzzles();\n    const order=(challengePool.length?challengePool:PUZZLES).map(p=>p.id);
     for (let i=order.length-1;i>0;i--) {
         const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]];
     }

@@ -1,5 +1,5 @@
 {
-  "version": "1.13.1",
+  "version": "1.13.112",
   "scripts": {
     "test:keys": "node scripts/test_keyboard_nav.mjs",
     "test:site": "node test_site_coherence.js",

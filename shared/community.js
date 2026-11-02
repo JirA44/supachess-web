@@ -12,7 +12,7 @@
 (function () {
     'use strict';
 
-    var SITE_VERSION = '1.13.0';
+    var SITE_VERSION = '1.13.1';
     // Capture this script's URL now; init() may run after document.currentScript is cleared.
     var communityScriptUrl = document.currentScript ? document.currentScript.src : null;
 
@@ -75,6 +75,31 @@
         document.head.appendChild(stylesheet);
     }
 
+    function recordRegisteredUser(user) {
+        if (!db || !user || !user.uid) return;
+        var marker = db.collection('registered_user_markers').doc(user.uid);
+        var counter = db.collection('site_stats').doc('counters');
+
+        db.runTransaction(function (transaction) {
+            return transaction.get(marker).then(function (markerDoc) {
+                if (markerDoc.exists) return false;
+                return transaction.get(counter).then(function (counterDoc) {
+                    var data = counterDoc.exists ? counterDoc.data() : {};
+                    var current = Number.isSafeInteger(data.registered_users) && data.registered_users >= 0
+                        ? data.registered_users : 0;
+                    transaction.set(marker, {
+                        uid: user.uid,
+                        registered_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    transaction.set(counter, { registered_users: current + 1 }, { merge: true });
+                    return true;
+                });
+            });
+        }).catch(function (err) {
+            console.warn('[Community] Registered-account count unavailable:', err && err.code);
+        });
+    }
+
     // --- Firebase Init (safe) ---
     function initFirebase() {
         try {
@@ -106,6 +131,7 @@
 
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
+                    if (user) recordRegisteredUser(user);
                     window.dispatchEvent(new CustomEvent('chessnova:auth-state', { detail: { user: user } }));
                     if (user && window.ChessNovaProgress && window.ChessNovaProgress.syncWithCloud) {
                         window.ChessNovaProgress.syncWithCloud(user);
@@ -354,12 +380,6 @@
         errorEl.textContent = '';
 
         auth.createUserWithEmailAndPassword(email, password).then(function () {
-            // Increment registered_users counter
-            if (db) {
-                db.collection('site_stats').doc('counters').set({
-                    registered_users: firebase.firestore.FieldValue.increment(1)
-                }, { merge: true }).catch(function () { });
-            }
             showToast(t('auth_success_signup'), false);
             closeAuthModal();
             btn.disabled = false;
@@ -404,12 +424,6 @@
         // Open Google directly from the click, preserving browser user activation.
         // Persistence is configured when Firebase starts.
         auth.signInWithPopup(provider).then(function (result) {
-            // Check if new user
-            if (result.additionalUserInfo && result.additionalUserInfo.isNewUser && db) {
-                db.collection('site_stats').doc('counters').set({
-                    registered_users: firebase.firestore.FieldValue.increment(1)
-                }, { merge: true }).catch(function () { });
-            }
             showToast(t('auth_success_login'), false);
             closeAuthModal();
         }).catch(function (err) {
@@ -560,15 +574,21 @@
 
         // Listen to counters
         db.collection('site_stats').doc('counters').onSnapshot(function (doc) {
-            if (!doc.exists) return;
+            var membersEl = document.getElementById('cn-stat-members');
+            if (!doc.exists) {
+                if (membersEl) membersEl.textContent = formatNumber(0);
+                return;
+            }
             var data = doc.data();
             var visitsEl = document.getElementById('cn-stat-visits');
             var uniqueEl = document.getElementById('cn-stat-unique');
-            var membersEl = document.getElementById('cn-stat-members');
             if (visitsEl) visitsEl.textContent = formatNumber(data.total_visits || 0);
             if (uniqueEl) uniqueEl.textContent = formatNumber(data.unique_visitors || 0);
             if (membersEl) membersEl.textContent = formatNumber(data.registered_users || 0);
-        }, function () { });
+        }, function () {
+            var membersEl = document.getElementById('cn-stat-members');
+            if (membersEl) membersEl.textContent = '—';
+        });
 
         // Estimate online: visitors with last_visit < 5 min ago
         var fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -621,14 +641,19 @@
 
         if (db) {
             db.collection('site_stats').doc('counters').onSnapshot(function (doc) {
-                if (doc.exists) {
-                    var data = doc.data();
-                    var visitors = document.getElementById('cn-visitors-count');
-                    var members = document.getElementById('cn-members-count');
-                    if (visitors) visitors.textContent = formatExactCount(data.unique_visitors);
-                    if (members) members.textContent = formatExactCount(data.registered_users);
+                var visitors = document.getElementById('cn-visitors-count');
+                var members = document.getElementById('cn-members-count');
+                if (!doc.exists) {
+                    if (members) members.textContent = formatExactCount(0);
+                    return;
                 }
-            }, function () { });
+                var data = doc.data();
+                if (visitors) visitors.textContent = formatExactCount(data.unique_visitors);
+                if (members) members.textContent = formatExactCount(data.registered_users || 0);
+            }, function () {
+                var members = document.getElementById('cn-members-count');
+                if (members) members.textContent = '—';
+            });
         }
     }
 

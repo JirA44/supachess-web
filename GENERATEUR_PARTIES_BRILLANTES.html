@@ -350,7 +350,7 @@ restoreDefensePuzzles();
 document.getElementById("build-defense").addEventListener("click",buildDefensePuzzles);
 document.getElementById("defense-reset").addEventListener("click",()=>selectDefensePuzzle(activeDefenseIndex));
 document.getElementById("defense-next").addEventListener("click",()=>selectDefensePuzzle((activeDefenseIndex+1)%defensePuzzles.length));
-\ndocument.getElementById("generate").addEventListener("click",generate);
+document.getElementById("generate").addEventListener("click",generate);
 document.getElementById("cancel").addEventListener("click",()=>{
  cancelRequested=true;document.getElementById("cancel").disabled=true;
  if(readyPromise&&!engineReady){

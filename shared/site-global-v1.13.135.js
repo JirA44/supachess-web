@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.135';
+  var SITE_VERSION = '1.13.136';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -19,6 +19,7 @@
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
+  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}';
   (document.head || document.documentElement).appendChild(style);
 
   // Normalize outline Unicode chess symbols to solid glyphs; CSS determines side color.
@@ -127,6 +128,26 @@
     document.body.insertBefore(makeLink('top'), document.body.firstChild);
     document.body.appendChild(makeLink('bottom'));
   }
+  function addSettingsLinks() {
+    if (!document.body || document.querySelector('.supachess-global-settings')) return;
+    var nav = document.createElement('nav');
+    nav.className = 'supachess-global-settings';
+    nav.setAttribute('aria-label', 'SupaChess settings');
+    var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr')
+      || (localStorage.getItem('chessnova_lang') || '').slice(0, 2).toLowerCase() === 'fr';
+    var base = 'https://jira44.github.io/supachess/index.html';
+    var appearance = document.createElement('a');
+    appearance.href = base + '#appearance-panel';
+    appearance.textContent = french ? '🎨 Apparence' : '🎨 Appearance';
+    var analysis = document.createElement('a');
+    analysis.href = base + '#analysis-preferences';
+    analysis.textContent = french ? '📊 Analyse' : '📊 Analysis';
+    nav.appendChild(appearance);
+    nav.appendChild(analysis);
+    var topBack = document.querySelector('.supachess-page-back--top');
+    if (topBack && topBack.parentNode) topBack.parentNode.insertBefore(nav, topBack.nextSibling);
+    else document.body.insertBefore(nav, document.body.firstChild);
+  }
   function addSiteVersion() {
     if (!document.body || document.querySelector('.supachess-site-version')) return;
     var label = document.createElement('small');
@@ -163,6 +184,7 @@
   }
   function initializeGlobalLabels() {
     addBackLinks();
+    addSettingsLinks();
     addSiteVersion();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializeGlobalLabels, { once: true });

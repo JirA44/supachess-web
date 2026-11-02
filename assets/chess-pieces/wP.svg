@@ -1,3 +1,3 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="White Pawn">
-<g fill="#fffaf0" stroke="#202634" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="20" r="9"/><path d="M43 33h14l-2 12 11 19 8 14H26l8-14 11-19z"/><path d="M25 78h50v8H25z"/></g>
+<g fill="#fffaf0" stroke="#202634" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="20" r="9"/><path d="M43 33h14l-2 12 11 19 8 14H26l8-14 11-19z"/><path d="M25 78h50v8H25z"/><g fill="none" stroke="#202634" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".9"><path d="M44 20h12M40 25q10 5 20 0M42 39h16M39 48q11 5 22 0M34 64h32M30 72h40M30 82h40"/></g></g>
 </svg>

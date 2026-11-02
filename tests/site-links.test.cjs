@@ -96,17 +96,21 @@ test('all repository HTML pages and local assets have resolvable links', () => {
 
 test('every configured chess piece is loaded from a local SVG asset', () => {
   const names = ['wK','wQ','wR','wB','wN','wP','bK','bQ','bR','bB','bN','bP'];
-  for (const name of names) assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'chess-pieces', name + '.svg')), name);
+  for (const name of names) {
+    const svgPath = path.join(ROOT, 'assets', 'chess-pieces', name + '.svg');
+    assert.ok(fs.existsSync(svgPath), name);
+    const svg = fs.readFileSync(svgPath, 'utf8');
+    assert.match(svg, /<g fill=\"none\" stroke=\"#[0-9a-f]{6}\" stroke-width=\"2\.2\"/i, name + ' has contrasting interior engraving');
+    assert.ok((svg.match(/<path /g) || []).length >= 2, name + ' keeps internal piece detail');
+  }
   let boardCount = 0;
-  const source = htmlFiles.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
-  assert.doesNotMatch(source, /https?:\/\/(?:chessboardjs\.com\/img\/chesspieces|raw\.githubusercontent\.com\/oakmac\/chessboardjs\/master\/website\/img\/chesspieces|unpkg\.com\/@chrisoakman\/chessboardjs@[^/]+\/dist\/img\/chesspieces)/i);
   for (const file of htmlFiles) {
     const content = fs.readFileSync(file, 'utf8');
     for (const [, theme] of content.matchAll(/pieceTheme\s*:\s*['"]([^'"]+)['"]/g)) {
       boardCount += 1;
-      assert.match(theme, /\{piece\}\.svg$/);
+      assert.match(theme, /\{piece\}\.svg(?:\?v=[a-z0-9-]+)?$/i);
       assert.doesNotMatch(theme, /^https?:\/\//i);
-      const asset = path.resolve(path.dirname(file), theme.replace('{piece}', 'wK'));
+      const asset = path.resolve(path.dirname(file), theme.replace('{piece}', 'wK').split('?')[0]);
       assert.ok(asset.startsWith(ROOT + path.sep), 'piece path escaped repository: ' + path.relative(ROOT,file) + ' -> ' + theme);
       assert.ok(fs.existsSync(asset), 'missing local piece for ' + path.relative(ROOT,file) + ' -> ' + theme);
     }

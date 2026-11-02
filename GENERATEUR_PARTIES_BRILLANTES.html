@@ -36,7 +36,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="notice">
 <strong>Choix du moteur :</strong> sélectionne Stockfish 16, 17, 18 ou 19. Lite évite les grands réseaux. Les builds 18/19 ont des téléchargements vérifiés; pour 16/17, importe les fichiers JS/WASM de la version voulue. Le réglage Elo UCI ne mesure pas indépendamment la force réelle du build.
 <div class="controls" style="margin-top:10px">
-<div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread · WASM 1,8 Mo</option><option value="full">Full mono-thread · WASM 99,1 Mo</option></select></div>
+<div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread</option><option value="full">Full mono-thread</option></select></div>
 <div class="field"><label for="engine-js">Fichier JavaScript</label><a id="engine-js-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.js" target="_blank" rel="noopener">Télécharger le fichier JS Lite</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
 <div class="field"><label for="engine-wasm">Réseau WASM</label><a id="engine-wasm-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.wasm" target="_blank" rel="noopener">Télécharger le réseau WASM Lite</a><input id="engine-wasm" type="file" accept=".wasm,application/wasm"></div>
 </div>
@@ -108,7 +108,7 @@ function makeEngineWorker(){
  return new Worker(jsUrl+"#"+wasmUrl);
 }
 function resetEngineForSelection(){if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(new Error("La version du moteur a changé."));activeSearch=null;}if(worker){worker.terminate();worker=null;}rejectUciWaiters(new Error("La sélection du moteur a changé."));readyPromise=null;engineReady=false;detectedEngineVersion=null;releaseEngineObjectUrls();}
-function setEngineInputsDisabled(disabled){for(const id of ["engine-version","engine-build","engine-js","engine-wasm"])document.getElementById(id).disabled=disabled;}
+function setEngineInputsDisabled(disabled){for(const id of ["engine-version","engine-build","engine-js","engine-wasm","generate"])document.getElementById(id).disabled=disabled;}
 function waitFor(token,timeoutMs){
  return new Promise((resolve,reject)=>{
   const waiter={token,resolve,reject};
@@ -359,5 +359,5 @@ document.getElementById("black-elo").addEventListener("change",()=>clampElo("bla
  updateEngineLinks();
  for(const id of ["engine-js","engine-wasm"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les deux fichiers "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Paire locale sélectionnée; la version SF"+selectedEngineVersion()+" sera vérifiée au démarrage. Tu peux générer.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.127"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.128"></script>
 </body></html>

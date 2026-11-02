@@ -100,7 +100,7 @@ test('every configured chess piece is loaded from a local SVG asset', () => {
     const svgPath = path.join(ROOT, 'assets', 'chess-pieces', name + '.svg');
     assert.ok(fs.existsSync(svgPath), name);
     const svg = fs.readFileSync(svgPath, 'utf8');
-    assert.match(svg, /<g fill=\"none\" stroke=\"#[0-9a-f]{6}\" stroke-width=\"2\.2\"/i, name + ' has contrasting interior engraving');
+    assert.match(svg, /<g fill=\"none\" stroke=\"#[0-9a-f]{6}\" stroke-width=\"3\"/i, name + ' has contrasting interior engraving');
     assert.ok((svg.match(/<path /g) || []).length >= 2, name + ' keeps internal piece detail');
   }
   let boardCount = 0;

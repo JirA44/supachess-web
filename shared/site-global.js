@@ -39,9 +39,22 @@
       var type = chessGlyphType[glyph];
       if (type && (white || black)) {
         var side = white ? 'w' : 'b';
-        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=engraved-20261102', root).href;
-        node.classList.add('supachess-vector-piece');
-        node.style.backgroundImage = 'url("' + vector + '")';
+        var vector = new URL('assets/chess-pieces/' + side + type + '.svg?v=engraved-20261102b', root).href;
+        if (node.getAttribute('data-supachess-vector-src') !== vector) {
+          node.setAttribute('data-supachess-vector-src', vector);
+          var artwork = new Image();
+          artwork.onload = function () {
+            if (node.getAttribute('data-supachess-vector-src') !== vector) return;
+            node.classList.add('supachess-vector-piece');
+            node.style.backgroundImage = 'url("' + vector + '")';
+          };
+          artwork.onerror = function () {
+            if (node.getAttribute('data-supachess-vector-src') !== vector) return;
+            node.classList.remove('supachess-vector-piece');
+            node.style.backgroundImage = 'none';
+          };
+          artwork.src = vector;
+        }
       }
       if (outlineToSolid[glyph]) node.textContent = outlineToSolid[glyph];
     });

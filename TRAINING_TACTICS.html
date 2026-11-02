@@ -285,7 +285,7 @@
         <div id="puzzle-challenge-status" class="challenge-status" role="status" aria-live="polite">Choisis un défi pour commencer.</div>
         <div id="puzzle-challenge-rankings" class="challenge-rankings" aria-label="Classements locaux"></div>
     </section>
-    <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200+</option></select></div>
+    <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200–2399</option><option value="elite">Élite · 2400–2599</option><option value="world-class">Maître mondial · 2600–2799</option><option value="legend">Légende · 2800+</option></select></div>
     <div class="theme-tabs" id="theme-tabs"></div>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
@@ -2892,6 +2892,2684 @@ const PUZZLES = [
     line: "Qh3 f5 Qh8+ Kf7 Qxc8",
     sourceId: "Owzrv",
     hl: []
+},
+{
+    id: "lichess-elite-3jCvZ",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2446,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1rk5/4b2p/1r6/Q7/5q2/2P1RN2/P4PPP/2KR4",
+    fen: "1rk5/4b2p/1r6/Q7/5q2/2P1RN2/P4PPP/2KR4 w - - 5 36",
+    answer: "a5e5",
+    solutionMoves: [
+        "a5e5",
+        "b6b1",
+        "c1d2",
+        "b8b2",
+        "d2e1",
+        "b1d1",
+        "e1d1",
+        "f4a4",
+        "d1e1",
+        "b2b1",
+        "e1e2",
+        "a4d1"
+    ],
+    line: "Qe5 Rb1+ Kd2 R8b2+ Ke1 Rxd1+ Kxd1 Qa4+ Ke1 Rb1+ Ke2 Qd1#",
+    sourceId: "3jCvZ",
+    hl: []
+},
+{
+    id: "lichess-elite-AZkjs",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2495,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5r2/ppb3k1/6p1/3pq3/2p3Q1/2P1P2R/PP1B2PP/6K1",
+    fen: "5r2/ppb3k1/6p1/3pq3/2p3Q1/2P1P2R/PP1B2PP/6K1 w - - 0 30",
+    answer: "e3e4",
+    solutionMoves: [
+        "e3e4",
+        "e5h2",
+        "h3h2",
+        "c7b6",
+        "d2e3",
+        "b6e3",
+        "g1h1",
+        "f8f1"
+    ],
+    line: "e4 Qxh2+ Rxh2 Bb6+ Be3 Bxe3+ Kh1 Rf1#",
+    sourceId: "AZkjs",
+    hl: []
+},
+{
+    id: "lichess-elite-rGZkW",
+    theme: "master",
+    themeLabel: "Sacrifice tactique",
+    rating: 2454,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Sacrifice tactique. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Sacrifice tactique",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6k1/pp5p/2p3p1/1PP1pp2/P7/3B4/8/5K2",
+    fen: "6k1/pp5p/2p3p1/1PP1pp2/P7/3B4/8/5K2 b - - 0 35",
+    answer: "g8f7",
+    solutionMoves: [
+        "g8f7",
+        "b5b6",
+        "a7b6",
+        "c5b6",
+        "f7e6",
+        "d3a6",
+        "b7a6",
+        "b6b7"
+    ],
+    line: "Kf7 b6 axb6 cxb6 Ke6 Ba6 bxa6 b7",
+    sourceId: "rGZkW",
+    hl: []
+},
+{
+    id: "lichess-elite-zsXQs",
+    theme: "master",
+    themeLabel: "Attaque découverte",
+    rating: 2500,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Attaque découverte. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Attaque découverte",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/6p1/7p/5BpP/3pK3/8/3k4/8",
+    fen: "8/6p1/7p/5BpP/3pK3/8/3k4/8 b - - 3 54",
+    answer: "d4d3",
+    solutionMoves: [
+        "d4d3",
+        "e4d4",
+        "d2e1",
+        "f5d3"
+    ],
+    line: "d3 Kd4 Ke1 Bxd3",
+    sourceId: "zsXQs",
+    hl: []
+},
+{
+    id: "lichess-elite-Lr5IR",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2481,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/p5K1/2p5/2Pk4/1P6/P7/8",
+    fen: "8/8/p5K1/2p5/2Pk4/1P6/P7/8 w - - 3 38",
+    answer: "a2a3",
+    solutionMoves: [
+        "a2a3",
+        "d4c3",
+        "b3b4",
+        "c5b4"
+    ],
+    line: "a3 Kc3 b4 cxb4",
+    sourceId: "Lr5IR",
+    hl: []
+},
+{
+    id: "lichess-elite-3wRWD",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2438,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2R5/3k2r1/p2b4/4p1p1/P3Pq2/5P1Q/1r5p/2R4K",
+    fen: "2R5/3k2r1/p2b4/4p1p1/P3Pq2/5P1Q/1r5p/2R4K b - - 2 34",
+    answer: "d7e7",
+    solutionMoves: [
+        "d7e7",
+        "c8e8",
+        "e7e8",
+        "h3e6",
+        "d6e7",
+        "c1c8"
+    ],
+    line: "Ke7 Re8+ Kxe8 Qe6+ Be7 Rc8#",
+    sourceId: "3wRWD",
+    hl: []
+},
+{
+    id: "lichess-elite-33yNm",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2546,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r6/p1k2rp1/Qp4p1/1Pp5/3p3R/6PK/P1q5/4R3",
+    fen: "1r6/p1k2rp1/Qp4p1/1Pp5/3p3R/6PK/P1q5/4R3 b - - 1 43",
+    answer: "f7f2",
+    solutionMoves: [
+        "f7f2",
+        "a6a7",
+        "b8b7",
+        "a7b7",
+        "c7b7",
+        "e1e7",
+        "b7c8",
+        "h4h8",
+        "f2f8",
+        "h8f8"
+    ],
+    line: "Rf2 Qxa7+ Rb7 Qxb7+ Kxb7 Re7+ Kc8 Rh8+ Rf8 Rxf8#",
+    sourceId: "33yNm",
+    hl: []
+},
+{
+    id: "lichess-elite-As6Kk",
+    theme: "master",
+    themeLabel: "Pion passé avancé",
+    rating: 2406,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pion passé avancé. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pion passé avancé",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/7R/4k3/1p6/4p3/2P2p1P/Pn3K2/8",
+    fen: "8/7R/4k3/1p6/4p3/2P2p1P/Pn3K2/8 w - - 0 38",
+    answer: "h7h5",
+    solutionMoves: [
+        "h7h5",
+        "b2d3",
+        "f2e3",
+        "f3f2",
+        "e3e2",
+        "d3f4"
+    ],
+    line: "Rh5 Nd3+ Ke3 f2 Ke2 Nf4+",
+    sourceId: "As6Kk",
+    hl: []
+},
+{
+    id: "lichess-elite-W90ZC",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2417,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1k1r3r/N1pbpq2/Pp3npB/5p1p/5Q2/1nPP2P1/1P3PBP/R2KR3",
+    fen: "1k1r3r/N1pbpq2/Pp3npB/5p1p/5Q2/1nPP2P1/1P3PBP/R2KR3 b - - 2 20",
+    answer: "b3a1",
+    solutionMoves: [
+        "b3a1",
+        "f4c7",
+        "b8c7",
+        "h6f4",
+        "e7e5",
+        "f4e5"
+    ],
+    line: "Nxa1 Qxc7+ Kxc7 Bf4+ e5 Bxe5#",
+    sourceId: "W90ZC",
+    hl: []
+},
+{
+    id: "lichess-elite-i6A2d",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2499,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/ppR5/2b2qp1/4pP2/3pP1B1/5K2/P7/5Q1R",
+    fen: "r4rk1/ppR5/2b2qp1/4pP2/3pP1B1/5K2/P7/5Q1R b - - 0 34",
+    answer: "g6f5",
+    solutionMoves: [
+        "g6f5",
+        "h1h8",
+        "f6h8",
+        "f1c4",
+        "c6d5",
+        "c4d5",
+        "f8f7",
+        "d5f7"
+    ],
+    line: "gxf5 Rh8+ Qxh8 Qc4+ Bd5 Qxd5+ Rf7 Qxf7#",
+    sourceId: "i6A2d",
+    hl: []
+},
+{
+    id: "lichess-elite-sHQBs",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2461,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5q1k/8/Q5RP/1p6/4P3/PP1pn3/K1P5/7r",
+    fen: "5q1k/8/Q5RP/1p6/4P3/PP1pn3/K1P5/7r w - - 0 44",
+    answer: "a6b5",
+    solutionMoves: [
+        "a6b5",
+        "h1a1",
+        "a2b2",
+        "e3d1",
+        "b2a1",
+        "f8a3",
+        "a1b1",
+        "d1c3"
+    ],
+    line: "Qxb5 Ra1+ Kb2 Nd1+ Kxa1 Qxa3+ Kb1 Nc3#",
+    sourceId: "sHQBs",
+    hl: []
+},
+{
+    id: "lichess-elite-HZb2w",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2414,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r7/pb3Qpp/1pk5/3pr3/3Pn3/qB6/2P2PPP/1K1R2NR",
+    fen: "r7/pb3Qpp/1pk5/3pr3/3Pn3/qB6/2P2PPP/1K1R2NR w - - 1 21",
+    answer: "d1d3",
+    solutionMoves: [
+        "d1d3",
+        "e4d2",
+        "d3d2",
+        "e5e1",
+        "d2d1",
+        "e1d1"
+    ],
+    line: "Rd3 Nd2+ Rxd2 Re1+ Rd1 Rxd1#",
+    sourceId: "HZb2w",
+    hl: []
+},
+{
+    id: "lichess-elite-jkYZW",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2400,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1k1r3r/pp3R2/B7/3b3p/P5p1/4q3/2Q3PP/1R5K",
+    fen: "1k1r3r/pp3R2/B7/3b3p/P5p1/4q3/2Q3PP/1R5K b - - 0 31",
+    answer: "e3e4",
+    solutionMoves: [
+        "e3e4",
+        "b1b7",
+        "d5b7",
+        "c2c7",
+        "b8a8",
+        "a6b7",
+        "e4b7",
+        "c7b7"
+    ],
+    line: "Qe4 Rbxb7+ Bxb7 Qc7+ Ka8 Bxb7+ Qxb7 Qxb7#",
+    sourceId: "jkYZW",
+    hl: []
+},
+{
+    id: "lichess-elite-6tkSp",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2501,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "rnbk2nr/ppp3pp/8/6N1/4R3/BB6/P4PPP/bN4K1",
+    fen: "rnbk2nr/ppp3pp/8/6N1/4R3/BB6/P4PPP/bN4K1 b - - 2 15",
+    answer: "g8f6",
+    solutionMoves: [
+        "g8f6",
+        "g5f7",
+        "d8d7",
+        "b3a4",
+        "b7b5",
+        "a4b5",
+        "c7c6",
+        "e4e7"
+    ],
+    line: "Nf6 Nf7+ Kd7 Ba4+ b5 Bxb5+ c6 Re7#",
+    sourceId: "6tkSp",
+    hl: []
+},
+{
+    id: "lichess-elite-BPTFH",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2444,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r1k1/pppr1p2/5BpQ/3qP3/6P1/1P3n1P/P4P2/3R1RK1",
+    fen: "4r1k1/pppr1p2/5BpQ/3qP3/6P1/1P3n1P/P4P2/3R1RK1 w - - 2 27",
+    answer: "g1g2",
+    solutionMoves: [
+        "g1g2",
+        "f3e1",
+        "g2g3",
+        "d5f3",
+        "g3h4",
+        "e1g2",
+        "h4g5",
+        "f3f4"
+    ],
+    line: "Kg2 Ne1+ Kg3 Qf3+ Kh4 Ng2+ Kg5 Qf4#",
+    sourceId: "BPTFH",
+    hl: []
+},
+{
+    id: "lichess-elite-z64ox",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2465,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1k1r2r1/pbp2p1p/1p3n2/P1p3q1/8/1P2PB2/2PNQPPP/R4RK1",
+    fen: "1k1r2r1/pbp2p1p/1p3n2/P1p3q1/8/1P2PB2/2PNQPPP/R4RK1 w - - 0 18",
+    answer: "a5b6",
+    solutionMoves: [
+        "a5b6",
+        "g5g2",
+        "f3g2",
+        "g8g2",
+        "g1h1",
+        "g2g1",
+        "h1g1",
+        "d8g8",
+        "e2g4",
+        "g8g4"
+    ],
+    line: "axb6 Qxg2+ Bxg2 Rxg2+ Kh1 Rg1+ Kxg1 Rg8+ Qg4 Rxg4#",
+    sourceId: "z64ox",
+    hl: []
+},
+{
+    id: "lichess-elite-holZw",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2511,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3Q4/5pk1/R5p1/1Q5p/3p2K1/P3qP1P/1P4P1/7r",
+    fen: "3Q4/5pk1/R5p1/1Q5p/3p2K1/P3qP1P/1P4P1/7r w - - 0 37",
+    answer: "g4h4",
+    solutionMoves: [
+        "g4h4",
+        "e3e1",
+        "g2g3",
+        "h1h3",
+        "h4h3",
+        "e1h1"
+    ],
+    line: "Kh4 Qe1+ g3 Rxh3+ Kxh3 Qh1#",
+    sourceId: "holZw",
+    hl: []
+},
+{
+    id: "lichess-elite-icxuQ",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2475,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/p2N2pr/bp1R4/3k1p2/1n1p4/6Br/P2K1P2/6R1",
+    fen: "8/p2N2pr/bp1R4/3k1p2/1n1p4/6Br/P2K1P2/6R1 b - - 3 32",
+    answer: "d5e4",
+    solutionMoves: [
+        "d5e4",
+        "f2f3",
+        "e4f3",
+        "d7e5",
+        "f3e4",
+        "g1e1",
+        "a6e2",
+        "e1e2"
+    ],
+    line: "Ke4 f3+ Kxf3 Ne5+ Ke4 Re1+ Be2 Rxe2#",
+    sourceId: "icxuQ",
+    hl: []
+},
+{
+    id: "lichess-elite-pNl8a",
+    theme: "master",
+    themeLabel: "Mat en deux",
+    rating: 2534,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en deux. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en deux",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r2q2n1/pp5R/2p1k3/4P1p1/3Ppp2/1Q6/PP1B2P1/2K5",
+    fen: "r2q2n1/pp5R/2p1k3/4P1p1/3Ppp2/1Q6/PP1B2P1/2K5 b - - 3 21",
+    answer: "d8d5",
+    solutionMoves: [
+        "d8d5",
+        "b3h3",
+        "g5g4",
+        "h3g4"
+    ],
+    line: "Qd5 Qh3+ g4 Qxg4#",
+    sourceId: "pNl8a",
+    hl: []
+},
+{
+    id: "lichess-elite-KwORg",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2435,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1kb5/2q3p1/8/4NK2/4P2r/2PQBP1r/8/R4R2",
+    fen: "1kb5/2q3p1/8/4NK2/4P2r/2PQBP1r/8/R4R2 w - - 1 31",
+    answer: "f5g6",
+    solutionMoves: [
+        "f5g6",
+        "h4h6",
+        "e3h6",
+        "h3h6",
+        "g6g5",
+        "c7e5"
+    ],
+    line: "Kg6 Rh6+ Bxh6 Rxh6+ Kg5 Qxe5#",
+    sourceId: "KwORg",
+    hl: []
+},
+{
+    id: "lichess-elite-T4PfR",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2451,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r1k3/pp6/4P3/3N1PR1/2p1b3/b3P2r/K1n5/3R4",
+    fen: "2r1k3/pp6/4P3/3N1PR1/2p1b3/b3P2r/K1n5/3R4 b - - 4 39",
+    answer: "a3e7",
+    solutionMoves: [
+        "a3e7",
+        "d5f6",
+        "e7f6",
+        "g5g8",
+        "e8e7",
+        "d1d7"
+    ],
+    line: "Be7 Nf6+ Bxf6 Rg8+ Ke7 Rd7#",
+    sourceId: "T4PfR",
+    hl: []
+},
+{
+    id: "lichess-elite-UF8rv",
+    theme: "master",
+    themeLabel: "Coup calme",
+    rating: 2438,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Coup calme. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Coup calme",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/pK6/1p4k1/2p5/8/PP6/8",
+    fen: "8/8/pK6/1p4k1/2p5/8/PP6/8 b - - 1 48",
+    answer: "g5f4",
+    solutionMoves: [
+        "g5f4",
+        "a2a3",
+        "f4e3",
+        "b6a6",
+        "b5b4",
+        "a3b4"
+    ],
+    line: "Kf4 a3 Ke3 Kxa6 b4 axb4",
+    sourceId: "UF8rv",
+    hl: []
+},
+{
+    id: "lichess-elite-QVzMZ",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2469,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r2rk1/pb4pp/1q1pp3/2p3N1/2P1n3/P3Q3/1P3PPP/2KRR3",
+    fen: "2r2rk1/pb4pp/1q1pp3/2p3N1/2P1n3/P3Q3/1P3PPP/2KRR3 b - - 3 18",
+    answer: "e4f2",
+    solutionMoves: [
+        "e4f2",
+        "e3e6",
+        "g8h8",
+        "g5f7",
+        "f8f7",
+        "e6c8",
+        "b7c8",
+        "e1e8",
+        "f7f8",
+        "e8f8"
+    ],
+    line: "Nxf2 Qxe6+ Kh8 Nf7+ Rxf7 Qxc8+ Bxc8 Re8+ Rf8 Rxf8#",
+    sourceId: "QVzMZ",
+    hl: []
+},
+{
+    id: "lichess-elite-5X08r",
+    theme: "master",
+    themeLabel: "Pièce piégée",
+    rating: 2444,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pièce piégée. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pièce piégée",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r3k1/2rbbppp/p3p3/3pP3/1p1P4/PqNQPN2/1PR3PP/2R3K1",
+    fen: "2r3k1/2rbbppp/p3p3/3pP3/1p1P4/PqNQPN2/1PR3PP/2R3K1 w - - 0 24",
+    answer: "f3d2",
+    solutionMoves: [
+        "f3d2",
+        "d7b5",
+        "d2b3",
+        "b5d3",
+        "c3d5",
+        "d3c2",
+        "d5e7",
+        "c7e7"
+    ],
+    line: "Nd2 Bb5 Nxb3 Bxd3 Nxd5 Bxc2 Nxe7+ Rxe7",
+    sourceId: "5X08r",
+    hl: []
+},
+{
+    id: "lichess-elite-SiaUi",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2538,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "7k/1p1b1Qbp/p1pN2p1/P3q1N1/1P6/6P1/6BP/6K1",
+    fen: "7k/1p1b1Qbp/p1pN2p1/P3q1N1/1P6/6P1/6BP/6K1 w - - 1 33",
+    answer: "f7d7",
+    solutionMoves: [
+        "f7d7",
+        "e5d4",
+        "g1f1",
+        "d4d1",
+        "f1f2",
+        "g7d4"
+    ],
+    line: "Qxd7 Qd4+ Kf1 Qd1+ Kf2 Bd4#",
+    sourceId: "SiaUi",
+    hl: []
+},
+{
+    id: "lichess-elite-PIOHV",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2401,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/R3b1pk/1P3r1p/3Q4/1PpP1p2/2P2P1P/3B1PK1/1q6",
+    fen: "8/R3b1pk/1P3r1p/3Q4/1PpP1p2/2P2P1P/3B1PK1/1q6 w - - 1 35",
+    answer: "d5e4",
+    solutionMoves: [
+        "d5e4",
+        "f6g6",
+        "e4g6",
+        "b1g6"
+    ],
+    line: "Qe4+ Rg6+ Qxg6+ Qxg6+",
+    sourceId: "PIOHV",
+    hl: []
+},
+{
+    id: "lichess-elite-eUXxh",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2439,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Défense précise. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/5pp1/3k4/5P2/3K2P1/7p/7P/8",
+    fen: "8/5pp1/3k4/5P2/3K2P1/7p/7P/8 b - - 0 49",
+    answer: "g7g6",
+    solutionMoves: [
+        "g7g6",
+        "f5g6",
+        "f7g6",
+        "d4e4"
+    ],
+    line: "g6 fxg6 fxg6 Ke4",
+    sourceId: "eUXxh",
+    hl: []
+},
+{
+    id: "lichess-elite-mY0lg",
+    theme: "master",
+    themeLabel: "Mat en deux",
+    rating: 2491,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en deux. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en deux",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r2k/2p3pB/5p2/1p1P3Q/2n5/4q3/r4RPP/5RK1",
+    fen: "4r2k/2p3pB/5p2/1p1P3Q/2n5/4q3/r4RPP/5RK1 b - - 3 29",
+    answer: "a2f2",
+    solutionMoves: [
+        "a2f2",
+        "h7e4",
+        "e3h6",
+        "h5e8"
+    ],
+    line: "Rxf2 Be4+ Qh6 Qxe8#",
+    sourceId: "mY0lg",
+    hl: []
+},
+{
+    id: "lichess-elite-rUkm0",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2416,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6k1/pR6/8/3N1K1P/6p1/1P6/r6r/8",
+    fen: "6k1/pR6/8/3N1K1P/6p1/1P6/r6r/8 b - - 0 42",
+    answer: "g4g3",
+    solutionMoves: [
+        "g4g3",
+        "d5f6",
+        "g8f8",
+        "f5g6",
+        "g3g2",
+        "b7f7"
+    ],
+    line: "g3 Nf6+ Kf8 Kg6 g2 Rf7#",
+    sourceId: "rUkm0",
+    hl: []
+},
+{
+    id: "lichess-elite-YlGtu",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2439,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1nbq1rk1/1ppp1p1N/4pbp1/8/8/3BP3/2PP1P1P/1N1QK1R1",
+    fen: "1nbq1rk1/1ppp1p1N/4pbp1/8/8/3BP3/2PP1P1P/1N1QK1R1 b - - 0 13",
+    answer: "g8h7",
+    solutionMoves: [
+        "g8h7",
+        "d1h5",
+        "h7g8",
+        "d3g6",
+        "f7g6",
+        "h5g6",
+        "f6g7",
+        "g6g7"
+    ],
+    line: "Kxh7 Qh5+ Kg8 Bxg6 fxg6 Qxg6+ Bg7 Qxg7#",
+    sourceId: "YlGtu",
+    hl: []
+},
+{
+    id: "lichess-elite-bZZGJ",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2495,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1bq1nr1/5k2/pp1N3R/2pPp1p1/2P1P1P1/P2B1Q2/1P4K1/8",
+    fen: "r1bq1nr1/5k2/pp1N3R/2pPp1p1/2P1P1P1/P2B1Q2/1P4K1/8 b - - 0 34",
+    answer: "f7g7",
+    solutionMoves: [
+        "f7g7",
+        "d6e8",
+        "g7h6",
+        "f3h3",
+        "h6g6",
+        "h3h5"
+    ],
+    line: "Kg7 Ne8+ Kxh6 Qh3+ Kg6 Qh5#",
+    sourceId: "bZZGJ",
+    hl: []
+},
+{
+    id: "lichess-elite-RBUwK",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2401,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/4p3/2R1p1p1/kp2Pn1p/3r1P2/6P1/PP4BP/1K6",
+    fen: "8/4p3/2R1p1p1/kp2Pn1p/3r1P2/6P1/PP4BP/1K6 w - - 2 33",
+    answer: "c6e6",
+    solutionMoves: [
+        "c6e6",
+        "d4d1",
+        "b1c2",
+        "f5e3",
+        "c2c3",
+        "b5b4",
+        "c3b3",
+        "d1d3"
+    ],
+    line: "Rxe6 Rd1+ Kc2 Ne3+ Kc3 b4+ Kb3 Rd3#",
+    sourceId: "RBUwK",
+    hl: []
+},
+{
+    id: "lichess-elite-hXkg2",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2405,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r3r2/pK5k/1pp5/5PQ1/qPBb3P/P2P4/8/6RR",
+    fen: "1r3r2/pK5k/1pp5/5PQ1/qPBb3P/P2P4/8/6RR w - - 4 36",
+    answer: "b7c7",
+    solutionMoves: [
+        "b7c7",
+        "d4e5",
+        "c7d7",
+        "b8b7",
+        "d7e6",
+        "f8e8",
+        "g5e7",
+        "b7e7"
+    ],
+    line: "Kc7 Be5+ Kd7 Rb7+ Ke6 Re8+ Qe7+ Rbxe7#",
+    sourceId: "hXkg2",
+    hl: []
+},
+{
+    id: "lichess-elite-ULgLz",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2545,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1k6/p1R1R1p1/7p/1p2pq2/6Q1/3r3K/1P3P1P/8",
+    fen: "1k6/p1R1R1p1/7p/1p2pq2/6Q1/3r3K/1P3P1P/8 w - - 8 37",
+    answer: "h3h4",
+    solutionMoves: [
+        "h3h4",
+        "f5f6",
+        "h4h5",
+        "d3h3",
+        "g4h3",
+        "f6g5"
+    ],
+    line: "Kh4 Qf6+ Kh5 Rh3+ Qxh3 Qg5#",
+    sourceId: "ULgLz",
+    hl: []
+},
+{
+    id: "lichess-elite-s2DUY",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2430,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "q5k1/4Qpbp/6p1/3RP3/P3NPP1/7r/2r5/4R1K1",
+    fen: "q5k1/4Qpbp/6p1/3RP3/P3NPP1/7r/2r5/4R1K1 b - - 0 39",
+    answer: "a8d5",
+    solutionMoves: [
+        "a8d5",
+        "e4f6",
+        "g7f6",
+        "e7e8",
+        "g8g7",
+        "e5f6",
+        "g7f6",
+        "e8h8"
+    ],
+    line: "Qxd5 Nf6+ Bxf6 Qe8+ Kg7 exf6+ Kxf6 Qh8#",
+    sourceId: "s2DUY",
+    hl: []
+},
+{
+    id: "lichess-elite-piuaY",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2403,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/2p5/1p1p1k2/p2P4/P1P2K2/2P5/8/8",
+    fen: "8/2p5/1p1p1k2/p2P4/P1P2K2/2P5/8/8 w - - 0 41",
+    answer: "f4g4",
+    solutionMoves: [
+        "f4g4",
+        "f6e5",
+        "g4f3",
+        "b6b5"
+    ],
+    line: "Kg4 Ke5 Kf3 b5",
+    sourceId: "piuaY",
+    hl: []
+},
+{
+    id: "lichess-elite-IFFpR",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2464,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3k4/4Rp2/8/p1QpP3/B2P1PK1/2p5/P3b1P1/5q2",
+    fen: "3k4/4Rp2/8/p1QpP3/B2P1PK1/2p5/P3b1P1/5q2 w - - 13 52",
+    answer: "g4f5",
+    solutionMoves: [
+        "g4f5",
+        "f1b1",
+        "a4c2",
+        "b1c2",
+        "f5g5",
+        "c2g6",
+        "g5h4",
+        "g6g4"
+    ],
+    line: "Kf5 Qb1+ Bc2 Qxc2+ Kg5 Qg6+ Kh4 Qg4#",
+    sourceId: "IFFpR",
+    hl: []
+},
+{
+    id: "lichess-elite-RzRQL",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2583,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/p1kr1Q1b/qpp2b2/3pN3/1P1Pn2P/PBP5/2K1R1R1",
+    fen: "8/8/p1kr1Q1b/qpp2b2/3pN3/1P1Pn2P/PBP5/2K1R1R1 w - - 9 34",
+    answer: "e4d6",
+    solutionMoves: [
+        "e4d6",
+        "e3f1",
+        "c1b1",
+        "a5e1",
+        "b2c1",
+        "e1c1"
+    ],
+    line: "Nxd6 Nf1+ Kb1 Qxe1+ Bc1 Qxc1#",
+    sourceId: "RzRQL",
+    hl: []
+},
+{
+    id: "lichess-elite-chy1m",
+    theme: "master",
+    themeLabel: "Attaque contre le roi",
+    rating: 2460,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Attaque contre le roi. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Attaque contre le roi",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "rn1kr3/ppp3p1/3b3p/3Q4/2Bp1P2/7q/PP6/RNB2RK1",
+    fen: "rn1kr3/ppp3p1/3b3p/3Q4/2Bp1P2/7q/PP6/RNB2RK1 w - - 0 22",
+    answer: "d5b7",
+    solutionMoves: [
+        "d5b7",
+        "d4d3",
+        "b7g2",
+        "d6c5",
+        "c1e3",
+        "c5e3"
+    ],
+    line: "Qxb7 d3 Qg2 Bc5+ Be3 Bxe3+",
+    sourceId: "chy1m",
+    hl: []
+},
+{
+    id: "lichess-elite-nVvWq",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2414,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3r4/5k1p/6pP/4Rp2/5P1K/8/6P1/8",
+    fen: "3r4/5k1p/6pP/4Rp2/5P1K/8/6P1/8 w - - 4 51",
+    answer: "h4g5",
+    solutionMoves: [
+        "h4g5",
+        "d8d2",
+        "e5c5",
+        "d2g2",
+        "g5h4",
+        "g2g4",
+        "h4h3",
+        "g4f4"
+    ],
+    line: "Kg5 Rd2 Rc5 Rxg2+ Kh4 Rg4+ Kh3 Rxf4",
+    sourceId: "nVvWq",
+    hl: []
+},
+{
+    id: "lichess-elite-5zHPR",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2878,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r1k1/3P2p1/5p1p/p7/3Q4/1P1R1KPr/PB1R1P2/7q",
+    fen: "4r1k1/3P2p1/5p1p/p7/3Q4/1P1R1KPr/PB1R1P2/7q w - - 1 44",
+    answer: "f3g4",
+    solutionMoves: [
+        "f3g4",
+        "f6f5",
+        "g4f5",
+        "h3h5",
+        "f5f4",
+        "h5f5",
+        "f4f5",
+        "h1h5",
+        "f5f4",
+        "g7g5",
+        "f4f5",
+        "g5g4",
+        "f5f6",
+        "h5g5"
+    ],
+    line: "Kg4 f5+ Kxf5 Rh5+ Kf4 Rf5+ Kxf5 Qh5+ Kf4 g5+ Kf5 g4+ Kf6 Qg5#",
+    sourceId: "5zHPR",
+    hl: []
+},
+{
+    id: "lichess-elite-liHu8",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2601,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/2P2k1p/R6B/4pP2/4n3/2P4P/1P3bPK/3r4",
+    fen: "8/2P2k1p/R6B/4pP2/4n3/2P4P/1P3bPK/3r4 w - - 1 33",
+    answer: "h3h4",
+    solutionMoves: [
+        "h3h4",
+        "f2g1",
+        "h2h3",
+        "e4f2",
+        "h3g3",
+        "d1d3",
+        "h6e3",
+        "d3e3"
+    ],
+    line: "h4 Bg1+ Kh3 Nf2+ Kg3 Rd3+ Be3 Rxe3#",
+    sourceId: "liHu8",
+    hl: []
+},
+{
+    id: "lichess-elite-0PQbc",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2676,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1bk3r/ppN2pp1/8/3p4/1B3Pp1/3BP1q1/PPP3P1/R2Q1RK1",
+    fen: "r1bk3r/ppN2pp1/8/3p4/1B3Pp1/3BP1q1/PPP3P1/R2Q1RK1 w - - 1 16",
+    answer: "f1e1",
+    solutionMoves: [
+        "f1e1",
+        "g3h2",
+        "g1f1",
+        "h2h1",
+        "f1f2",
+        "g4g3",
+        "f2f3",
+        "h1h5",
+        "f3g3",
+        "h5h4",
+        "g3f3",
+        "c8g4"
+    ],
+    line: "Re1 Qh2+ Kf1 Qh1+ Kf2 g3+ Kf3 Qh5+ Kxg3 Qh4+ Kf3 Bg4#",
+    sourceId: "0PQbc",
+    hl: []
+},
+{
+    id: "lichess-elite-cDxu4",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2622,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2N4r/5ppp/p1Q1p2n/1pn1P3/5P2/3Nq3/P1Pk2PP/1K3B1R",
+    fen: "2N4r/5ppp/p1Q1p2n/1pn1P3/5P2/3Nq3/P1Pk2PP/1K3B1R w - - 5 25",
+    answer: "d3c5",
+    solutionMoves: [
+        "d3c5",
+        "e3e1",
+        "b1b2",
+        "e1c1",
+        "b2b3",
+        "c1c2",
+        "b3a3",
+        "c2c1",
+        "a3b4",
+        "c1c3"
+    ],
+    line: "Nxc5 Qe1+ Kb2 Qc1+ Kb3 Qxc2+ Ka3 Qc1+ Kb4 Qc3#",
+    sourceId: "cDxu4",
+    hl: []
+},
+{
+    id: "lichess-elite-8xcOI",
+    theme: "master",
+    themeLabel: "Pion passé avancé",
+    rating: 2726,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pion passé avancé. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pion passé avancé",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/8/8/5PPK/1r5P/4k3/8/8",
+    fen: "8/8/8/5PPK/1r5P/4k3/8/8 b - - 2 55",
+    answer: "e3e4",
+    solutionMoves: [
+        "e3e4",
+        "f5f6",
+        "e4d5",
+        "f6f7",
+        "b4f4",
+        "g5g6"
+    ],
+    line: "Ke4 f6 Kd5 f7 Rf4 g6",
+    sourceId: "8xcOI",
+    hl: []
+},
+{
+    id: "lichess-elite-L4XAD",
+    theme: "master",
+    themeLabel: "Mat en trois",
+    rating: 2609,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en trois. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en trois",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "3r4/5b2/n5pb/1pkN1p1p/5P1P/1KN2BP1/8/2R5",
+    fen: "3r4/5b2/n5pb/1pkN1p1p/5P1P/1KN2BP1/8/2R5 b - - 5 38",
+    answer: "b5b4",
+    solutionMoves: [
+        "b5b4",
+        "c3b5",
+        "c5b5",
+        "f3e2",
+        "b5a5",
+        "c1a1"
+    ],
+    line: "b4 Nb5+ Kxb5 Be2+ Ka5 Ra1#",
+    sourceId: "L4XAD",
+    hl: []
+},
+{
+    id: "lichess-elite-MwNQP",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2884,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1r6/1r3pp1/4p1k1/R2pP1pN/2pPnPP1/1bP4R/6NP/6K1",
+    fen: "1r6/1r3pp1/4p1k1/R2pP1pN/2pPnPP1/1bP4R/6NP/6K1 b - - 0 40",
+    answer: "b3d1",
+    solutionMoves: [
+        "b3d1",
+        "f4f5",
+        "e6f5",
+        "h5f4",
+        "g5f4",
+        "h3h5",
+        "f7f6",
+        "e5e6",
+        "f4f3",
+        "g2f4"
+    ],
+    line: "Bd1 f5+ exf5 Nhf4+ gxf4 Rh5 f6 e6 f3 Nf4#",
+    sourceId: "MwNQP",
+    hl: []
+},
+{
+    id: "lichess-elite-rFdnc",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2632,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4r1k1/p1pb1ppp/2p5/2N1bn2/2P4q/1P3B2/P4PPP/1RBQ2K1",
+    fen: "4r1k1/p1pb1ppp/2p5/2N1bn2/2P4q/1P3B2/P4PPP/1RBQ2K1 w - - 2 20",
+    answer: "d1d7",
+    solutionMoves: [
+        "d1d7",
+        "e5h2",
+        "g1f1",
+        "h4f2",
+        "f1f2",
+        "h2g3",
+        "f2g1",
+        "e8e1"
+    ],
+    line: "Qxd7 Bxh2+ Kf1 Qxf2+ Kxf2 Bg3+ Kg1 Re1#",
+    sourceId: "rFdnc",
+    hl: []
+},
+{
+    id: "lichess-elite-pyyQV",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2679,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2kn1br1/ppp4p/7q/4p3/P4n1N/2P3P1/1P1NBP1K/R2Q1R2",
+    fen: "2kn1br1/ppp4p/7q/4p3/P4n1N/2P3P1/1P1NBP1K/R2Q1R2 w - - 2 22",
+    answer: "f1h1",
+    solutionMoves: [
+        "f1h1",
+        "h6h4",
+        "h2g1",
+        "g8g3",
+        "f2g3",
+        "f8c5",
+        "g1f1",
+        "h4h1"
+    ],
+    line: "Rh1 Qxh4+ Kg1 Rxg3+ fxg3 Bc5+ Kf1 Qxh1#",
+    sourceId: "pyyQV",
+    hl: []
+},
+{
+    id: "lichess-elite-HRfnO",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2681,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2b1r3/3q4/pp1p2kB/2nPrp2/P1p1P1nR/2N2KQ1/1PB3P1/2R5",
+    fen: "2b1r3/3q4/pp1p2kB/2nPrp2/P1p1P1nR/2N2KQ1/1PB3P1/2R5 w - - 0 30",
+    answer: "e4f5",
+    solutionMoves: [
+        "e4f5",
+        "d7f5",
+        "c2f5",
+        "e5f5",
+        "h6f4",
+        "e8e3",
+        "f3g4",
+        "f5f6"
+    ],
+    line: "exf5+ Qxf5+ Bxf5+ Rxf5+ Bf4 Re3+ Kxg4 Rf6#",
+    sourceId: "HRfnO",
+    hl: []
+},
+{
+    id: "lichess-elite-TTKJz",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2633,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r1b5/pp2k2R/2p2p2/5Pr1/2Q3P1/2P5/PPK5/6q1",
+    fen: "r1b5/pp2k2R/2p2p2/5Pr1/2Q3P1/2P5/PPK5/6q1 b - - 1 34",
+    answer: "e7d6",
+    solutionMoves: [
+        "e7d6",
+        "c4d3",
+        "d6c5",
+        "b2b4",
+        "c5b6",
+        "d3d8",
+        "b6b5",
+        "a2a4",
+        "b5a4",
+        "d8a5"
+    ],
+    line: "Kd6 Qd3+ Kc5 b4+ Kb6 Qd8+ Kb5 a4+ Kxa4 Qa5#",
+    sourceId: "TTKJz",
+    hl: []
+},
+{
+    id: "lichess-elite-rlcNV",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2779,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r4rk1/p2b2p1/3p1p2/1ppNqP1B/2P1P2Q/6P1/PP5P/2K4R",
+    fen: "r4rk1/p2b2p1/3p1p2/1ppNqP1B/2P1P2Q/6P1/PP5P/2K4R b - - 1 25",
+    answer: "d7e8",
+    solutionMoves: [
+        "d7e8",
+        "d5e7",
+        "e5e7",
+        "h5g6",
+        "e8g6",
+        "f5g6",
+        "f8e8",
+        "h4h7",
+        "g8f8",
+        "h7h8"
+    ],
+    line: "Be8 Ne7+ Qxe7 Bg6 Bxg6 fxg6 Rfe8 Qh7+ Kf8 Qh8#",
+    sourceId: "rlcNV",
+    hl: []
+},
+{
+    id: "lichess-elite-vCzVC",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2641,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/1p3Q1k/2b1p1pp/4P3/2P5/p2BP2P/1q4P1/6K1",
+    fen: "8/1p3Q1k/2b1p1pp/4P3/2P5/p2BP2P/1q4P1/6K1 b - - 5 32",
+    answer: "h7h8",
+    solutionMoves: [
+        "h7h8",
+        "f7f8",
+        "h8h7",
+        "d3g6",
+        "h7g6",
+        "f8g8",
+        "g6f5",
+        "g8g4",
+        "f5e5",
+        "g4f4"
+    ],
+    line: "Kh8 Qf8+ Kh7 Bxg6+ Kxg6 Qg8+ Kf5 Qg4+ Kxe5 Qf4#",
+    sourceId: "vCzVC",
+    hl: []
+},
+{
+    id: "lichess-elite-hi8yH",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2631,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Défense précise. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6k1/4R1p1/6Pp/1p1p1p1P/1P3q2/p1P5/4R3/6K1",
+    fen: "6k1/4R1p1/6Pp/1p1p1p1P/1P3q2/p1P5/4R3/6K1 b - - 1 36",
+    answer: "f4c1",
+    solutionMoves: [
+        "f4c1",
+        "e2e1",
+        "c1g5",
+        "g1f1",
+        "g5f4",
+        "f1e2"
+    ],
+    line: "Qc1+ Re1 Qg5+ Kf1 Qf4+ Ke2",
+    sourceId: "hi8yH",
+    hl: []
+},
+{
+    id: "lichess-elite-11OB1",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2635,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6k1/pp3p1p/1q1p1n2/3P2p1/2Br4/5K2/P1R1Q1PP/4R3",
+    fen: "6k1/pp3p1p/1q1p1n2/3P2p1/2Br4/5K2/P1R1Q1PP/4R3 w - - 0 26",
+    answer: "c4d3",
+    solutionMoves: [
+        "c4d3",
+        "d4f4",
+        "f3g3",
+        "b6e3",
+        "e2e3",
+        "f6h5",
+        "g3h3",
+        "f4h4"
+    ],
+    line: "Bd3 Rf4+ Kg3 Qe3+ Qxe3 Nh5+ Kh3 Rh4#",
+    sourceId: "11OB1",
+    hl: []
+},
+{
+    id: "lichess-elite-gwhSh",
+    theme: "master",
+    themeLabel: "Mat en cinq",
+    rating: 2674,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en cinq. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en cinq",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "7Q/pkp2p1p/2q5/1p4N1/6P1/P2bB2P/5P2/K7",
+    fen: "7Q/pkp2p1p/2q5/1p4N1/6P1/P2bB2P/5P2/K7 w - - 0 31",
+    answer: "h8d4",
+    solutionMoves: [
+        "h8d4",
+        "c6h1",
+        "a1b2",
+        "h1b1",
+        "b2c3",
+        "b1c2",
+        "c3b4",
+        "c7c5",
+        "d4c5",
+        "a7a5",
+        "b4a5",
+        "c2a4"
+    ],
+    line: "Qd4 Qh1+ Kb2 Qb1+ Kc3 Qc2+ Kb4 c5+ Qxc5 a5+ Kxa5 Qa4#",
+    sourceId: "gwhSh",
+    hl: []
+},
+{
+    id: "lichess-elite-Z1JcF",
+    theme: "master",
+    themeLabel: "Pion passé avancé",
+    rating: 2614,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pion passé avancé. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pion passé avancé",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/5k2/3NpP2/2pnK1P1/p7/8/8/8",
+    fen: "8/5k2/3NpP2/2pnK1P1/p7/8/8/8 b - - 3 46",
+    answer: "f7g6",
+    solutionMoves: [
+        "f7g6",
+        "f6f7",
+        "g6g7",
+        "g5g6"
+    ],
+    line: "Kg6 f7 Kg7 g6",
+    sourceId: "Z1JcF",
+    hl: []
+},
+{
+    id: "lichess-elite-T1cIK",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2691,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "1k3r2/1pp4p/6p1/1N1pq3/P3n3/2PQP2P/1P3rP1/R4RK1",
+    fen: "1k3r2/1pp4p/6p1/1N1pq3/P3n3/2PQP2P/1P3rP1/R4RK1 w - - 0 24",
+    answer: "d3d4",
+    solutionMoves: [
+        "d3d4",
+        "f2g2",
+        "g1g2",
+        "f8f2",
+        "f1f2",
+        "e5g3",
+        "g2f1",
+        "g3f2"
+    ],
+    line: "Qd4 Rxg2+ Kxg2 Rf2+ Rxf2 Qg3+ Kf1 Qxf2#",
+    sourceId: "T1cIK",
+    hl: []
+},
+{
+    id: "lichess-elite-Di5SK",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2649,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Défense précise. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6k1/5pp1/2p4p/1p5P/3r4/8/P4PP1/2R3K1",
+    fen: "6k1/5pp1/2p4p/1p5P/3r4/8/P4PP1/2R3K1 b - - 1 32",
+    answer: "d4c4",
+    solutionMoves: [
+        "d4c4",
+        "c1c4",
+        "b5c4",
+        "g1f1",
+        "g8f8",
+        "f1e2",
+        "f8e7",
+        "e2e3"
+    ],
+    line: "Rc4 Rxc4 bxc4 Kf1 Kf8 Ke2 Ke7 Ke3",
+    sourceId: "Di5SK",
+    hl: []
+},
+{
+    id: "lichess-elite-lITXj",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2620,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/6pp/2k5/1pp2p2/1PP1p3/2K1PP2/6PP/8",
+    fen: "8/6pp/2k5/1pp2p2/1PP1p3/2K1PP2/6PP/8 b - - 0 26",
+    answer: "b5c4",
+    solutionMoves: [
+        "b5c4",
+        "f3e4",
+        "f5e4",
+        "c3c4"
+    ],
+    line: "bxc4 fxe4 fxe4 Kxc4",
+    sourceId: "lITXj",
+    hl: []
+},
+{
+    id: "lichess-elite-PcQqe",
+    theme: "master",
+    themeLabel: "Coup calme",
+    rating: 2871,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Coup calme. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Coup calme",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/p1p5/1p6/5p2/PPPK4/4Pk2/8/8",
+    fen: "8/p1p5/1p6/5p2/PPPK4/4Pk2/8/8 w - - 0 37",
+    answer: "c4c5",
+    solutionMoves: [
+        "c4c5",
+        "b6c5",
+        "b4c5",
+        "c7c6",
+        "a4a5",
+        "f5f4",
+        "e3e4",
+        "f3g4"
+    ],
+    line: "c5 bxc5+ bxc5 c6 a5 f4 e4 Kg4",
+    sourceId: "PcQqe",
+    hl: []
+},
+{
+    id: "lichess-elite-uUCHq",
+    theme: "master",
+    themeLabel: "Pion passé avancé",
+    rating: 2643,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pion passé avancé. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pion passé avancé",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "5k2/7Q/5r1p/p2P4/2P5/1P3p1P/P4r2/7K",
+    fen: "5k2/7Q/5r1p/p2P4/2P5/1P3p1P/P4r2/7K w - - 5 39",
+    answer: "h1g1",
+    solutionMoves: [
+        "h1g1",
+        "f2g2",
+        "g1f1",
+        "g2g7",
+        "h7h8",
+        "f8f7",
+        "d5d6",
+        "f3f2",
+        "h8g7",
+        "f7g7"
+    ],
+    line: "Kg1 Rg2+ Kf1 Rg7 Qh8+ Kf7 d6 f2 Qxg7+ Kxg7",
+    sourceId: "uUCHq",
+    hl: []
+},
+{
+    id: "lichess-elite-uW5T1",
+    theme: "master",
+    themeLabel: "Technique de finale",
+    rating: 2660,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Technique de finale. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Technique de finale",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "8/1p2k3/1ppp4/3Pp3/P1P5/1P3K2/5P2/8",
+    fen: "8/1p2k3/1ppp4/3Pp3/P1P5/1P3K2/5P2/8 b - - 0 45",
+    answer: "e7f6",
+    solutionMoves: [
+        "e7f6",
+        "d5c6",
+        "b7c6",
+        "b3b4",
+        "f6e7",
+        "a4a5"
+    ],
+    line: "Kf6 dxc6 bxc6 b4 Ke7 a5",
+    sourceId: "uW5T1",
+    hl: []
+},
+{
+    id: "lichess-elite-TQePs",
+    theme: "master",
+    themeLabel: "Clouage",
+    rating: 2883,
+    turn: "w",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Clouage. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Clouage",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "r5k1/ppp3pp/3p4/2bN4/3nP1nq/2PP4/PP1Q1PKP/R1B2R2",
+    fen: "r5k1/ppp3pp/3p4/2bN4/3nP1nq/2PP4/PP1Q1PKP/R1B2R2 w - - 1 16",
+    answer: "f1h1",
+    solutionMoves: [
+        "f1h1",
+        "a8f8",
+        "f2f4",
+        "d4f3",
+        "g2f3",
+        "g4e5"
+    ],
+    line: "Rh1 Rf8 f4 Nf3 Kxf3 Ne5+",
+    sourceId: "TQePs",
+    hl: []
+},
+{
+    id: "lichess-elite-Mb3aK",
+    theme: "master",
+    themeLabel: "Mat en quatre",
+    rating: 2662,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Mat en quatre. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Mat en quatre",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "4R3/pp3p1p/2nQ2pk/2bp2P1/3q3P/5P1K/P7/8",
+    fen: "4R3/pp3p1p/2nQ2pk/2bp2P1/3q3P/5P1K/P7/8 b - - 0 39",
+    answer: "h6h5",
+    solutionMoves: [
+        "h6h5",
+        "d6g3",
+        "f7f5",
+        "e8h8",
+        "d4h8",
+        "g3g4",
+        "f5g4",
+        "f3g4"
+    ],
+    line: "Kh5 Qg3 f5 Rh8 Qxh8 Qg4+ fxg4+ fxg4#",
+    sourceId: "Mb3aK",
+    hl: []
+},
+{
+    id: "lichess-elite-VlIys",
+    theme: "master",
+    themeLabel: "Double échec",
+    rating: 2681,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Double échec. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Double échec",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r1k2r/4bp1p/p1bP1p2/5P2/2p1N1PP/P1N2Q2/1PP4q/2K1R3",
+    fen: "2r1k2r/4bp1p/p1bP1p2/5P2/2p1N1PP/P1N2Q2/1PP4q/2K1R3 b k - 2 22",
+    answer: "e7d8",
+    solutionMoves: [
+        "e7d8",
+        "e4f6",
+        "e8f8",
+        "d6d7",
+        "c6f3",
+        "d7c8q"
+    ],
+    line: "Bd8 Nxf6+ Kf8 d7 Bxf3 dxc8=Q",
+    sourceId: "VlIys",
+    hl: []
+},
+{
+    id: "lichess-elite-FLmP3",
+    theme: "master",
+    themeLabel: "Pièce en prise",
+    rating: 2895,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Pièce en prise. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Pièce en prise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "6R1/4KP2/4p3/5rp1/4k3/8/8/8",
+    fen: "6R1/4KP2/4p3/5rp1/4k3/8/8/8 b - - 0 58",
+    answer: "f5f7",
+    solutionMoves: [
+        "f5f7",
+        "e7f7",
+        "e4f4",
+        "f7g6",
+        "e6e5",
+        "g8f8"
+    ],
+    line: "Rxf7+ Kxf7 Kf4 Kg6 e5 Rf8+",
+    sourceId: "FLmP3",
+    hl: []
+},
+{
+    id: "lichess-elite-Vudzw",
+    theme: "master",
+    themeLabel: "Défense précise",
+    rating: 2614,
+    turn: "b",
+    desc: "Trouve le coup précis puis calcule toute la combinaison. La cote est celle du puzzle, pas celle du joueur.",
+    explain: "Motif principal : Défense précise. Rejoue toute la variante et vérifie chaque réponse.",
+    question: "Quel motif décrit le mieux cette combinaison ?",
+    choices: [
+        {
+            text: "Défense précise",
+            correct: true
+        },
+        {
+            text: "Un coup de développement sans menace",
+            correct: false
+        },
+        {
+            text: "Une prise immédiate qui gagne la dame",
+            correct: false
+        }
+    ],
+    board: "2r2r1k/6qp/p1R1Q1p1/3n4/3P4/8/PP3PPP/3R2K1",
+    fen: "2r2r1k/6qp/p1R1Q1p1/3n4/3P4/8/PP3PPP/3R2K1 b - - 0 23",
+    answer: "d5f4",
+    solutionMoves: [
+        "d5f4",
+        "e6c8",
+        "g7f7",
+        "c8g4",
+        "h7h5",
+        "g4f3",
+        "f4h3",
+        "g1f1"
+    ],
+    line: "Nf4 Qxc8 Qf7 Qg4 h5 Qf3 Nh3+ Kf1",
+    sourceId: "Vudzw",
+    hl: []
 }
 ]
 
@@ -2903,6 +5581,10 @@ PUZZLES.forEach((puzzle, index) => {
     puzzle.choices.splice(targetIndex, 0, correctChoice);
 });
 
+
+
+const LICHESS_SOLUTION_LINES = {q2cun:["h3h4","c3c6","a2f2","f4e3","f2h2"],IGs0J:["d4f3","h4h5","f3g5"],9brtS:["a4c6","b7c6","e2a6"],QCPaS:["f4g6","h8h7","g6f8","d8f8","d2h6"],fEz5o:["g7g2","g1g2","d6h2"],YS5D6:["a4b6","c4c5","d3d5"],7nrsg:["e2d3","c8a8","a6a7"],187ff:["g6e4","e2d2","g7g2"],vLDbN:["d6e5","d2c3","c8c3","f3c3","e6f6"],3i59Q:["h4h3","d6g3","c6e5"],7X01V:["d3c4","f8f7","c4f7","f6f7","h1h8","g8h8","g6f7"],dXBu7:["c2h7","g8f8","c1e1"],guaMZ:["g3h4","g5e5","d8h8","h7g6","c8c6"],cNvFC:["e4e5","d6e5","g5f6","e7f6","d1d7"],XKbrl:["h5h6","a2a1","d2b1","a1b1","c5c1"],mMcCS:["h5g4","e8f7","g8f7"],W6B8s:["d1h5","g8g7","h5h7"],HtVST:["h3e6","g7e6","d6d7","f7g8","d7h7"],1o3Ma:["g5g6","f8e8","g6f7","c7f7","a2f7"],khWSV:["c4d4","e3f3","c8g4","h5g4","a8f8","f3g2","d4g4"],bvOgR:["h4h2","g1f1","h2h1","f1e2","h1g2"],MIeCJ:["c1c8","a8c8","e3d4","g7d4","d1d4","c8c1","b5f1"],VYrkz:["f5c8","c7c8","c4c8","g8h7","c8h8","h7h8","e5f7","h8h7","f7d6"],Sxa0M:["d4b5","e4g3","h2g3"],EradF:["d2d1","g1g2","a2d5","f2f3","d1f3","g2h3","f3h5"],NGle0:["b7b8","d3b1","b8b1"],MHb6y:["h4g5","d4e5","g2g3","e5f5","g3f4","f5f4","g5g6"],ocezv:["d7e5","a7e7","a8a1","d3f1","a1f1"],ZHsnA:["h2c2","b2c2","c4d3","h7g8","d3c2"],1eFKW:["d5d6","g6f7","c5c8","b4b1","d6d7"],6ZGuS:["f3f6","a4c3","f7e7","e8e7","f6e7"],WSIph:["f2e3","g4f5","e3f3","e6e5","d4e5"],Kirkc:["d2h6","h7g8","g4f6","e7f6","e5f6","c7c1","h6c1"],ZFMme:["b6e6","g1g3","f4g3","h1g1","h6h3"],lY6ai:["e8e2","g2f1","c6c2"],bB7b1:["d2f4","c7f4","g3h5","f4f5","d3f5"],RG6Kr:["h4h8","g8f7","h8g7","f7g7","h3h7","g7f8","h7h8","f8e7","h1h7","e6g7","h7g7"],GYhZa:["e2h2","h3h2","g4h4","h2g1","c3e2","g1f1","h4h1"],jVWzt:["f6h4","h2h3","d4f3","g1h1","f3d2"],2faAV:["d3b5","c7c6","d1d8"],rQcwG:["f6g6","a7g7","g6g7","e5f5","f2f5"],Ut0kC:["c8c3","b2c3","d3c4","a2b2","c4f7"],rBQEt:["g1g3","f4g3","f2g3"],JxJWL:["f7f6","g5h6","f8f7","e5f7","b8g3"],AAAFw:["c6d5","c4d5","d6c5"],2sQdR:["a4a3","f3e2","a3c3"],9ZyfB:["g1a7","e7d8","a7b8"],PJSER:["f2f4","e5e6","d6d7","e6d7","d1d5"],XL5Sv:["d5f6","g7f6","g5f6"],Owzrv:["f3h3","f7f5","h3h8","f8f7","h8c8"]};
+PUZZLES.forEach(p => { if (p.sourceId && LICHESS_SOLUTION_LINES[p.sourceId]) p.solutionMoves = LICHESS_SOLUTION_LINES[p.sourceId]; });
 
 const TACTIC_EXPLANATION_FIXES = {
     'discovered-A':'Le cavalier quitte la colonne a : la tour blanche a1 découvre une attaque contre le roi noir a8.',
@@ -2958,7 +5640,7 @@ let activeTheme = 'all';
 let activeDifficulty = 'all';
 function getDifficultyPuzzles() {
     if (activeDifficulty==='all') return PUZZLES;
-    const ranges={'high':p=>p.rating>=1800&&p.rating<2000,'very-high':p=>p.rating>=2000&&p.rating<2200,'very-very-high':p=>p.rating>=2200};
+    const ranges={'high':p=>p.rating>=1800&&p.rating<2000,'very-high':p=>p.rating>=2000&&p.rating<2200,'very-very-high':p=>p.rating>=2200&&p.rating<2400,'elite':p=>p.rating>=2400&&p.rating<2600,'world-class':p=>p.rating>=2600&&p.rating<2800,'legend':p=>p.rating>=2800};
     return PUZZLES.filter(p=>ranges[activeDifficulty]&&ranges[activeDifficulty](p));
 }
 function getFilteredPuzzles() { const pool=getDifficultyPuzzles(); return activeTheme==='all'?pool:pool.filter(p=>p.theme===activeTheme); }
@@ -3064,7 +5746,7 @@ function openPuzzle(id) {
     if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
     currentPuzzle = PUZZLES.find(p=>p.id===id);
     if (!currentPuzzle) return;
-    currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null, mistakes:0 };
+    currentPuzzle.session = { moveCorrect:false, conceptCorrect:false, selected:null, mistakes:0, solutionIndex:0, lastUserMove:null };
     tacticHintLevel = 0;
     tacticGame = new Chess(currentPuzzle.fen || (currentPuzzle.board + ' ' + currentPuzzle.turn + ' - - 0 1'));
     const themeName = THEMES.find(t=>t.id===currentPuzzle.theme)?.name||'';
@@ -3077,7 +5759,7 @@ function openPuzzle(id) {
             <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span><br>
             ${currentPuzzle.desc}
         </div>
-        <p id="tactic-feedback" class="tactic-feedback" role="status" aria-live="polite">Clique d’abord la pièce que tu veux déplacer, puis sa case d’arrivée. La solution reste cachée.</p>
+        <p id="tactic-feedback" class="tactic-feedback" role="status" aria-live="polite">Clique la pièce puis sa destination. Pour ces puzzles avancés, continue jusqu’au bout de la combinaison.</p>
         <section id="tactic-knowledge" class="tactic-knowledge" hidden>
             <h3>${currentPuzzle.question}</h3>
             <div class="tactic-choice-list">${currentPuzzle.choices.map((choice,index)=>'<button type="button" class="tactic-choice" onclick="answerConcept('+index+')">'+choice.text+'</button>').join('')}</div>
@@ -3125,14 +5807,14 @@ function selectTacticSquare(square) {
     }
     currentPuzzle.session.selected=null;
     document.querySelectorAll('.big-cell').forEach(cell=>cell.classList.remove('selected-square'));
-    const move = tacticGame && tacticGame.move({ from:from, to:square, promotion:'q' });
+    const expectedLine=currentPuzzle.solutionMoves;\n    const expectedUci=expectedLine&&expectedLine[currentPuzzle.session.solutionIndex] || currentPuzzle.answer;\n    const move = tacticGame && tacticGame.move({ from:from, to:square, promotion:(expectedUci&&expectedUci[4])||'q' });
     if (!move) {
         if (puzzleChallenge) { currentPuzzle.session.mistakes++; noteChallengeMistake(); }
         feedback.textContent='Ce déplacement est illégal dans cette position. Vérifie la pièce et la case d’arrivée.';
         showTacticHint();
         return;
     }
-    if (from+square===currentPuzzle.answer) {
+    if (from+square===expectedUci.slice(0,4)) {
         currentPuzzle.session.moveCorrect=true;
         const solvedBoard=tacticGame.fen().split(' ')[0];
         const fromIndex=(8-Number(from[1]))*8+(from.charCodeAt(0)-97);

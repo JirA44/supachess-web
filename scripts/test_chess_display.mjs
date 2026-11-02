@@ -39,4 +39,6 @@ for (const file of boardPages) {
 assert.ok(boardPages.length > 0, 'site-wide board audit finds chessboard pages');
 assert.match(readFileSync('shared/site-global.js', 'utf8'), /normalizeChessGlyphs\(document\);\s*ensureBoardRanks\(document\)/, 'initially rendered pieces receive contrast styles');
 assert.match(readFileSync('shared/site-global.js', 'utf8'), /replace\(\/\[\\uFE0E\\uFE0F\]\/g, ''\)/, 'piece normalizer strips Unicode variation selectors before applying filled glyphs');
+assert.match(readFileSync('shared/site-global.js', 'utf8'), /chessGlyphType = \{/,'unicode pieces map to detailed SVG variants');
+assert.match(readFileSync('shared/site-global.js', 'utf8'), /node\.style\.backgroundImage =/, 'unicode pieces display detailed SVG artwork without removing their text data');
 console.log(`Site-wide chessboard contrast audit passed (${boardPages.length} board pages)`);

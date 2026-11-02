@@ -51,7 +51,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script>
-const ENGINE_WORKER_URL="shared/stockfish-generator-worker.js";
+const ENGINE_WORKER_URL="shared/stockfish-generator-worker.js?v=stockfish19-release-20261102";
 let worker=null, readyPromise=null, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}

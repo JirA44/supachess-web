@@ -26,7 +26,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 <header>
   <h1>🛡️ Défendre contre les tactiques</h1>
   <p>Ne cherche pas seulement le coup brillant : apprends à repérer la menace adverse avant qu’elle arrive, puis à l’empêcher. Cette première série travaille l’enfilade sur le roi et la dame, sur plusieurs horizons.</p>
-  <span class="pill">9 positions · 3 horizons · les deux camps</span>
+  <span class="pill">9 positions · 3 niveaux Elo · 3 horizons · les deux camps</span>
 </header>
 <section class="panel method" aria-labelledby="method-title">
   <h2 id="method-title">Ta routine de défense en 4 étapes</h2>
@@ -38,6 +38,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
   </div>
   <div class="motifs" aria-label="Motifs tactiques à apprendre à défendre"><span>Fourchette : éloigner une cible ou neutraliser l’attaquant</span><span>Clouage : interposer, échanger l’attaquant ou déplacer la cible sans ouvrir le roi</span><span>Enfilade : sortir la pièce de grande valeur de la ligne</span><span>Attaque découverte : bloquer la ligne ou déplacer la cible</span><span>Dernière rangée : créer une case de fuite et contrôler les cases d’entrée</span></div>
 </section>
+<section class="panel method" aria-labelledby="progression-title"><h2 id="progression-title">Parcours progressif : défendre, prévoir, contre-attaquer</h2><p>Commence par reconnaître la menace immédiate, puis calcule les coups de préparation et les réponses forcées. Les Elo sont indicatifs : ils décrivent la complexité de l’exercice, pas une note de joueur.</p><div class="steps"><div class="step"><b>900 · Repérer</b>Vois l’alignement roi-dame et trouve le coup simple qui retire la cible.</div><div class="step"><b>1 400 · Prévenir</b>Détecte la pièce qui prépare l’enfilade et neutralise le plan avant qu’il soit prêt.</div><div class="step"><b>1 900 · Calculer</b>Lis la séquence complète, vérifie les coups forcés et compare plusieurs parades.</div><div class="step"><b>2 300+ · Trouver une ressource</b>Quand la défense directe échoue, cherche un échange, une menace plus forte ou une contre-attaque qui gagne un tempo.</div></div><p class="horizon-note"><strong>Réflexe stratégique :</strong> après chaque défense, demande-toi si l’adversaire garde son plan, s’il a une menace plus urgente, et si tu peux créer une contre-menace. Un coup brillant de défense peut être un échec intermédiaire, une attaque sur la dame, une pièce sacrifiée pour ouvrir une fuite ou une contre-attaque forcée.</p></section>
 <section class="panel" aria-labelledby="practice-title">
   <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 9 réussis</div></div>
   <div class="controls" role="group" aria-label="Filtrer par horizon de menace">
@@ -64,7 +65,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 <script>
 const BASE_EXERCISES = [
   {
-    id:"skewer-h1",horizon:1,fen:"3k2r1/8/8/8/8/Q3K3/8/8 w - - 0 1",
+    id:"skewer-h1",horizon:1,rating:900,fen:"3k2r1/8/8/8/8/Q3K3/8/8 w - - 0 1",
     blackPlan:["g8g3"],whiteReplies:[],
     planLabel:"Tour donne échec sur la ligne du roi",
     prompt:"Tu défends. Protège la dame avant le prochain coup adverse.",
@@ -72,7 +73,7 @@ const BASE_EXERCISES = [
     explanation:"Éloigne la dame de la ligne visée avant l’échec. En la sortant de l’alignement, tu empêches la tour de la gagner après le déplacement du roi."
   },
   {
-    id:"skewer-h2",horizon:2,fen:"3k2r1/8/8/6n1/8/Q3K3/8/8 w - - 0 1",
+    id:"skewer-h2",horizon:2,rating:1400,fen:"3k2r1/8/8/6n1/8/Q3K3/8/8 w - - 0 1",
     blackPlan:["g5h7","g8g3"],whiteReplies:["e3d3"],
     planLabel:"Cavalier libère la colonne → tour donne échec",
     prompt:"Tu défends. Trouve la parade avant le 2e coup adverse.",
@@ -80,7 +81,7 @@ const BASE_EXERCISES = [
     explanation:"Sors la dame de l’alignement avant le coup de préparation. La tour pourra encore donner échec, mais elle ne gagnera plus la dame derrière le roi."
   },
   {
-    id:"skewer-h3",horizon:3,fen:"3k2r1/8/8/6n1/6b1/Q3K3/8/8 w - - 0 1",
+    id:"skewer-h3",horizon:3,rating:1900,fen:"3k2r1/8/8/6n1/6b1/Q3K3/8/8 w - - 0 1",
     blackPlan:["g5h7","g4h3","g8g3"],whiteReplies:["e3d3","d3c3"],
     planLabel:"Cavalier puis fou dégagent la colonne → tour donne échec",
     prompt:"Tu défends. Repère le plan avant le 3e coup adverse.",
@@ -115,7 +116,7 @@ function transformFen(fen,mode){
 const EXERCISES=BASE_EXERCISES.flatMap(base=>["original","mirror","swap"].map(mode=>{
   const transform=mode==="mirror"?"mirror":mode==="swap"?"swap":"original";
   const titleSuffix=mode==="original"?"Vue standard":mode==="mirror"?"Aile opposée":"Camp noir";
-  return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
+  return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Elo "+base.rating+" · Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
 }));
 let filter="all",currentId=EXERCISES[0].id,game=null,selected=null,solved=new Set(),lastMove=null;
 function coord(square){return {file:square.charCodeAt(0)-97,rank:Number(square[1])};}
@@ -218,6 +219,6 @@ function nextExercise(){
 function start(){resetExercise();}
 start();
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.114"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.115"></script>
 </body>
 </html>

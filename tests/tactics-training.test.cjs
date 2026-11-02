@@ -15,9 +15,9 @@ function boardToFen(board) {
   return board.split('/').map(rank => rank.replace(/\.{1,8}/g, run => String(run.length))).join('/');
 }
 
-test('catalog contains 40 unique, complete tactical exercises', () => {
-  assert.equal(puzzles.length, 40);
-  assert.equal(new Set(puzzles.map(puzzle => puzzle.id)).size, 40);
+test('catalog contains 158 unique, complete tactical exercises', () => {
+  assert.equal(puzzles.length, 158);
+  assert.equal(new Set(puzzles.map(puzzle => puzzle.id)).size, 158);
   for (const puzzle of puzzles) {
     assert.equal(puzzle.board.split('/').length, 8, puzzle.id);
     assert.ok(puzzle.board.split('/').every(rank => rank.replace(/[1-8]/g, digit => '.'.repeat(Number(digit))).length === 8), puzzle.id);
@@ -44,7 +44,7 @@ test('every prescribed move is legal and matches its tactical result', () => {
 test('puzzle stays hidden until the learner plays the move and explains it, then advances quickly', async () => {
   const dom = new JSDOM(html, { url: 'https://supachess.test/TRAINING_TACTICS.html', runScripts: 'dangerously', beforeParse(window) { window.Chess = Chess; } });
   const { window } = dom;
-  assert.equal(window.document.getElementById('stat-total').textContent, '40');
+  assert.equal(window.document.getElementById('stat-total').textContent, '158');
 
   window.openPuzzle('knight-fork-A');
   const modal = window.document.getElementById('modal-inner');
@@ -114,7 +114,7 @@ test('existing solved tactical themes synchronize to profile progress without re
   const progress = JSON.parse(window.localStorage.getItem('chessnova_training_tactics'));
   assert.deepEqual(progress.completedCategories, ['xray']);
   assert.deepEqual(progress.solvedPuzzleIds, existing);
-  assert.equal(progress.totalPuzzles, 40);
+  assert.equal(progress.totalPuzzles, 158);
   assert.equal(window.document.getElementById('stat-solved').textContent, '4');
   dom.window.close();
 });

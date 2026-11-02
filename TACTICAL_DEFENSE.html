@@ -6,6 +6,7 @@
 <meta name="description" content="Entraînement SupaChess pour repérer et neutraliser les menaces tactiques avant qu'elles ne se réalisent.">
 <title>Défense tactique — SupaChess</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="shared/progress.js?v=site-version-1.13.125"></script>
 <style>
 :root{color-scheme:dark;--bg:#0b1324;--panel:#15243b;--panel2:#1b2d49;--line:#34506f;--text:#f6f8fc;--muted:#c0cbd9;--gold:#facc15;--green:#86efac;--red:#fca5a5;--blue:#93c5fd}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#193860 0,#0b1324 60%);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{width:min(1120px,100% - 28px);margin:auto;padding:22px 0 48px}
@@ -40,7 +41,7 @@ header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4r
 </section>
 <section class="panel"><h2>Défi avancé : plusieurs coups brillants ou précis</h2><p>Pour les positions très chargées et les combinaisons longues, résous les puzzles séquencés : tu dois trouver chaque coup clé et poursuivre après la première tactique.</p><a class="nav-link" href="TACTICAL_SEQUENCES.html">Lancer les puzzles de combinaisons longues →</a></section><section class="panel method" aria-labelledby="progression-title"><h2 id="progression-title">Parcours progressif : défendre, prévoir, contre-attaquer</h2><p>Commence par reconnaître la menace immédiate, puis calcule les coups de préparation et les réponses forcées. Les Elo sont indicatifs : ils décrivent la complexité de l’exercice, pas une note de joueur.</p><div class="steps"><div class="step"><b>900 · Repérer</b>Vois l’alignement roi-dame et trouve le coup simple qui retire la cible.</div><div class="step"><b>1 400 · Prévenir</b>Détecte la pièce qui prépare l’enfilade et neutralise le plan avant qu’il soit prêt.</div><div class="step"><b>1 900 · Calculer</b>Lis la séquence complète, vérifie les coups forcés et compare plusieurs parades.</div><div class="step"><b>2 300+ · Trouver une ressource</b>Quand la défense directe échoue, cherche un échange, une menace plus forte ou une contre-attaque qui gagne un tempo.</div></div><p class="horizon-note"><strong>Réflexe stratégique :</strong> après chaque défense, demande-toi si l’adversaire garde son plan, s’il a une menace plus urgente, et si tu peux créer une contre-menace. Un coup brillant de défense peut être un échec intermédiaire, une attaque sur la dame, une pièce sacrifiée pour ouvrir une fuite ou une contre-attaque forcée.</p></section>
 <section class="panel" aria-labelledby="practice-title">
-  <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 15 réussis</div></div>
+  <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 15 réussis</div><div class="tag" id="xp-status">+10 XP par nouveau puzzle résolu</div></div>
   <div class="controls" role="group" aria-label="Filtrer par horizon de menace">
     <button class="horizon-btn" type="button" data-filter="all" aria-pressed="true" onclick="filterHorizon('all')">Tous</button>
     <button class="horizon-btn" type="button" data-filter="1" aria-pressed="false" onclick="filterHorizon('1')">Prochain demi-coup adverse</button>
@@ -134,7 +135,39 @@ const EXERCISES=BASE_EXERCISES.flatMap(base=>["original","mirror","swap"].map(mo
   const titleSuffix=mode==="original"?"Vue standard":mode==="mirror"?"Aile opposée":"Camp noir";
   return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Elo "+base.rating+" · Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
 }));
-let filter="all",currentId=EXERCISES[0].id,game=null,selected=null,solved=new Set(),lastMove=null;
+const DEFENSE_SOLVED_KEY="supachess_tactical_defense_solved_v1";
+function loadSolvedExercises(){try{const value=JSON.parse(localStorage.getItem(DEFENSE_SOLVED_KEY)||"[]");return new Set(Array.isArray(value)?value.filter(id=>EXERCISES.some(ex=>ex.id===id)):[]);}catch(e){return new Set();}}
+function saveSolvedExercises(){try{localStorage.setItem(DEFENSE_SOLVED_KEY,JSON.stringify(Array.from(solved)));}catch(e){}}
+function awardDefensePuzzleXP(){
+  const amount=10,reason="Puzzle de défense tactique résolu";
+  try{
+    if(window.ChessNovaProgress&&typeof ChessNovaProgress.recordPractice==="function"){
+      ChessNovaProgress.recordPractice("puzzles",amount,reason);
+      const progress=ChessNovaProgress.load();
+      progress.puzzlesSolved=(progress.puzzlesSolved||0)+1;
+      ChessNovaProgress.save(progress);
+      if(progress.puzzlesSolved>=10)ChessNovaProgress.unlockBadge("puzzle-10");
+      if(progress.puzzlesSolved>=50)ChessNovaProgress.unlockBadge("puzzle-50");
+      if(progress.puzzlesSolved>=100)ChessNovaProgress.unlockBadge("puzzle-100");
+      return;
+    }
+  }catch(e){}
+  try{
+    const progress=JSON.parse(localStorage.getItem("chessnova_progress")||"{}");
+    progress.xp=(Number(progress.xp)||0)+amount;
+    progress.level=window.ChessNovaProgress&&ChessNovaProgress.getLevelForXP?ChessNovaProgress.getLevelForXP(progress.xp):(Number(progress.level)||1);
+    progress.puzzlesSolved=(Number(progress.puzzlesSolved)||0)+1;
+    progress.practice=progress.practice&&typeof progress.practice==="object"?progress.practice:{sessions:0,activities:{}};
+    progress.practice.sessions=(Number(progress.practice.sessions)||0)+1;
+    progress.practice.activities=progress.practice.activities&&typeof progress.practice.activities==="object"?progress.practice.activities:{};
+    progress.practice.activities.puzzles=(Number(progress.practice.activities.puzzles)||0)+1;
+    progress.recentRewards=Array.isArray(progress.recentRewards)?progress.recentRewards:[];
+    progress.recentRewards.unshift({text:"+10 XP: "+reason,time:Date.now()});
+    progress.recentRewards=progress.recentRewards.slice(0,10);
+    localStorage.setItem("chessnova_progress",JSON.stringify(progress));
+  }catch(e){}
+}
+let filter="all",currentId=EXERCISES[0].id,game=null,selected=null,solved=loadSolvedExercises(),lastMove=null;
 function coord(square){return {file:square.charCodeAt(0)-97,rank:Number(square[1])};}
 function pieceAt(game,square){return game.get(square);}
 function findPiece(game,color,type){for(let r=0;r<8;r++)for(let f=0;f<8;f++){const sq=String.fromCharCode(97+f)+(8-r),p=game.get(sq);if(p&&p.color===color&&p.type===type)return sq;}return null;}
@@ -205,12 +238,12 @@ function planStillWins(ex,afterDefense){
   }
   return true;
 }
-function explainSuccess(ex,move){
+function explainSuccess(ex,move,firstSolve){
   const box=document.getElementById("explanation");box.className="explain show";
   const moveText=move.san;
-  box.innerHTML="<strong>Bonne défense : "+moveText+".</strong> "+ex.explanation+"<p><strong>À retenir :</strong> recalculer la menace après chaque demi-coup ; si le plan adverse est encore possible, chercher une autre parade.</p>";
+  box.innerHTML="<strong>Bonne défense : "+moveText+".</strong> "+ex.explanation+"<p><strong>À retenir :</strong> recalculer la menace après chaque demi-coup ; si le plan adverse est encore possible, chercher une autre parade.</p><p><strong>Récompense :</strong> "+(firstSolve?"+10 XP ajoutés à ta progression.":"XP déjà attribuée pour ce puzzle.")+"</p>";
   document.getElementById("next-button").hidden=false;
-  setStatus("Menace neutralisée. La dame ne peut plus être gagnée par l’enfilade annoncée.","good");
+  setStatus(firstSolve?"Menace neutralisée : +10 XP.":"Puzzle déjà validé : aucun nouvel XP.", "good");
 }
 function clickSquare(square){
   const ex=activeExercise();
@@ -226,7 +259,7 @@ function clickSquare(square){
   if(planStillWins(ex,game)){
     game.undo();renderBoard();setStatus("Ce coup est légal, mais l’enfilade annoncée reste gagnante. Éloigne la dame de la ligne ou neutralise la tour.", "bad");return;
   }
-  lastMove={from,to:square};solved.add(ex.id);renderExerciseList();renderBoard();explainSuccess(ex,move);
+  lastMove={from,to:square};const firstSolve=!solved.has(ex.id);if(firstSolve){solved.add(ex.id);saveSolvedExercises();awardDefensePuzzleXP();}renderExerciseList();renderBoard();explainSuccess(ex,move,firstSolve);
 }
 function nextExercise(){
   const items=EXERCISES.filter(x=>filter==="all"||String(x.horizon)===filter);
@@ -235,6 +268,6 @@ function nextExercise(){
 function start(){resetExercise();}
 start();
 </script>
-<script defer src="shared/site-global.js?v=site-version-1.13.124"></script>
+<script defer src="shared/site-global.js?v=site-version-1.13.125"></script>
 </body>
 </html>

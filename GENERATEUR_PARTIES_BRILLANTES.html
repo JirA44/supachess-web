@@ -101,7 +101,7 @@ function readWasmFile(file){
    const magic=new Uint8Array(buffer,0,4);
    if(magic[0]!==0||magic[1]!==97||magic[2]!==115||magic[3]!==109)return reject(new Error("Ce fichier n’est pas un réseau WebAssembly valide. Télécharge stockfish-19-single.wasm."));
    document.getElementById("progress-fill").style.width="100%";
-   status("Lecture du réseau terminée · temps restant : ≈ 0 sec · 0 % restant. Compilation de Stockfish en cours…");
+   status("Lecture du fichier terminée : 0 % restant pour le transfert. Compilation de Stockfish en cours…");
    resolve(buffer);
   };
   reader.readAsArrayBuffer(file);

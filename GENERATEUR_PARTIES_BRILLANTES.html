@@ -310,6 +310,7 @@ async function buildDefensePuzzles(){
    }
    if(line.some(m=>m.color===userColor))defensePuzzles.push({...item,line,userColor,id:"generated-defense-"+n,rating:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
   }
+  saveDefensePuzzles();renderCustomProblemOptions();
   renderDefensePuzzleList();
   document.getElementById("defense-panel").classList.remove("hidden");
   statusEl.textContent=defensePuzzles.length+" puzzle(s) défensif(s) généré(s) depuis "+candidates.length+" position(s) tactique(s) candidate(s). Le premier coup de la ligne est la défense à trouver.";

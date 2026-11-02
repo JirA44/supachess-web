@@ -118,7 +118,7 @@ service cloud.firestore {
     }
 
     // Prototype model: one owner-written puzzle score per account.
-    // Only authenticated users can read scores; no email or profile document is exposed.
+    // Only authenticated users can read pseudonymous scores; profile data is not exposed.
     function isValidPuzzleLeaderboardEntry() {
       return request.resource.data.keys().hasOnly([
           'displayName', 'puzzleElo', 'puzzlesSolved', 'updatedAt'

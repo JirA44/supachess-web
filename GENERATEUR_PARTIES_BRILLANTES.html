@@ -20,8 +20,8 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <a class="back" href="PARTIES_BRILLANTES_ENTRAINEMENT.html">← Retour aux parties brillantes</a>
 <section class="hero">
 <h1>Générateur de parties brillantes · Elo 2 800+</h1>
-<p class="muted">Fais jouer Stockfish 19 contre Stockfish 19, génère plusieurs parties, puis garde celles qui contiennent le plus de sacrifices tactiques candidats et les meilleures séquences.</p>
-<div class="notice"><strong>Réglage vérifiable :</strong> le moteur complet reçoit le protocole UCI <code>UCI_LimitStrength=true</code> et un Elo réglé à au moins 2 800 pour chaque camp. La cote UCI est un réglage moteur, pas une performance mesurée dans un tournoi humain. Les sacrifices affichés sont des candidats détectés par une heuristique explicite, pas une étiquette officielle « brilliant » de Stockfish.</div>
+<p class="muted">Fais jouer Stockfish 19 contre Stockfish 19 à 2 800 Elo ou plus par camp. Classe les parties générées, puis transforme leurs positions tactiques en puzzles : trouve la défense, la contre-attaque et la suite calculée par le moteur.</p>
+<div class="notice"><strong>Réglage vérifiable :</strong> Stockfish reçoit le protocole UCI <code>UCI_LimitStrength=true</code> et un Elo réglé à au moins 2 800 pour chaque camp. La cote UCI est un réglage moteur, pas une performance mesurée dans un tournoi humain. Les sacrifices affichés sont des candidats détectés par une heuristique explicite, pas une étiquette officielle « brilliant » de Stockfish.</div>
 </section>
 <section class="panel">
 <h2>Paramètres de génération</h2>
@@ -46,8 +46,16 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
 <section id="results-panel" class="panel hidden">
-<h2>Classement des parties générées</h2><p class="muted">Classement par nombre de sacrifices candidats, puis par longueur de la meilleure séquence rapprochée.</p>
+<h2>Classement des parties générées</h2><p class="muted">Après la génération, crée aussi des puzzles défensifs calculés à partir des tactiques candidates.</p><p class="muted">Classement par nombre de sacrifices candidats, puis par longueur de la meilleure séquence rapprochée.</p>
 <div id="results" class="results"></div>
+</section>
+<section id="defense-panel" class="panel hidden">
+<h2>Puzzles de défense créés à partir des parties</h2>
+<p class="muted">Chaque puzzle part d’une tactique candidate générée par Stockfish 19 à 2 800 Elo ou plus. Tu joues le camp qui doit se défendre ; le moteur calcule une ligne de réponses et de contre-attaques avec les réglages Elo et le temps choisis. Ces lignes sont des recommandations du moteur pour cette analyse, pas des solutions universelles certifiées.</p>
+<div class="actions"><button id="build-defense" class="btn">Créer les puzzles défensifs</button></div>
+<p id="defense-status" class="status" role="status" aria-live="polite">Génère d’abord au moins une partie contenant un sacrifice tactique candidat.</p>
+<div id="defense-results" class="results"></div>
+<div id="defense-play" class="study-grid hidden"><div><h3 id="defense-title"></h3><div id="defense-board" class="board" role="grid" aria-label="Échiquier du puzzle de défense"></div><div class="move-controls"><button id="defense-reset" class="btn secondary">Recommencer ce puzzle</button><button id="defense-next" class="btn">Puzzle suivant →</button></div></div><div><p id="defense-prompt" class="summary"></p><p id="defense-feedback" class="status" aria-live="polite"></p><div id="defense-moves" class="moves"></div></div></div>
 </section>
 <section id="study-panel" class="panel hidden">
 <div class="study-grid">
@@ -231,7 +239,7 @@ function pgnFor(record){
  return headers+temp.pgn({maxWidth:80,newline:"\n"})+" "+result+"\n";
 }
 async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies){
- const game=new Chess(),uci=[],san=[],candidatePlies=[];let chain=0,bestChain=0,chainStart=-1,lastCandidatePly=-10,opening="Partie ouverte";
+ const game=new Chess(),uci=[],san=[],candidatePlies=[],fensAfter=[];let chain=0,bestChain=0,chainStart=-1,lastCandidatePly=-10,opening="Partie ouverte";
  for(let ply=0;ply<maxPlies&&!game.game_over();ply++){
   if(cancelRequested)break;
   const elo=game.turn()==="w"?whiteElo:blackElo;
@@ -240,14 +248,14 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
   const token=await bestMove(game.fen(),elo,movetime,{remainingSeconds,remainingPercent});if(!token||token==="(none)")break;
   const movingPiece=game.get(token.slice(0,2)),movingType=movingPiece&&movingPiece.type;
   const move=game.move({from:token.slice(0,2),to:token.slice(2,4),promotion:token[4]||"q"});if(!move)throw new Error("Stockfish a renvoyé un coup illégal : "+token);
-  uci.push(token);san.push(move.san);moveTimeSamples.push(performance.now()-searchStartedAt);if(moveTimeSamples.length>20)moveTimeSamples.shift();
+  uci.push(token);san.push(move.san);fensAfter.push(game.fen());moveTimeSamples.push(performance.now()-searchStartedAt);if(moveTimeSamples.length>20)moveTimeSamples.shift();
   if(inspectSacrifice(game,move,movingType)){
    candidatePlies.push(ply);if(ply-lastCandidatePly<=3)chain+=1;else{chain=1;chainStart=ply;}bestChain=Math.max(bestChain,ply-chainStart+1);lastCandidatePly=ply;
   }
   setProgress(((index+(ply+1)/maxPlies)/total)*100);
   await new Promise(resolve=>setTimeout(resolve,0));
  }
- return {uci,san,candidatePlies,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening};
+ return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening};
 }
 async function generate(){
  if(typeof Chess!=="function"){status("La bibliothèque d’échecs ne s’est pas chargée.");return;}
@@ -260,7 +268,66 @@ async function generate(){
  }catch(error){status("Erreur moteur : "+error.message);}
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
 }
-document.getElementById("generate").addEventListener("click",generate);
+
+let defensePuzzles=[],activeDefenseIndex=0,defenseGame=null,defenseSelected=null,defenseLineIndex=0,defensePlayed=[];
+function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
+async function buildDefensePuzzles(){
+ const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
+ if(!engineReady||!currentGames.length){statusEl.textContent="Génère d’abord des parties avec Stockfish 19.";return;}
+ button.disabled=true;defensePuzzles=[];statusEl.textContent="Extraction des positions tactiques candidates…";
+ const candidates=[];
+ currentGames.forEach((record,gameIndex)=>record.candidatePlies.slice(0,4).forEach(ply=>{const fen=record.fensAfter[ply];if(fen)candidates.push({record,gameIndex,ply,fen});}));
+ const selected=candidates.slice(0,8);
+ if(!selected.length){statusEl.textContent="Aucune tactique candidate n’a été détectée dans les parties. Génère d’autres parties ou augmente leur longueur.";button.disabled=false;return;}
+ try{
+  for(let n=0;n<selected.length;n++){
+   const item=selected[n],game=new Chess(item.fen),line=[],userColor=game.turn();
+   statusEl.textContent="Analyse des défenses et contre-attaques Stockfish · puzzle "+(n+1)+"/"+selected.length+" · Elo UCI "+item.record.whiteElo+"/"+item.record.blackElo+" · temps par demi-coup "+document.getElementById("move-time").value+" ms.";
+   for(let ply=0;ply<5&&!game.game_over();ply++){
+    const elo=game.turn()==="w"?item.record.whiteElo:item.record.blackElo;
+    const token=await bestMove(game.fen(),elo,Number(document.getElementById("move-time").value),{remainingSeconds:0,remainingPercent:0});
+    if(!token||token==="(none)")break;
+    const move=game.move({from:token.slice(0,2),to:token.slice(2,4),promotion:token[4]||"q"});
+    if(!move)break;
+    line.push({color:move.color,from:move.from,to:move.to,san:move.san});
+   }
+   if(line.some(m=>m.color===userColor))defensePuzzles.push({...item,line,userColor,id:"generated-defense-"+n});
+  }
+  renderDefensePuzzleList();
+  document.getElementById("defense-panel").classList.remove("hidden");
+  statusEl.textContent=defensePuzzles.length+" puzzle(s) défensif(s) généré(s) depuis "+candidates.length+" position(s) tactique(s) candidate(s). Le premier coup de la ligne est la défense à trouver.";
+  if(defensePuzzles.length)selectDefensePuzzle(0);
+ }catch(error){statusEl.textContent="Impossible d’analyser les positions : "+error.message;}
+ finally{button.disabled=false;}
+}
+function renderDefensePuzzleList(){
+ const root=document.getElementById("defense-results");root.innerHTML="";
+ defensePuzzles.forEach((p,i)=>{const button=document.createElement("button");button.type="button";button.className="candidate";button.innerHTML="<strong>Puzzle "+(i+1)+" · Partie "+(p.gameIndex+1)+" · après "+p.record.san[p.ply]+"</strong><small>Position défensive · "+p.line.filter(m=>m.color===p.userColor).length+" coup(s) à trouver · "+
+ (p.userColor==="w"?"Blancs":"Noirs")+" défendent · Stockfish 19 "+p.record.engineBuild+" · Elo UCI "+p.record.whiteElo+"/"+p.record.blackElo+"</small>";
+ button.addEventListener("click",()=>selectDefensePuzzle(i));root.appendChild(button);});
+}
+function selectDefensePuzzle(i){activeDefenseIndex=i;const p=defensePuzzles[i];if(!p)return;defenseGame=new Chess(p.fen);defenseLineIndex=0;defensePlayed=[];defenseSelected=null;
+ document.getElementById("defense-play").classList.remove("hidden");document.getElementById("defense-title").textContent="Puzzle "+(i+1)+" · "+(p.userColor==="w"?"Blancs défendent":"Noirs défendent");
+ document.getElementById("defense-prompt").textContent="Trouve une défense active ou une contre-attaque. La séquence continue sur plusieurs demi-coups ; les réponses Stockfish sont jouées automatiquement.";
+ document.getElementById("defense-moves").textContent="—";defenseStatus("À toi : joue le meilleur coup défensif de la ligne calculée par Stockfish.");renderDefenseBoard();}
+function renderDefenseBoard(){const p=defensePuzzles[activeDefenseIndex],root=document.getElementById("defense-board");if(!p||!defenseGame)return;const matrix=defenseGame.board();let html="";
+ for(let r=0;r<8;r++)for(let f=0;f<8;f++){const rr=p.userColor==="w"?r:7-r,ff=p.userColor==="w"?f:7-f,sq=String.fromCharCode(97+ff)+(8-rr),piece=matrix[rr][ff],light=(rr+ff)%2===0;html+='<button type="button" class="square '+(light?"light":"dark")+(defenseSelected===sq?" last":"")+'" aria-label="'+sq+(piece?" "+(piece.color==="w"?"blanche ":"noire ")+piece.type:" case vide")+'" onclick="playDefenseSquare(\''+sq+'\')">'+(piece?'<span class="'+(piece.color==="w"?"white-piece":"black-piece")+'">'+STARTING_PIECES[piece.type]+'</span>':"")+'</button>';}
+ root.innerHTML=html;}
+function playDefenseSquare(square){const p=defensePuzzles[activeDefenseIndex];if(!p||!defenseGame||defenseLineIndex>=p.line.length)return;
+ if(!defenseSelected){const piece=defenseGame.get(square);if(!piece||piece.color!==p.userColor){defenseStatus("Sélectionne une pièce de ton camp.","bad");return;}defenseSelected=square;renderDefenseBoard();return;}
+ if(square===defenseSelected){defenseSelected=null;renderDefenseBoard();return;}
+ const expected=p.line[defenseLineIndex],from=defenseSelected;defenseSelected=null;
+ if(expected.color!==p.userColor||expected.from!==from||expected.to!==square){renderDefenseBoard();defenseStatus("Ce coup ne correspond pas à la ligne recommandée par Stockfish. Cherche une défense qui garde l’évaluation la plus favorable.","bad");return;}
+ const move=defenseGame.move({from,to:square,promotion:"q"});if(!move){renderDefenseBoard();defenseStatus("Coup illégal. Réessaie.","bad");return;}defensePlayed.push(move.san);defenseLineIndex++;
+ while(defenseLineIndex<p.line.length&&p.line[defenseLineIndex].color!==p.userColor){const reply=p.line[defenseLineIndex],response=defenseGame.move({from:reply.from,to:reply.to,promotion:"q"});if(!response)break;defensePlayed.push(response.san);defenseLineIndex++;}
+ renderDefenseBoard();document.getElementById("defense-moves").textContent=defensePlayed.join(" · ");
+ if(defenseLineIndex>=p.line.length){defenseStatus("Séquence défensive terminée. Ligne Stockfish : "+defensePlayed.join(" "), "good");}
+ else defenseStatus("Bonne défense : "+move.san+". Continue le calcul.", "good");
+}
+document.getElementById("build-defense").addEventListener("click",buildDefensePuzzles);
+document.getElementById("defense-reset").addEventListener("click",()=>selectDefensePuzzle(activeDefenseIndex));
+document.getElementById("defense-next").addEventListener("click",()=>selectDefensePuzzle((activeDefenseIndex+1)%defensePuzzles.length));
+\ndocument.getElementById("generate").addEventListener("click",generate);
 document.getElementById("cancel").addEventListener("click",()=>{
  cancelRequested=true;document.getElementById("cancel").disabled=true;
  if(readyPromise&&!engineReady){

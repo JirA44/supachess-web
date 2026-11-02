@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Entraînement SupaChess pour repérer et neutraliser les menaces tactiques avant qu'elles ne se réalisent.">
+<title>Défense tactique — SupaChess</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b1324;--panel:#15243b;--panel2:#1b2d49;--line:#34506f;--text:#f6f8fc;--muted:#c0cbd9;--gold:#facc15;--green:#86efac;--red:#fca5a5;--blue:#93c5fd}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#193860 0,#0b1324 60%);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{width:min(1120px,100% - 28px);margin:auto;padding:22px 0 48px}
+nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px}a{color:var(--blue)}.nav-link{display:inline-flex;align-items:center;padding:9px 14px;border:1px solid var(--line);border-radius:999px;color:var(--text);text-decoration:none;background:#102037}
+header{text-align:center;padding:22px 12px 16px}h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.08;margin:0 0 12px}header p{max-width:800px;margin:0 auto;color:var(--muted)}.pill{display:inline-block;margin:16px 4px 0;padding:5px 12px;border:1px solid #52708f;border-radius:999px;background:#102037;color:#e7effa}
+.panel{background:linear-gradient(145deg,rgba(24,42,68,.97),rgba(14,28,47,.97));border:1px solid var(--line);border-radius:18px;padding:20px;margin:18px 0;box-shadow:0 14px 38px #0003}.method h2,.exercise-head h2{margin:0 0 8px}.muted{color:var(--muted)}.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px;margin-top:14px}.step{padding:12px;border-radius:12px;background:#0c1b30;border:1px solid #263f5e}.step b{display:block;color:var(--gold);margin-bottom:4px}.motifs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.motifs span{padding:6px 10px;border-radius:8px;background:#233956;color:#e8f1ff;font-size:.9rem}
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:16px 0}.horizon-btn,.action-btn{min-height:44px;padding:9px 14px;border:1px solid #617998;border-radius:10px;background:#193657;color:#fff;font:inherit;font-weight:750;cursor:pointer}.horizon-btn[aria-pressed=true]{background:#6c4f0b;border-color:#facc15;color:#fff8d5}.action-btn.primary{background:#146c43;border-color:#4ade80}.action-btn:hover,.horizon-btn:hover{filter:brightness(1.15)}button:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.exercise-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:10px;margin:14px 0}.exercise-card{display:block;text-align:left;width:100%;padding:13px;background:#0d1c30;border:1px solid var(--line);border-radius:12px;color:var(--text);font:inherit;cursor:pointer}.exercise-card[aria-current=true]{border:2px solid var(--gold);padding:12px;background:#24344a}.exercise-card small{display:block;color:var(--muted)}.exercise-card strong{display:block}.exercise-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.tag{font-size:.82rem;color:#fde68a;border:1px solid #79601a;border-radius:999px;padding:3px 9px;background:#332808}
+.play-area{display:grid;grid-template-columns:minmax(250px,430px) minmax(240px,1fr);gap:22px;align-items:center;margin-top:18px}.board-wrap{display:flex;justify-content:center}.board{width:min(100%,430px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border:4px solid #c4a477;border-radius:7px;overflow:hidden;box-shadow:0 14px 35px #0007}.square{position:relative;display:flex;align-items:center;justify-content:center;border:0;padding:0;min-width:0;min-height:0;aspect-ratio:1;font-size:clamp(1.6rem,6vw,3.1rem);cursor:pointer}.square.light{background:#f0d9b5}.square.dark{background:#b58863}.square.selected{box-shadow:inset 0 0 0 4px #facc15;z-index:1}.square.last{box-shadow:inset 0 0 0 4px rgba(34,197,94,.7)}.square-label{position:absolute;left:3px;top:1px;font:700 .58rem/1 system-ui,sans-serif;color:#1f2937;pointer-events:none}.piece-token{display:block;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",sans-serif;font-weight:900;paint-order:stroke fill;-webkit-text-fill-color:#fff;-webkit-text-stroke:2.8px #101827;text-shadow:0 0 2px #101827,1px 0 #101827,-1px 0 #101827,0 1px #101827,0 -1px #101827,1px 1px #101827,-1px -1px #101827,1px -1px #101827,-1px 1px #101827;filter:drop-shadow(0 1px 1px #000b)}.piece-token.black-piece{-webkit-text-fill-color:#171717;-webkit-text-stroke:2.7px #f8fafc;text-shadow:0 0 2px #f8fafc,1px 0 #f8fafc,-1px 0 #f8fafc,0 1px #f8fafc,0 -1px #f8fafc,1px 1px #f8fafc,-1px -1px #f8fafc,1px -1px #f8fafc,-1px 1px #f8fafc;filter:drop-shadow(0 1px 1px #fff9)}
+.turn{font-weight:800;color:var(--gold);margin-bottom:7px}.prompt{font-size:1.1rem;font-weight:700}.threat{margin-top:12px;padding:12px;border-left:4px solid #fb7185;border-radius:0 10px 10px 0;background:#321a2a}.status{min-height:3.1em;padding:12px;border-radius:10px;background:#0c1a2d;border:1px solid #2b4666;margin:14px 0}.status.good{border-color:#22c55e;color:#dcfce7}.status.bad{border-color:#fb7185;color:#ffe4e6}.explain{display:none;margin:12px 0;padding:14px;background:#102f28;border:1px solid #37875d;border-radius:12px}.explain.show{display:block}.plan{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#fef3c7;word-break:break-word}.horizon-note{font-size:.92rem;padding:12px;border-radius:10px;background:#0f2035;color:var(--muted)}
+[hidden]{display:none!important}
+@media(max-width:760px){.wrap{width:min(100% - 20px,600px);padding-top:12px}.play-area{grid-template-columns:1fr;gap:14px}.panel{padding:15px}.board{width:min(100%,min(88vw,430px))}.square{font-size:clamp(1.45rem,10vw,2.65rem)}.square-label{font-size:.5rem}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<nav aria-label="Navigation SupaChess"><a class="nav-link" href="TRAINING_TACTICS.html">← Exercices tactiques</a><a class="nav-link" href="hub.html">Hub SupaChess</a></nav>
+<header>
+  <h1>🛡️ Défendre contre les tactiques</h1>
+  <p>Ne cherche pas seulement le coup brillant : apprends à repérer la menace adverse avant qu’elle arrive, puis à l’empêcher. Cette première série travaille l’enfilade sur le roi et la dame, sur plusieurs horizons.</p>
+  <span class="pill">9 positions · 3 horizons · les deux camps</span>
+</header>
+<section class="panel method" aria-labelledby="method-title">
+  <h2 id="method-title">Ta routine de défense en 4 étapes</h2>
+  <div class="steps">
+    <div class="step"><b>1 · Cherche les coups forcés</b>Quels échecs, captures et menaces l’adversaire pourra-t-il jouer ?</div>
+    <div class="step"><b>2 · Repère la cible</b>Ton roi et les pièces de grande valeur sont-ils alignés ou attaqués ensemble ?</div>
+    <div class="step"><b>3 · Compare les parades</b>Déplace la cible, bloque la ligne, échange l’attaquant ou retire sa pièce de soutien.</div>
+    <div class="step"><b>4 · Vérifie la suite</b>Rejoue la menace après ta défense, puis regarde aussi le 2e et le 3e coup adverse.</div>
+  </div>
+  <div class="motifs" aria-label="Motifs tactiques à apprendre à défendre"><span>Fourchette : éloigner une cible ou neutraliser l’attaquant</span><span>Clouage : interposer, échanger l’attaquant ou déplacer la cible sans ouvrir le roi</span><span>Enfilade : sortir la pièce de grande valeur de la ligne</span><span>Attaque découverte : bloquer la ligne ou déplacer la cible</span><span>Dernière rangée : créer une case de fuite et contrôler les cases d’entrée</span></div>
+</section>
+<section class="panel" aria-labelledby="practice-title">
+  <div class="exercise-head"><div><h2 id="practice-title">Exercices : désamorcer l’enfilade</h2><p class="muted">Joue le coup de défense sur l’échiquier. Un coup légal n’est validé que s’il neutralise réellement la ligne annoncée.</p></div><div class="tag" id="progress">0 / 9 réussis</div></div>
+  <div class="controls" role="group" aria-label="Filtrer par horizon de menace">
+    <button class="horizon-btn" type="button" data-filter="all" aria-pressed="true" onclick="filterHorizon('all')">Tous</button>
+    <button class="horizon-btn" type="button" data-filter="1" aria-pressed="false" onclick="filterHorizon('1')">Prochain demi-coup adverse</button>
+    <button class="horizon-btn" type="button" data-filter="2" aria-pressed="false" onclick="filterHorizon('2')">2e coup adverse</button>
+    <button class="horizon-btn" type="button" data-filter="3" aria-pressed="false" onclick="filterHorizon('3')">3e coup adverse</button>
+  </div>
+  <p class="horizon-note"><strong>Comptage :</strong> « 2e coup adverse » signifie que l’adversaire prépare la tactique, tu joues entre ses deux coups, puis il peut la réaliser. Au 3e coup adverse, tu auras deux occasions supplémentaires de détecter et neutraliser son plan.</p>
+  <div class="exercise-list" id="exercise-list"></div>
+  <div class="play-area">
+    <div class="board-wrap"><div id="board" class="board" role="group" aria-label="Échiquier interactif"></div></div>
+    <div>
+      <div class="turn" id="turn-label"></div>
+      <div class="prompt" id="prompt"></div>
+      <div class="threat" id="threat"></div>
+      <p id="status" class="status" role="status" aria-live="polite">Sélectionne une pièce, puis sa destination. Trouve une défense qui casse l’enfilade.</p>
+      <div id="explanation" class="explain" aria-live="polite"></div>
+      <div class="controls"><button class="action-btn" type="button" onclick="resetExercise()">↺ Recommencer</button><button class="action-btn primary" id="next-button" type="button" onclick="nextExercise()" hidden>Exercice suivant →</button></div>
+    </div>
+  </div>
+</section>
+</main>
+<script>
+const BASE_EXERCISES = [
+  {
+    id:"skewer-h1",horizon:1,fen:"3k2r1/8/8/8/8/Q3K3/8/8 w - - 0 1",
+    blackPlan:["g8g3"],whiteReplies:[],
+    planLabel:"…Rg3+",
+    prompt:"Blancs jouent. Protège la dame avant le prochain coup noir.",
+    threat:"La tour g8 peut descendre en g3+ : elle donnera échec au roi e3 et la dame a3 se trouvera derrière lui.",
+    explanation:"La dame devait sortir de la 3e rangée avant …Rg3+. En l’éloignant de la ligne du roi, tu empêches la tour de gagner la dame après l’échec."
+  },
+  {
+    id:"skewer-h2",horizon:2,fen:"3k2r1/8/8/6n1/8/Q3K3/8/8 w - - 0 1",
+    blackPlan:["g5h7","g8g3"],whiteReplies:["e3d3"],
+    planLabel:"…Nh7 — (ton coup) — …Rg3+",
+    prompt:"Blancs jouent. Trouve la défense avant le 2e coup noir.",
+    threat:"Le cavalier g5 peut libérer la colonne g en allant en h7. Après un coup blanc, …Rg3+ enfile le roi et la dame.",
+    explanation:"La dame doit quitter la 3e rangée dès maintenant. La ligne noire …Nh7, puis …Rg3+ reste jouable, mais ne gagne plus la dame."
+  },
+  {
+    id:"skewer-h3",horizon:3,fen:"3k2r1/8/8/6n1/6b1/Q3K3/8/8 w - - 0 1",
+    blackPlan:["g5h7","g4h3","g8g3"],whiteReplies:["e3d3","d3c3"],
+    planLabel:"…Nh7 — (ton coup) — …Bh3 — (ton coup) — …Rg3+",
+    prompt:"Blancs jouent. Détecte le plan noir avant son 3e demi-coup de tour.",
+    threat:"Le cavalier puis le fou peuvent dégager la colonne g. La tour voudrait conclure par …Rg3+ et attaquer la dame derrière le roi.",
+    explanation:"Sors la dame de la rangée visée avant le début du déblayage. Même après …Nh7 et …Bh3, …Rg3+ ne peut plus enchaîner sur ta dame."
+  }
+];
+const PIECES={p:"♟",n:"♞",b:"♝",r:"♜",q:"♛",k:"♚"};
+function transformSquare(square,mode){
+  const file=square.charCodeAt(0)-97,rank=Number(square[1]);
+  if(mode==="mirror")return String.fromCharCode(97+(7-file))+rank;
+  if(mode==="swap")return square[0]+(9-rank);
+  return square;
+}
+function transformUci(uci,mode){return transformSquare(uci.slice(0,2),mode)+transformSquare(uci.slice(2,4),mode)+(uci.slice(4)||"");}
+function transformFen(fen,mode){
+  const [placement,turn,castling,ep,half,full]=fen.split(" ");
+  const board=Array.from({length:8},()=>Array(8).fill(""));
+  const rows=placement.split("/");
+  rows.forEach((row,r)=>{
+    let f=0;
+    for(const ch of row){if(/\d/.test(ch)){f+=Number(ch);continue;}let rr=r,ff=f;
+      if(mode==="mirror")ff=7-f;
+      if(mode==="swap"){rr=7-r;ch;}
+      const piece=mode==="swap"?(ch===ch.toUpperCase()?ch.toLowerCase():ch.toUpperCase()):ch;
+      board[rr][ff]=piece;f++;
+    }
+  });
+  const out=board.map(row=>{let s="",empty=0;for(const p of row){if(!p){empty++;continue;}if(empty){s+=empty;empty=0;}s+=p;}if(empty)s+=empty;return s;}).join("/");
+  return [out,mode==="swap"?(turn==="w"?"b":"w"):turn,"-","-",half||"0",full||"1"].join(" ");
+}
+const EXERCISES=BASE_EXERCISES.flatMap(base=>["original","mirror","swap"].map(mode=>{
+  const transform=mode==="mirror"?"mirror":mode==="swap"?"swap":"original";
+  const titleSuffix=mode==="original"?"Vue standard":mode==="mirror"?"Aile opposée":"Camp noir";
+  return {...base,id:base.id+"-"+mode,fen:transformFen(base.fen,transform),turn:mode==="swap"?"b":"w",blackPlan:base.blackPlan.map(m=>transformUci(m,transform)),whiteReplies:base.whiteReplies.map(m=>transformUci(m,transform)),attackerColor:mode==="swap"?"w":"b",defenderColor:mode==="swap"?"b":"w",title:"Enfilade · "+base.horizon+" coup"+(base.horizon>1?"s":"")+" adverse · "+titleSuffix};
+}));
+let filter="all",currentId=EXERCISES[0].id,game=null,selected=null,solved=new Set(),lastMove=null;
+function coord(square){return {file:square.charCodeAt(0)-97,rank:Number(square[1])};}
+function pieceAt(game,square){return game.get(square);}
+function findPiece(game,color,type){for(let r=0;r<8;r++)for(let f=0;f<8;f++){const sq=String.fromCharCode(97+f)+(8-r),p=game.get(sq);if(p&&p.color===color&&p.type===type)return sq;}return null;}
+function activeExercise(){return EXERCISES.find(x=>x.id===currentId)||EXERCISES[0];}
+function setStatus(text,tone=""){const el=document.getElementById("status");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
+function renderExerciseList(){
+  const list=document.getElementById("exercise-list");
+  const items=EXERCISES.filter(x=>filter==="all"||String(x.horizon)===filter);
+  list.innerHTML=items.map(x=>'<button type="button" class="exercise-card" aria-current="'+(x.id===currentId)+'" onclick="chooseExercise(\''+x.id+'\')"><strong>'+(solved.has(x.id)?"✅ ":"")+x.title+'</strong><small>'+x.prompt+'</small></button>').join("");
+  document.getElementById("progress").textContent=solved.size+" / "+EXERCISES.length+" réussis";
+}
+function renderBoard(){
+  const ex=activeExercise(),board=document.getElementById("board"),rows=game.board(),order=[];
+  for(let r=0;r<8;r++)for(let f=0;f<8;f++){const rr=ex.turn==="b"?7-r:r,ff=ex.turn==="b"?7-f:f;order.push({r:rr,f:ff});}
+  board.innerHTML=order.map(({r,f})=>{
+    const square=String.fromCharCode(97+f)+(8-r),p=rows[r][f],isLight=(r+f)%2===1;
+    const glyph=p?PIECES[p.type]:"",white=p&&p.color==="w";
+    const label=(ex.turn==="b"?String.fromCharCode(104-f):String.fromCharCode(97+f))+(ex.turn==="b"?r+1:8-r);
+    return '<button type="button" class="square '+(isLight?"light":"dark")+(selected===square?" selected":"")+(lastMove&&(lastMove.from===square||lastMove.to===square)?" last":"")+'" data-square="'+square+'" aria-label="'+label+(p?" "+(p.color==="w"?"pièce blanche ":"pièce noire ")+p.type:" case vide")+'" onclick="clickSquare(\''+square+'\')">'+(glyph?'<span class="piece-token'+(white?"":" black-piece")+'">'+glyph+'</span>':"")+'<span class="square-label" aria-hidden="true">'+label[0]+(square[1])+'</span></button>';
+  }).join("");
+}
+function chooseExercise(id){currentId=id;resetExercise();}
+function filterHorizon(value){
+  filter=value;
+  document.querySelectorAll(".horizon-btn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.filter===value)));
+  const visible=EXERCISES.filter(x=>value==="all"||String(x.horizon)===value);
+  if(!visible.some(x=>x.id===currentId))currentId=visible[0].id;
+  renderExerciseList();resetExercise();
+}
+function resetExercise(){
+  const ex=activeExercise();game=new Chess(ex.fen);selected=null;lastMove=null;
+  document.getElementById("turn-label").textContent=ex.defenderColor==="w"?"⬜ Blancs défendent":"⬛ Noirs défendent";
+  document.getElementById("prompt").textContent=ex.prompt;
+  document.getElementById("threat").innerHTML="<strong>Menace annoncée :</strong> "+ex.threat+"<br><strong>Plan :</strong> <span class='plan'>"+ex.planLabel+"</span>";
+  const box=document.getElementById("explanation");box.className="explain";box.innerHTML="";
+  document.getElementById("next-button").hidden=true;
+  setStatus("Sélectionne une pièce, puis sa destination. Trouve une défense qui casse l’enfilade.");
+  renderExerciseList();renderBoard();
+}
+function planStillWins(ex,afterDefense){
+  const sim=new Chess(afterDefense.fen());
+  let finalMove=null;
+  for(let i=0;i<ex.blackPlan.length;i++){
+    const u=ex.blackPlan[i],move=sim.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"});
+    if(!move)return false;
+    finalMove=u;
+    if(i<ex.whiteReplies.length){
+      const reply=ex.whiteReplies[i],response=sim.move({from:reply.slice(0,2),to:reply.slice(2,4),promotion:reply[4]||"q"});
+      if(!response)return false;
+    }
+  }
+  if(!sim.isCheck())return false;
+  const queenSq=findPiece(sim,ex.defenderColor,"q");
+  if(!queenSq)return false;
+  const replies=sim.moves({verbose:true});
+  if(!replies.length)return false;
+  const rookSquare=finalMove.slice(2,4),rook=sim.get(rookSquare);
+  if(!rook||rook.type!=="r"||rook.color!==ex.attackerColor)return false;
+  for(const reply of replies){
+    const afterReply=new Chess(sim.fen());
+    if(!afterReply.move({from:reply.from,to:reply.to,promotion:reply.promotion||"q"}))continue;
+    const q=findPiece(afterReply,ex.defenderColor,"q");
+    if(!q)return false;
+    const capture=afterReply.move({from:rookSquare,to:q,promotion:"q"});
+    if(!capture)return false;
+    const recaptures=afterReply.moves({verbose:true}).some(m=>m.color===ex.defenderColor&&m.to===rookSquare&&m.captured==="r");
+    if(recaptures)return false;
+  }
+  return true;
+}
+function explainSuccess(ex,move){
+  const box=document.getElementById("explanation");box.className="explain show";
+  const moveText=move.san;
+  box.innerHTML="<strong>Bonne défense : "+moveText+".</strong> "+ex.explanation+"<p><strong>À retenir :</strong> recalculer la menace après chaque demi-coup ; si le plan adverse est encore possible, chercher une autre parade.</p>";
+  document.getElementById("next-button").hidden=false;
+  setStatus("Menace neutralisée. La dame ne peut plus être gagnée par l’enfilade annoncée.","good");
+}
+function clickSquare(square){
+  const ex=activeExercise();if(solved.has(ex.id))return;
+  const p=game.get(square),feedback=document.getElementById("status");
+  if(!selected){
+    if(!p||p.color!==ex.defenderColor){setStatus("Sélectionne une de tes pièces à déplacer.");return;}
+    selected=square;renderBoard();setStatus("Pièce sélectionnée. Clique la destination.");return;
+  }
+  if(selected===square){selected=null;renderBoard();setStatus("Sélection annulée. Choisis une pièce à déplacer.");return;}
+  const from=selected;selected=null;
+  const move=game.move({from,to:square,promotion:"q"});
+  if(!move){renderBoard();setStatus("Coup illégal. Choisis une destination autorisée.");return;}
+  if(planStillWins(ex,game)){
+    game.undo();renderBoard();setStatus("Ce coup est légal, mais l’enfilade annoncée reste gagnante. Éloigne la dame de la ligne ou neutralise la tour.", "bad");return;
+  }
+  lastMove={from,to:square};solved.add(ex.id);renderExerciseList();renderBoard();explainSuccess(ex,move);
+}
+function nextExercise(){
+  const items=EXERCISES.filter(x=>filter==="all"||String(x.horizon)===filter);
+  const index=items.findIndex(x=>x.id===currentId);currentId=items[(index+1)%items.length].id;resetExercise();
+}
+function start(){resetExercise();}
+start();
+</script>
+<script defer src="shared/site-global.js?v=piece-contrast-20261102d"></script>
+</body>
+</html>

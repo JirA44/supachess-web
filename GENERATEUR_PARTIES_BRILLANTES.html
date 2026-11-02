@@ -61,7 +61,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 let worker=null, readyPromise=null, engineReady=false, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
-function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?Math.floor(seconds/60)+" min "+(seconds%60)+" s":seconds+" s";}
+function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?seconds+" s (~"+Math.floor(seconds/60)+" min "+(seconds%60)+" s)":seconds+" s";}
 function setProgress(percent){document.getElementById("progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";}
 function waitFor(line,timeout=180000){
  const startedAt=performance.now();
@@ -93,7 +93,7 @@ function onEngineMessage(event){
    status(error.message);
    if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}
    rejectUciWaiters(error);
-   if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}return;
+   if(activeSearch){clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}return;
   }
   return;
  }
@@ -149,9 +149,9 @@ function ensureEngine(){
   engineReady=false;
   worker=makeEngineWorker();worker.onmessage=onEngineMessage;
   const compileStartedAt=performance.now();
-  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=900,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly · "+elapsed+" s écoulées · ≈ "+formatDuration(remaining)+" avant interruption automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). La compilation ne fournit pas de pourcentage réel.");setProgress(percent);},1000);
+  engineBootStatusTimer=setInterval(()=>{const elapsed=Math.floor((performance.now()-compileStartedAt)/1000),limit=900,remaining=Math.max(0,limit-elapsed),percent=Math.min(100,Math.floor(elapsed/limit*100));status("Compilation WebAssembly : aucun signal de fin depuis "+elapsed+" s · ≈ "+formatDuration(remaining)+" avant l’arrêt automatique · "+percent+" % du délai écoulé ("+(100-percent)+" % restant). Le moteur peut encore compiler; son pourcentage réel n’est pas fourni."+(elapsed>=180?" Si l’attente continue, vérifie que les deux fichiers sont complets et que le navigateur a assez de mémoire.":""));setProgress(percent);},1000);
   const runtimeReady=new Promise((resolve,reject)=>{runtimeReadyResolve=resolve;runtimeReadyReject=reject;engineBootTimeout=setTimeout(()=>reject(new Error("Stockfish n’a pas terminé la compilation WebAssembly après 15 minutes. Vérifie que les deux fichiers sont complets et réessaie dans un navigateur avec assez de mémoire.")),900000);});
-  worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){clearTimeout(activeSearch.timer);clearInterval(activeSearch.progressTimer);activeSearch.reject(error);activeSearch=null;}};
+  worker.onerror=event=>{const error=new Error(event.message||"Stockfish n’a pas pu démarrer. Vérifie les fichiers téléchargés et réessaie.");status(error.message);if(runtimeReadyReject){runtimeReadyReject(error);runtimeReadyResolve=null;runtimeReadyReject=null;}rejectUciWaiters(error);if(activeSearch){activeSearch.reject(error);activeSearch=null;}};
   worker.postMessage({type:"init",wasmBinary},[wasmBinary]);
   status("Réseau lu (100 %). Compilation WebAssembly de Stockfish en cours…");
   await runtimeReady;clearTimeout(engineBootTimeout);engineBootTimeout=null;clearInterval(engineBootStatusTimer);engineBootStatusTimer=null;runtimeReadyResolve=null;runtimeReadyReject=null;
@@ -238,7 +238,7 @@ async function generate(){
   await ensureEngine();
   for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies);currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
   status(cancelRequested?"Génération interrompue après le demi-coup en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
- }catch(error){status(cancelRequested&&error.message==="Initialisation annulée."?"Compilation Stockfish annulée.":"Erreur moteur : "+error.message);}
+ }catch(error){status("Erreur moteur : "+error.message);}
  finally{button.disabled=false;document.getElementById("cancel").disabled=true;}
 }
 document.getElementById("generate").addEventListener("click",generate);

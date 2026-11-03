@@ -19,7 +19,7 @@
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
-  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}}';
+  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a,.supachess-global-settings button{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none;cursor:pointer}.supachess-global-settings a:hover,.supachess-global-settings button:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible,.supachess-global-settings button:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a,.supachess-global-settings button{font-size:12px;padding:7px 10px}}';
 
   style.textContent += [
     '.supachess-vector-piece{background-color:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;min-width:0!important;min-height:0!important;display:inline-block!important;width:88%!important;height:88%!important;line-height:1!important}',
@@ -189,8 +189,11 @@
     var nav = document.createElement('nav');
     nav.className = 'supachess-global-settings';
     nav.setAttribute('aria-label', french ? 'Réglages SupaChess' : 'SupaChess settings');
-    var appearance = document.createElement('a');
-    appearance.href = '#supachess-appearance';
+    var appearance = document.createElement('button');
+    appearance.type = 'button';
+    appearance.className = 'supachess-settings-action';
+    appearance.setAttribute('aria-haspopup', 'dialog');
+    appearance.setAttribute('aria-controls', 'supachess-preferences-dialog');
     appearance.textContent = french ? '🎨 Apparence' : '🎨 Appearance';
     var analysis = document.createElement('a');
     analysis.href = new URL('PLAYER_ANALYSIS.html', root).href;
@@ -206,6 +209,7 @@
     applyGlobalPreferences(preferences);
     var dialog = document.createElement('dialog');
     dialog.className = 'supachess-preferences';
+    dialog.id = 'supachess-preferences-dialog';
     dialog.setAttribute('aria-labelledby', 'supachess-preferences-title');
     var boardLabels = french
       ? { title: 'Réglages SupaChess', intro: 'Ces choix sont mémorisés sur cet appareil et appliqués sur les pages SupaChess compatibles.', appearance: 'Apparence de l’échiquier', theme: 'Thème des cases', classic: 'Classique', green: 'Vert', blue: 'Bleu', wood: 'Bois', contrast: 'Contraste élevé', pieceSize: 'Taille des pièces', coordinates: 'Afficher les coordonnées', analysis: 'Analyse', analysisText: 'Pour les statistiques et le profil de jeu, ouvre l’analyse de style SupaChess.', openAnalysis: 'Ouvrir l’analyse de style →', reset: 'Réinitialiser les réglages', close: 'Fermer' }
@@ -243,7 +247,6 @@
       else dialog.setAttribute('open', '');
     }
     appearance.addEventListener('click', function (event) {
-      event.preventDefault();
       openPreferences();
       dialog.querySelector('#supa-pref-theme').focus();
     });
@@ -263,7 +266,7 @@
     var label = document.createElement('small');
     label.className = 'supachess-site-version';
     label.setAttribute('data-supachess-version-label', '');
-    label.setAttribute('aria-label', 'SupaChess site version ' + SITE_VERSION);
+    label.setAttribute('aria-label', 'SupaChess site version 1.13.135');
     var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr');
     label.textContent = (french ? 'Version du site : ' : 'Site version: ') + SITE_VERSION;
     var pagePath = (location.pathname || '/').replace(/\/$/, '').split('/').pop() || 'index.html';

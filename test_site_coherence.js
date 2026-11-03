@@ -38,7 +38,7 @@ function getAllHtml(includeArchived = false) {
     function visit(directory) {
         for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
             if (entry.isDirectory()) {
-                if (entry.name !== '.git') visit(path.join(directory, entry.name));
+                if (!['.git', 'node_modules', '.wrangler', 'coverage', 'dist', 'build'].includes(entry.name)) visit(path.join(directory, entry.name));
                 continue;
             }
             if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.html')) continue;

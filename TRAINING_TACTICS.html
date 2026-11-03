@@ -295,6 +295,7 @@
     </section>
     <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200–2399</option><option value="elite">Élite · 2400–2599</option><option value="world-class">Maître mondial · 2600–2799</option><option value="legend">Légende · 2800+</option></select></div>
     <div class="theme-tabs" id="theme-tabs"></div>
+    <p id="generated-puzzles-status" class="muted" role="status" aria-live="polite" style="text-align:center;margin:0 0 14px"></p>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
 
@@ -5603,7 +5604,8 @@ function loadGeneratedDefensePuzzles() {
         saved.forEach((item, index) => {
             if (!item || typeof item.fen !== 'string' || !Array.isArray(item.line) || !item.line.length) return;
             const game = new Chess(item.fen);
-            const userColor = item.userColor === 'b' ? 'b' : item.userColor === 'w' ? 'w' : game.turn();
+            const initialColor = game.turn();
+            const userColor = item.userColor === 'b' ? 'b' : item.userColor === 'w' ? 'w' : initialColor;
             const solutionMoves = [];
             for (const step of item.line.slice(0, 8)) {
                 if (!step || typeof step.from !== 'string' || typeof step.to !== 'string') break;
@@ -5611,7 +5613,7 @@ function loadGeneratedDefensePuzzles() {
                 if (!move) break;
                 solutionMoves.push(move.from + move.to + (move.promotion || ''));
             }
-            if (!solutionMoves.length || game.turn() !== userColor || !item.line[0] || item.line[0].color !== userColor) return;
+            if (!solutionMoves.length || initialColor !== userColor || !item.line[0] || item.line[0].color !== userColor) return;
             const id = 'generated-stockfish-' + String(item.id || index);
             if (PUZZLES.some(puzzle => puzzle.id === id)) return;
             const lineSan = item.line.slice(0, solutionMoves.length).map(step => step.san).filter(Boolean);
@@ -5631,6 +5633,11 @@ function loadGeneratedDefensePuzzles() {
                 answer:solutionMoves[0], solutionMoves, engineElo
             });
         });
+        const generatedCount = PUZZLES.filter(puzzle => puzzle.generated).length;
+        const generatedStatus = document.getElementById('generated-puzzles-status');
+        if (generatedStatus) generatedStatus.textContent = generatedCount
+            ? generatedCount + ' puzzle(s) Stockfish généré(s) disponibles dans l’onglet « Générés par Stockfish » sur ce navigateur.'
+            : 'Les puzzles créés avec Stockfish apparaîtront automatiquement ici après leur génération sur ce même navigateur.';
     } catch (error) {
         console.warn('Puzzles Stockfish locaux ignorés :', error);
     }

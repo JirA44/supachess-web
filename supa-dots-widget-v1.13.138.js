@@ -473,7 +473,7 @@
         btnEl = document.createElement('button');
         btnEl.id = 'supa-dots-btn';
         btnEl.innerHTML = '⚡ Dots <span id="supa-dots-lbl">OFF</span>';
-        btnEl.title = 'SUPA Dots — Coups colorés + Tactiques';
+        btnEl.title = (document.documentElement.lang || '').toLowerCase().startsWith('fr') ? 'SUPA Dots — Active les repères, puis sélectionne une pièce pour afficher les coups légaux et leur qualité.' : 'SUPA Dots — Turn on hints, then select a piece to show legal moves and their quality.';
         btnEl.style.cssText = [
             'position:fixed', 'bottom:20px', 'right:20px', 'z-index:9999',
             'padding:10px 18px', 'background:rgba(15,10,30,0.92)', 'color:#9ca3af',

@@ -24,7 +24,9 @@ assert.match(chessnova, /evalValue\.textContent = signedEvalDisplay;/, 'each eva
 console.log('Chess display checks passed');
 
 function collectHtmlFiles(directory) {
+  const ignored = new Set(['.git', 'node_modules', '.wrangler', 'coverage', 'dist', 'build']);
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    if (entry.isDirectory() && ignored.has(entry.name)) return [];
     const filePath = join(directory, entry.name);
     if (entry.isDirectory()) return collectHtmlFiles(filePath);
     return entry.isFile() && entry.name.endsWith('.html') ? [filePath] : [];
@@ -33,12 +35,23 @@ function collectHtmlFiles(directory) {
 
 const boardMarkers = /(?:chess-piece|white-piece|black-piece|piece-token|data-square|class=["'][^"']*(?:board|square|chessboard))/i;
 const boardPages = collectHtmlFiles('.').filter(file => boardMarkers.test(readFileSync(file, 'utf8')));
+const globalAssets = readdirSync('shared')
+  .filter(file => /^site-global-v1\.13\.\d+\.js$/.test(file))
+  .sort((a, b) => Number(a.match(/v1\.13\.(\d+)/)[1]) - Number(b.match(/v1\.13\.(\d+)/)[1]));
+assert.ok(globalAssets.length > 0, 'versioned shared board audit script exists');
+const latestGlobal = globalAssets.at(-1);
+const currentGlobalPath = join('shared', latestGlobal);
+const currentGlobalVersion = latestGlobal.match(/v(1\.13\.\d+)\.js$/)[1];
 for (const file of boardPages) {
-  assert.match(readFileSync(file, 'utf8'), /shared\/site-global\.js/, `${file} loads the shared piece-contrast and board audit`);
+  assert.ok(
+    readFileSync(file, 'utf8').includes(latestGlobal + '?v=' + currentGlobalVersion),
+    file + ' loads ' + latestGlobal
+  );
 }
 assert.ok(boardPages.length > 0, 'site-wide board audit finds chessboard pages');
-assert.match(readFileSync('shared/site-global.js', 'utf8'), /normalizeChessGlyphs\(document\);\s*ensureBoardRanks\(document\)/, 'initially rendered pieces receive contrast styles');
-assert.match(readFileSync('shared/site-global.js', 'utf8'), /replace\(\/\[\\uFE0E\\uFE0F\]\/g, ''\)/, 'piece normalizer strips Unicode variation selectors before applying filled glyphs');
-assert.match(readFileSync('shared/site-global.js', 'utf8'), /chessGlyphType = \{/,'unicode pieces map to detailed SVG variants');
-assert.match(readFileSync('shared/site-global.js', 'utf8'), /node\.style\.backgroundImage =/, 'unicode pieces display detailed SVG artwork without removing their text data');
-console.log(`Site-wide chessboard contrast audit passed (${boardPages.length} board pages)`);
+const globalSource = readFileSync(currentGlobalPath, 'utf8');
+assert.match(globalSource, /normalizeChessGlyphs\(document\);\s*ensureBoardRanks\(document\)/, 'initially rendered pieces receive contrast styles');
+assert.match(globalSource, /replace\(\/\[\\uFE0E\\uFE0F\]\/g, ''\)/, 'piece normalizer strips Unicode variation selectors before applying filled glyphs');
+assert.match(globalSource, /chessGlyphType = \{/, 'unicode pieces map to detailed SVG variants');
+assert.match(globalSource, /node\.style\.setProperty\(['"]background-image['"]/, 'unicode pieces override page CSS priority for detailed SVG artwork');
+console.log('Site-wide chessboard contrast audit passed (' + boardPages.length + ' board pages)');

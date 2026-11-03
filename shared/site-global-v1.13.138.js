@@ -407,10 +407,11 @@
     attempt();
   }
   var evalStyle = document.createElement('style');
-  evalStyle.textContent = '.supachess-eval-toggle{display:block;margin:8px auto;padding:8px 14px;border:1px solid #78c6dc;border-radius:9px;background:#12354a;color:#fff;font:600 14px/1.3 system-ui,sans-serif;cursor:pointer}.supachess-eval-toggle:hover{background:#1b526f}.supachess-eval-toggle:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}.supachess-eval-panel{max-width:600px;margin:6px auto 14px;padding:10px 12px;border:1px solid #466078;border-radius:10px;background:#101c2c;color:#f4f7fb}.supachess-eval-track{position:relative;height:20px;overflow:hidden;border-radius:7px;background:#202a3a;border:1px solid #77889e}.supachess-eval-white{height:100%;width:50%;background:#f5f5f2;transition:width .25s}.supachess-eval-track span{position:absolute;inset:0;display:grid;place-items:center;color:#101827;font:700 13px/1 system-ui,sans-serif;text-shadow:0 0 2px #fff}.supachess-eval-note{margin:6px 0 0;text-align:center;font:12px/1.4 system-ui,sans-serif;color:#c6d2df}.supachess-eval-panel[hidden]{display:none!important}';
+  evalStyle.textContent = '.evalbar[hidden],.eval-bar-wrap[hidden],.eval-bar-container[hidden],.eval-bar[hidden]{display:none!important}.supachess-eval-toggle{display:block;margin:8px auto;padding:8px 14px;border:1px solid #78c6dc;border-radius:9px;background:#12354a;color:#fff;font:600 14px/1.3 system-ui,sans-serif;cursor:pointer}.supachess-eval-toggle:hover{background:#1b526f}.supachess-eval-toggle:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}.supachess-eval-panel{max-width:600px;margin:6px auto 14px;padding:10px 12px;border:1px solid #466078;border-radius:10px;background:#101c2c;color:#f4f7fb}.supachess-eval-track{position:relative;height:20px;overflow:hidden;border-radius:7px;background:#202a3a;border:1px solid #77889e}.supachess-eval-white{height:100%;width:50%;background:#f5f5f2;transition:width .25s}.supachess-eval-track span{position:absolute;inset:0;display:grid;place-items:center;color:#101827;font:700 13px/1 system-ui,sans-serif;text-shadow:0 0 2px #fff}.supachess-eval-note{margin:6px 0 0;text-align:center;font:12px/1.4 system-ui,sans-serif;color:#c6d2df}.supachess-eval-panel[hidden]{display:none!important}';
   (document.head || document.documentElement).appendChild(evalStyle);
 
   function initializeGlobalLabels() {
+    initializeEvalBar();
     addBackLinks();
     addSettingsLinks();
     addSiteVersion();

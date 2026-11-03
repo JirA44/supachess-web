@@ -10,6 +10,7 @@
  *  4. Pas de console.error hard-codés ni de alert() suspects
  *  5. Chaque page a un <title> non vide
  *  6. _redirects cohérent (pas de redirect vers fichier inexistant)
+ *  7. Toute page HTML utilise la même version du script global
  */
 
 const fs   = require('fs');
@@ -32,19 +33,36 @@ function readFile(f) {
     try { return fs.readFileSync(f, 'utf8'); } catch { return null; }
 }
 
-function getAllHtml() {
-    return fs.readdirSync(DIR)
-        .filter(f => f.endsWith('.html'))
-        .filter(f => !f.match(/backup|BACKUP|_old|^test_/i));
+function getAllHtml(includeArchived = false) {
+    const pages = [];
+    function visit(directory) {
+        for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+            if (entry.isDirectory()) {
+                if (!['.git', 'node_modules', '.wrangler', 'coverage', 'dist', 'build'].includes(entry.name)) visit(path.join(directory, entry.name));
+                continue;
+            }
+            if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.html')) continue;
+            const relative = path.relative(DIR, path.join(directory, entry.name));
+            if (!includeArchived && /backup|_old|^test_/i.test(entry.name)) continue;
+            pages.push(relative);
+        }
+    }
+    visit(DIR);
+    return pages;
 }
 
 // Page has any chess logic
 function hasChessLogic(content) {
     return /new Chess\(|Chess\(|chess\.js/.test(content);
 }
+// Page has a live chess.js position that Dots can query for legal moves.
+function hasChessGame(content) {
+    return /\bnew\s+Chess\s*\(/.test(content);
+}
 // Page has interactive chessboard.js (user can play)
 function hasInteractiveBoard(content) {
-    return /Chessboard\(|chessboard-1|@chrisoakman|chessboardjs/.test(content);
+    // A dependency URL is not a board. Require an actual Chessboard initializer call.
+    return /\b(?:window\.)?Chessboard\s*(?:\?\.)?\(/.test(content);
 }
 // Backward compat alias
 function hasBoard(content) {
@@ -58,7 +76,7 @@ function testRequiredScripts() {
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
-        if (!hasInteractiveBoard(content)) continue;  // only pages where user can play
+        if (!hasInteractiveBoard(content) || !hasChessGame(content)) continue;  // needs a live board and game
 
         const hasChessJS    = /chess\.min\.js|chess\.js/.test(content);
         const hasChessboard = /chessboard.*\.js|@chrisoakman/.test(content);
@@ -78,7 +96,7 @@ function testDotsWidget() {
         if (!content) continue;
         // Candidate dots require an interactive chessboard; static lesson diagrams use
         // chess.js only to replay legal SAN moves and should not receive a useless widget.
-        if (!hasInteractiveBoard(content)) continue;
+        if (!hasInteractiveBoard(content) || !hasChessGame(content)) continue;
 
         const hasDots = /supa-dots-widget/.test(content);
         if (!hasDots) fail(`${page} — supa-dots-widget.js manquant`);
@@ -96,20 +114,23 @@ function testInternalLinks() {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
 
-        // Match src="..." et href="..." relatifs (pas http, pas /shared, pas /)
-        const refs = [...content.matchAll(/(?:src|href)="([^"]+)"/g)]
-            .map(m => m[1])
-            // Inline JS may compose href values conditionally; those are not static file paths.
-            .filter(r => !/\+\s*\(|\$\{|\btrack\s*===/.test(r))
-            .filter(r => !r.startsWith('http') && !r.startsWith('//') && !r.startsWith('/') && !r.startsWith('#') && !r.startsWith('data:'));
+        // Inspect markup only: JavaScript-generated links are not static file references.
+        const staticMarkup = content
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, block => {
+                return /<script\b[^>]*\bsrc\s*=/.test(block) ? block : '';
+            });
+        const refs = [...staticMarkup.matchAll(/\b(?:src|href)\s*=\s*(["'])(.*?)\1/gi)]
+            .map(m => m[2])
+            .filter(r => !/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/|#)/i.test(r));
 
         for (const ref of refs) {
             const key = `${page}→${ref}`;
             if (checked.has(key)) continue;
             checked.add(key);
 
-            const localRef = ref.split(/[?#]/, 1)[0];
-            const target = path.join(DIR, localRef);
+            const localRef = decodeURIComponent(ref.split(/[?#]/, 1)[0]);
+            const target = path.resolve(DIR, path.dirname(page), localRef);
             if (!fs.existsSync(target)) {
                 fail(`${page} → "${ref}" introuvable`);
             }
@@ -118,9 +139,36 @@ function testInternalLinks() {
     if (errors === 0) ok('Tous les liens relatifs résolus');
 }
 
-// ── Test 4 : titre non vide ───────────────────────────────────────────────────
+// ── Test 4 : une version globale exacte sur chaque page ───────────────────────
+function testSiteVersionReferences() {
+    console.log('\n🏷️ Test 4 — Version globale cohérente sur chaque page');
+    const expectedVersion = '1.13.142';
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.142.js'));
+    if (!globalScript) {
+        fail('shared/site-global-v1.13.142.js manquant');
+        return;
+    }
+    if (!/var SITE_VERSION = ['"]1\.13\.142['"]/.test(globalScript)) {
+        fail('Le script global ne déclare pas la version ' + expectedVersion);
+    }
+    for (const page of getAllHtml(true)) {
+        const content = readFile(path.join(DIR, page));
+        if (!content) continue;
+        const refs = [...content.matchAll(/<script\b[^>]*\bsrc\s*=\s*(["'])([^"']*site-global-v1\.13\.(\d+)\.js(?:\?v=([^"']+))?)\1[^>]*>/gi)];
+        if (refs.length !== 1) {
+            fail(page + ' — ' + refs.length + ' script(s) global(aux), un seul attendu');
+            continue;
+        }
+        if (refs[0][3] !== '142' || refs[0][4] !== expectedVersion) {
+            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.142');
+        }
+    }
+    if (errors === 0) ok('Les ' + getAllHtml(true).length + ' pages HTML utilisent la même version');
+}
+
+// ── Test 5 : titre non vide ───────────────────────────────────────────────────
 function testTitles() {
-    console.log('\n📝 Test 4 — Balise <title> non vide');
+    console.log('\n📝 Test 5 — Balise <title> non vide');
     const pages = getAllHtml();
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
@@ -132,9 +180,9 @@ function testTitles() {
     }
 }
 
-// ── Test 5 : _redirects cohérent ─────────────────────────────────────────────
+// ── Test 6 : _redirects cohérent ─────────────────────────────────────────────
 function testRedirects() {
-    console.log('\n🔀 Test 5 — _redirects cohérence');
+    console.log('\n🔀 Test 6 — _redirects cohérence');
     const content = readFile(path.join(DIR, '_redirects'));
     if (!content) { warn('_redirects introuvable'); return; }
 
@@ -157,19 +205,19 @@ function testRedirects() {
     }
 }
 
-// ── Test 6 : pages interactives — window.game/board ou var (pas let/const) ────
+// ── Test 7 : pages interactives — window.game/board ou var (pas let/const) ────
 function testGlobalExposure() {
-    console.log('\n🌐 Test 6 — game/board accessibles globalement sur pages jouables');
+    console.log('\n🌐 Test 7 — game/board accessibles globalement sur pages jouables');
     const pages = getAllHtml();
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
-        if (!hasInteractiveBoard(content)) continue;
+        if (!hasInteractiveBoard(content) || !hasChessGame(content)) continue;
         if (!/supa-dots-widget/.test(content)) continue;
 
         // window.x = ..., Object.defineProperty(window, ...), or var x = (global)
-        const exposesGame  = /window\.game\s*=|Object\.defineProperty[^)]*window[^)]*['"']game|var\s+game\s*=/.test(content);
-        const exposesBoard = /window\.board\s*=|Object\.defineProperty[^)]*window[^)]*['"']board|var\s+board\s*=/.test(content);
+        const exposesGame  = /window\.game\s*=|Object\.defineProperty[^)]*window[^)]*['"']game|(?:var|let|const)\s+game\s*=/.test(content);
+        const exposesBoard = /window\.board\s*=|Object\.defineProperty[^)]*window[^)]*['"']board|(?:var|let|const)\s+board\s*=/.test(content);
 
         if (!exposesGame)  warn(`${page} — game non global (widget uses auto-scan fallback)`);
         if (!exposesBoard) warn(`${page} — board non global (widget uses auto-scan fallback)`);
@@ -182,6 +230,7 @@ console.log('🧪 SupaChess — Auto-test cohérence\n' + '='.repeat(50));
 testRequiredScripts();
 testDotsWidget();
 testInternalLinks();
+testSiteVersionReferences();
 testTitles();
 testRedirects();
 testGlobalExposure();

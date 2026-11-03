@@ -44,7 +44,7 @@
 <article class="term" data-category="Règles"><h3>Pat</h3><p>Le joueur au trait n’a aucun coup légal et son roi n’est pas en échec : la partie est nulle.</p></article>
 <article class="term" data-category="Règles"><h3>Échec et mat</h3><p>Le roi est en échec et son camp ne dispose d’aucun coup légal pour supprimer l’échec.</p></article>
 </div><p class="empty" id="empty">Aucune notion ne correspond à cette recherche.</p></section>
-<footer>Bibliothèque SupaChess · Version détaillée <strong>1.13.114</strong> · Les cotes et catégories de puzzles sont indicatives ; la qualité de chaque variante doit être vérifiée.</footer>
+<footer>Bibliothèque SupaChess · Les cotes et catégories de puzzles sont indicatives ; la qualité de chaque variante doit être vérifiée.</footer>
 </main>
 <script>
 (async()=>{try{const r=await fetch("training_games/tactical-training-puzzles.json");if(!r.ok)throw Error("data indisponible");const d=await r.json();document.getElementById("puzzle-count").textContent=Array.isArray(d.puzzles)?d.puzzles.length:"—"}catch{document.getElementById("puzzle-count").textContent="—";document.querySelector("#puzzle-count").nextSibling.textContent=" positions vérifiables indisponibles hors connexion."}})();
@@ -52,5 +52,5 @@ const search=document.getElementById("term-search"),category=document.getElement
 function filter(){const q=search.value.trim().toLocaleLowerCase("fr"),c=category.value;let n=0;for(const card of cards){const show=(!c||card.dataset.category===c)&&card.textContent.toLocaleLowerCase("fr").includes(q);card.hidden=!show;if(show)n++}empty.style.display=n?"none":"block"}
 search.addEventListener("input",filter);category.addEventListener("change",filter);
 </script>
-<script defer src="shared/site-global-v1.13.138.js?v=1.13.138"></script>
+<script defer src="shared/site-global-v1.13.142.js?v=1.13.142"></script>
 </body></html>

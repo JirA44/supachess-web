@@ -397,6 +397,30 @@ test('the Stockfish report renders complete chessboard diagrams', async ({ page 
 });
 
 
+test('Dots controls load and turn off on all nested legendary replay pages', async ({ page }) => {
+  await isolateExternalServices(page);
+  const paths = [
+    '/web/legendary-games/anand_vs_kasparov.html',
+    '/web/legendary-games/carlsen_modern.html',
+    '/web/legendary-games/carlsen_vs_kasparov.html',
+    '/web/legendary-games/deep_blue_vs_kasparov.html',
+    '/web/legendary-games/fischer_game_of_century.html',
+    '/web/legendary-games/karpov_positional.html',
+    '/web/legendary-games/kasparov_immortal.html',
+    '/web/legendary-games/kasparov_vs_karpov.html',
+    '/web/legendary-games/tal_masterpiece.html'
+  ];
+  for (const pathName of paths) {
+    await page.goto(pathName);
+    const button = page.locator('#supa-dots-btn');
+    await expect(button, pathName + ' exposes the Dots control').toBeVisible();
+    await expect(button, pathName + ' starts enabled').toHaveAttribute('aria-pressed', 'true');
+    await button.click();
+    await expect(button, pathName + ' turns Dots off').toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#supa-dots-lbl')).toHaveText('OFF');
+  }
+});
+
 test('Fischer replay Dots toggle shows and clears legal move hints with readable move text', async ({ page }) => {
   await isolateExternalServices(page);
   await page.addInitScript(() => {

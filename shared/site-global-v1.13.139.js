@@ -345,6 +345,7 @@
       if (!visible || existingBars.length || !worker || !ready || busy) return;
       var fen = getFen();
       if (!fen) { note.textContent = isEnglish ? 'Position not available.' : 'Position indisponible.'; return; }
+      if (fen === lastFen && score.textContent) return;
       lastFen = fen;
       busy = true;
       worker.postMessage('stop');

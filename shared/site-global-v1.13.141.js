@@ -460,7 +460,7 @@
         ['classification','quality','moveType','type','annotation','comment','tags','label','move','san'].forEach(function (key) {
           if (item[key] != null) values.push(Array.isArray(item[key]) ? item[key].join(' ') : String(item[key]));
         });
-        ['brilliant','best','good','inaccuracy','mistake','blunder','missedWin','missed_win'].forEach(function (key) {
+        ['brilliant','best','excellent','good','inaccuracy','mistake','blunder','missedWin','missed_win'].forEach(function (key) {
           if (item[key] === true) values.push(key);
         });
       }

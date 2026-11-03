@@ -43,7 +43,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 </div>
 <p class="muted">SF18/19 : sélectionne le JS et le WASM du même build, vérifiés par nom et taille. SF17 : sélectionne le JS et le WASM Lite téléchargés. SF16 : sélectionne aussi le réseau NNUE. Les noms des fichiers 16/17 peuvent varier; l’identifiant UCI est contrôlé au démarrage.</p>
 </div>
-<div class="actions"><button id="generate" class="btn">Générer et classer les parties</button><button id="cancel" class="btn secondary" disabled>Annuler la compilation ou arrêter après le demi-coup</button></div>
+<div class="actions"><button id="generate" class="btn">Générer parties et exercices</button><button id="cancel" class="btn secondary" disabled>Annuler après le demi-coup en cours</button></div><label class="muted" style="display:flex;align-items:center;gap:9px;margin:10px 0"><input id="auto-build-puzzles" type="checkbox" checked> Créer et enregistrer automatiquement des puzzles défensifs après les parties</label>
 <p id="status" class="status" role="status" aria-live="polite">Choisis SF16 à SF19. SF16 nécessite trois fichiers, dont le NNUE; SF17 nécessite le JS et le WASM Lite. L’identifiant UCI confirme la version au démarrage.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
 </section>
@@ -257,7 +257,7 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
 const GENERATED_GAMES_STORAGE_KEY="supachess-generated-games-v1";
 let generatedGameLibrary=[];
 function saveGeneratedGames(){try{localStorage.setItem(GENERATED_GAMES_STORAGE_KEY,JSON.stringify(generatedGameLibrary.slice(-250)));}catch(_e){status("Parties enregistrées en mémoire locale; exporte régulièrement la banque JSON.");}}
-function restoreGeneratedGames(){try{const data=JSON.parse(localStorage.getItem(GENERATED_GAMES_STORAGE_KEY)||"[]");if(Array.isArray(data))generatedGameLibrary=data.filter(g=>g&&Array.isArray(g.uci)&&Array.isArray(g.san));}catch(_e){generatedGameLibrary=[];}}
+function restoreGeneratedGames(){try{const data=JSON.parse(localStorage.getItem(GENERATED_GAMES_STORAGE_KEY)||"[]");if(Array.isArray(data))generatedGameLibrary=data.filter(g=>g&&Array.isArray(g.uci)&&Array.isArray(g.san));}catch(_e){generatedGameLibrary=[];}currentGames=generatedGameLibrary.slice(-40);currentGames.sort((a,b)=>(b.candidateCount||0)-(a.candidateCount||0)||(b.bestChain||0)-(a.bestChain||0)||b.uci.length-a.uci.length);selectedGame=0;if(currentGames.length){renderResults();status(currentGames.length+" partie(s) générée(s) restaurée(s) depuis ce navigateur. Elles restent jouables dans la page Parties brillantes.");}}
 function addGeneratedGame(record){record.id=record.id||("sfgame-"+Date.now()+"-"+Math.random().toString(36).slice(2,8));record.createdAt=record.createdAt||new Date().toISOString();const signature=record.engineVersion+"|"+record.uci.join(",")+"|"+record.whiteElo+"|"+record.blackElo;if(!generatedGameLibrary.some(g=>g.signature===signature)){record.signature=signature;generatedGameLibrary.push(record);saveGeneratedGames();}}
 async function generate(){
  if(typeof Chess!=="function"){status("La bibliothèque d’échecs ne s’est pas chargée.");return;}
@@ -266,14 +266,21 @@ async function generate(){
  try{
   await ensureEngine();
   for(let i=0;i<total&&!cancelRequested;i++){const record=await generateCandidate(i,total,whiteElo,blackElo,movetime,maxPlies,precisionMode);record.engineBuild=activeEngineBuild;addGeneratedGame(record);currentGames.push(record);currentGames.sort((a,b)=>b.candidateCount-a.candidateCount||b.bestChain-a.bestChain||b.uci.length-a.uci.length);selectedGame=0;renderResults();}
-  status(cancelRequested?"Génération interrompue après le demi-coup en cours.":"Génération terminée : les parties sont classées par sacrifices candidats et séquence maximale.");
+  if(document.getElementById("auto-build-puzzles").checked&&currentGames.length){
+   status("Parties générées. Analyse automatique des positions tactiques pour créer des exercices…");
+   const before=generatedDefensePuzzles.length;
+   await buildDefensePuzzles();
+   status("Génération terminée : "+currentGames.length+" partie(s) disponibles et "+(generatedDefensePuzzles.length-before)+" nouveau(x) puzzle(s) réutilisable(s) dans les exercices tactiques de ce navigateur.");
+  }else{
+   status(cancelRequested?"Génération interrompue après le demi-coup en cours. Les parties terminées restent enregistrées.":"Génération terminée : les parties sont classées et enregistrées. Coche l’option pour créer aussi des puzzles automatiquement.");
+  }
  }catch(error){status("Erreur moteur : "+error.message);}
  finally{button.disabled=false;setEngineInputsDisabled(false);document.getElementById("cancel").disabled=true;}
 }
 
 const DEFENSE_PUZZLE_STORAGE_KEY="supachess-generated-defense-puzzles-v1";
 let defensePuzzles=[],generatedDefensePuzzles=[],tacticalTrainingPuzzles=[],activeDefenseIndex=0,defenseGame=null,defenseSelected=null,defenseLineIndex=0,defensePlayed=[];
-function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(generatedDefensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,engineElo:p.engineElo,themes:p.themes,solutionEngineVersion:p.solutionEngineVersion,record:{san:p.record.san,engineBuild:p.record.engineBuild,engineVersion:p.record.engineVersion,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
+function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(generatedDefensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,engineElo:p.engineElo,themes:p.themes,solutionEngineVersion:p.solutionEngineVersion,record:{id:p.record.id,signature:p.record.signature,san:p.record.san,engineBuild:p.record.engineBuild,engineVersion:p.record.engineVersion,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
 const TACTICAL_THEME_LABELS={fork:"Fourchette",pin:"Clouage",skewer:"Enfilade",discovered:"Attaque à la découverte",backrank:"Mat du couloir",smothered:"Mat étouffé",doublecheck:"Échec double",xray:"Attaque aux rayons X",master:"Combinaison avancée","Défense tactique":"Défense tactique","Sacrifice candidat":"Sacrifice candidat","Combinaison multi-coups":"Combinaison multi-coups"};
 function customPuzzleThemeMatches(p){const selected=[...document.querySelectorAll("#custom-theme-options input:checked")].map(x=>x.value);return !selected.length||(p.themes||[]).some(tag=>selected.includes(tag));}
 function customPuzzleMatches(p){const min=Math.max(400,Number(document.getElementById("custom-elo-min").value)||400),max=Math.min(4000,Number(document.getElementById("custom-elo-max").value)||4000),rating=Number(p.rating);return Number.isFinite(rating)&&min<=max&&rating>=min&&rating<=max&&customPuzzleThemeMatches(p);}
@@ -282,37 +289,53 @@ function filterCustomProblems(){const min=document.getElementById("custom-elo-mi
 function startCustomProblem(){const matches=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p));if(!matches.length){filterCustomProblems();return;}const chosen=matches[Math.floor(Math.random()*matches.length)];selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent="Puzzle de la banque lancé · cote enregistrée "+chosen.p.rating+" · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
 function refreshCustomPuzzlePool(){defensePuzzles=[...tacticalTrainingPuzzles,...generatedDefensePuzzles];renderCustomProblemOptions();renderDefensePuzzleList();filterCustomProblems();}
 function restoreDefensePuzzles(){try{const saved=JSON.parse(localStorage.getItem(DEFENSE_PUZZLE_STORAGE_KEY)||"[]");if(!Array.isArray(saved))return;generatedDefensePuzzles=saved.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&p.line.length&&p.record).map((p,i)=>({...p,id:p.id||"saved-defense-"+i,rating:null,engineElo:Number(p.engineElo)||Math.min(Number(p.record.whiteElo)||2800,Number(p.record.blackElo)||2800),themes:Array.isArray(p.themes)?p.themes:["Défense tactique","Sacrifice candidat"]}));if(generatedDefensePuzzles.length)document.getElementById("defense-status").textContent=generatedDefensePuzzles.length+" puzzle(s) Stockfish restauré(s) depuis cet appareil.";}catch(_e){}}
-async function loadTacticalPuzzleBank(){try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san});}if(!line.length)return null;const rating=Number(p.rating)||400;return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";}}
+async function loadTacticalPuzzleBank(){try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});}if(!line.length)return null;const rating=Number(p.rating)||400;return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";}}
 function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
 async function buildDefensePuzzles(){
  const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
- if(!currentGames.length){statusEl.textContent="Génère d’abord des parties avec Stockfish 16, 17, 18 ou 19.";return;}
- button.disabled=true;generatedDefensePuzzles=[];statusEl.textContent="Extraction des positions tactiques candidates…";
+ if(!currentGames.length){statusEl.textContent="Génère d’abord une partie avec Stockfish 16, 17, 18 ou 19.";return 0;}
+ const previousCount=generatedDefensePuzzles.length;
+ const existingIds=new Set(generatedDefensePuzzles.map(p=>p.id));
+ button.disabled=true;statusEl.textContent="Extraction des positions tactiques candidates… Les puzzles déjà créés sont conservés.";
  const candidates=[];
- currentGames.forEach((record,gameIndex)=>record.candidatePlies.slice(0,4).forEach(ply=>{const fen=record.fensAfter[ply];if(fen)candidates.push({record,gameIndex,ply,fen});}));
+ currentGames.forEach((record,gameIndex)=>(Array.isArray(record.candidatePlies)?record.candidatePlies:[]).slice(0,4).forEach(ply=>{
+  const fen=Array.isArray(record.fensAfter)?record.fensAfter[ply]:null;
+  if(fen)candidates.push({record,gameIndex,ply,fen});
+ }));
  const selected=candidates.slice(0,8);
- if(!selected.length){refreshCustomPuzzlePool();statusEl.textContent="Aucune tactique candidate n’a été détectée dans les parties. Génère d’autres parties ou augmente leur longueur.";button.disabled=false;return;}
+ if(!selected.length){
+  refreshCustomPuzzlePool();
+  statusEl.textContent="Aucune nouvelle position tactique candidate. Les "+generatedDefensePuzzles.length+" puzzle(s) déjà enregistrés restent disponibles.";
+  button.disabled=false;return 0;
+ }
  setEngineInputsDisabled(true);
  try{
   await ensureEngine();
   for(let n=0;n<selected.length;n++){
    const item=selected[n],game=new Chess(item.fen),line=[],userColor=game.turn();
-   statusEl.textContent="Analyse des défenses et contre-attaques Stockfish · puzzle "+(n+1)+"/"+selected.length+" · Elo UCI "+item.record.whiteElo+"/"+item.record.blackElo+" · temps par demi-coup "+document.getElementById("move-time").value+" ms.";
+   statusEl.textContent="Analyse des défenses Stockfish · puzzle "+(n+1)+"/"+selected.length+" · Elo UCI "+item.record.whiteElo+"/"+item.record.blackElo+" · recherche "+document.getElementById("move-time").value+" ms.";
    for(let ply=0;ply<5&&!game.game_over();ply++){
     const elo=game.turn()==="w"?item.record.whiteElo:item.record.blackElo;
     const token=await bestMove(game.fen(),elo,Number(document.getElementById("move-time").value),{remainingSeconds:0,remainingPercent:0});
     if(!token||token==="(none)")break;
     const move=game.move({from:token.slice(0,2),to:token.slice(2,4),promotion:token[4]||"q"});
     if(!move)break;
-    line.push({color:move.color,from:move.from,to:move.to,san:move.san});
+    line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});
    }
-   if(line.some(m=>m.color===userColor))generatedDefensePuzzles.push({...item,line,userColor,solutionEngineVersion:activeEngineVersion,id:"generated-defense-"+n,rating:null,engineElo:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
+   const recordKey=item.record.id||item.record.signature||("game-"+item.gameIndex);
+   const puzzleId="generated-defense-"+recordKey+"-ply-"+item.ply;
+   if(line.some(m=>m.color===userColor)&&!existingIds.has(puzzleId)){
+    generatedDefensePuzzles.push({...item,line,userColor,solutionEngineVersion:activeEngineVersion,id:puzzleId,rating:null,engineElo:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
+    existingIds.add(puzzleId);
+   }
   }
   refreshCustomPuzzlePool();saveDefensePuzzles();
   document.getElementById("defense-panel").classList.remove("hidden");
-  statusEl.textContent=generatedDefensePuzzles.length+" puzzle(s) défensif(s) généré(s) depuis "+candidates.length+" position(s) tactique(s) candidate(s). Le premier coup de la ligne est la défense à trouver.";
-  if(generatedDefensePuzzles.length)selectDefensePuzzle(tacticalTrainingPuzzles.length);
- }catch(error){statusEl.textContent="Impossible d’analyser les positions : "+error.message;}
+  const added=generatedDefensePuzzles.length-previousCount;
+  statusEl.textContent=added+" nouveau(x) puzzle(s) défensif(s) enregistré(s) · "+generatedDefensePuzzles.length+" au total. Ils sont maintenant disponibles dans les exercices tactiques de ce navigateur.";
+  if(added)selectDefensePuzzle(tacticalTrainingPuzzles.length+previousCount);
+  return added;
+ }catch(error){statusEl.textContent="Impossible d’analyser les positions : "+error.message;return 0;}
  finally{button.disabled=false;setEngineInputsDisabled(false);}
 }
 let customBankVisibleCount=12;

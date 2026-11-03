@@ -809,11 +809,11 @@
 <script src="shared/profiles.js?v=global-site-search-20261031"></script>
 <script>document.addEventListener('DOMContentLoaded', function(){ if(window.SupaProfiles) SupaProfiles.initSearchBar(); if(window.SupaProfiles&&typeof firebase!=='undefined'&&firebase){ var a=firebase.auth(), d=firebase.firestore(); SupaProfiles.init(a,d); SupaProfiles.initRankingSection(); a.onAuthStateChanged(function(u){ if(u) SupaProfiles.ensureUserProfile(u); }); if(new URLSearchParams(location.search).get('openProfile')==='1'){a.onAuthStateChanged(function(u){history.replaceState(null,'',location.pathname+location.hash);if(!u){var login=document.getElementById('cn-auth-bar-login');if(login)login.click();return;}SupaProfiles.getProfile(u.uid).then(function(profile){if(profile)SupaProfiles.renderProfileModal(profile);else SupaProfiles.renderOwnProfileFallback(u);}).catch(function(){SupaProfiles.renderOwnProfileFallback(u);});});} }});</script>
 <!-- /ChessNova Community -->
-    <script src="supa-dots-widget.js?v=20261025b"></script>
+    <script src="supa-dots-widget-v1.13.138.js?v=1.13.138?v=20261025b"></script>
 <script src="supa-move-bubbles.js?v=20261025b"></script>
 <script src="supa-style-engine.js"></script>
 <script src="supa-quick-solve.js"></script>
     <script src="js/decision_audit.js"></script>
-    <script defer src="shared/site-global-v1.13.137.js?v=1.13.137"></script>
+    <script defer src="shared/site-global-v1.13.138.js?v=1.13.138"></script>
 </body>
 </html>

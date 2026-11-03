@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.136';
+  var SITE_VERSION = '1.13.137';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -19,7 +19,7 @@
     '.supachess-page-back:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}',
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
-  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}}';
+  style.textContent += '.supachess-global-settings{display:flex;justify-content:center;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings-panel{min-width:180px;max-width:320px;border:1px solid #7892ad;border-radius:12px;background:#13253b;color:#fff;font:600 13px/1.4 system-ui,sans-serif}.supachess-global-settings-panel>summary{padding:8px 12px;cursor:pointer;list-style:none}.supachess-global-settings-panel>summary::-webkit-details-marker{display:none}.supachess-global-settings-body{display:grid;gap:8px;padding:10px 12px;border-top:1px solid #7892ad}.supachess-global-settings-body label{display:grid;gap:5px}.supachess-global-settings-body label:has(input[type=checkbox]){display:flex;align-items:flex-start;gap:7px}.supachess-global-settings-body select{max-width:100%;padding:7px;border-radius:7px;background:#09111f;color:#fff}.supachess-global-settings-panel:focus-within{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings-panel{width:min(100%,320px)}}';
   (document.head || document.documentElement).appendChild(style);
 
   // Normalize outline Unicode chess symbols to solid glyphs; CSS determines side color.
@@ -132,21 +132,84 @@
     if (!document.body || document.querySelector('.supachess-global-settings')) return;
     var nav = document.createElement('nav');
     nav.className = 'supachess-global-settings';
-    nav.setAttribute('aria-label', 'SupaChess settings');
+    nav.setAttribute('aria-label', 'Réglages de cette page');
     var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr')
       || (localStorage.getItem('chessnova_lang') || '').slice(0, 2).toLowerCase() === 'fr';
-    var base = 'https://jira44.github.io/supachess/index.html';
-    var appearance = document.createElement('a');
-    appearance.href = base + '#appearance-panel';
-    appearance.textContent = french ? '🎨 Apparence' : '🎨 Appearance';
-    var analysis = document.createElement('a');
-    analysis.href = base + '#analysis-preferences';
-    analysis.textContent = french ? '📊 Analyse' : '📊 Analysis';
-    nav.appendChild(appearance);
-    nav.appendChild(analysis);
+    var themes = {
+      green:['#eeeed2','#769656'], blue:['#e8edf5','#7892ad'], wood:['#f0d9b5','#b58863'],
+      slate:['#e2e6ed','#788394'], purple:['#f0e8f7','#9a7ab2'], gray:['#e4e4e1','#888985'],
+      sand:['#f4e7c8','#c4a06a'], midnight:['#cbd5e1','#334155']
+    };
+    var labels = french
+      ? {green:'Vert classique',blue:'Bleu',wood:'Bois',slate:'Ardoise',purple:'Violet',gray:'Gris',sand:'Sable',midnight:'Nuit'}
+      : {green:'Classic green',blue:'Blue',wood:'Wood',slate:'Slate',purple:'Purple',gray:'Gray',sand:'Sand',midnight:'Midnight'};
+    var prefs = { board:'green', showComments:true, showMoveInfo:true, outlinedPieces:true };
+    try { Object.assign(prefs, JSON.parse(localStorage.getItem('supachess-web-page-prefs-v1') || '{}')); } catch (_) {}
+    function save() {
+      try { localStorage.setItem('supachess-web-page-prefs-v1', JSON.stringify(prefs)); } catch (_) {}
+    }
+    function apply() {
+      var colors = themes[prefs.board] || themes.green;
+      document.documentElement.style.setProperty('--supachess-board-light', colors[0]);
+      document.documentElement.style.setProperty('--supachess-board-dark', colors[1]);
+      document.documentElement.dataset.gaShowComments = String(prefs.showComments !== false);
+      document.documentElement.dataset.gaShowMoveInfo = String(prefs.showMoveInfo !== false);
+      document.documentElement.dataset.gaOutlinedPieces = String(prefs.outlinedPieces !== false);
+      document.querySelectorAll('#board .white-1e1d7,.board .white-1e1d7').forEach(function (square) { square.style.setProperty('background-color', colors[0], 'important'); });
+      document.querySelectorAll('#board .black-3c85d,.board .black-3c85d').forEach(function (square) { square.style.setProperty('background-color', colors[1], 'important'); });
+    }
+    var style = document.createElement('style');
+    style.id = 'supachess-local-page-settings';
+    style.textContent = ':root[data-ga-show-comments="false"] .move-comment{display:none!important}:root[data-ga-show-move-info="false"] #moveInfo{display:none!important}:root[data-ga-outlined-pieces="true"] #board .piece-417db{filter:drop-shadow(0 0 1.5px #111)!important}';
+    (document.head || document.documentElement).appendChild(style);
+    var appearance = document.createElement('details');
+    appearance.className = 'supachess-global-settings-panel';
+    var appearanceSummary = document.createElement('summary');
+    appearanceSummary.textContent = french ? '🎨 Apparence' : '🎨 Appearance';
+    appearance.appendChild(appearanceSummary);
+    var appearanceBody = document.createElement('div');
+    appearanceBody.className = 'supachess-global-settings-body';
+    var boardLabel = document.createElement('label');
+    boardLabel.textContent = french ? 'Couleurs de l’échiquier' : 'Board colors';
+    var boardSelect = document.createElement('select');
+    boardSelect.setAttribute('aria-label', boardLabel.textContent);
+    Object.keys(themes).forEach(function (key) {
+      var option = document.createElement('option'); option.value = key; option.textContent = labels[key]; boardSelect.appendChild(option);
+    });
+    boardSelect.value = themes[prefs.board] ? prefs.board : 'green';
+    boardSelect.addEventListener('change', function () { prefs.board = boardSelect.value; save(); apply(); });
+    boardLabel.appendChild(boardSelect);
+    appearanceBody.appendChild(boardLabel);
+    var pieceLabel = document.createElement('label');
+    var pieceToggle = document.createElement('input'); pieceToggle.type = 'checkbox'; pieceToggle.checked = prefs.outlinedPieces !== false;
+    pieceToggle.addEventListener('change', function () { prefs.outlinedPieces = pieceToggle.checked; save(); apply(); });
+    pieceLabel.appendChild(pieceToggle);
+    pieceLabel.appendChild(document.createTextNode(french ? ' Renforcer le contour des pièces' : ' Strengthen piece outlines'));
+    appearanceBody.appendChild(pieceLabel);
+    appearance.appendChild(appearanceBody);
+    var analysis = document.createElement('details');
+    analysis.className = 'supachess-global-settings-panel';
+    var analysisSummary = document.createElement('summary');
+    analysisSummary.textContent = french ? '📊 Analyse' : '📊 Analysis';
+    analysis.appendChild(analysisSummary);
+    var analysisBody = document.createElement('div');
+    analysisBody.className = 'supachess-global-settings-body';
+    [
+      ['showComments', french ? 'Afficher les commentaires de la partie' : 'Show game comments'],
+      ['showMoveInfo', french ? 'Afficher les informations du coup courant' : 'Show current-move details']
+    ].forEach(function (entry) {
+      var label = document.createElement('label');
+      var input = document.createElement('input'); input.type = 'checkbox'; input.checked = prefs[entry[0]] !== false;
+      input.addEventListener('change', function () { prefs[entry[0]] = input.checked; save(); apply(); });
+      label.appendChild(input); label.appendChild(document.createTextNode(' ' + entry[1])); analysisBody.appendChild(label);
+    });
+    analysis.appendChild(analysisBody);
+    nav.append(appearance, analysis);
     var topBack = document.querySelector('.supachess-page-back--top');
     if (topBack && topBack.parentNode) topBack.parentNode.insertBefore(nav, topBack.nextSibling);
     else document.body.insertBefore(nav, document.body.firstChild);
+    apply();
+    if (window.MutationObserver) new MutationObserver(apply).observe(document.body, {childList:true,subtree:true});
   }
   function addSiteVersion() {
     if (!document.body || document.querySelector('.supachess-site-version')) return;

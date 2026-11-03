@@ -99,6 +99,8 @@ function testInternalLinks() {
         // Match src="..." et href="..." relatifs (pas http, pas /shared, pas /)
         const refs = [...content.matchAll(/(?:src|href)="([^"]+)"/g)]
             .map(m => m[1])
+            // Inline JS may compose href values conditionally; those are not static file paths.
+            .filter(r => !/\+\s*\(|\$\{|\btrack\s*===/.test(r))
             .filter(r => !r.startsWith('http') && !r.startsWith('//') && !r.startsWith('/') && !r.startsWith('#') && !r.startsWith('data:'));
 
         for (const ref of refs) {

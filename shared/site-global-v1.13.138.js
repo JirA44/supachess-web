@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.139';
+  var SITE_VERSION = '1.13.138';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -285,133 +285,7 @@
     else if (bottomLink && bottomLink.parentNode) bottomLink.parentNode.insertBefore(label, bottomLink);
     else document.body.appendChild(label);
   }
-
-  function installOptionalEvalBar() {
-    var boards = Array.prototype.slice.call(document.querySelectorAll('#board,#chessboard,#lesson-board,.chess-board,.board'))
-      .filter(function (el) { return el.getBoundingClientRect().width >= 140 && el.getBoundingClientRect().height >= 140; });
-    if (!boards.length) return;
-    var board = boards[0];
-    var existingBars = Array.prototype.slice.call(document.querySelectorAll('.evalbar,.eval-bar-wrap,.eval-bar-container,.eval-bar'))
-      .filter(function (el) { return !el.closest('#supachess-optional-eval'); });
-    if (document.getElementById('supachess-optional-eval-toggle')) return;
-    var button = document.createElement('button');
-    button.id = 'supachess-optional-eval-toggle';
-    button.type = 'button';
-    button.className = 'supachess-eval-toggle';
-    button.setAttribute('aria-pressed', 'false');
-    var isEnglish = /^en\b/i.test(document.documentElement.lang || '');
-    var panel = document.createElement('section');
-    panel.id = 'supachess-optional-eval';
-    panel.className = 'supachess-eval-panel';
-    panel.hidden = true;
-    panel.setAttribute('aria-live', 'polite');
-    panel.innerHTML = '<div class="supachess-eval-track" aria-label="Évaluation Stockfish"><div class="supachess-eval-white"></div><span></span></div><p class="supachess-eval-note"></p>';
-    var host = board.parentElement || board;
-    host.insertAdjacentElement('afterend', button);
-    button.insertAdjacentElement('afterend', panel);
-    var track = panel.querySelector('.supachess-eval-track');
-    var fill = panel.querySelector('.supachess-eval-white');
-    var score = track.querySelector('span');
-    var note = panel.querySelector('.supachess-eval-note');
-    var storageKey = 'supachess-evalbar-visible-v1';
-    var visible = false;
-    try { visible = localStorage.getItem(storageKey) === 'true'; } catch (_) {}
-    var worker = null, ready = false, busy = false, timer = 0, lastFen = '';
-    function getGame() {
-      var candidates = [];
-      try { if (window.game) candidates.push(window.game); } catch (_) {}
-      try { if (window.chess) candidates.push(window.chess); } catch (_) {}
-      try { if (window.tacticGame) candidates.push(window.tacticGame); } catch (_) {}
-      try { if (typeof game !== 'undefined') candidates.push(game); } catch (_) {}
-      try { if (typeof chess !== 'undefined') candidates.push(chess); } catch (_) {}
-      try { if (typeof tacticGame !== 'undefined') candidates.push(tacticGame); } catch (_) {}
-      for (var i = 0; i < candidates.length; i++) {
-        try { if (candidates[i] && typeof candidates[i].fen === 'function') return candidates[i]; } catch (_) {}
-      }
-      return null;
-    }
-    function getFen() {
-      var g = getGame();
-      if (!g) return '';
-      try { var fen = g.fen(); return typeof fen === 'string' && fen.split(/\s+/).length >= 4 ? fen : ''; } catch (_) { return ''; }
-    }
-    function sync() {
-      button.setAttribute('aria-pressed', String(visible));
-      button.textContent = isEnglish ? (visible ? 'Hide evaluation bar' : 'Show evaluation bar') : (visible ? 'Masquer la barre d’évaluation' : 'Afficher la barre d’évaluation');
-      if (existingBars.length) existingBars.forEach(function (el) { el.hidden = !visible; });
-      else panel.hidden = !visible;
-    }
-    function analyze() {
-      if (!visible || existingBars.length || !worker || !ready || busy) return;
-      var fen = getFen();
-      if (!fen) { note.textContent = isEnglish ? 'Position not available.' : 'Position indisponible.'; return; }
-      lastFen = fen;
-      busy = true;
-      worker.postMessage('stop');
-      worker.postMessage('position fen ' + fen);
-      worker.postMessage('go movetime 700');
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        busy = false;
-        if (visible && getFen() !== lastFen) analyze();
-      }, 1100);
-    }
-    function ensureWorker() {
-      if (worker || existingBars.length || !visible) return;
-      try {
-        worker = new Worker(new URL('/supachess/vendor/stockfish-19-lite-single.js', location.origin));
-        worker.onmessage = function (event) {
-          var line = String(event.data || '');
-          if (line === 'uciok') { worker.postMessage('isready'); return; }
-          if (line === 'readyok') { ready = true; analyze(); return; }
-          if (!line.startsWith('info ')) return;
-          var cpMatch = line.match(/\bscore cp (-?\d+)/);
-          var mateMatch = line.match(/\bscore mate (-?\d+)/);
-          var depthMatch = line.match(/\bdepth (\d+)/);
-          if (!cpMatch && !mateMatch) return;
-          var fen = getFen();
-          if (!fen || fen !== lastFen) return;
-          var sideToMove = fen.split(/\s+/)[1];
-          var cp = cpMatch ? Number(cpMatch[1]) : (Number(mateMatch[1]) > 0 ? 2000 : -2000);
-          if (sideToMove === 'b') cp = -cp;
-          var clamped = Math.max(-1000, Math.min(1000, cp));
-          fill.style.width = (50 + clamped / 20) + '%';
-          score.textContent = mateMatch ? '#' + (Number(mateMatch[1]) * (sideToMove === 'b' ? -1 : 1)) : (cp > 0 ? '+' : '') + (cp / 100).toFixed(2);
-          note.textContent = (isEnglish ? 'Local Stockfish · depth ' : 'Stockfish local · profondeur ') + (depthMatch ? depthMatch[1] : '…');
-        };
-        worker.onerror = function () { note.textContent = isEnglish ? 'Local engine unavailable.' : 'Moteur local indisponible.'; };
-        worker.postMessage('uci');
-      } catch (_) { note.textContent = isEnglish ? 'Local engine unavailable.' : 'Moteur local indisponible.'; }
-    }
-    button.addEventListener('click', function () {
-      visible = !visible;
-      try { localStorage.setItem(storageKey, String(visible)); } catch (_) {}
-      sync();
-      if (visible) { ensureWorker(); analyze(); }
-      else if (worker) worker.postMessage('stop');
-    });
-    sync();
-    if (visible) { ensureWorker(); analyze(); }
-    var observer = new MutationObserver(function () {
-      if (visible && !existingBars.length) analyze();
-    });
-    observer.observe(board, { subtree: true, childList: true, attributes: true, characterData: true });
-    window.setInterval(function () { if (visible && !existingBars.length) analyze(); }, 1500);
-  }
-  function initializeEvalBar() {
-    var tries = 0;
-    var attempt = function () {
-      installOptionalEvalBar();
-      if (!document.getElementById('supachess-optional-eval-toggle') && tries++ < 20) setTimeout(attempt, 500);
-    };
-    attempt();
-  }
-  var evalStyle = document.createElement('style');
-  evalStyle.textContent = '.evalbar[hidden],.eval-bar-wrap[hidden],.eval-bar-container[hidden],.eval-bar[hidden]{display:none!important}.supachess-eval-toggle{display:block;margin:8px auto;padding:8px 14px;border:1px solid #78c6dc;border-radius:9px;background:#12354a;color:#fff;font:600 14px/1.3 system-ui,sans-serif;cursor:pointer}.supachess-eval-toggle:hover{background:#1b526f}.supachess-eval-toggle:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}.supachess-eval-panel{max-width:600px;margin:6px auto 14px;padding:10px 12px;border:1px solid #466078;border-radius:10px;background:#101c2c;color:#f4f7fb}.supachess-eval-track{position:relative;height:20px;overflow:hidden;border-radius:7px;background:#202a3a;border:1px solid #77889e}.supachess-eval-white{height:100%;width:50%;background:#f5f5f2;transition:width .25s}.supachess-eval-track span{position:absolute;inset:0;display:grid;place-items:center;color:#101827;font:700 13px/1 system-ui,sans-serif;text-shadow:0 0 2px #fff}.supachess-eval-note{margin:6px 0 0;text-align:center;font:12px/1.4 system-ui,sans-serif;color:#c6d2df}.supachess-eval-panel[hidden]{display:none!important}';
-  (document.head || document.documentElement).appendChild(evalStyle);
-
   function initializeGlobalLabels() {
-    initializeEvalBar();
     addBackLinks();
     addSettingsLinks();
     addSiteVersion();

@@ -446,6 +446,7 @@
     var categories = [
       { id: 'brilliant', fr: 'Brillant', en: 'Brilliant' },
       { id: 'best', fr: 'Meilleur', en: 'Best' },
+      { id: 'excellent', fr: 'Excellent', en: 'Excellent' },
       { id: 'good', fr: 'Bon', en: 'Good' },
       { id: 'inaccuracy', fr: 'Imprécision', en: 'Inaccuracy' },
       { id: 'mistake', fr: 'Erreur', en: 'Mistake' },
@@ -479,7 +480,8 @@
       if (/missed[ _-]?win|gain manque|occasion manque/.test(normalized)) flags['missed-win'] = true;
       if (/inaccuracy|imprecision/.test(normalized) || /\?!$/.test(san) || /[a-z0-9+#=]{2,10}\?!/.test(raw)) flags.inaccuracy = true;
       if (/mistake|erreur/.test(normalized) || (/\?$/.test(san) && !/\?\?$/.test(san)) || /[a-z0-9+#=]{2,10}\?(?![!?])/.test(raw)) flags.mistake = true;
-      if (/\bbest\b|meilleur|excellent/.test(normalized) || /!$/.test(san) || /[a-z0-9+#=]{2,10}!(?![!?])/.test(raw)) flags.best = true;
+      if (/\bbest\b|meilleur/.test(normalized)) flags.best = true;
+      if (/\bexcellent\b/.test(normalized) || /!$/.test(san) || /[a-z0-9+#=]{2,10}!(?![!?])/.test(raw)) flags.excellent = true;
       if (/\bgood\b|bon coup/.test(normalized)) flags.good = true;
       return flags;
     }

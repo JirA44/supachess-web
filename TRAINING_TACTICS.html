@@ -318,6 +318,7 @@ const THEMES = [
     { id:'doublecheck', name:'♟️ Double échec', color:'#ec4899' },
     { id:'xray', name:'🔮 Rayon X', color:'#14b8a6' },
     { id:'master', name:'♟️ Puzzles avancés', color:'#facc15' },
+    { id:'generated', name:'🧪 Générés par Stockfish', color:'#c084fc' },
 ]
 
 const PUZZLES = [
@@ -5594,6 +5595,48 @@ PUZZLES.forEach((puzzle, index) => {
 const LICHESS_SOLUTION_LINES = {"q2cun":["h3h4","c3c6","a2f2","f4e3","f2h2"],"IGs0J":["d4f3","h4h5","f3g5"],"9brtS":["a4c6","b7c6","e2a6"],"QCPaS":["f4g6","h8h7","g6f8","d8f8","d2h6"],"fEz5o":["g7g2","g1g2","d6h2"],"YS5D6":["a4b6","c4c5","d3d5"],"7nrsg":["e2d3","c8a8","a6a7"],"187ff":["g6e4","e2d2","g7g2"],"vLDbN":["d6e5","d2c3","c8c3","f3c3","e6f6"],"3i59Q":["h4h3","d6g3","c6e5"],"7X01V":["d3c4","f8f7","c4f7","f6f7","h1h8","g8h8","g6f7"],"dXBu7":["c2h7","g8f8","c1e1"],"guaMZ":["g3h4","g5e5","d8h8","h7g6","c8c6"],"cNvFC":["e4e5","d6e5","g5f6","e7f6","d1d7"],"XKbrl":["h5h6","a2a1","d2b1","a1b1","c5c1"],"mMcCS":["h5g4","e8f7","g8f7"],"W6B8s":["d1h5","g8g7","h5h7"],"HtVST":["h3e6","g7e6","d6d7","f7g8","d7h7"],"1o3Ma":["g5g6","f8e8","g6f7","c7f7","a2f7"],"khWSV":["c4d4","e3f3","c8g4","h5g4","a8f8","f3g2","d4g4"],"bvOgR":["h4h2","g1f1","h2h1","f1e2","h1g2"],"MIeCJ":["c1c8","a8c8","e3d4","g7d4","d1d4","c8c1","b5f1"],"VYrkz":["f5c8","c7c8","c4c8","g8h7","c8h8","h7h8","e5f7","h8h7","f7d6"],"Sxa0M":["d4b5","e4g3","h2g3"],"EradF":["d2d1","g1g2","a2d5","f2f3","d1f3","g2h3","f3h5"],"NGle0":["b7b8","d3b1","b8b1"],"MHb6y":["h4g5","d4e5","g2g3","e5f5","g3f4","f5f4","g5g6"],"ocezv":["d7e5","a7e7","a8a1","d3f1","a1f1"],"ZHsnA":["h2c2","b2c2","c4d3","h7g8","d3c2"],"1eFKW":["d5d6","g6f7","c5c8","b4b1","d6d7"],"6ZGuS":["f3f6","a4c3","f7e7","e8e7","f6e7"],"WSIph":["f2e3","g4f5","e3f3","e6e5","d4e5"],"Kirkc":["d2h6","h7g8","g4f6","e7f6","e5f6","c7c1","h6c1"],"ZFMme":["b6e6","g1g3","f4g3","h1g1","h6h3"],"lY6ai":["e8e2","g2f1","c6c2"],"bB7b1":["d2f4","c7f4","g3h5","f4f5","d3f5"],"RG6Kr":["h4h8","g8f7","h8g7","f7g7","h3h7","g7f8","h7h8","f8e7","h1h7","e6g7","h7g7"],"GYhZa":["e2h2","h3h2","g4h4","h2g1","c3e2","g1f1","h4h1"],"jVWzt":["f6h4","h2h3","d4f3","g1h1","f3d2"],"2faAV":["d3b5","c7c6","d1d8"],"rQcwG":["f6g6","a7g7","g6g7","e5f5","f2f5"],"Ut0kC":["c8c3","b2c3","d3c4","a2b2","c4f7"],"rBQEt":["g1g3","f4g3","f2g3"],"JxJWL":["f7f6","g5h6","f8f7","e5f7","b8g3"],"AAAFw":["c6d5","c4d5","d6c5"],"2sQdR":["a4a3","f3e2","a3c3"],"9ZyfB":["g1a7","e7d8","a7b8"],"PJSER":["f2f4","e5e6","d6d7","e6d7","d1d5"],"XL5Sv":["d5f6","g7f6","g5f6"],"Owzrv":["f3h3","f7f5","h3h8","f8f7","h8c8"]};
 PUZZLES.forEach(p => { if (p.sourceId && LICHESS_SOLUTION_LINES[p.sourceId]) p.solutionMoves = LICHESS_SOLUTION_LINES[p.sourceId]; });
 
+const GENERATED_DEFENSE_PUZZLE_KEY = 'supachess-generated-defense-puzzles-v1';
+function loadGeneratedDefensePuzzles() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(GENERATED_DEFENSE_PUZZLE_KEY) || '[]');
+        if (!Array.isArray(saved)) return;
+        saved.forEach((item, index) => {
+            if (!item || typeof item.fen !== 'string' || !Array.isArray(item.line) || !item.line.length) return;
+            const game = new Chess(item.fen);
+            const userColor = item.userColor === 'b' ? 'b' : item.userColor === 'w' ? 'w' : game.turn();
+            const solutionMoves = [];
+            for (const step of item.line.slice(0, 8)) {
+                if (!step || typeof step.from !== 'string' || typeof step.to !== 'string') break;
+                const move = game.move({from:step.from,to:step.to,promotion:step.promotion || 'q'});
+                if (!move) break;
+                solutionMoves.push(move.from + move.to + (move.promotion || ''));
+            }
+            if (!solutionMoves.length || game.turn() !== userColor || !item.line[0] || item.line[0].color !== userColor) return;
+            const id = 'generated-stockfish-' + String(item.id || index);
+            if (PUZZLES.some(puzzle => puzzle.id === id)) return;
+            const lineSan = item.line.slice(0, solutionMoves.length).map(step => step.san).filter(Boolean);
+            const engineLabel = String(item.solutionEngineVersion || item.record && item.record.engineVersion || 'Stockfish');
+            const engineElo = Number(item.engineElo || item.record && Math.min(item.record.whiteElo || 0, item.record.blackElo || 0)) || null;
+            PUZZLES.push({
+                id, generated:true, theme:'generated', themeLabel:'Généré · ' + engineLabel,
+                title:'Position générée · ' + (item.themes || ['Défense tactique']).join(' · '),
+                rating:null, turn:userColor, board:item.fen.split(' ')[0], fen:item.fen, hl:[],
+                desc:'Trouve le premier coup de la ligne, puis poursuis la défense ou la contre-attaque calculée.',
+                explain:'Ligne candidate calculée par ' + engineLabel + (engineElo ? ' · Elo UCI demandé ' + engineElo : '') + '. Variante : ' + lineSan.join(' · ') + '. Elle n’est pas une cote de difficulté certifiée.',
+                question:'Que signifie l’Elo affiché pour cette analyse ?',
+                choices:[
+                    {text:'Le réglage Elo UCI demandé au moteur, pas une cote de puzzle étalonnée',correct:true},
+                    {text:'Une cote FIDE certifiée pour la difficulté du puzzle',correct:false}
+                ],
+                answer:solutionMoves[0], solutionMoves, engineElo
+            });
+        });
+    } catch (error) {
+        console.warn('Puzzles Stockfish locaux ignorés :', error);
+    }
+}
+loadGeneratedDefensePuzzles();
+
 const TACTIC_EXPLANATION_FIXES = {
     'discovered-A':'Le cavalier quitte la colonne a : la tour blanche a1 découvre une attaque contre le roi noir a8.',
     'discovered-B':'Le cavalier quitte la colonne h : la tour blanche h1 découvre une attaque contre le roi noir h8.',
@@ -5627,7 +5670,7 @@ function syncTacticsMastery() {
     try {
         const validSolved = Array.from(new Set(solved.filter(id => PUZZLES.some(puzzle => puzzle.id === id))));
         const completedCategories = THEMES
-            .filter(theme => theme.id !== 'all')
+            .filter(theme => theme.id !== 'all' && theme.id !== 'generated')
             .filter(theme => {
                 const themePuzzles = PUZZLES.filter(puzzle => puzzle.theme === theme.id);
                 return themePuzzles.length > 0 && themePuzzles.every(puzzle => validSolved.includes(puzzle.id));
@@ -5734,10 +5777,11 @@ function renderGrid() {
     grid.innerHTML = filtered.map(p => {
         const isSolved = solved.includes(p.id);
         const theme = THEMES.find(t=>t.id===p.theme);
-        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title || p.themeLabel || ('Puzzle ' + p.id)}, ${p.rating} Elo, ${isSolved?'résolu':'à résoudre'}">
+        const difficultyLabel = p.generated ? 'Non étalonné' : '⭐ ' + p.rating;
+        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title || p.themeLabel || ('Puzzle ' + p.id)}, ${p.generated?'difficulté non étalonnée':p.rating + ' Elo'}, ${isSolved?'résolu':'à résoudre'}">
             <div class="pz-top">
                 <span class="pz-title">${isSolved?'✅ ':''} ${p.title || p.themeLabel || ('Puzzle ' + p.id)}</span>
-                <span class="pz-rating">⭐ ${p.rating}</span>
+                <span class="pz-rating">${difficultyLabel}</span>
             </div>
             <span class="pz-theme-badge">${p.themeLabel||theme?.name||''}</span>
             ${renderMiniBoard(p.board, p.hl)}
@@ -5761,7 +5805,7 @@ function openPuzzle(id) {
     document.getElementById('modal-inner').innerHTML = `
         <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>
         <h2>${currentPuzzle.title}</h2>
-        <div class="modal-sub">Difficulté indicative : ⭐ ${currentPuzzle.rating}</div>
+        <div class="modal-sub">${currentPuzzle.generated?"Exercice généré · difficulté non étalonnée":"Difficulté indicative : ⭐ "+currentPuzzle.rating}</div>
         <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl, currentPuzzle.turn)}</div>
         <div class="modal-desc">
             <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span><br>

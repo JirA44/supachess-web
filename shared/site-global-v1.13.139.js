@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.139';
+  var SITE_VERSION = '1.13.140';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -20,6 +20,15 @@
     '.supachess-page-back--top{margin-top:0}'
   ].join('');
   style.textContent += '.supachess-global-settings{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px auto;padding:0 12px}.supachess-global-settings a{display:inline-block;padding:8px 12px;border:1px solid #7892ad;border-radius:999px;background:#13253b;color:#fff!important;font:600 13px/1.25 system-ui,sans-serif;text-decoration:none}.supachess-global-settings a:hover{background:#1c3c5c;text-decoration:underline}.supachess-global-settings a:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}@media(max-width:520px){.supachess-global-settings a{font-size:12px;padding:7px 10px}}';
+
+  style.textContent += [
+    '.supachess-vector-piece{background-color:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;min-width:0!important;min-height:0!important;display:inline-block!important;width:88%!important;height:88%!important;line-height:1!important}',
+    '.supachess-vector-piece{background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important}',
+    '.square,.analysis-square,.cell,.big-cell{touch-action:manipulation}',
+    '.controls button,.board-controls button,.chess-controls button{min-width:44px;min-height:44px;touch-action:manipulation}',
+    '@media(max-width:768px){.board-container,#chessboard,.chessboard,#analysisBoard{max-width:min(100%,88vw,78vh);margin-left:auto;margin-right:auto}.controls{gap:8px;flex-wrap:wrap}.controls button{padding:10px 12px}}',
+    '@media(pointer:coarse){.controls button,.board-controls button,.chess-controls button{min-width:48px;min-height:48px}.square,.analysis-square,.cell,.big-cell{transition:none!important}}'
+  ].join('');
   (document.head || document.documentElement).appendChild(style);
 
 
@@ -74,12 +83,14 @@
           artwork.onload = function () {
             if (node.getAttribute('data-supachess-vector-src') !== vector) return;
             node.classList.add('supachess-vector-piece');
-            node.style.backgroundImage = 'url("' + vector + '")';
+            node.style.setProperty('background-image', 'url("' + vector + '")', 'important');
+            node.style.setProperty('background-color', 'transparent', 'important');
           };
           artwork.onerror = function () {
             if (node.getAttribute('data-supachess-vector-src') !== vector) return;
             node.classList.remove('supachess-vector-piece');
-            node.style.backgroundImage = 'none';
+            node.style.removeProperty('background-image');
+            node.style.removeProperty('background-color');
           };
           artwork.src = vector;
         }
@@ -252,7 +263,7 @@
     var label = document.createElement('small');
     label.className = 'supachess-site-version';
     label.setAttribute('data-supachess-version-label', '');
-    label.setAttribute('aria-label', 'SupaChess site version 1.13.135');
+    label.setAttribute('aria-label', 'SupaChess site version ' + SITE_VERSION);
     var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr');
     label.textContent = (french ? 'Version du site : ' : 'Site version: ') + SITE_VERSION;
     var pagePath = (location.pathname || '/').replace(/\/$/, '').split('/').pop() || 'index.html';

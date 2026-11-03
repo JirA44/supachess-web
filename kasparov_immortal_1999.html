@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<!-- Version 2.3 - Fix navigation - 2026-01-23 -->
+<!-- Version 2.4 - Cross-device chessboard rendering - 2026-11-03 -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -345,7 +345,13 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 107, 107, 0.7);
         }
-    </style>
+        /* Shared SVG pieces must remain visible above the legacy piece-chip rules. */
+    .piece-white,.piece-black{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;min-width:0!important;min-height:0!important;width:88%;height:88%;font-size:1em}
+    .controls .btn{min-width:44px;min-height:44px;touch-action:manipulation}
+    @media(pointer:coarse){.controls .btn{min-width:48px;min-height:48px}}
+    @media(max-width:768px){body{padding:clamp(8px,2vw,16px)}.board-section{padding:clamp(10px,2.5vw,22px)}.main-content{grid-template-columns:minmax(0,1fr)}.board-container{width:min(100%,88vw,78vh);max-width:600px}}
+    @media(min-width:769px) and (max-width:1200px){.main-content{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:16px}.board-section{padding:clamp(14px,2vw,24px)}}
+</style>
 </head>
 <body>
     <div class="container">
@@ -762,6 +768,6 @@
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget-v1.13.138.js?v=1.13.138"></script>
 
-<script defer src="shared/site-global-v1.13.139.js?v=1.13.139"></script>
+<script defer src="shared/site-global-v1.13.139.js?v=1.13.140"></script>
 </body>
 </html>

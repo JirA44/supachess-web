@@ -335,7 +335,6 @@
       if (!g) return '';
       try { var fen = g.fen(); return typeof fen === 'string' && fen.split(/\s+/).length >= 4 ? fen : ''; } catch (_) { return ''; }
     }
-    if (!getFen() && !existingBars.length) { button.remove(); panel.remove(); return; }
     function sync() {
       button.setAttribute('aria-pressed', String(visible));
       button.textContent = isEnglish ? (visible ? 'Hide evaluation bar' : 'Show evaluation bar') : (visible ? 'Masquer la barre d’évaluation' : 'Afficher la barre d’évaluation');

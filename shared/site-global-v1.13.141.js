@@ -492,7 +492,7 @@
     var indexed = gameData.map(function (item, index) {
       var row = rowFor(index);
       var ply = row && Number(row.getAttribute('data-ply'));
-      if (!Number.isFinite(ply) || ply < 1) ply = index + 1;
+      if (!isFinite(ply) || ply < 1) ply = index + 1;
       return { item: item, index: index, ply: ply, side: sideFor(item, index), flags: flagsFor(item, row) };
     });
 
@@ -500,7 +500,7 @@
     var nav = document.createElement('section');
     nav.id = 'supachess-move-type-nav';
     var navStyle = document.createElement('style');
-    navStyle.textContent = '#supachess-move-type-nav{display:flex;flex-wrap:wrap;align-items:end;gap:.65rem;margin:1rem auto;padding:1rem;max-width:min(100%,72rem);box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#172033;font:inherit}#supachess-move-type-nav label{display:grid;gap:.3rem;min-width:min(10rem,100%);flex:1 1 10rem}#supachess-move-type-nav select,#supachess-move-type-nav button{min-height:44px;max-width:100%;padding:.55rem .75rem;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:inherit;font:inherit;touch-action:manipulation}#supachess-move-type-nav button{cursor:pointer}#supachess-move-type-nav button:focus-visible,#supachess-move-type-nav select:focus-visible{outline:3px solid #2563eb;outline-offset:2px}#supachess-move-type-nav .supa-nav-status{flex:1 0 100%;margin:.1rem 0 0;font-size:.95rem}#supachess-move-type-nav button:active{transform:translateY(1px)}@media(prefers-color-scheme:dark){#supachess-move-type-nav{background:#172033;color:#f8fafc;border-color:#475569}#supachess-move-type-nav select,#supachess-move-type-nav button{background:#0f172a;color:#f8fafc;border-color:#64748b}}@media(min-width:60rem){#supachess-move-type-nav{justify-content:center}}';
+    navStyle.textContent = '#supachess-move-type-nav{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.65rem;margin:1rem auto;padding:1rem;max-width:100%;max-width:min(100%,72rem);box-sizing:border-box;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#172033;font:inherit}#supachess-move-type-nav label{display:grid;gap:.3rem;min-width:min(10rem,100%);flex:1 1 10rem}#supachess-move-type-nav select,#supachess-move-type-nav button{min-height:44px;max-width:100%;padding:.55rem .75rem;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:inherit;font:inherit;touch-action:manipulation}#supachess-move-type-nav button{cursor:pointer}#supachess-move-type-nav button:focus-visible,#supachess-move-type-nav select:focus-visible{outline:3px solid #2563eb;outline-offset:2px}#supachess-move-type-nav .supa-nav-status{flex:1 0 100%;margin:.1rem 0 0;font-size:.95rem}#supachess-move-type-nav button:active{transform:translateY(1px)}@media(prefers-color-scheme:dark){#supachess-move-type-nav{background:#172033;color:#f8fafc;border-color:#475569}#supachess-move-type-nav select,#supachess-move-type-nav button{background:#0f172a;color:#f8fafc;border-color:#64748b}}@media(min-width:60rem){#supachess-move-type-nav{justify-content:center}}';
     document.head.appendChild(navStyle);
     nav.className = 'supachess-move-type-nav';
     nav.setAttribute('aria-label', isEnglish ? 'Navigate annotated moves' : 'Naviguer entre les coups annotés');
@@ -592,8 +592,10 @@
     typeSelect.addEventListener('change', refreshLabels);
     playerSelect.addEventListener('change', refreshLabels);
     refreshLabels();
-    var host = board.closest('.board-section,.board-panel,.board-area,.board-container') || board.parentElement || board;
-    host.insertAdjacentElement('afterend', nav);
+    var host = board;
+    if (typeof board.closest === 'function') host = board.closest('.board-section,.board-panel,.board-area,.board-container') || board.parentElement || board;
+    if (host.insertAdjacentElement) host.insertAdjacentElement('afterend', nav);
+    else if (host.parentNode) host.parentNode.insertBefore(nav, host.nextSibling);
   }
 
   function initializeGlobalLabels() {

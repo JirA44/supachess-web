@@ -65,4 +65,39 @@ test('existing-board inspection rejects repeated square coordinates and broken p
   assert.match(protocol.inspect(board, { allowUnmeasured: true }).errors.join(' '), /images de pièces/);
 });
 
+test('static text diagrams validate their eight ranks and 64 squares', () => {
+  const diagram = dom.window.document.createElement('div');
+  diagram.className = 'chess-diagram';
+  diagram.textContent = `
+8  . . . . . r k .
+7  . . . . . . p p
+6  . . . Q p q . .
+5  . . . . . . . p
+4  . P P . . . . .
+3  . . . . . . . .
+2  . . . . . P P .
+1  . . . . R . K .
+  a b c d e f g h`;
+  assert.equal(protocol.inspect(diagram, { allowUnmeasured: true }).valid, true);
+  diagram.textContent = diagram.textContent.replace('7  . . . . . . p p\n', '');
+  assert.equal(protocol.inspect(diagram, { allowUnmeasured: true }).valid, false);
+});
+
+test('custom square grids are discovered by the shared validator', () => {
+  const board = dom.window.document.createElement('div');
+  board.id = 'analysisBoard';
+  board.setAttribute('data-fen', initial);
+  board.setAttribute('role', 'grid');
+  board.getBoundingClientRect = () => ({ width: 512, height: 512 });
+  for (const square of protocol.create(initial).querySelectorAll('[data-square]')) {
+    const cell = dom.window.document.createElement('button');
+    cell.setAttribute('data-square', square.dataset.square);
+    cell.setAttribute('role', 'gridcell');
+    board.appendChild(cell);
+  }
+  dom.window.document.body.appendChild(board);
+  protocol.bootstrap(dom.window.document);
+  assert.equal(board.dataset.supaBoardStatus, 'ready');
+});
+
 test.after(() => dom.window.close());

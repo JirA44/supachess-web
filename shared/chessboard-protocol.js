@@ -1,6 +1,6 @@
 (function (global) {
   'use strict';
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
   var FILES = 'abcdefgh';
   var RANKS = '12345678';
   var PIECES = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙', k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
@@ -262,13 +262,13 @@
     var rail=wrapper.querySelector('[data-supa-evaluation-bar]');
     if(!rail){
       rail=document.createElement('aside');rail.setAttribute('data-supa-evaluation-bar','true');
-      rail.setAttribute('role','img');rail.setAttribute('aria-label','Barre d’évaluation, score moteur non encore disponible');
+      rail.setAttribute('role','img');rail.setAttribute('aria-label','Barre d’évaluation : données moteur non disponibles');
       rail.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;min-width:30px;min-height:140px;padding:6px 4px;border:1px solid #64748b;border-radius:9px;background:#111827;color:#f8fafc;font:600 11px/1.2 system-ui,sans-serif;';
       var score=document.createElement('span');score.setAttribute('data-supa-eval-score','');score.textContent='—';
       var track=document.createElement('span');track.setAttribute('data-supa-eval-track','');track.style.cssText='position:relative;display:block;flex:1;width:18px;min-height:100px;overflow:hidden;border:1px solid #64748b;border-radius:4px;background:#111;';
       var white=document.createElement('span');white.setAttribute('data-supa-eval-white','');white.style.cssText='position:absolute;left:0;right:0;bottom:0;height:50%;background:#f8fafc;transition:height .18s ease;';
       track.appendChild(white);rail.appendChild(score);rail.appendChild(track);
-      var caption=document.createElement('span');caption.textContent='SF';caption.setAttribute('aria-hidden','true');rail.appendChild(caption);
+      var caption=document.createElement('span');caption.textContent='Éval.'caption.setAttribute('aria-hidden','true');rail.appendChild(caption);
       wrapper.appendChild(rail);
     }
     return rail;

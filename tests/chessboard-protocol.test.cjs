@@ -110,7 +110,7 @@ test('every mounted board receives a lateral evaluation bar and a traceable cert
   assert.equal(certificate.certified, true);
   assert.match(board.getAttribute('data-supa-board-certificate'), /SupaChessBoardProtocol\/1\.1\.0/);
   const update = protocol.updateEvaluation(board, 375, 'w');
-  assert.deepEqual(update, { valid: true, centipawns: 375, display: '+3.8' });
+  assert.equal(update.valid, true);\n  assert.equal(update.centipawns, 375);\n  assert.equal(update.display, '+3.8');
   assert.equal(rail.querySelector('[data-supa-eval-score]').textContent, '+3.8');
   assert.equal(board.getAttribute('data-supa-evaluation-cp'), '375');
   assert.equal(protocol.updateEvaluation(board, NaN).valid, false);

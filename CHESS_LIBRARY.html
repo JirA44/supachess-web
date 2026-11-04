@@ -55,5 +55,5 @@ const search=document.getElementById("term-search"),category=document.getElement
 function filter(){const q=search.value.trim().toLocaleLowerCase("fr"),c=category.value;let n=0;for(const card of cards){const show=(!c||card.dataset.category===c)&&card.textContent.toLocaleLowerCase("fr").includes(q);card.hidden=!show;if(show)n++}empty.style.display=n?"none":"block"}
 search.addEventListener("input",filter);category.addEventListener("change",filter);
 </script>
-<script defer src="shared/site-global-v1.13.146.js?v=1.13.146"></script>
+<script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
 </body></html>

@@ -220,10 +220,10 @@
     all.forEach(function(element){
       if(!element.hasAttribute('data-supa-original-visibility'))element.setAttribute('data-supa-original-visibility',element.style.visibility||'');
       var attempts=Number(element.dataset.supaBoardAttempts||0)+1;element.dataset.supaBoardAttempts=String(attempts);
-      var result=inspectBoard(element);
+      ensureEvaluationBar(element);\n      var result=inspectBoard(element);
       element.dataset.supaBoardPhase=result.phase;
       if(result.valid){
-        element.dataset.supaBoardStatus=result.warnings.length?'ready-with-warning':'ready';
+        var certificate=certifyBoard(element,result);\n        element.dataset.supaBoardStatus=certificate.certified?(result.warnings.length?'ready-with-warning':'ready'):'rejected';\n        if(certificate.certified)element.dataset.supaBoardCertificate=certificate.protocolVersion+' · '+certificate.checks.join(', ');\n        else {mountStatus(element,(certificate.errors||[]).join(' '));return;}
         element.dataset.supaBoardWarnings=result.warnings.join(' | ');
         element.style.visibility=element.getAttribute('data-supa-original-visibility')||'';
         if(element.__supaProtocolNotice){element.__supaProtocolNotice.remove();element.__supaProtocolNotice=null;}
@@ -249,7 +249,56 @@
       new MutationObserver(function(){if(pending)return;pending=true;setTimeout(function(){pending=false;validateExisting(document);},120);}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','data-fen','data-position']});
     }
   }
-  global.SupaChessBoardProtocol={version:VERSION,phases:['position','variante','construction','dimensions','cases','pièces','accessibilité','validé'],errors:errors,validateFen:parseFen,validateLine:validateLine,inspect:inspectBoard,create:createBoard,bootstrap:bootstrap};
+  function ensureEvaluationBar(board) {
+    if(!board||!board.parentNode)return null;
+    var wrapper=board.closest&&board.closest('.supa-board-certified-layout');
+    if(!wrapper){
+      wrapper=document.createElement('div');wrapper.className='supa-board-certified-layout';
+      wrapper.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:10px;align-items:stretch;width:100%;max-width:100%;';
+      board.parentNode.insertBefore(wrapper,board);wrapper.appendChild(board);
+      board.style.setProperty('width','100%','important');board.style.setProperty('max-width','100%','important');
+      board.style.setProperty('height','auto','important');board.style.setProperty('aspect-ratio','1 / 1','important');
+    }
+    var rail=wrapper.querySelector('[data-supa-evaluation-bar]');
+    if(!rail){
+      rail=document.createElement('aside');rail.setAttribute('data-supa-evaluation-bar','true');
+      rail.setAttribute('role','img');rail.setAttribute('aria-label','Barre d’évaluation, score moteur non encore disponible');
+      rail.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;min-width:30px;min-height:140px;padding:6px 4px;border:1px solid #64748b;border-radius:9px;background:#111827;color:#f8fafc;font:600 11px/1.2 system-ui,sans-serif;';
+      var score=document.createElement('span');score.setAttribute('data-supa-eval-score','');score.textContent='—';
+      var track=document.createElement('span');track.setAttribute('data-supa-eval-track','');track.style.cssText='position:relative;display:block;flex:1;width:18px;min-height:100px;overflow:hidden;border:1px solid #64748b;border-radius:4px;background:#111;';
+      var white=document.createElement('span');white.setAttribute('data-supa-eval-white','');white.style.cssText='position:absolute;left:0;right:0;bottom:0;height:50%;background:#f8fafc;transition:height .18s ease;';
+      track.appendChild(white);rail.appendChild(score);rail.appendChild(track);
+      var caption=document.createElement('span');caption.textContent='SF';caption.setAttribute('aria-hidden','true');rail.appendChild(caption);
+      wrapper.appendChild(rail);
+    }
+    return rail;
+  }
+  function updateEvaluation(board, centipawns, perspective) {
+    var rail=ensureEvaluationBar(board);
+    if(!rail)return {valid:false,error:'Échiquier non monté dans le document.'};
+    if(typeof centipawns!=='number'||!isFinite(centipawns))return {valid:false,error:'Évaluation moteur invalide.'};
+    var whiteScore=perspective==='b'?-centipawns:centipawns;
+    var clamped=Math.max(-1000,Math.min(1000,whiteScore));
+    var whitePercent=Math.max(5,Math.min(95,50+clamped/20));
+    var score=rail.querySelector('[data-supa-eval-score]'),fill=rail.querySelector('[data-supa-eval-white]');
+    var display=(whiteScore>0?'+':'')+(whiteScore/100).toFixed(1);
+    score.textContent=display;fill.style.height=whitePercent+'%';
+    rail.setAttribute('aria-label','Barre d’évaluation, avantage blancs '+display+' pion(s)');
+    board.setAttribute('data-supa-evaluation-cp',String(whiteScore));
+    return {valid:true,centipawns:whiteScore,display:display};
+  }
+  function certifyBoard(board, inspection) {
+    var checked=inspection||inspectBoard(board);
+    if(!checked.valid)return {certified:false,phase:checked.phase,errors:checked.errors||[]};
+    var rail=board&&board.closest&&board.closest('.supa-board-certified-layout');
+    if(!rail||!rail.querySelector('[data-supa-evaluation-bar]'))return {certified:false,phase:'évaluation',errors:['Barre d’évaluation latérale absente.']};
+    var certificate={certified:true,protocolVersion:VERSION,issuedAt:new Date().toISOString(),phase:'certifié',fen:checked.fen||board.getAttribute('data-fen')||null,checks:['position','géométrie','64 cases','pièces','accessibilité','barre latérale']};
+    board.setAttribute('data-supa-board-certificate','SupaChessBoardProtocol/'+VERSION);
+    board.setAttribute('data-supa-board-phase','certifié');
+    board.setAttribute('data-supa-board-certified-at',certificate.issuedAt);
+    return certificate;
+  }
+  global.SupaChessBoardProtocol={version:VERSION,updateEvaluation:updateEvaluation,ensureEvaluationBar:ensureEvaluationBar,certify:certifyBoard,phases:['position','variante','construction','dimensions','cases','pièces','accessibilité','validé'],errors:errors,validateFen:parseFen,validateLine:validateLine,inspect:inspectBoard,create:createBoard,bootstrap:bootstrap};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bootstrap(document);},{once:true});
   else bootstrap(document);
 })(window);

@@ -848,7 +848,11 @@ function profileMovesForSelectedGames() {
     return allGames.filter(game => isProfileGameEligible(game) && isProfileGameIncluded(game))
         .map(game => {
             const color = getProfileGamePlayerColor(game);
-            return game.history.filter(move => move.color === color && move.rated);
+            return game.history.filter(move => move.color === color && move.rated).map(move => ({
+                ...move,
+                sourceGameId: String(game.id || ""),
+                sourceGamePgn: game.pgn || ""
+            }));
         })
         .filter(moves => moves.length > 0);
 }
@@ -1340,7 +1344,12 @@ function findWorstMoves(playerMovesByGame, category) {
                     eval: m.eval,
                     evalDiff: m.evalDiff,
                     moveNum: m.moveNum,
-                    gameIndex: g
+                    gameIndex: g,
+                    gameId: m.sourceGameId || "",
+                    ply: Number(m.ply) || null,
+                    correctionCategory: Number(m.lossCp) >= 200 || m.category === "blunder" ? "blunder"
+                        : Number(m.lossCp) >= 60 || m.category === "mistake" || m.category === "error" ? "mistake"
+                        : "inaccuracy"
                 });
             }
         }
@@ -1726,13 +1735,24 @@ function renderTrainingTab(trainingProgram, swAnalysis) {
             ${ex.worstMoves.length > 0 ? `
             <div class="exercise-box" style="margin-top:8px;">
                 <div class="exercise-title">Exemples d'erreurs a corriger</div>
-                ${ex.worstMoves.map(wm => `
-                    <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
-                        <span style="color:#e74c3c;">${wm.quality || 'Erreur'}</span>
-                        - Coup ${wm.moveNum}: <strong>${wm.san}</strong>
-                        ${wm.comment ? `<br><span style="color:#888;">${wm.comment.substring(0, 100)}</span>` : ''}
-                    </div>
-                `).join('')}
+                ${ex.worstMoves.map(wm => {
+                    const validTarget = wm.gameId && Number.isInteger(wm.ply) && wm.ply > 0 &&
+                        ["inaccuracy", "mistake", "blunder"].includes(wm.correctionCategory);
+                    const correctionUrl = validTarget
+                        ? "https://jira44.github.io/supachess/index.html?resume-correction-profile=1&focus-category=" +
+                            encodeURIComponent(wm.correctionCategory) + "&focus-ply=" + encodeURIComponent(String(wm.ply))
+                        : null;
+                    const content = '<span style="color:#e74c3c;">' + escapePlayerText(wm.quality || 'Erreur') + '</span>' +
+                        ' - Coup ' + escapePlayerText(wm.moveNum) + ': <strong>' + escapePlayerText(wm.san) + '</strong>' +
+                        (wm.comment ? '<br><span style="color:#aaa;">' + escapePlayerText(wm.comment.substring(0, 100)) + '</span>' : '') +
+                        (correctionUrl
+                            ? '<br><span style="display:inline-block;margin-top:6px;color:#9be6b1;font-weight:700;">Ouvrir la position dans SupaChess et chercher le meilleur coup →</span>'
+                            : '<br><span style="color:#f0b35c;">Position source indisponible pour cet exemple.</span>');
+                    const itemStyle = "display:block;padding:9px 10px;margin:5px 0;border:1px solid rgba(255,255,255,0.1);border-radius:7px;font-size:0.85rem;color:inherit;text-decoration:none";
+                    return correctionUrl
+                        ? '<a href="' + correctionUrl + '" data-correction-game-id="' + escapePlayerText(wm.gameId) + '" data-correction-ply="' + wm.ply + '" data-correction-category="' + escapePlayerText(wm.correctionCategory) + '" aria-label="Corriger le coup ' + escapePlayerText(wm.moveNum) + ' ' + escapePlayerText(wm.san) + ' dans SupaChess" style="' + itemStyle + '">' + content + '</a>'
+                        : '<div style="' + itemStyle + '">' + content + '</div>';
+                }).join('')}
             </div>` : ''}
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
@@ -2480,10 +2500,45 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
     }
 }
 
+function installProfileCorrectionLinks() {
+    const container = document.getElementById('training-exercises');
+    if (!container || container.dataset.correctionLinksInstalled) return;
+    container.dataset.correctionLinksInstalled = '1';
+    container.addEventListener('click', function(event) {
+        const link = event.target.closest && event.target.closest('a[data-correction-game-id]');
+        if (!link || !container.contains(link)) return;
+        const game = allGames.find(item => String(item.id || '') === link.dataset.correctionGameId);
+        if (!game || !game.pgn) {
+            event.preventDefault();
+            const status = document.getElementById('analysis-selection-summary');
+            if (status) status.textContent = 'Impossible d’ouvrir cet exercice : le PGN source de la partie n’est plus disponible sur cet appareil.';
+            return;
+        }
+        const payload = {
+            sourceGameId: String(game.id),
+            pgn: game.pgn,
+            headers: {
+                White: game.whitePlayer || 'Blancs',
+                Black: game.blackPlayer || 'Noirs'
+            },
+            category: link.dataset.correctionCategory,
+            ply: Number(link.dataset.correctionPly)
+        };
+        try {
+            sessionStorage.setItem('supachess_pending_correction', JSON.stringify(payload));
+        } catch (_) {
+            event.preventDefault();
+            const status = document.getElementById('analysis-selection-summary');
+            if (status) status.textContent = 'Le navigateur n’a pas permis de transmettre la partie à SupaChess. Réessaie après avoir autorisé le stockage de session pour ce site.';
+        }
+    });
+}
+
 // ==========================================
 // INITIALIZATION
 // ==========================================
 document.addEventListener('DOMContentLoaded', async function() {
+    installProfileCorrectionLinks();
     const data = await loadAllData();
     latestPlayerAnalysisData = data;
     updateProfileStatus(data);

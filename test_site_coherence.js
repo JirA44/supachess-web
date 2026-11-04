@@ -181,7 +181,7 @@ function testBoardProtocolCoverage() {
     }
     for (const page of getAllHtml(true)) {
         const content = readFile(path.join(DIR, page));
-        if (!content || !content.includes('site-global-v1.13.146.js?v=1.13.145')) {
+        if (!content || !content.includes('site-global-v1.13.146.js?v=1.13.146')) {
             fail(page + ' — chargement du vérificateur commun manquant');
         }
     }

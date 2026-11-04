@@ -811,7 +811,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <link rel="stylesheet" href="shared/community.css?v=supaengine-hub-i18n-fix-20261101-v2">
 <script src="shared/i18n.js?v=language-sync-20261104"></script>
-<script src="shared/community.js?v=profile-dashboard-20261026"></script>
+<script src="shared/community-v1.13.14801.js?v=1.13.14801"></script>
 <script src="shared/profiles.js?v=global-site-search-20261031"></script>
 <script>document.addEventListener('DOMContentLoaded', function(){ if(window.SupaProfiles) SupaProfiles.initSearchBar(); if(window.SupaProfiles&&typeof firebase!=='undefined'&&firebase){ var a=firebase.auth(), d=firebase.firestore(); SupaProfiles.init(a,d); SupaProfiles.initRankingSection(); a.onAuthStateChanged(function(u){ if(u) SupaProfiles.ensureUserProfile(u); }); if(new URLSearchParams(location.search).get('openProfile')==='1'){a.onAuthStateChanged(function(u){history.replaceState(null,'',location.pathname+location.hash);if(!u){var login=document.getElementById('cn-auth-bar-login');if(login)login.click();return;}SupaProfiles.getProfile(u.uid).then(function(profile){if(profile)SupaProfiles.renderProfileModal(profile);else SupaProfiles.renderOwnProfileFallback(u);}).catch(function(){SupaProfiles.renderOwnProfileFallback(u);});});} }});</script>
 <!-- /ChessNova Community -->
@@ -820,7 +820,7 @@
 <script src="supa-style-engine.js"></script>
 <script src="supa-quick-solve.js"></script>
     <script src="js/decision_audit.js"></script>
-    <script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
+    <script defer src="shared/site-global-v1.13.14801.js?v=1.13.14801"></script>
 <dialog id="suggest-game-dialog" aria-labelledby="suggest-game-title" style="max-width:min(640px,calc(100vw - 24px));width:100%;border:1px solid #4b6b86;border-radius:16px;padding:0;background:#101827;color:#f8fafc">
 <form id="suggest-game-form" style="padding:22px">
 <header style="display:flex;justify-content:space-between;gap:16px;align-items:center"><h2 id="suggest-game-title" data-i18n="suggest_game_title">Suggest a legendary game</h2><button type="button" onclick="closeSuggestGame()" aria-label="Close" data-i18n="close" data-i18n-attr="aria-label">×</button></header>

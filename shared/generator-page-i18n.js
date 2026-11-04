@@ -5,6 +5,9 @@
 
   var pairs = [
     ["Full mono-thread · réseau NNUE 38 Mo", "Full single-thread · 38 MB NNUE network"],
+    ["Stockfish reçoit le protocole UCI", "Stockfish receives the UCI protocol"],
+    [" demi-coups", " half-moves"],
+    [" demi-coup", " half-move"],
     ["Télécharger Stockfish 16 JS", "Download Stockfish 16 JS"],
     ["Télécharger Stockfish 16 WASM", "Download Stockfish 16 WASM"],
     ["Télécharger le réseau NNUE 16", "Download the SF16 NNUE network"],

@@ -100,4 +100,20 @@ test('custom square grids are discovered by the shared validator', () => {
   assert.equal(board.dataset.supaBoardStatus, 'ready');
 });
 
+test('every mounted board receives a lateral evaluation bar and a traceable certificate', () => {
+  const board = protocol.create(initial);
+  dom.window.document.body.appendChild(board);
+  const rail = protocol.ensureEvaluationBar(board);
+  assert.ok(rail, 'evaluation rail is mounted');
+  assert.ok(rail.querySelector('[data-supa-eval-track]'));
+  const certificate = protocol.certify(board, { valid: true, fen: initial });
+  assert.equal(certificate.certified, true);
+  assert.match(board.getAttribute('data-supa-board-certificate'), /SupaChessBoardProtocol\/1\.1\.0/);
+  const update = protocol.updateEvaluation(board, 375, 'w');
+  assert.deepEqual(update, { valid: true, centipawns: 375, display: '+3.8' });
+  assert.equal(rail.querySelector('[data-supa-eval-score]').textContent, '+3.8');
+  assert.equal(board.getAttribute('data-supa-evaluation-cp'), '375');
+  assert.equal(protocol.updateEvaluation(board, NaN).valid, false);
+});
+
 test.after(() => dom.window.close());

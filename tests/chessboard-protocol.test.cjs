@@ -108,7 +108,7 @@ test('every mounted board receives a lateral evaluation bar and a traceable cert
   assert.ok(rail.querySelector('[data-supa-eval-track]'));
   const certificate = protocol.certify(board, { valid: true, fen: initial });
   assert.equal(certificate.certified, true);
-  assert.match(board.getAttribute('data-supa-board-certificate'), /SupaChessBoardProtocol\/1\.1\.0/);
+  assert.match(board.getAttribute('data-supa-board-certificate'), /SupaChessBoardProtocol\/1\.1\.1/);
   const update = protocol.updateEvaluation(board, 375, 'w');
   assert.equal(update.valid, true);
   assert.equal(update.centipawns, 375);
@@ -116,6 +116,25 @@ test('every mounted board receives a lateral evaluation bar and a traceable cert
   assert.equal(rail.querySelector('[data-supa-eval-score]').textContent, '+3.8');
   assert.equal(board.getAttribute('data-supa-evaluation-cp'), '375');
   assert.equal(protocol.updateEvaluation(board, NaN).valid, false);
+
+  const legacyBoard = protocol.create(initial);
+  const legacyLayout = dom.window.document.createElement('div');
+  legacyLayout.className = 'supachess-eval-layout';
+  const legacyRail = dom.window.document.createElement('div');
+  legacyRail.className = 'supachess-eval-rail';
+  const legacyPanel = dom.window.document.createElement('section');
+  legacyPanel.className = 'supachess-eval-panel';
+  legacyPanel.hidden = true;
+  legacyPanel.innerHTML = '<div class="supachess-eval-track"><div class="supachess-eval-white"></div><span></span></div>';
+  legacyRail.appendChild(legacyPanel);
+  legacyLayout.appendChild(legacyBoard);
+  legacyLayout.appendChild(legacyRail);
+  dom.window.document.body.appendChild(legacyLayout);
+  assert.equal(protocol.ensureEvaluationBar(legacyBoard), legacyRail);
+  assert.equal(legacyPanel.hidden, false);
+  assert.equal(protocol.certify(legacyBoard, { valid: true, fen: initial }).certified, true);
+  protocol.updateEvaluation(legacyBoard, -250, 'w');
+  assert.equal(legacyPanel.querySelector('.supachess-eval-track span').textContent, '-2.5');
 });
 
 test.after(() => dom.window.close());

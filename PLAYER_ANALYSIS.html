@@ -374,6 +374,7 @@
 
     <!-- TAB 1: PROFIL DE STYLE -->
     <div class="tab-content active" id="tab-style">
+        <p id="level-diagnostic-result" hidden role="status" aria-live="polite" style="margin:0 0 14px;padding:12px 14px;border:1px solid #38bdf8;border-radius:10px;background:#082638;color:#e6f7ff;"></p>
         <div id="no-data-style" class="no-data" style="display:none;">
             <div class="icon">♟</div>
             <h3 id="no-data-style-title">Pas encore de coups classés pour établir le profil</h3>
@@ -658,12 +659,14 @@
                 <span>0 = toutes les parties sans aides confirmées dans la période.</span>
             </div>
             <div class="analysis-selection-actions">
+                <button type="button" class="profile-diagnostic-button" onclick="launchUnaidedLevelDiagnostic()">Lancer le diagnostic du niveau</button>
                 <button type="button" onclick="selectUnaidedProfileGames()">Sélectionner les parties confirmées sans aides</button>
                 <button type="button" onclick="selectProfileGamesByAidStatus(true)">Sélectionner les parties confirmées avec aides</button>
                 <button type="button" onclick="selectProfileGamesByAidStatus(null)">Sélectionner les parties indéterminées</button>
                 <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties analysables</button>
                 <button type="button" onclick="resetProfileGameSelection()">Réinitialiser les choix</button>
             </div>
+            <p id="level-diagnostic-selection-status" class="analysis-selection-summary" role="status" aria-live="polite">Pour lancer le diagnostic, sélectionne au moins une partie analysable confirmée sans aides. Les parties avec aides ou au statut indéterminé ne seront pas utilisées.</p>
             <div class="filter-bar" aria-label="Filtrer les parties par aides utilisées">
                 <button class="aid-filter-btn active" data-aid-filter="all" onclick="filterGamesByAid('all')">Tous les statuts</button>
                 <button class="aid-filter-btn" data-aid-filter="false" onclick="filterGamesByAid('false')">Sans aides</button>
@@ -933,6 +936,35 @@ function selectUnaidedProfileGames() {
     });
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
+}
+
+function launchUnaidedLevelDiagnostic() {
+    updateProfileScopeGameIds();
+    const selectedUnaided = allGames.filter(game =>
+        isProfileGameEligible(game) &&
+        currentScopeGameIds.has(String(game.id || '')) &&
+        isProfileGameIncluded(game) &&
+        game.trainingAidsUsed === false
+    );
+    const selectionStatus = document.getElementById('level-diagnostic-selection-status');
+    if (!selectedUnaided.length) {
+        if (selectionStatus) selectionStatus.textContent = 'Diagnostic non lancé : sélectionne au moins une partie analysable portant le statut « Sans aides ». Les parties aidées ou indéterminées ne comptent pas.';
+        return false;
+    }
+    const includedIds = new Set(selectedUnaided.map(game => String(game.id)));
+    allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id || ''))).forEach(game => {
+        profileGameSelection[String(game.id)] = includedIds.has(String(game.id));
+    });
+    persistProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
+    const result = document.getElementById('level-diagnostic-result');
+    if (result) {
+        result.hidden = false;
+        result.textContent = 'Diagnostic lancé sur ' + selectedUnaided.length + ' partie(s) confirmée(s) sans aides. Les parties avec aides et indéterminées ont été exclues. Le résultat décrit cet échantillon; une seule partie donne une première indication, pas une mesure stable du niveau.';
+    }
+    if (selectionStatus) selectionStatus.textContent = 'Diagnostic lancé : ' + selectedUnaided.length + ' partie(s) sans aides retenue(s).';
+    switchTab('style');
+    return true;
 }
 
 function selectAllProfileGames() {

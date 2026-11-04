@@ -145,6 +145,42 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Detailed chess games are private to their owning Firebase account.
+    match /users/{uid}/games/{gameId} {
+      function validGameDocument() {
+        return request.resource.data.keys().hasOnly([
+            'schemaVersion', 'gameId', 'date', 'opponent', 'moves',
+            'avgRating', 'history', 'pgn', 'result', 'createdAt'
+          ])
+          && request.resource.data.keys().hasAll([
+            'schemaVersion', 'gameId', 'date', 'opponent', 'moves',
+            'avgRating', 'history', 'pgn', 'result', 'createdAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.gameId == gameId
+          && request.resource.data.date is string
+          && request.resource.data.date.size() <= 80
+          && request.resource.data.opponent is string
+          && request.resource.data.opponent.size() <= 160
+          && request.resource.data.moves is int
+          && request.resource.data.moves >= 0
+          && request.resource.data.moves <= 1000
+          && (request.resource.data.avgRating == null
+            || request.resource.data.avgRating is int
+            || request.resource.data.avgRating is float)
+          && request.resource.data.history is list
+          && request.resource.data.history.size() <= 600
+          && request.resource.data.pgn is string
+          && request.resource.data.pgn.size() <= 50000
+          && request.resource.data.result is string
+          && request.resource.data.result.size() <= 20
+          && request.resource.data.createdAt == request.time;
+      }
+      allow get, list: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validGameDocument();
+      allow delete: if false;
+    }
+
     // All other collections remain denied until their access patterns are
     // separately reviewed and given least-privilege rules.
   }

@@ -621,6 +621,44 @@ let puzzleBoard = null;
 let puzzles = [];
 let currentPuzzleIndex = 0;
 
+async function getFirebaseProfileContext() {
+    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore) {
+        return { user: null, db: null, error: new Error('Firebase indisponible.') };
+    }
+    try {
+        const config = {
+            apiKey: "AIzaSyA8duVGo5Vgzn7VXyDTJcdkvThVElYmTss",
+            authDomain: "chessnova.firebaseapp.com",
+            projectId: "chessnova",
+            storageBucket: "chessnova.firebasestorage.app",
+            messagingSenderId: "260734552934",
+            appId: "1:260734552934:web:c2bf0995c1dd72d87896a7"
+        };
+        const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(config);
+        const auth = firebase.auth(app);
+        const db = firebase.firestore(app);
+        if (auth.currentUser) return { user: auth.currentUser, db, error: null };
+        const user = await new Promise(resolve => {
+            let settled = false;
+            let unsubscribe = () => {};
+            let timer = null;
+            const finish = value => {
+                if (settled) return;
+                settled = true;
+                if (timer) window.clearTimeout(timer);
+                unsubscribe();
+                resolve(value || null);
+            };
+            timer = window.setTimeout(() => finish(auth.currentUser), 8000);
+            unsubscribe = auth.onAuthStateChanged(finish, () => finish(null));
+        });
+        return { user, db, error: null };
+    } catch (error) {
+        console.warn('Firebase profile initialization failed:', error);
+        return { user: null, db: null, error };
+    }
+}
+
 async function loadAllData() {
     const localGames = [];
     let profile = null;
@@ -634,22 +672,23 @@ async function loadAllData() {
     try { coachProgress = JSON.parse(localStorage.getItem('chessnova_coach_progress') || 'null'); } catch (e) {}
     let gameProgress = null;
     try { gameProgress = JSON.parse(localStorage.getItem('chessnova_progress') || 'null'); } catch (e) {}
-    const sessionId = localStorage.getItem('chessnova_session');
-    if (sessionId) {
-        const apiUrl = 'https://aimix-api.hugo-padilla-pro.workers.dev';
+    const firebaseContext = await getFirebaseProfileContext();
+    const firebaseUser = firebaseContext.user;
+    const firestore = firebaseContext.db;
+    profileLoadError = firebaseContext.error ? 'Le service Firestore est indisponible.' : '';
+    if (firebaseUser && firestore) {
+        profile = {
+            uid: firebaseUser.uid,
+            username: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0] || 'Joueur',
+            displayName: firebaseUser.displayName || ''
+        };
         try {
-            const headers = { Authorization: 'Bearer ' + sessionId };
-            const responses = await Promise.all([
-                fetch(apiUrl + '/api/profile', { headers }),
-                fetch(apiUrl + '/api/games', { headers })
-            ]);
-            if (!responses[0].ok || !responses[1].ok) throw new Error('Le profil ou son historique est indisponible.');
-            const payloads = await Promise.all(responses.map(response => response.json()));
-            profile = payloads[0].user || null;
-            profileGames = Array.isArray(payloads[1].games) ? payloads[1].games : [];
+            const snapshot = await firestore.collection('users').doc(firebaseUser.uid)
+                .collection('games').orderBy('createdAt', 'desc').limit(200).get();
+            profileGames = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
-            profileLoadError = error && error.message ? error.message : 'Historique du profil indisponible.';
-            console.warn('Profile game history load failed:', error);
+            profileLoadError = 'Impossible de lire l’historique Firestore.';
+            console.warn('Firestore game history load failed:', error && error.code);
         }
     }
     const normalizePgn = value => String(value || '').replace(/\[[^\]]*\]/g, '').replace(/[0-9]+\.(\.\.)?/g, '').replace(/\s+/g, ' ').trim();
@@ -671,9 +710,10 @@ async function loadAllData() {
         };
     }).filter(Boolean);
     allGames = localGames.concat(cloudGames);
-    playerMovesByGame = localGames.map(game => Array.isArray(game.history)
+    playerMovesByGame = allGames.map(game => Array.isArray(game.history)
         ? game.history.filter(move => !move.isOpponent) : []).filter(moves => moves.length > 0);
-    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, profileLoadError, hasSession: !!sessionId };
+    const detailedGames = allGames.filter(game => Array.isArray(game.history) && game.history.length > 0);
+    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, detailedGames, profileLoadError, firebaseUser, hasSession: !!firebaseUser, hasAccount: !!firebaseUser };
 }
 
 // ==========================================
@@ -1609,9 +1649,14 @@ function formatProfileGameDate(value) {
 function updateProfileStatus(data) {
     const status = document.getElementById('player-profile-status');
     if (!status) return;
-    const detailedCount = data.localGames.length;
-    if (!data.hasSession) {
+    const detailedCount = data.detailedGames.length;
+    if (!data.hasAccount) {
         status.textContent = 'Historique du profil non chargé : connectez-vous dans SupaChess pour récupérer les parties associées à ce compte. Parties locales détaillées : ' + detailedCount + '.';
+        return;
+    }
+    if (!data.hasSession && data.firebaseUser) {
+        const name = data.firebaseUser.displayName || data.firebaseUser.email || 'Compte SupaChess';
+        status.textContent = name + ' · Compte connecté. ' + (data.profileLoadError || (data.profileGames.length + ' partie(s) récupérée(s) depuis Firestore.')) + ' Parties détaillées disponibles : ' + detailedCount + '.';
         return;
     }
     const name = data.profile && (data.profile.username || data.profile.displayName) || 'Profil connecté';
@@ -1619,7 +1664,7 @@ function updateProfileStatus(data) {
         status.textContent = name + ' · ' + data.profileLoadError + ' Les parties locales détaillées restent affichées (' + detailedCount + ').';
         return;
     }
-    status.textContent = name + ' · ' + data.profileGames.length + ' partie(s) récupérée(s) du profil (' + detailedCount + ' avec historique détaillé local). Les filtres de précision ne portent que sur les parties détaillées.';
+    status.textContent = name + ' · ' + data.profileGames.length + ' partie(s) récupérée(s) depuis Firestore (' + detailedCount + ' avec historique détaillé). Les filtres de précision ne portent que sur ces parties.';
 }
 function openProfileGameInCoach(index) {
     const game = allGames[index];

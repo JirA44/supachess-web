@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="shared/progress.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="shared/puzzle-rating.js"></script>
     <link rel="stylesheet" href="shared/community.css?v=tactics-community-20261101">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -295,7 +296,7 @@
     </section>
     <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200–2399</option><option value="elite">Élite · 2400–2599</option><option value="world-class">Maître mondial · 2600–2799</option><option value="legend">Légende · 2800+</option></select></div>
     <div class="theme-tabs" id="theme-tabs"></div>
-    <p id="generated-puzzles-status" class="muted" role="status" aria-live="polite" style="text-align:center;margin:0 0 14px"></p>
+    <p id="generated-puzzles-status" class="muted" role="status" aria-live="polite" style="text-align:center;margin:0 0 8px"></p><p style="text-align:center;margin:0 0 14px"><a class="challenge-button" href="GENERATEUR_PARTIES_BRILLANTES.html">Créer des exercices personnalisés · Elo puzzle estimé · choisir la phase</a></p>
     <div class="puzzle-grid" id="puzzle-grid"></div>
 </div>
 
@@ -5619,16 +5620,19 @@ function loadGeneratedDefensePuzzles() {
             const lineSan = item.line.slice(0, solutionMoves.length).map(step => step.san).filter(Boolean);
             const engineLabel = String(item.solutionEngineVersion || item.record && item.record.engineVersion || 'Stockfish');
             const engineElo = Number(item.engineElo || item.record && Math.min(item.record.whiteElo || 0, item.record.blackElo || 0)) || null;
+            const phase = item.phase || SupaPuzzleRating.classifyPhase(item.fen);
+            const rating = Number(item.rating) >= 400 ? Math.round(Number(item.rating) / 50) * 50 : SupaPuzzleRating.estimateElo(item.fen, item.line, userColor);
             PUZZLES.push({
-                id, generated:true, theme:'generated', themeLabel:'Généré · ' + engineLabel,
-                title:'Position générée · ' + (item.themes || ['Défense tactique']).join(' · '),
-                rating:null, turn:userColor, board:item.fen.split(' ')[0], fen:item.fen, hl:[],
+                id, generated:true, rating, ratingSource:'provisional-heuristic', phase, theme:'generated',
+                themeLabel:'Généré · ' + engineLabel + ' · ' + SupaPuzzleRating.phaseLabel(phase),
+                title:SupaPuzzleRating.phaseLabel(phase) + ' · Position générée · ' + (item.themes || ['Défense tactique']).join(' · '),
+                turn:userColor, board:item.fen.split(' ')[0], fen:item.fen, hl:[],
                 desc:'Trouve le premier coup de la ligne, puis poursuis la défense ou la contre-attaque calculée.',
-                explain:'Ligne candidate calculée par ' + engineLabel + (engineElo ? ' · Elo UCI demandé ' + engineElo : '') + '. Variante : ' + lineSan.join(' · ') + '. Elle n’est pas une cote de difficulté certifiée.',
-                question:'Que signifie l’Elo affiché pour cette analyse ?',
+                explain:'Elo puzzle estimé : ' + rating + ' (estimation initiale, non calibrée). Elo UCI moteur : ' + (engineElo || 'inconnu') + '. Variante : ' + lineSan.join(' · ') + '.',
+                question:'Comment interpréter le niveau affiché ?',
                 choices:[
-                    {text:'Le réglage Elo UCI demandé au moteur, pas une cote de puzzle étalonnée',correct:true},
-                    {text:'Une cote FIDE certifiée pour la difficulté du puzzle',correct:false}
+                    {text:'C’est une estimation initiale de difficulté du puzzle, à calibrer avec les résultats des joueurs',correct:true},
+                    {text:'C’est l’Elo UCI du moteur ou une cote FIDE certifiée',correct:false}
                 ],
                 answer:solutionMoves[0], solutionMoves, engineElo
             });
@@ -5636,8 +5640,8 @@ function loadGeneratedDefensePuzzles() {
         const generatedCount = PUZZLES.filter(puzzle => puzzle.generated).length;
         const generatedStatus = document.getElementById('generated-puzzles-status');
         if (generatedStatus) generatedStatus.textContent = generatedCount
-            ? generatedCount + ' puzzle(s) Stockfish généré(s) disponibles dans l’onglet « Générés par Stockfish » sur ce navigateur.'
-            : 'Les puzzles créés avec Stockfish apparaîtront automatiquement ici après leur génération sur ce même navigateur.';
+            ? generatedCount + ' puzzle(s) personnalisés disponibles dans l’onglet « Générés par Stockfish » · phases classées · Elo puzzle estimé provisoire · enregistrés sur ce navigateur.'
+            : 'Les puzzles créés avec Stockfish apparaîtront ici après génération sur ce même navigateur. Leur Elo puzzle sera estimé et leur phase indiquée.';
     } catch (error) {
         console.warn('Puzzles Stockfish locaux ignorés :', error);
     }
@@ -5784,8 +5788,8 @@ function renderGrid() {
     grid.innerHTML = filtered.map(p => {
         const isSolved = solved.includes(p.id);
         const theme = THEMES.find(t=>t.id===p.theme);
-        const difficultyLabel = p.generated ? 'Non étalonné' : '⭐ ' + p.rating;
-        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title || p.themeLabel || ('Puzzle ' + p.id)}, ${p.generated?'difficulté non étalonnée':p.rating + ' Elo'}, ${isSolved?'résolu':'à résoudre'}">
+        const difficultyLabel = p.generated ? '≈ ' + p.rating + ' Elo estimé' : '⭐ ' + p.rating;
+        return `<button type="button" class="pz-card ${isSolved?'solved':''}" onclick="openPuzzle('${p.id}')" aria-label="${p.title || p.themeLabel || ('Puzzle ' + p.id)}, ${p.generated?'Elo puzzle estimé '+p.rating+' (provisoire)':p.rating + ' Elo'}, ${isSolved?'résolu':'à résoudre'}">
             <div class="pz-top">
                 <span class="pz-title">${isSolved?'✅ ':''} ${p.title || p.themeLabel || ('Puzzle ' + p.id)}</span>
                 <span class="pz-rating">${difficultyLabel}</span>
@@ -5812,7 +5816,7 @@ function openPuzzle(id) {
     document.getElementById('modal-inner').innerHTML = `
         <div id="challenge-live-status" class="challenge-live-status" role="timer" aria-live="off"></div>
         <h2>${currentPuzzle.title}</h2>
-        <div class="modal-sub">${currentPuzzle.generated?"Exercice généré · difficulté non étalonnée":"Difficulté indicative : ⭐ "+currentPuzzle.rating}</div>
+        <div class="modal-sub">${currentPuzzle.generated?"Elo puzzle estimé : "+currentPuzzle.rating+" · estimation initiale non calibrée":"Difficulté indicative : ⭐ "+currentPuzzle.rating}</div>
         <div class="big-board-wrap">${renderBigBoard(currentPuzzle.board, currentPuzzle.hl, currentPuzzle.turn)}</div>
         <div class="modal-desc">
             <span class="turn-badge ${currentPuzzle.turn==='w'?'turn-w':'turn-b'}">${currentPuzzle.turn==='w'?'⬜ Blancs jouent':'⬛ Noirs jouent'}</span><br>
@@ -6156,6 +6160,8 @@ if (challengeNameInput) { challengeNameInput.value=getChallengeName(); challenge
 renderChallengeRankings();
 challengeStatus();
 updateStats();
+const requestedTheme = new URLSearchParams(location.search).get('theme');
+if (THEMES.some(theme => theme.id === requestedTheme)) activeTheme = requestedTheme;
 renderTabs();
 renderGrid();
 const requestedPuzzle = new URLSearchParams(location.search).get('puzzle');
@@ -6164,6 +6170,6 @@ if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(r
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
 <script src="shared/community.js?v=tactics-community-20261101"></script>
 
-<script defer src="shared/site-global-v1.13.142.js?v=1.13.142"></script>
+<script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
 </body>
 </html>

@@ -984,6 +984,33 @@
         });
     }
 
+    window.ChessNovaCommunity = window.ChessNovaCommunity || {};
+    window.ChessNovaCommunity.submitGameSuggestion = function (data) {
+        data = data || {};
+        var title = String(data.title || '').trim();
+        var context = String(data.context || '').trim();
+        var source = String(data.source || '').trim();
+        var pgn = String(data.pgn || '').trim();
+        if (!db) return Promise.reject(new Error('Firebase indisponible'));
+        if (!title || (!source && !pgn)) return Promise.reject(new Error('Titre et PGN ou source requis'));
+        if (source) {
+            try {
+                var sourceUrl = new URL(source);
+                if (sourceUrl.protocol !== 'http:' && sourceUrl.protocol !== 'https:') return Promise.reject(new Error('Lien source invalide'));
+            } catch (_) { return Promise.reject(new Error('Lien source invalide')); }
+        }
+        if (title.length > 160 || context.length > 2000 || source.length > 1000 || pgn.length > 100000) return Promise.reject(new Error('Suggestion trop longue'));
+        var message = 'Titre : ' + title + '\nContexte : ' + context + '\nSource : ' + source + '\nPGN :\n' + pgn;
+        return db.collection('suggestions').add({
+            author_uid: currentUser ? currentUser.uid : null,
+            author_name: currentUser ? (currentUser.displayName || currentUser.email) : 'Anonymous',
+            category: 'legendary_game',
+            message: message,
+            rating: 3,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    };
+
     // --- FAQ ---
     function loadFAQ() {
         if (!db) {

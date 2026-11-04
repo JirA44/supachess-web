@@ -68,7 +68,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 <section class="card" id="module-complex"><div class="eyebrow">Module 6 · positions critiques</div><h2>Gérer une position difficile ou complexe</h2>
 <p class="muted">Quand il y a beaucoup de pièces, de menaces ou peu de temps, ne calcule pas tout l’échiquier au hasard. Stabilise ta réflexion : qu’est-ce que l’adversaire menace ? Quels sont les échecs, prises et menaces des deux camps ? Garde deux ou trois candidats, calcule la meilleure défense pour chacun, puis évalue les positions finales. Si tu es moins bien, cherche aussi les ressources de défense et les chances pratiques.</p>
 <div class="grid"><article class="tile"><h3>1 · Comprendre avant de bouger</h3><p>Repère les menaces immédiates, les pièces attaquées et les rois en danger. Une menace de mat doit être traitée avant un plan lent.</p></article><article class="tile"><h3>2 · Réduire les candidats</h3><p>Commence par les coups forcés. Si aucun ne règle la position, choisis au plus trois idées : défendre, contre-attaquer ou améliorer une pièce.</p></article><article class="tile"><h3>3 · Calculer sans mélanger les lignes</h3><p>Pour chaque candidat, suis séparément les meilleures réponses adverses. Arrête-toi à une position stable et vérifie les menaces qui restent.</p></article><article class="tile"><h3>4 · Trouver une défense tenace</h3><p>En position inférieure, vérifie les échecs perpétuels, les répétitions, les forteresses, les pat possibles et les échanges vers une finale défendable.</p></article></div>
-<div class="tile"><h3>Position d’échauffement : repérer une tactique au milieu du désordre</h3><p>Trait aux Blancs. Le cavalier peut donner échec tout en attaquant la tour : le coup forcé réduit immédiatement le nombre de réponses à calculer.</p><div id="complexBoard" class="complex-board" role="img" aria-label="Position : roi blanc e1, cavalier blanc b5, roi noir e8, tour noire a8"></div><p class="muted"><b>FEN :</b> <code>r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1</code> · Blancs au trait.</p></div>
+<div class="tile"><h3>Position d’échauffement : repérer une tactique au milieu du désordre</h3><p>Trait aux Blancs. Le cavalier peut donner échec tout en attaquant la tour : le coup forcé réduit immédiatement le nombre de réponses à calculer.</p><div id="complexBoard" class="complex-board" data-supa-board-ignore="true" aria-label="Chargement de la position validée"></div><p class="muted"><b>FEN :</b> <code>r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1</code> · Blancs au trait.</p></div>
 <div class="question"><b>Exercice 13.</b> Dans cette position, quel coup réduit le plus les possibilités noires et gagne une tactique ?
 <div class="options" data-q="q13" data-hint="Cherche un coup de cavalier qui donne échec au roi e8 tout en attaquant la tour a8." data-explain="1.Cc7+ est une fourchette : le roi doit répondre à l’échec, puis le cavalier peut prendre la tour a8."><button class="option" data-correct="true">1. Cc7+ : échec au roi et attaque de la tour.</button><button class="option" data-correct="false">1. Ca7 : déplacer le cavalier sans exploiter les deux cibles.</button><button class="option" data-correct="false">1. Rd2 : jouer un coup de roi avant d’examiner le coup forcé.</button></div><div class="feedback" aria-live="polite"></div></div>
 <div class="question"><b>Exercice 14.</b> Après <code>1. Cc7+</code>, quelle est la bonne façon de poursuivre ton calcul ?
@@ -280,7 +280,8 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  function render(){
   if(!game)return;
   area.replaceChildren();const rows=game.board(),legal=selected?game.moves({square:selected,verbose:true}).map(m=>m.to):[];
-  rows.forEach((row,ri)=>row.forEach((piece,fi)=>{const sq=String.fromCharCode(97+fi)+(8-ri),b=document.createElement('button');b.type='button';b.className='analysis-square '+((ri+fi)%2===0?'light':'dark')+(sq===selected?' selected':'')+(legal.includes(sq)?' target':'');b.textContent=piece?glyph[piece.color==='w'?piece.type.toUpperCase():piece.type]:'';b.setAttribute('aria-label',sq+(piece?' '+(piece.color==='w'?'blanc':'noir')+' '+piece.type:' vide'));b.addEventListener('click',()=>clickSquare(sq));area.appendChild(b)}));
+  area.setAttribute('data-fen',game.fen());area.setAttribute('role','grid');
+  rows.forEach((row,ri)=>row.forEach((piece,fi)=>{const sq=String.fromCharCode(97+fi)+(8-ri),b=document.createElement('button');b.type='button';b.setAttribute('data-square',sq);b.setAttribute('role','gridcell');b.className='analysis-square '+((ri+fi)%2===0?'light':'dark')+(sq===selected?' selected':'')+(legal.includes(sq)?' target':'');b.textContent=piece?glyph[piece.color==='w'?piece.type.toUpperCase():piece.type]:'';b.setAttribute('aria-label',sq+(piece?' '+(piece.color==='w'?'blanc':'noir')+' '+piece.type:' vide'));b.addEventListener('click',()=>clickSquare(sq));area.appendChild(b)}));
   fenInput.value=game.fen();const h=game.history();historyEl.textContent=h.length?h.join(' '):'—';report('Trait aux '+(game.turn()==='w'?'Blancs':'Noirs')+(game.is_check()?' · échec':'')+(game.is_checkmate()?' · mat':'')+(game.in_draw()?' · partie nulle':''));document.dispatchEvent(new Event('board-position-changed'));
  }
  function clickSquare(sq){if(!game)return;const piece=game.get(sq);if(selected){const options=game.moves({square:selected,verbose:true});const m=options.find(x=>x.to===sq);if(m){try{const played=game.move({from:selected,to:sq,promotion:m.promotion?(document.getElementById('promotion').value||'q'):undefined});selected=null;render();if(played)document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:played.from+played.to+(played.promotion||'')}}));return}catch(_){}}if(piece&&piece.color===game.turn()){selected=sq;render();return}selected=null;render();return}if(piece&&piece.color===game.turn()){selected=sq;render()}}
@@ -411,11 +412,18 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
   });
  });
  renderMastery();
- const board=document.getElementById('complexBoard');
- const fen='r3k3/8/8/1N6/8/8/8/4K3';
- const glyph={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
- fen.split('/').forEach((rank,ri)=>{let row=[];for(const ch of rank){if(/[0-9]/.test(ch)){for(let n=0;n<Number(ch);n++)row.push('');}else row.push(ch);}row.forEach((piece,fi)=>{const sq=document.createElement('span');sq.className=((ri+fi)%2===0?'light':'dark');sq.textContent=glyph[piece]||'';sq.setAttribute('aria-label',(piece?({K:'roi blanc',N:'cavalier blanc',k:'roi noir',r:'tour noire'}[piece]||piece):'case vide')+' '+String.fromCharCode(97+fi)+(8-ri));board.appendChild(sq);});});
- update();
+ const placeholder=document.getElementById('complexBoard');
+ const fen='r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1';
+ let boardAttempts=0;
+ function buildValidatedComplexBoard(){
+  const protocol=window.SupaChessBoardProtocol;
+  if(!protocol){if(++boardAttempts<80)setTimeout(buildValidatedComplexBoard,50);return;}
+  const generated=protocol.create(fen,{label:'Position validée : roi blanc e1, cavalier blanc b5, roi noir e8, tour noire a8'});
+  generated.id='complexBoard';generated.classList.add('complex-board');
+  placeholder.replaceWith(generated);
+  update();
+ }
+ setTimeout(buildValidatedComplexBoard,0);
 })();
-</script><script defer src="shared/site-global-v1.13.142.js?v=1.13.142"></script>
+</script><script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
 </body></html>

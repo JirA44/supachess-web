@@ -142,13 +142,13 @@ function testInternalLinks() {
 // ── Test 4 : une version globale exacte sur chaque page ───────────────────────
 function testSiteVersionReferences() {
     console.log('\n🏷️ Test 4 — Version globale cohérente sur chaque page');
-    const expectedVersion = '1.13.142';
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.142.js'));
+    const expectedVersion = '1.13.148';
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.147.js'));
     if (!globalScript) {
-        fail('shared/site-global-v1.13.142.js manquant');
+        fail('shared/site-global-v1.13.147.js manquant');
         return;
     }
-    if (!/var SITE_VERSION = ['"]1\.13\.142['"]/.test(globalScript)) {
+    if (!/var SITE_VERSION = ['"]1\.13\.148['"]/.test(globalScript)) {
         fail('Le script global ne déclare pas la version ' + expectedVersion);
     }
     for (const page of getAllHtml(true)) {
@@ -159,21 +159,43 @@ function testSiteVersionReferences() {
             fail(page + ' — ' + refs.length + ' script(s) global(aux), un seul attendu');
             continue;
         }
-        if (refs[0][3] !== '142' || refs[0][4] !== expectedVersion) {
-            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.142');
+        if (refs[0][3] !== '147' || refs[0][4] !== '1.13.147') {
+            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.147 (version affichée : 1.13.148)');
         }
     }
     if (errors === 0) ok('Les ' + getAllHtml(true).length + ' pages HTML utilisent la même version');
 }
 
-// ── Test 5 : titre non vide ───────────────────────────────────────────────────
+// ── Test 5 : validation commune de tous les échiquiers ───────────────────────
+function testBoardProtocolCoverage() {
+    console.log('\n♟️ Test 5 — Vérificateur commun des échiquiers');
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.147.js'));
+    const boardProtocol = readFile(path.join(DIR, 'shared', 'chessboard-protocol.js'));
+    if (!globalScript || !/initializeBoardProtocol\(\);/.test(globalScript)) {
+        fail('Le script global ne déclenche pas le vérificateur commun des échiquiers');
+        return;
+    }
+    if (!boardProtocol || !/function validateExisting\(/.test(boardProtocol) || !/function createBoard\(/.test(boardProtocol)) {
+        fail('Le constructeur ou le contrôleur commun des échiquiers est manquant');
+        return;
+    }
+    for (const page of getAllHtml(true)) {
+        const content = readFile(path.join(DIR, page));
+        if (!content || !content.includes('site-global-v1.13.147.js?v=1.13.147')) {
+            fail(page + ' — chargement du vérificateur commun manquant');
+        }
+    }
+    if (errors === 0) ok('Toutes les pages HTML chargent le vérificateur/constructeur commun');
+}
+
+// ── Test 6 : titre non vide ───────────────────────────────────────────────────
 function testTitles() {
     console.log('\n📝 Test 5 — Balise <title> non vide');
     const pages = getAllHtml();
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
-        const m = content.match(/<title>([^<]*)<\/title>/i);
+        const m = content.match(/<title\b[^>]*>([^<]*)<\/title>/i);
         if (!m)              warn(`${page} — pas de <title>`);
         else if (!m[1].trim()) fail(`${page} — <title> vide`);
         else ok(`${page} — "${m[1].trim()}"`);
@@ -231,6 +253,7 @@ testRequiredScripts();
 testDotsWidget();
 testInternalLinks();
 testSiteVersionReferences();
+testBoardProtocolCoverage();
 testTitles();
 testRedirects();
 testGlobalExposure();

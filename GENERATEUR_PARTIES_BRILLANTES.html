@@ -64,7 +64,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="custom-elo-max">Elo maximum</label><input id="custom-elo-max" type="number" min="400" max="4000" step="50" value="3000"></div>
 </div>
 <strong>Thèmes</strong><p class="muted">Laisse tout décoché pour inclure tous les thèmes présents dans les exercices chargés.</p>
-<div id="custom-theme-options" class="theme-options"></div>
+<div id="custom-theme-options" class="theme-options"></div><strong>Phases de jeu</strong><p class="muted">Les phases suivent l’ordre ouverture → milieu de partie → finale. Coche une phase pour filtrer les exercices personnalisés.</p><div id="custom-phase-options" class="theme-options"></div>
 <div class="actions"><button id="start-custom-problem" class="btn">C’est parti !</button></div>
 <p id="custom-problem-status" class="status" role="status" aria-live="polite">Chargement de la banque de puzzles tactiques…</p></div>
 <div id="defense-play" class="study-grid hidden"><div><h3 id="defense-title"></h3><div id="defense-board" class="board" role="grid" aria-label="Échiquier du puzzle de défense"></div><div class="move-controls"><button id="defense-reset" class="btn secondary">Recommencer ce puzzle</button><button id="defense-next" class="btn">Puzzle suivant →</button></div></div><div><p id="defense-prompt" class="summary"></p><p id="defense-feedback" class="status" aria-live="polite"></p><div id="defense-moves" class="moves"></div></div></div>
@@ -79,6 +79,7 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 16, 17, 18 ou 19, selon la version sélectionnée. Le réglage UCI Elo ne certifie pas la force réelle du build ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
+<script src="shared/puzzle-rating.js"></script>
 <script>
 let worker=null, readyPromise=null, engineReady=false, activeEngineBuild="Lite mono-thread", activeEngineVersion="19", detectedEngineVersion=null, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
@@ -203,8 +204,8 @@ function inspectSacrifice(game,move,movingType){
  return game.moves({verbose:true}).some(reply=>reply.to===move.to);
 }
 function renderBoard(game,lastMove){
- const board=document.getElementById("board"),matrix=game.board();let html='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Position d’échecs en SVG">';
- for(let r=0;r<8;r++)for(let c=0;c<8;c++){const piece=matrix[r][c],sq=String.fromCharCode(97+c)+(8-r),light=(r+c)%2===0,x=c*100,y=r*100,highlight=lastMove&&(lastMove.from===sq||lastMove.to===sq);html+='<rect x="'+x+'" y="'+y+'" width="100" height="100" fill="'+(highlight?"#facc15":light?"#f0d9b5":"#b58863")+'"/>';if(piece){const white=piece.color==="w";html+='<text x="'+(x+50)+'" y="'+(y+77)+'" text-anchor="middle" font-size="82" fill="'+(white?"#fff":"#171717")+'" stroke="'+(white?"#111":"#fff")+'" stroke-width="2.5" paint-order="stroke fill">'+STARTING_PIECES[piece.type]+'</text>';}}
+ const board=document.getElementById("board"),matrix=game.board();board.setAttribute("data-fen",game.fen());board.setAttribute("role","grid");board.setAttribute("aria-label","Échiquier validé");let html='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Position d’échecs en SVG">';
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){const piece=matrix[r][c],sq=String.fromCharCode(97+c)+(8-r),light=(r+c)%2===0,x=c*100,y=r*100,highlight=lastMove&&(lastMove.from===sq||lastMove.to===sq);html+='<rect data-square="'+sq+'" role="gridcell" aria-label="'+sq+'" x="'+x+'" y="'+y+'" width="100" height="100" fill="'+(highlight?"#facc15":light?"#f0d9b5":"#b58863")+'"/>';if(piece){const white=piece.color==="w";html+='<text x="'+(x+50)+'" y="'+(y+77)+'" text-anchor="middle" font-size="82" fill="'+(white?"#fff":"#171717")+'" stroke="'+(white?"#111":"#fff")+'" stroke-width="2.5" paint-order="stroke fill">'+STARTING_PIECES[piece.type]+'</text>';}}
  board.innerHTML=html+'</svg>';
 }
 function renderReplay(){
@@ -280,16 +281,41 @@ async function generate(){
 
 const DEFENSE_PUZZLE_STORAGE_KEY="supachess-generated-defense-puzzles-v1";
 let defensePuzzles=[],generatedDefensePuzzles=[],tacticalTrainingPuzzles=[],activeDefenseIndex=0,defenseGame=null,defenseSelected=null,defenseLineIndex=0,defensePlayed=[];
-function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(generatedDefensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,engineElo:p.engineElo,themes:p.themes,solutionEngineVersion:p.solutionEngineVersion,record:{id:p.record.id,signature:p.record.signature,san:p.record.san,engineBuild:p.record.engineBuild,engineVersion:p.record.engineVersion,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
+function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(generatedDefensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,engineElo:p.engineElo,themes:p.themes,solutionEngineVersion:p.solutionEngineVersion,phase:p.phase,ratingSource:p.ratingSource,record:{id:p.record.id,signature:p.record.signature,san:p.record.san,engineBuild:p.record.engineBuild,engineVersion:p.record.engineVersion,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
 const TACTICAL_THEME_LABELS={fork:"Fourchette",pin:"Clouage",skewer:"Enfilade",discovered:"Attaque à la découverte",backrank:"Mat du couloir",smothered:"Mat étouffé",doublecheck:"Échec double",xray:"Attaque aux rayons X",master:"Combinaison avancée","Défense tactique":"Défense tactique","Sacrifice candidat":"Sacrifice candidat","Combinaison multi-coups":"Combinaison multi-coups"};
 function customPuzzleThemeMatches(p){const selected=[...document.querySelectorAll("#custom-theme-options input:checked")].map(x=>x.value);return !selected.length||(p.themes||[]).some(tag=>selected.includes(tag));}
-function customPuzzleMatches(p){const min=Math.max(400,Number(document.getElementById("custom-elo-min").value)||400),max=Math.min(4000,Number(document.getElementById("custom-elo-max").value)||4000),rating=Number(p.rating);return Number.isFinite(rating)&&min<=max&&rating>=min&&rating<=max&&customPuzzleThemeMatches(p);}
-function renderCustomProblemOptions(){const root=document.getElementById("custom-theme-options");if(!root)return;const selected=new Set([...root.querySelectorAll("input:checked")].map(x=>x.value));const counts=new Map();defensePuzzles.forEach(p=>(p.themes||[]).forEach(tag=>counts.set(tag,(counts.get(tag)||0)+1)));root.innerHTML=[...counts].sort((a,b)=>a[0].localeCompare(b[0],"fr")).map(([tag,count])=>'<label class="theme-option"><input type="checkbox" value="'+tag+'"'+(selected.has(tag)?" checked":"")+'> <span>'+(TACTICAL_THEME_LABELS[tag]||tag)+' <span class="muted">('+count+')</span></span></label>').join("")||"<em>La banque de puzzles n’a pas encore chargé de thèmes.</em>";}
+function customPuzzlePhaseMatches(p){const selected=[...document.querySelectorAll("#custom-phase-options input:checked")].map(x=>x.value);return !selected.length||selected.includes(p.phase);}
+function customPuzzleMatches(p){const min=Math.max(400,Number(document.getElementById("custom-elo-min").value)||400),max=Math.min(4000,Number(document.getElementById("custom-elo-max").value)||4000),rating=Number(p.rating);return Number.isFinite(rating)&&min<=max&&rating>=min&&rating<=max&&customPuzzleThemeMatches(p)&&customPuzzlePhaseMatches(p);}
+function renderCustomProblemOptions(){
+ const root=document.getElementById("custom-theme-options"),phaseRoot=document.getElementById("custom-phase-options");
+ if(!root||!phaseRoot)return;
+ const selected=new Set([...root.querySelectorAll("input:checked")].map(x=>x.value)),selectedPhases=new Set([...phaseRoot.querySelectorAll("input:checked")].map(x=>x.value));
+ const counts=new Map(),phaseCounts=new Map();
+ defensePuzzles.forEach(p=>{(p.themes||[]).forEach(tag=>counts.set(tag,(counts.get(tag)||0)+1));if(p.phase)phaseCounts.set(p.phase,(phaseCounts.get(p.phase)||0)+1);});
+ root.innerHTML=[...counts].sort((a,b)=>a[0].localeCompare(b[0],"fr")).map(([tag,count])=>'<label class="theme-option"><input type="checkbox" value="'+tag+'"'+(selected.has(tag)?" checked":"")+'> <span>'+(TACTICAL_THEME_LABELS[tag]||tag)+' <span class="muted">('+count+')</span></span></label>').join("")||"<em>Aucun thème chargé.</em>";
+ const order=["opening","middlegame","endgame"],labels={opening:"Ouverture",middlegame:"Milieu de partie",endgame:"Finale"};
+ phaseRoot.innerHTML=order.filter(phase=>phaseCounts.has(phase)).map(phase=>'<label class="theme-option"><input type="checkbox" value="'+phase+'"'+(selectedPhases.has(phase)?" checked":"")+'> <span>'+labels[phase]+' <span class="muted">('+phaseCounts.get(phase)+')</span></span></label>').join("")||"<em>Aucune phase disponible.</em>";
+}
 function filterCustomProblems(){const min=document.getElementById("custom-elo-min"),max=document.getElementById("custom-elo-max");customBankVisibleCount=12;if(min&&max&&Number(min.value)>Number(max.value)){document.getElementById("custom-problem-status").textContent="La cote minimum doit être inférieure ou égale à la cote maximum.";renderDefensePuzzleList();return;}renderCustomProblemOptions();renderDefensePuzzleList();const count=defensePuzzles.filter(p=>p.source==="training"&&customPuzzleMatches(p)).length,generated=defensePuzzles.filter(p=>p.source!=="training"&&customPuzzleThemeMatches(p)).length,ratings=tacticalTrainingPuzzles.map(p=>Number(p.rating)).filter(Number.isFinite),high=ratings.length?Math.max(...ratings):null;document.getElementById("custom-problem-status").textContent=count+" puzzle(s) de la banque correspondent aux filtres · "+generated+" puzzle(s) Stockfish généré(s) affichés séparément sans Elo de difficulté étalonné."+(high!==null?" Cote maximale enregistrée dans la banque : "+high+"; les cotes sont indicatives, pas un Elo FIDE.":"");}
-function startCustomProblem(){const matches=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p));if(!matches.length){filterCustomProblems();return;}const chosen=matches[Math.floor(Math.random()*matches.length)];selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent="Puzzle de la banque lancé · cote enregistrée "+chosen.p.rating+" · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function customPhaseRank(phase){return ({opening:0,middlegame:1,endgame:2})[phase]??3;}
+function getOrderedCustomMatches(){return defensePuzzles.map((p,i)=>({p,i})).filter(x=>customPuzzleMatches(x.p)).sort((a,b)=>customPhaseRank(a.p.phase)-customPhaseRank(b.p.phase)||Number(a.p.rating)-Number(b.p.rating)||String(a.p.id).localeCompare(String(b.p.id)));}
+function showCustomPuzzle(chosen,prefix){const phase=window.SupaPuzzleRating.phaseLabel(chosen.p.phase);selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent=prefix+" · "+phase+" · Elo puzzle estimé "+chosen.p.rating+" (provisoire) · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function startCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}showCustomPuzzle(matches[0],"Première étape du parcours personnalisé");}
+function nextCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}const currentId=defensePuzzles[activeDefenseIndex]&&defensePuzzles[activeDefenseIndex].id,index=matches.findIndex(x=>x.p.id===currentId),chosen=matches[(index+1+matches.length)%matches.length];showCustomPuzzle(chosen,"Étape suivante du parcours personnalisé");}
 function refreshCustomPuzzlePool(){defensePuzzles=[...tacticalTrainingPuzzles,...generatedDefensePuzzles];renderCustomProblemOptions();renderDefensePuzzleList();filterCustomProblems();}
-function restoreDefensePuzzles(){try{const saved=JSON.parse(localStorage.getItem(DEFENSE_PUZZLE_STORAGE_KEY)||"[]");if(!Array.isArray(saved))return;generatedDefensePuzzles=saved.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&p.line.length&&p.record).map((p,i)=>({...p,id:p.id||"saved-defense-"+i,rating:null,engineElo:Number(p.engineElo)||Math.min(Number(p.record.whiteElo)||2800,Number(p.record.blackElo)||2800),themes:Array.isArray(p.themes)?p.themes:["Défense tactique","Sacrifice candidat"]}));if(generatedDefensePuzzles.length)document.getElementById("defense-status").textContent=generatedDefensePuzzles.length+" puzzle(s) Stockfish restauré(s) depuis cet appareil.";}catch(_e){}}
-async function loadTacticalPuzzleBank(){try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});}if(!line.length)return null;const rating=Number(p.rating)||400;return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";}}
+function restoreDefensePuzzles(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(DEFENSE_PUZZLE_STORAGE_KEY)||"[]");if(!Array.isArray(saved))return;
+  generatedDefensePuzzles=saved.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&p.line.length&&p.record).map((p,i)=>({...p,
+   id:p.id||"saved-defense-"+i,
+   rating:Number(p.rating)>=400?Math.round(Number(p.rating)/50)*50:window.SupaPuzzleRating.estimateElo(p.fen,p.line,p.userColor),
+   ratingSource:p.ratingSource||"provisional-heuristic",phase:p.phase||window.SupaPuzzleRating.classifyPhase(p.fen),
+   engineElo:Number(p.engineElo)||Math.min(Number(p.record.whiteElo)||2800,Number(p.record.blackElo)||2800),
+   themes:Array.isArray(p.themes)?p.themes:["Défense tactique","Sacrifice candidat"]}));
+  if(generatedDefensePuzzles.length)document.getElementById("defense-status").textContent=generatedDefensePuzzles.length+" puzzle(s) restauré(s), avec Elo estimé, depuis cet appareil.";
+ }catch(_e){}
+}
+async function loadTacticalPuzzleBank(){try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});}if(!line.length)return null;const rating=Number(p.rating)||400,phase=window.SupaPuzzleRating.classifyPhase(p.fen);return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,phase,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";}}
 function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
 async function buildDefensePuzzles(){
  const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
@@ -297,12 +323,12 @@ async function buildDefensePuzzles(){
  const previousCount=generatedDefensePuzzles.length;
  const existingIds=new Set(generatedDefensePuzzles.map(p=>p.id));
  button.disabled=true;statusEl.textContent="Extraction des positions tactiques candidates… Les puzzles déjà créés sont conservés.";
- const candidates=[];
- currentGames.forEach((record,gameIndex)=>(Array.isArray(record.candidatePlies)?record.candidatePlies:[]).slice(0,4).forEach(ply=>{
+ const candidates=[],phaseOrder=["opening","middlegame","endgame"];
+ currentGames.forEach((record,gameIndex)=>(Array.isArray(record.candidatePlies)?record.candidatePlies:[]).forEach(ply=>{
   const fen=Array.isArray(record.fensAfter)?record.fensAfter[ply]:null;
-  if(fen)candidates.push({record,gameIndex,ply,fen});
+  if(fen)candidates.push({record,gameIndex,ply,fen,phase:window.SupaPuzzleRating.classifyPhase(fen)});
  }));
- const selected=candidates.slice(0,8);
+ const selected=phaseOrder.flatMap(phase=>candidates.filter(item=>item.phase===phase).slice(0,3)).slice(0,8);
  if(!selected.length){
   refreshCustomPuzzlePool();
   statusEl.textContent="Aucune nouvelle position tactique candidate. Les "+generatedDefensePuzzles.length+" puzzle(s) déjà enregistrés restent disponibles.";
@@ -325,7 +351,8 @@ async function buildDefensePuzzles(){
    const recordKey=item.record.id||item.record.signature||("game-"+item.gameIndex);
    const puzzleId="generated-defense-"+recordKey+"-ply-"+item.ply;
    if(line.some(m=>m.color===userColor)&&!existingIds.has(puzzleId)){
-    generatedDefensePuzzles.push({...item,line,userColor,solutionEngineVersion:activeEngineVersion,id:puzzleId,rating:null,engineElo:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
+    const rating=window.SupaPuzzleRating.estimateElo(item.fen,line,userColor);
+    generatedDefensePuzzles.push({...item,line,userColor,solutionEngineVersion:activeEngineVersion,id:puzzleId,rating,ratingSource:"provisional-heuristic",engineElo:Math.min(item.record.whiteElo,item.record.blackElo),themes:["Défense tactique","Sacrifice candidat",...(line.length>=4?["Combinaison multi-coups"]:[])]});
     existingIds.add(puzzleId);
    }
   }
@@ -341,14 +368,15 @@ async function buildDefensePuzzles(){
 let customBankVisibleCount=12;
 function renderDefensePuzzleList(){
  const root=document.getElementById("defense-results");root.innerHTML="";
- const generated=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source!=="training"&&customPuzzleThemeMatches(x.p));
- const bank=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p)).sort((a,b)=>Number(a.p.rating)-Number(b.p.rating));
+ const order=(a,b)=>customPhaseRank(a.p.phase)-customPhaseRank(b.p.phase)||Number(a.p.rating)-Number(b.p.rating)||String(a.p.id).localeCompare(String(b.p.id));
+ const generated=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source!=="training"&&customPuzzleMatches(x.p)).sort(order);
+ const bank=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p)).sort(order);
  function appendButton(entry,label,generatedPuzzle){
   const p=entry.p,i=entry.i,button=document.createElement("button");button.type="button";button.className="candidate";
   const lineLength=p.line.filter(m=>m.color===p.userColor).length;
   const themes=p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" · ");
   const title=p.source==="training"?(p.title||"Puzzle tactique"):"Partie "+(p.gameIndex+1)+" · position après "+((p.record.san||[])[p.ply]||"la tactique");
-  const ratingText=generatedPuzzle?"Difficulté non étalonnée · Elo moteur de la ligne : "+Number(p.engineElo||p.record.whiteElo||0):"Cote enregistrée : "+p.rating;
+  const ratingText=generatedPuzzle?"Phase : "+window.SupaPuzzleRating.phaseLabel(p.phase)+" · Elo puzzle estimé : "+p.rating+" (provisoire) · Elo UCI : "+Number(p.engineElo||p.record.whiteElo||0):"Phase : "+window.SupaPuzzleRating.phaseLabel(p.phase)+" · Elo indicatif : "+p.rating;
   button.innerHTML="<strong>"+label+" · "+title+"</strong><small>"+themes+" · "+lineLength+" coup(s) à trouver · "+(p.userColor==="w"?"Blancs":"Noirs")+" jouent · "+ratingText+"</small>";
   button.addEventListener("click",()=>selectDefensePuzzle(i));root.appendChild(button);
  }
@@ -387,6 +415,7 @@ function playDefenseSquare(square){const p=defensePuzzles[activeDefenseIndex];if
 document.getElementById("custom-elo-min").addEventListener("change",filterCustomProblems);
 document.getElementById("custom-elo-max").addEventListener("change",filterCustomProblems);
 document.getElementById("custom-theme-options").addEventListener("change",filterCustomProblems);
+document.getElementById("custom-phase-options").addEventListener("change",filterCustomProblems);
 document.getElementById("start-custom-problem").addEventListener("click",startCustomProblem);
 restoreGeneratedGames();
 restoreDefensePuzzles();
@@ -396,7 +425,7 @@ document.getElementById("export-library").addEventListener("click",()=>{const pa
 document.getElementById("import-library").addEventListener("change",async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.format!=="SupaChessGeneratedLibrary"||!Array.isArray(data.games)||!Array.isArray(data.puzzles))throw Error("Format de banque invalide.");for(const game of data.games){if(Array.isArray(game.uci)&&Array.isArray(game.san))addGeneratedGame(game);}const known=new Set(generatedDefensePuzzles.map(p=>p.id));generatedDefensePuzzles.push(...data.puzzles.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&!known.has(p.id)));saveDefensePuzzles();refreshCustomPuzzlePool();document.getElementById("defense-status").textContent="Banque importée et conservée sur cet appareil : "+generatedGameLibrary.length+" partie(s), "+generatedDefensePuzzles.length+" puzzle(s).";}catch(error){document.getElementById("defense-status").textContent="Import impossible : "+error.message;}finally{e.target.value="";}});
 document.getElementById("export-position-svg").addEventListener("click",()=>{const svg=document.querySelector("#defense-board svg")||document.querySelector("#board svg");if(!svg){document.getElementById("defense-status").textContent="Ouvre une position de partie ou un puzzle avant l’export SVG.";return;}const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:"image/svg+xml"})),a=document.createElement("a");a.href=url;a.download="supachess-position.svg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 document.getElementById("defense-reset").addEventListener("click",()=>selectDefensePuzzle(activeDefenseIndex));
-document.getElementById("defense-next").addEventListener("click",()=>selectDefensePuzzle((activeDefenseIndex+1)%defensePuzzles.length));
+document.getElementById("defense-next").addEventListener("click",nextCustomProblem);
 document.getElementById("generate").addEventListener("click",generate);
 document.getElementById("cancel").addEventListener("click",()=>{
  cancelRequested=true;document.getElementById("cancel").disabled=true;
@@ -437,5 +466,5 @@ async function downloadEngineAsset(url){
 for(const id of ["engine-js-link","engine-wasm-link","engine-nnue-link"])document.getElementById(id).addEventListener("click",event=>{event.preventDefault();downloadEngineAsset(event.currentTarget.href);});
  for(const id of ["engine-js","engine-wasm","engine-nnue"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les fichiers JS et WASM "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Fichiers Stockfish "+selectedEngineVersion()+" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.");}catch(error){status(error.message);}});
 </script>
-<script defer src="shared/site-global-v1.13.142.js?v=1.13.142"></script>
+<script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
 </body></html>

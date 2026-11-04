@@ -10,11 +10,12 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#18345a 0,#0b1220 42rem);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:inline-flex;margin-bottom:18px;text-decoration:none;color:#eaf2ff}.hero,.panel{border:1px solid var(--line);border-radius:18px;background:rgba(18,29,48,.94);box-shadow:0 20px 55px rgba(0,0,0,.2)}
 .hero{padding:26px;margin-bottom:18px}.hero h1{margin:0 0 8px;font-size:clamp(1.7rem,4vw,2.7rem)}.hero p{margin:5px 0;color:var(--muted);max-width:850px}
-.generator-link{display:inline-flex;margin-top:14px;padding:10px 14px;border:1px solid var(--gold);border-radius:10px;background:#74561b;color:#fff;font-weight:750;text-decoration:none}.generator-link:hover{background:#8a6724}\n.note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--gold);background:rgba(244,201,93,.09);border-radius:8px;color:#f9e9ba;font-size:.92rem}
+.generator-link{display:inline-flex;margin-top:14px;padding:10px 14px;border:1px solid var(--gold);border-radius:10px;background:#74561b;color:#fff;font-weight:750;text-decoration:none}.generator-link:hover{background:#8a6724}
+.note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--gold);background:rgba(244,201,93,.09);border-radius:8px;color:#f9e9ba;font-size:.92rem}
 .layout{display:grid;grid-template-columns:minmax(230px,290px) minmax(0,1fr);gap:18px;align-items:start}.panel{padding:18px}.panel h2{margin:0 0 12px;font-size:1.1rem}
-.game-list{display:grid;gap:9px}.game-item{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);padding:11px 12px;text-align:left;font:inherit;cursor:pointer}.game-item:hover,.game-item.active{border-color:var(--gold);background:#24334c}.game-item strong{display:block}.game-item small{display:block;color:var(--muted);margin-top:3px}
+.game-list{display:grid;gap:14px}.phase-group{display:grid;gap:9px;padding:12px;border:1px solid var(--line);border-radius:13px;background:rgba(8,16,29,.55)}.phase-heading{margin:0;color:var(--gold);font-size:1rem}.phase-description,.phase-empty{margin:0;color:var(--muted);font-size:.88rem}.phase-group .game-item{margin:0}.game-item{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);padding:11px 12px;text-align:left;font:inherit;cursor:pointer}.game-item:hover,.game-item.active{border-color:var(--gold);background:#24334c}.game-item strong{display:block}.game-item small{display:block;color:var(--muted);margin-top:3px}
 .session-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.session-top h2{margin-bottom:4px}.meta{color:var(--muted);font-size:.9rem}
-.board-area{display:grid;grid-template-columns:minmax(280px, min(68vh,620px)) minmax(210px,1fr);gap:16px;align-items:start;margin-top:16px}
+.board-area{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(110px,.35fr) minmax(210px,1fr);gap:12px;align-items:start;margin-top:16px}.board-area>#board{grid-column:1;grid-row:1/span 2;min-width:0}.board-area>#supachess-optional-eval-toggle{grid-column:2;grid-row:1;width:100%;font-size:.78rem;padding:8px 5px}.board-area>#supachess-optional-eval{grid-column:2;grid-row:2;width:100%;max-width:none;margin:0;padding:8px}.board-area>.side{grid-column:3;grid-row:1/span 2}.supachess-eval-track{height:20px}.supachess-eval-note{font-size:11px}
 .board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));border:3px solid #d7e0ef;border-radius:5px;overflow:hidden;touch-action:manipulation}
 .square{border:0;padding:0;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;cursor:pointer;font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-size:clamp(1.55rem,6.5vw,3.55rem);line-height:1}
 .square.light{background:#f0d9b5}.square.dark{background:#b58863}.square.last{box-shadow:inset 0 0 0 4px rgba(250,204,21,.7)}.square.selected{box-shadow:inset 0 0 0 4px #facc15;z-index:1}.square:focus-visible{outline:3px solid #fff;outline-offset:-4px;z-index:2}
@@ -23,7 +24,7 @@ a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:in
 .progress{height:8px;border-radius:9px;background:#29364a;overflow:hidden}.progress>span{display:block;height:100%;background:linear-gradient(90deg,#66d79a,#f4c95d);width:0;transition:width .2s}
 .moves{min-height:90px;max-height:190px;overflow:auto;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1727;color:#dce7f6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
 .controls{display:flex;flex-wrap:wrap;gap:8px}.btn{min-height:44px;border-radius:9px;padding:9px 13px;border:1px solid rgba(255,255,255,.22);background:#23446e;color:#fff;font:inherit;font-weight:700;cursor:pointer}.btn:hover,.btn:focus-visible{border-color:var(--gold);outline:2px solid rgba(244,201,93,.4);outline-offset:2px}.btn.secondary{background:#263142}.btn.gold{background:#74561b;border-color:#d7aa3a}.source{font-size:.86rem;color:var(--muted);overflow-wrap:anywhere}.source a{color:#c7dcff}
-@media(max-width:800px){.layout{grid-template-columns:1fr}.game-list{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.board-area{grid-template-columns:minmax(0,1fr)}.board{max-width:min(100%,620px);margin:auto}.page{padding:13px}.hero{padding:19px}.panel{padding:14px}}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.game-list{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.board-area{grid-template-columns:minmax(0,1fr) 105px;gap:9px}.board-area>#board{grid-column:1;grid-row:1/span 2;max-width:min(100%,620px);margin:auto}.board-area>#supachess-optional-eval-toggle{grid-column:2;grid-row:1}.board-area>#supachess-optional-eval{grid-column:2;grid-row:2}.board-area>.side{grid-column:1/-1;grid-row:3}.page{padding:13px}.hero{padding:19px}.panel{padding:14px}}@media(max-width:390px){.board-area{grid-template-columns:minmax(0,1fr) 88px;gap:7px}.board-area>#supachess-optional-eval{padding:6px}.supachess-eval-note{font-size:10px}}
 </style>
 </head>
 <body>
@@ -33,7 +34,7 @@ a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:in
 <h1>♟️ Parties brillantes : calculer les combinaisons</h1>
 <p>Rejoue des séquences tirées de parties réelles. Tu joues chaque coup clé de ton camp ; les réponses de l’adversaire se jouent automatiquement. Le but est de calculer plusieurs coups de suite, pas seulement de reconnaître le premier sacrifice.</p>
 <p class="note">Les positions et variantes proviennent des PGN du dépôt et suivent les coups effectivement joués. « Brillant » est ici un thème d’entraînement : les coups ne sont pas tous étiquetés « brilliant » par un moteur. Pour attribuer cette étiquette avec rigueur, il faudrait analyser chaque position avec une version et des réglages Stockfish fixés.</p>
-<a class="generator-link" href="GENERATEUR_PARTIES_BRILLANTES.html">Générer des parties Stockfish · Elo 2 800+</a><div class="engine-version-picker" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0;padding:12px;border:1px solid #34506f;border-radius:12px;background:#102037;color:#f5f7fb"><strong>Générer / vérifier avec Stockfish :</strong> <a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=16#engine-settings">Stockfish 16</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=17#engine-settings">Stockfish 17</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=18#engine-settings">Stockfish 18</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=19#engine-settings">Stockfish 19</a><span style="color:#c0cbd9">Les leçons déjà présentes ne sont pas attribuées rétroactivement à ces moteurs.</span></div>
+<a class="generator-link" href="GENERATEUR_PARTIES_BRILLANTES.html">Générer des parties Stockfish · Elo 2 800+</a><p class="note phase-guide">Parcours structuré : ouverture (jusqu’au 12e coup avec la plupart des pièces), milieu de partie, puis finale (matériel réduit ou 40e coup). Les positions sont classées dans cet ordre. Aucune position de départ aléatoire n’est ajoutée si Stockfish n’a pas trouvé de candidat tactique dans une phase.</p><div class="engine-version-picker" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0;padding:12px;border:1px solid #34506f;border-radius:12px;background:#102037;color:#f5f7fb"><strong>Générer / vérifier avec Stockfish :</strong> <a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=16#engine-settings">Stockfish 16</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=17#engine-settings">Stockfish 17</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=18#engine-settings">Stockfish 18</a><a href="GENERATEUR_PARTIES_BRILLANTES.html?engine=19#engine-settings">Stockfish 19</a><span style="color:#c0cbd9">Les leçons déjà présentes ne sont pas attribuées rétroactivement à ces moteurs.</span></div>
 <p class="note" id="generated-games-status">Chargement des séquences générées dans ce navigateur…</p>
 <div class="controls"><button class="btn secondary" id="refresh-generated-games" type="button">↻ Recharger mes parties générées</button></div>
 </header>
@@ -56,66 +57,100 @@ a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:in
 </div>
 </div>
 <script src="training_games/chess.0.10.3.js"></script>
+<script src="shared/puzzle-rating.js"></script>
 <script>
 const STUDIES=[{"id":"study-1","title":"Sacrifice de qualité et attaques forcées","lesson":"Rxd4 ouvre une suite où les échecs successifs coordonnent les pièces blanches.","playerColor":"w","startFen":"b2r3r/k4p1p/p2q1np1/NppP4/3p1Q2/P4PPB/1PP4P/1K1RR3 w - - 1 24","lineUci":["d1d4","c5d4","e1e7","a7b6","f4d4","b6a5","b2b4","a5a4"],"lineSan":["Rxd4","cxd4","Re7+","Kb6","Qxd4+","Kxa5","b4+","Ka4"],"white":"Garry Kasparov","black":"Veselin Topalov","event":"Hoogovens Group A","date":"1999.01.20","source":"","sourcePath":"data/games/kasparov_topalov_1999_immortal.pgn","moveCount":4},{"id":"study-2","title":"Sacrifice de dame et initiative","lesson":"Qxf6 provoque une séquence forcée ; rejoue les réponses exactes puis poursuis l’attaque.","playerColor":"w","startFen":"r1b2rk1/pp1ppp1p/5bp1/q7/3nP2Q/1BN1B3/PPP2PPP/R4RK1 w - - 4 12","lineUci":["h4f6","d4e2","c3e2","e7f6","e2c3","f8e8","c3d5","e8e6","e3d4","g8g7"],"lineSan":["Qxf6","Ne2+","Nxe2","exf6","Nc3","Re8","Nd5","Re6","Bd4","Kg7"],"white":"Rashid Nezhmetdinov","black":"Oleg Chernikov","event":"RSFSR Team Championship","date":"1962.??.??","source":"https://www.lifemasteraj.com/old_af-dl/nezh-cher_r62.html","sourcePath":"data/games/nezhmetdinov_vs_chernikov_1962.pgn","moveCount":5},{"id":"study-3","title":"Attaque de Tal contre le roi","lesson":"Une série de coups forcing transforme l’attaque en initiative durable.","playerColor":"w","startFen":"r1bb1rk1/p2n1ppp/q1p5/5NQn/2p5/5N2/PPPB1PPP/2KR3R w - - 2 16","lineUci":["f5h6","g8h8","g5h5","a6a2","d2c3","d7f6","h5f7","a2a1","c1d2","f8f7"],"lineSan":["Nh6+","Kh8","Qxh5","Qxa2","Bc3","Nf6","Qxf7","Qa1+","Kd2","Rxf7"],"white":"Mikhail Tal","black":"Vasily Smyslov","event":"Candidates Tournament","date":"1959.09.18","source":"ChessBox; 1959 Candidates round report","sourcePath":"data/games/tal_smyslov_candidates_1959_round8.pgn","moveCount":5},{"id":"study-4","title":"Combinaison d’Anand","lesson":"Les échanges sur d5 préparent le coup tactique final.","playerColor":"w","startFen":"r2r2k1/5p1p/2n1p1p1/qN1pn3/4P2P/PP2Q3/3RBPP1/3R2K1 w - - 0 25","lineUci":["e4d5","d8d5","d2d5","e6d5","b3b4","a5a4","d1d5"],"lineSan":["exd5","Rxd5","Rxd5","exd5","b4","Qa4","Rxd5"],"white":"Anand, Viswanathan","black":"Kasparov, Gary","event":"PCA/Intel-GP","date":"1995.04.30","source":"365Chess, PCA/Intel-GP 1995","sourcePath":"data/games/anand_vs_kasparov_moscow_1995.pgn","moveCount":4},{"id":"study-5","title":"Combinaison de Kasparov avec gain de dame","lesson":"Après 33.Rf4, joue ...Ne4, puis trouve les coups forcing qui conduisent à la capture de la dame blanche.","playerColor":"b","startFen":"2r1r3/5pk1/5nbp/8/Np1q1RP1/1P1n2P1/3Q2BP/1N1R3K b - - 4 33","lineUci":["f6e4","d2d3","e4f2","f4f2","g6d3","f2d2","d4e3"],"lineSan":["Ne4","Qxd3","Nf2+","Rxf2","Bxd3","Rfd2","Qe3"],"white":"Anatoly Karpov","black":"Garry Kasparov","event":"World Championship Match","date":"1985.10.15","source":"Chess Trap Guide, game 16 record","sourcePath":"data/games/karpov_kasparov_1985_game16.pgn","moveCount":4},{"id":"study-6","title":"Sacrifice d’ouverture de Deep Blue","lesson":"Un sacrifice de pièce force les réponses noires et laisse les pièces blanches actives.","playerColor":"w","startFen":"r1bqkb1r/pp1n1pp1/2p1pn1p/6N1/3P4/3B1N2/PPP2PPP/R1BQK2R w KQkq - 0 8","lineUci":["g5e6","d8e7","e1g1","f7e6","d3g6","e8d8","c1f4","b7b5"],"lineSan":["Nxe6","Qe7","O-O","fxe6","Bg6+","Kd8","Bf4","b5"],"white":"Deep Blue","black":"Garry Kasparov","event":"IBM Man-Machine Rematch","date":"1997.05.11","source":"IBM Deep Blue history; game score checked against published PGN","sourcePath":"data/games/deep_blue_kasparov_1997_game6.pgn","moveCount":4}];
 const GENERATED_GAMES_STORAGE_KEY="supachess-generated-games-v1";
+const PHASE_ORDER=['opening','middlegame','endgame'];
+function phaseRank(phase){const i=PHASE_ORDER.indexOf(phase);return i<0?PHASE_ORDER.length:i;}
+function studyPhase(study){return study.phase||window.SupaPuzzleRating.classifyPhase(study.startFen);}
+function studyMoveNumber(study){return window.SupaPuzzleRating.phaseMoveNumber(study.startFen);}
+const PHASE_PURPOSE={opening:"Développement, contrôle du centre et sécurité du roi.",middlegame:"Plans, calcul des variantes et tactiques dans une position développée.",endgame:"Activité du roi, pions passés et conversion technique."};
+let rejectedStudyCount=0;
+function validateStudy(study){
+ try{
+  if(!study||typeof study.startFen!=="string"||!Array.isArray(study.lineUci)||!study.lineUci.length)return false;
+  const replay=new Chess(study.startFen),san=[];
+  for(const uci of study.lineUci){
+   if(typeof uci!=="string"||! /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(uci))return false;
+   const move=replay.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
+   if(!move)return false;
+   san.push(move.san);
+  }
+  study.lineSan=san;
+  study.moveCount=Math.ceil(study.lineUci.length/2);
+  return true;
+ }catch(_error){return false;}
+}
+function retainValidatedStudies(){
+ for(let i=STUDIES.length-1;i>=0;i--)if(!validateStudy(STUDIES[i])){STUDIES.splice(i,1);rejectedStudyCount++;}
+}
+function sortStudiesByPhase(){
+ STUDIES.sort((a,b)=>phaseRank(studyPhase(a))-phaseRank(studyPhase(b))||studyMoveNumber(a)-studyMoveNumber(b)||a.lineUci.length-b.lineUci.length||String(a.id).localeCompare(String(b.id),'fr'));
+}
 function loadGeneratedStudies(){
- const status=document.getElementById("generated-games-status");
- const startFen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
- let count=0;
+ const status=document.getElementById("generated-games-status"),startFen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
  try{
   const records=JSON.parse(localStorage.getItem(GENERATED_GAMES_STORAGE_KEY)||"[]");
   if(!Array.isArray(records))throw new Error("invalid generated-game library");
   records.slice(-25).forEach((record,recordIndex)=>{
    if(!record||!Array.isArray(record.uci)||!Array.isArray(record.san))return;
-   let candidatePlies=Array.isArray(record.candidatePlies)?record.candidatePlies.filter(Number.isInteger):[];
-   if(!candidatePlies.length)candidatePlies=[0];
-   candidatePlies=candidatePlies.slice(0,3);
-   candidatePlies.forEach(ply=>{
+   const plies=Array.isArray(record.candidatePlies)?record.candidatePlies.filter(Number.isInteger):[];
+   if(!plies.length)return;
+   const byPhase=new Map();
+   plies.forEach(ply=>{
     if(ply<0||ply>=record.uci.length)return;
-    const before=new Chess(startFen);
+    const position=new Chess(startFen);
     for(let i=0;i<ply;i++){
-     const uci=record.uci[i],move=uci&&before.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
+     const uci=record.uci[i],move=typeof uci==="string"&&position.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
      if(!move)return;
     }
-    const lineUci=record.uci.slice(ply,Math.min(ply+12,record.uci.length));
-    const lineSan=record.san.slice(ply,ply+lineUci.length);
+    const fen=position.fen(),phase=window.SupaPuzzleRating.classifyPhase(fen);
+    if(!byPhase.has(phase))byPhase.set(phase,{ply,fen});
+   });
+   PHASE_ORDER.forEach(phase=>{
+    const candidate=byPhase.get(phase);if(!candidate)return;
+    const {ply,fen}=candidate,lineUci=record.uci.slice(ply,Math.min(ply+12,record.uci.length)),lineSan=record.san.slice(ply,ply+lineUci.length);
     if(!lineUci.length)return;
     const id="generated-study-"+(record.id||recordIndex)+"-"+ply;
     if(STUDIES.some(study=>study.id===id))return;
-    const sideToMove=before.turn();
-    const moveCount=lineUci.filter((_,offset)=>((offset%2===0)?sideToMove:(sideToMove==="w"?"b":"w"))===sideToMove).length;
-    const engine="Stockfish "+(record.engineVersion||"")+" "+(record.engineBuild||"");
-    STUDIES.push({
-     id,title:"Position générée · demi-coup "+(ply+1),
-     lesson:"Trouve la meilleure suite proposée par le moteur depuis la position candidate. Les sacrifices candidats sont détectés par une heuristique; vérifie la variante et ne prends pas l’Elo UCI demandé pour une cote de puzzle.",
-     playerColor:sideToMove,startFen:before.fen(),lineUci,lineSan,
-     white:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.whiteElo,
-     black:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.blackElo,
-     event:engine,date:String(record.createdAt||"").slice(0,10)||"date inconnue",
-     source:"Partie générée dans le navigateur · "+engine,
-     sourcePath:"",moveCount,generated:true
-    });
-    count++;
+    const sideToMove=fen.split(" ")[1],moveCount=Math.ceil(lineUci.length/2),engine="Stockfish "+(record.engineVersion||"")+" "+(record.engineBuild||"");
+    STUDIES.push({id,title:window.SupaPuzzleRating.phaseLabel(phase)+" · Position candidate · coup "+(Math.floor(ply/2)+1),
+     lesson:"Phase : "+window.SupaPuzzleRating.phaseLabel(phase)+". Trouve le coup clé, calcule la réponse adverse, puis vérifie la suite Stockfish. La position vient d’un candidat tactique détecté; l’Elo UCI du moteur ne représente pas le niveau Elo du puzzle.",
+     playerColor:sideToMove,startFen:fen,lineUci,lineSan,white:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.whiteElo,
+     black:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.blackElo,event:engine,
+     date:String(record.createdAt||"").slice(0,10)||"date inconnue",source:"Partie générée dans le navigateur · "+engine,
+     sourcePath:"",moveCount,generated:true,phase,estimatedRating:window.SupaPuzzleRating.estimateElo(fen,lineUci,sideToMove)});
    });
   });
-  if(status)status.textContent=count
-   ?count+" séquence(s) de parties générées ajoutées automatiquement depuis ce navigateur."
-   :"Aucune partie générée sur cet appareil pour l’instant. Génère une partie Stockfish : ses positions clés apparaîtront ici.";
- }catch(error){
-  if(status)status.textContent="Les parties générées n’ont pas pu être chargées depuis ce navigateur.";
- }
+  retainValidatedStudies();
+  sortStudiesByPhase();
+  const available=STUDIES.filter(study=>study.generated).length;
+  if(status)status.textContent=available
+   ?available+" position(s) générée(s) conservée(s) après vérification complète des variantes; parcours ordonné par phase puis par numéro de coup. "+(rejectedStudyCount?rejectedStudyCount+" position(s) invalide(s) exclue(s).":"Aucune position aléatoire n’est ajoutée.")
+   :"Aucun candidat tactique validé sur cet appareil. Génère des parties et des puzzles Stockfish pour alimenter ce parcours par phase.";
+ }catch(error){if(status)status.textContent="Les parties générées n’ont pas pu être chargées depuis ce navigateur.";}
 }
 let currentIndex=-1,game=null,cursor=0,selected=null,played=[],lastMove=null;
 const whitePieces={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 const blackPieces={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function renderList(){
  const root=document.getElementById("game-list");root.innerHTML="";
- STUDIES.forEach((study,index)=>{
-  const button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
-  const title=document.createElement("strong");title.textContent=(index+1)+". "+study.title;
-  const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" coups à trouver";
-  button.appendChild(title);button.appendChild(sub);button.onclick=function(){loadStudy(index);};root.appendChild(button);
+ PHASE_ORDER.forEach((phase,phaseIndex)=>{
+  const entries=STUDIES.map((study,index)=>({study,index})).filter(entry=>studyPhase(entry.study)===phase);
+  const section=document.createElement("section");section.className="phase-group";section.dataset.phase=phase;
+  const heading=document.createElement("h3");heading.className="phase-heading";
+  heading.textContent="Étape "+(phaseIndex+1)+"/"+PHASE_ORDER.length+" · "+window.SupaPuzzleRating.phaseLabel(phase)+" · "+entries.length+" position(s)";
+  const description=document.createElement("p");description.className="phase-description";description.textContent=PHASE_PURPOSE[phase];
+  section.append(heading,description);
+  if(!entries.length){const empty=document.createElement("p");empty.className="phase-empty";empty.textContent="Aucune position vérifiée disponible pour cette phase. La phase reste visible et ne sera pas remplacée par un exercice pris au hasard.";section.appendChild(empty);}
+  entries.forEach((entry,phasePosition)=>{
+   const {study,index}=entry,button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
+   const title=document.createElement("strong");title.textContent="Position "+(phasePosition+1)+"/"+entries.length+" · coup "+studyMoveNumber(study)+" · "+study.title;
+   const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" demi-coups dans la variante"+(study.generated?" · estimation Elo provisoire ≈ "+study.estimatedRating:"");
+   button.append(title,sub);button.onclick=function(){loadStudy(index);};section.appendChild(button);
+  });
+  root.appendChild(section);
  });
 }
 function label(text,strong){
@@ -124,7 +159,7 @@ function label(text,strong){
 function loadStudy(index){
  currentIndex=index;const study=STUDIES[index];game=new Chess(study.startFen);cursor=0;selected=null;played=[];lastMove=null;
  document.getElementById("study-title").textContent=study.title;
- document.getElementById("study-meta").textContent=study.event+" · "+study.date+" · "+study.white+" — "+study.black;
+ document.getElementById("study-meta").textContent="Étape "+(phaseRank(studyPhase(study))+1)+"/"+PHASE_ORDER.length+" · "+window.SupaPuzzleRating.phaseLabel(studyPhase(study))+" · Coup "+studyMoveNumber(study)+" · "+study.event+" · "+study.date+" · "+study.white+" — "+study.black+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
  document.getElementById("turn-label").textContent=(study.playerColor==="w"?"⬜ Blancs jouent":"⬛ Noirs jouent")+" · séquence de "+study.lineUci.length+" demi-coups";
  document.getElementById("lesson").textContent=study.lesson;
  const source=document.getElementById("source");
@@ -186,6 +221,6 @@ document.getElementById("refresh-generated-games").addEventListener("click",()=>
 window.addEventListener("storage",event=>{if(event.key===GENERATED_GAMES_STORAGE_KEY){loadGeneratedStudies();renderList();}});
 loadGeneratedStudies();renderList();loadStudy(0);
 </script>
-<script defer src="shared/site-global-v1.13.142.js?v=1.13.142"></script>
+<script defer src="shared/site-global-v1.13.147.js?v=1.13.147"></script>
 </body>
 </html>

@@ -143,7 +143,7 @@ function testInternalLinks() {
 function testSiteVersionReferences() {
     console.log('\n🏷️ Test 4 — Version globale cohérente sur chaque page');
     const expectedVersion = '1.13.146';
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.146.js'));
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.145.js'));
     if (!globalScript) {
         fail('shared/site-global-v1.13.145.js manquant');
         return;
@@ -169,7 +169,7 @@ function testSiteVersionReferences() {
 // ── Test 5 : validation commune de tous les échiquiers ───────────────────────
 function testBoardProtocolCoverage() {
     console.log('\n♟️ Test 5 — Vérificateur commun des échiquiers');
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.146.js'));
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.145.js'));
     const boardProtocol = readFile(path.join(DIR, 'shared', 'chessboard-protocol.js'));
     if (!globalScript || !/initializeBoardProtocol\(\);/.test(globalScript)) {
         fail('Le script global ne déclenche pas le vérificateur commun des échiquiers');
@@ -195,7 +195,7 @@ function testTitles() {
     for (const page of pages) {
         const content = readFile(path.join(DIR, page));
         if (!content) continue;
-        const m = content.match(/<title>([^<]*)<\/title>/i);
+        const m = content.match(/<title\b[^>]*>([^<]*)<\/title>/i);
         if (!m)              warn(`${page} — pas de <title>`);
         else if (!m[1].trim()) fail(`${page} — <title> vide`);
         else ok(`${page} — "${m[1].trim()}"`);

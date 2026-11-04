@@ -629,7 +629,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.150"></script>
+<script src="shared/player-analysis-data.js?v=1.13.151"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -700,7 +700,7 @@ function getProfileGamePlayerColor(game) {
 function getProfileGamePlayerName(game, color) {
     if (!game || !color) return '';
     if (color === game.userColor) return 'Moi';
-    return String(color === 'w' ? game.whitePlayer : game.blackPlayer || '').trim();
+    return String((color === 'w' ? game.whitePlayer : game.blackPlayer) || '').trim();
 }
 
 function renderProfilePlayerOptions() {
@@ -711,7 +711,8 @@ function renderProfilePlayerOptions() {
         if (!Array.isArray(game.history)) return;
         ['w', 'b'].forEach(color => {
             if (color === game.userColor) return;
-            const name = String(color === 'w' ? game.whitePlayer : game.blackPlayer || '').trim();
+            if (!game.history.some(move => move.color === color && move.rated)) return;
+            const name = String((color === 'w' ? game.whitePlayer : game.blackPlayer) || '').trim();
             if (!name || /^(?:moi|joueur|player|adversaire|partie locale)$/i.test(name)) return;
             const id = 'named:' + normalizeProfilePlayerName(name);
             if (!players.has(id)) players.set(id, name);
@@ -1823,8 +1824,8 @@ function renderGamesList(filter) {
         let resultIcon = resultForSelectedPlayer === 'win' ? '✅' : resultForSelectedPlayer === 'loss' ? '❌' : resultForSelectedPlayer === 'draw' ? '🤝' : '⬜';
         if (avgR !== null && avgR >= 7) ratingClass = 'rating-high';
         else if (avgR !== null && avgR < 5) ratingClass = 'rating-low';
-        const playerName = getProfileGamePlayerName(g, selectedColor);
-        const opponent = escapePlayerText(playerName || g.opponent || 'Partie du profil');
+        const opponentColor = selectedColor === 'w' ? 'b' : selectedColor === 'b' ? 'w' : null;
+        const opponent = escapePlayerText(getProfileGamePlayerName(g, opponentColor) || g.opponent || 'Partie du profil');
         const moves = escapePlayerText(g.moves || (g.history ? g.history.length : '?'));
         const date = escapePlayerText(formatProfileGameDate(g.date));
         const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' :

@@ -13,7 +13,7 @@ a{color:#b9d5ff}.page{max-width:1180px;margin:auto;padding:22px}.back{display:in
 .generator-link{display:inline-flex;margin-top:14px;padding:10px 14px;border:1px solid var(--gold);border-radius:10px;background:#74561b;color:#fff;font-weight:750;text-decoration:none}.generator-link:hover{background:#8a6724}
 .note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--gold);background:rgba(244,201,93,.09);border-radius:8px;color:#f9e9ba;font-size:.92rem}
 .layout{display:grid;grid-template-columns:minmax(230px,290px) minmax(0,1fr);gap:18px;align-items:start}.panel{padding:18px}.panel h2{margin:0 0 12px;font-size:1.1rem}
-.game-list{display:grid;gap:9px}.game-item{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);padding:11px 12px;text-align:left;font:inherit;cursor:pointer}.game-item:hover,.game-item.active{border-color:var(--gold);background:#24334c}.game-item strong{display:block}.game-item small{display:block;color:var(--muted);margin-top:3px}
+.game-list{display:grid;gap:14px}.phase-group{display:grid;gap:9px;padding:12px;border:1px solid var(--line);border-radius:13px;background:rgba(8,16,29,.55)}.phase-heading{margin:0;color:var(--gold);font-size:1rem}.phase-description,.phase-empty{margin:0;color:var(--muted);font-size:.88rem}.phase-group .game-item{margin:0}.game-item{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--panel2);color:var(--text);padding:11px 12px;text-align:left;font:inherit;cursor:pointer}.game-item:hover,.game-item.active{border-color:var(--gold);background:#24334c}.game-item strong{display:block}.game-item small{display:block;color:var(--muted);margin-top:3px}
 .session-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.session-top h2{margin-bottom:4px}.meta{color:var(--muted);font-size:.9rem}
 .board-area{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(110px,.35fr) minmax(210px,1fr);gap:12px;align-items:start;margin-top:16px}.board-area>#board{grid-column:1;grid-row:1/span 2;min-width:0}.board-area>#supachess-optional-eval-toggle{grid-column:2;grid-row:1;width:100%;font-size:.78rem;padding:8px 5px}.board-area>#supachess-optional-eval{grid-column:2;grid-row:2;width:100%;max-width:none;margin:0;padding:8px}.board-area>.side{grid-column:3;grid-row:1/span 2}.supachess-eval-track{height:20px}.supachess-eval-note{font-size:11px}
 .board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));border:3px solid #d7e0ef;border-radius:5px;overflow:hidden;touch-action:manipulation}
@@ -64,7 +64,30 @@ const GENERATED_GAMES_STORAGE_KEY="supachess-generated-games-v1";
 const PHASE_ORDER=['opening','middlegame','endgame'];
 function phaseRank(phase){const i=PHASE_ORDER.indexOf(phase);return i<0?PHASE_ORDER.length:i;}
 function studyPhase(study){return study.phase||window.SupaPuzzleRating.classifyPhase(study.startFen);}
-function sortStudiesByPhase(){STUDIES.sort((a,b)=>phaseRank(studyPhase(a))-phaseRank(studyPhase(b))||Number(!!a.generated)-Number(!!b.generated)||String(a.title).localeCompare(String(b.title),'fr'));}
+function studyMoveNumber(study){return window.SupaPuzzleRating.phaseMoveNumber(study.startFen);}
+const PHASE_PURPOSE={opening:"Développement, contrôle du centre et sécurité du roi.",middlegame:"Plans, calcul des variantes et tactiques dans une position développée.",endgame:"Activité du roi, pions passés et conversion technique."};
+let rejectedStudyCount=0;
+function validateStudy(study){
+ try{
+  if(!study||typeof study.startFen!=="string"||!Array.isArray(study.lineUci)||!study.lineUci.length)return false;
+  const replay=new Chess(study.startFen),san=[];
+  for(const uci of study.lineUci){
+   if(typeof uci!=="string"||! /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(uci))return false;
+   const move=replay.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
+   if(!move)return false;
+   san.push(move.san);
+  }
+  study.lineSan=san;
+  study.moveCount=Math.ceil(study.lineUci.length/2);
+  return true;
+ }catch(_error){return false;}
+}
+function retainValidatedStudies(){
+ for(let i=STUDIES.length-1;i>=0;i--)if(!validateStudy(STUDIES[i])){STUDIES.splice(i,1);rejectedStudyCount++;}
+}
+function sortStudiesByPhase(){
+ STUDIES.sort((a,b)=>phaseRank(studyPhase(a))-phaseRank(studyPhase(b))||studyMoveNumber(a)-studyMoveNumber(b)||a.lineUci.length-b.lineUci.length||String(a.id).localeCompare(String(b.id),'fr'));
+}
 function loadGeneratedStudies(){
  const status=document.getElementById("generated-games-status"),startFen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
  try{
@@ -79,7 +102,7 @@ function loadGeneratedStudies(){
     if(ply<0||ply>=record.uci.length)return;
     const position=new Chess(startFen);
     for(let i=0;i<ply;i++){
-     const uci=record.uci[i],move=uci&&position.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
+     const uci=record.uci[i],move=typeof uci==="string"&&position.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"});
      if(!move)return;
     }
     const fen=position.fen(),phase=window.SupaPuzzleRating.classifyPhase(fen);
@@ -100,10 +123,11 @@ function loadGeneratedStudies(){
      sourcePath:"",moveCount,generated:true,phase,estimatedRating:window.SupaPuzzleRating.estimateElo(fen,lineUci,sideToMove)});
    });
   });
+  retainValidatedStudies();
   sortStudiesByPhase();
   const available=STUDIES.filter(study=>study.generated).length;
   if(status)status.textContent=available
-   ?available+" position(s) tactique(s) générée(s), classée(s) par phase : ouverture → milieu de partie → finale. Aucune position initiale aléatoire n’est ajoutée."
+   ?available+" position(s) générée(s) conservée(s) après vérification complète des variantes; parcours ordonné par phase puis par numéro de coup. "+(rejectedStudyCount?rejectedStudyCount+" position(s) invalide(s) exclue(s).":"Aucune position aléatoire n’est ajoutée.")
    :"Aucun candidat tactique validé sur cet appareil. Génère des parties et des puzzles Stockfish pour alimenter ce parcours par phase.";
  }catch(error){if(status)status.textContent="Les parties générées n’ont pas pu être chargées depuis ce navigateur.";}
 }
@@ -112,11 +136,21 @@ const whitePieces={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 const blackPieces={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function renderList(){
  const root=document.getElementById("game-list");root.innerHTML="";
- STUDIES.forEach((study,index)=>{
-  const phase=studyPhase(study),button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
-  const title=document.createElement("strong");title.textContent="Phase "+(phaseRank(phase)+1)+" · "+window.SupaPuzzleRating.phaseLabel(phase)+" · "+(index+1)+". "+study.title;
-  const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" coups à trouver"+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
-  button.appendChild(title);button.appendChild(sub);button.onclick=function(){loadStudy(index);};root.appendChild(button);
+ PHASE_ORDER.forEach((phase,phaseIndex)=>{
+  const entries=STUDIES.map((study,index)=>({study,index})).filter(entry=>studyPhase(entry.study)===phase);
+  const section=document.createElement("section");section.className="phase-group";section.dataset.phase=phase;
+  const heading=document.createElement("h3");heading.className="phase-heading";
+  heading.textContent="Étape "+(phaseIndex+1)+"/"+PHASE_ORDER.length+" · "+window.SupaPuzzleRating.phaseLabel(phase)+" · "+entries.length+" position(s)";
+  const description=document.createElement("p");description.className="phase-description";description.textContent=PHASE_PURPOSE[phase];
+  section.append(heading,description);
+  if(!entries.length){const empty=document.createElement("p");empty.className="phase-empty";empty.textContent="Aucune position vérifiée disponible pour cette phase. La phase reste visible et ne sera pas remplacée par un exercice pris au hasard.";section.appendChild(empty);}
+  entries.forEach((entry,phasePosition)=>{
+   const {study,index}=entry,button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
+   const title=document.createElement("strong");title.textContent="Position "+(phasePosition+1)+"/"+entries.length+" · coup "+studyMoveNumber(study)+" · "+study.title;
+   const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" demi-coups dans la variante"+(study.generated?" · estimation Elo provisoire ≈ "+study.estimatedRating:"");
+   button.append(title,sub);button.onclick=function(){loadStudy(index);};section.appendChild(button);
+  });
+  root.appendChild(section);
  });
 }
 function label(text,strong){
@@ -125,7 +159,7 @@ function label(text,strong){
 function loadStudy(index){
  currentIndex=index;const study=STUDIES[index];game=new Chess(study.startFen);cursor=0;selected=null;played=[];lastMove=null;
  document.getElementById("study-title").textContent=study.title;
- document.getElementById("study-meta").textContent="Phase "+(phaseRank(studyPhase(study))+1)+" · "+window.SupaPuzzleRating.phaseLabel(studyPhase(study))+" · "+study.event+" · "+study.date+" · "+study.white+" — "+study.black+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
+ document.getElementById("study-meta").textContent="Étape "+(phaseRank(studyPhase(study))+1)+"/"+PHASE_ORDER.length+" · "+window.SupaPuzzleRating.phaseLabel(studyPhase(study))+" · Coup "+studyMoveNumber(study)+" · "+study.event+" · "+study.date+" · "+study.white+" — "+study.black+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
  document.getElementById("turn-label").textContent=(study.playerColor==="w"?"⬜ Blancs jouent":"⬛ Noirs jouent")+" · séquence de "+study.lineUci.length+" demi-coups";
  document.getElementById("lesson").textContent=study.lesson;
  const source=document.getElementById("source");

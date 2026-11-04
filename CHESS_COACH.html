@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Coach - Entraînement Personnalisé | ChessNova</title>
+    <title>Coach IA · Analyse de partie | SupaChess</title>
 
     <!-- Libraries -->
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
@@ -397,6 +397,9 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        .recent-game-accuracy { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; padding:7px 9px; border-radius:7px; background:rgba(0,217,255,.08); color:#dbeafe; font-size:.9em; }
+        .recent-game-accuracy b { color:#5eead4; font-size:1.05em; }
+        .recent-game-accuracy--missing { color:var(--text-secondary); background:transparent; padding-left:0; }
         /* Back link */
         .back-link {
             display: inline-flex;
@@ -444,7 +447,7 @@
         <a href="index.html" class="back-link">← Retour au Hub</a>
 
         <div class="header">
-            <h1>Chess Coach</h1>
+            <h1>Coach IA · Analyse de partie</h1>
             <p class="subtitle">Analysez vos parties, comprenez vos erreurs, progressez</p>
         </div>
 
@@ -4320,7 +4323,7 @@ Exemple:
             updatePuzzleStats();
         }
 
-        function saveRecentGame() {
+        function saveRecentGame(whiteAcc, blackAcc) {
             const headers = game.header();
             const pgn = game.pgn();
             const recent = {
@@ -4330,12 +4333,16 @@ Exemple:
                 date: new Date().toISOString(),
                 moves: analyzedMoves.length,
                 pgn: pgn,
-                gameHash: getGameHash(pgn)
+                gameHash: getGameHash(pgn),
+                whiteAcc: Number.isFinite(Number(whiteAcc)) ? Number(whiteAcc) : null,
+                blackAcc: Number.isFinite(Number(blackAcc)) ? Number(blackAcc) : null
             };
 
             progress.recentGames = progress.recentGames || [];
+            const previousIndex = progress.recentGames.findIndex(item => item.gameHash === recent.gameHash);
+            if (previousIndex >= 0) progress.recentGames.splice(previousIndex, 1);
             progress.recentGames.unshift(recent);
-            if (progress.recentGames.length > 10) progress.recentGames.pop();
+            if (progress.recentGames.length > 200) progress.recentGames.length = 200;
             saveProgress();
             loadRecentGames();
         }
@@ -4351,21 +4358,30 @@ Exemple:
 
             container.innerHTML = games.map((g, i) => {
                 const isCached = g.gameHash && analysisCache[g.gameHash];
+                const stored = isCached || {};
+                const whiteAcc = g.whiteAcc !== null && g.whiteAcc !== undefined ? g.whiteAcc : stored.whiteAcc;
+                const blackAcc = g.blackAcc !== null && g.blackAcc !== undefined ? g.blackAcc : stored.blackAcc;
+                const accuracy = Number.isFinite(Number(whiteAcc)) && Number.isFinite(Number(blackAcc))
+                    ? '<div class="recent-game-accuracy"><span>' + escapeHtml(g.white || 'Blancs') + ' : <b>' + Math.round(Number(whiteAcc)) + '%</b></span><span>' + escapeHtml(g.black || 'Noirs') + ' : <b>' + Math.round(Number(blackAcc)) + '%</b></span></div>'
+                    : '<div class="recent-game-accuracy recent-game-accuracy--missing">Précision par joueur indisponible</div>';
+                const date = new Date(g.date);
+                const dateLabel = Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
                 return `
                 <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
                      onclick="loadRecentGame(${i})"
                      onmouseover="this.style.background='rgba(0,217,255,0.1)'"
                      onmouseout="this.style.background='rgba(0,0,0,0.2)'">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span><b>${g.white}</b> vs <b>${g.black}</b></span>
+                        <span><b>${escapeHtml(g.white || 'Blancs')}</b> vs <b>${escapeHtml(g.black || 'Noirs')}</b></span>
                         <div style="display:flex;gap:6px;align-items:center;">
                             ${isCached ? '<span title="Analyse en cache — chargement instantané" style="color:#00d9ff;font-size:0.85em;">⚡ Cache</span>' : ''}
-                            <span style="color: var(--accent-yellow);">${g.result}</span>
+                            <span style="color: var(--accent-yellow);">${escapeHtml(g.result || '?')}</span>
                         </div>
                     </div>
                     <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">
-                        ${g.moves} coups • ${new Date(g.date).toLocaleDateString()}
+                        ${Number(g.moves) || 0} demi-coups • ${dateLabel}
                     </div>
+                    ${accuracy}
                 </div>`;
             }).join('');
         }

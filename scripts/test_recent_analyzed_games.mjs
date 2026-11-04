@@ -29,6 +29,7 @@ const panelMarkup = await chromium.launch({ headless: true }).then(async (browse
   }
 });
 assert.ok(panelMarkup.isAtTopOfRightColumn);
+assert.ok(html.includes('saveRecentGame(whiteAcc, blackAcc);'), 'calculated player accuracies are passed into recent-game persistence');
 
 const saveStart = html.indexOf('function saveRecentGame(');
 const loadStart = html.indexOf('function loadRecentGames()', saveStart);

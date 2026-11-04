@@ -1675,10 +1675,17 @@
             }
         }
 
-        // Configuration API Auth
+        // API retains legacy rating updates; profile-game history is stored in Firestore.
         const API_URL = 'https://aimix-api.hugo-padilla-pro.workers.dev';
         let currentUser = null;
         let sessionId = localStorage.getItem('chessnova_session');
+        function createCloudGameId() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return 'g_' + window.crypto.randomUUID().replace(/-/g, '');
+            }
+            return 'g_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+        }
+        let currentGameCloudId = createCloudGameId();
         let gameStartTime = null;
 
         let sessionStats = {
@@ -3088,6 +3095,7 @@
                     difficulty: difficulty,
                     gameHistory: window.gameHistory || [],
                     allGamesHistory: window.allGamesHistory || [],
+                    currentGameCloudId: currentGameCloudId,
                     currentOpponent: window.currentOpponent || '',
                     lastSaved: new Date().toISOString(),
                     version: '2.2'
@@ -3107,6 +3115,7 @@
                         difficulty = parsed.difficulty || difficulty;
                         window.gameHistory = parsed.gameHistory || [];
                         window.allGamesHistory = parsed.allGamesHistory || [];
+                        currentGameCloudId = parsed.currentGameCloudId || currentGameCloudId;
                         window.currentOpponent = parsed.currentOpponent || '';
                         showToast('✅ Données restaurées!', 'success', 2000);
                         return true;
@@ -3114,6 +3123,7 @@
                 }
                 window.gameHistory = [];
                 window.allGamesHistory = [];
+                currentGameCloudId = createCloudGameId();
                 return false;
             }, 'Erreur chargement');
         }
@@ -8876,7 +8886,9 @@
                 };
                 const settings = difficultyLevels[difficulty] || difficultyLevels['beginner'];
                 window.allGamesHistory.push({
-                    date: new Date().toLocaleString('fr-FR'),
+                    id: currentGameCloudId,
+                    pgn: game.pgn(),
+                    date: new Date().toISOString(),
                     opponent: `IA ${difficultyLabels[difficulty] || difficulty} (${settings.elo} ELO)`,
                     moves: window.gameHistory.length,
                     avgRating: window.gameHistory.length > 0 ? (window.gameHistory.reduce((a, b) => a + b.rating, 0) / window.gameHistory.length).toFixed(1) : 0,
@@ -8885,6 +8897,7 @@
             }
 
             // Réinitialiser pour la nouvelle partie
+            currentGameCloudId = createCloudGameId();
             window.gameResigned = false;
             window.gameHistory = [];
             reviewPly = null;
@@ -10078,22 +10091,72 @@
             await db.collection('users').doc(currentUser.uid).update(stats);
         }
         
-        async function saveGameToFirestore(gameData) {
-            if (!db || !currentUser?.uid) return;
-            await db.collection('games').add({
-                odUID: currentUser.uid,
-                ...gameData,
-                created_at: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        function cloudGameDocumentId(record, index) {
+            const supplied = record && record.id ? String(record.id) : '';
+            if (/^[A-Za-z0-9_-]{1,100}$/.test(supplied)) return supplied;
+            const moves = Array.isArray(record && record.history)
+                ? record.history.map(move => move && (move.san || move.move) || '').join(' ')
+                : String(record && record.pgn || '');
+            const source = [record && record.date || '', record && record.opponent || '', moves, index].join('|');
+            let hash = 2166136261;
+            for (let i = 0; i < source.length; i++) hash = Math.imul(hash ^ source.charCodeAt(i), 16777619);
+            return 'legacy_' + (hash >>> 0).toString(16).padStart(8, '0') + '_' + Number(index || 0).toString(36);
         }
-        
+
+        function makeCloudGameDocument(gameData, gameId) {
+            const history = Array.isArray(gameData.history) ? gameData.history.slice(-600) : [];
+            const safeHistory = JSON.parse(JSON.stringify(history));
+            const avgRating = Number(gameData.avgRating);
+            return {
+                schemaVersion: 1,
+                gameId,
+                date: String(gameData.date || new Date().toISOString()).slice(0, 80),
+                opponent: String(gameData.opponent || 'SupaChess').slice(0, 160),
+                moves: Math.max(0, Math.min(1000, Math.floor(Number(gameData.moves) || safeHistory.length))),
+                avgRating: Number.isFinite(avgRating) ? avgRating : null,
+                history: safeHistory,
+                pgn: String(gameData.pgn || '').slice(0, 50000),
+                result: String(gameData.result || '*').slice(0, 20),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+        }
+
+        async function saveGameToFirestore(gameData) {
+            const user = auth && auth.currentUser;
+            if (!db || !user || !user.uid || !gameData) return false;
+            const gameId = cloudGameDocumentId(gameData, 0);
+            const ref = db.collection('users').doc(user.uid).collection('games').doc(gameId);
+            await ref.set(makeCloudGameDocument(gameData, gameId), { merge: true });
+            return true;
+        }
+
+        async function syncLocalGamesToFirestore() {
+            const user = auth && auth.currentUser;
+            const games = Array.isArray(window.allGamesHistory) ? window.allGamesHistory : [];
+            if (!db || !user || !user.uid || !games.length) return 0;
+            const collection = db.collection('users').doc(user.uid).collection('games');
+            let synced = 0;
+            for (let start = 0; start < games.length; start += 400) {
+                const batch = db.batch();
+                let batchCount = 0;
+                games.slice(start, start + 400).forEach((game, offset) => {
+                    if (!game || !Array.isArray(game.history) || !game.history.length) return;
+                    const index = start + offset;
+                    const gameId = cloudGameDocumentId(game, index);
+                    batch.set(collection.doc(gameId), makeCloudGameDocument(game, gameId), { merge: true });
+                    synced++;
+                    batchCount++;
+                });
+                if (batchCount) await batch.commit();
+            }
+            return synced;
+        }
+
         async function loadGamesFromFirestore() {
-            if (!db || !currentUser?.uid) return [];
-            const snapshot = await db.collection('games')
-                .where('odUID', '==', currentUser.uid)
-                .orderBy('created_at', 'desc')
-                .limit(50)
-                .get();
+            const user = auth && auth.currentUser;
+            if (!db || !user || !user.uid) return [];
+            const snapshot = await db.collection('users').doc(user.uid).collection('games')
+                .orderBy('createdAt', 'desc').limit(200).get();
             return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         }
         
@@ -10122,20 +10185,29 @@
         if (auth) {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    let userData = await loadUserFromFirestore(user.uid);
-                    if (!userData) {
-                        await createUserDoc(user, user.displayName || user.email.split('@')[0]);
-                        userData = await loadUserFromFirestore(user.uid);
-                    }
-                    // Ensure username is set (fallback to Google displayName)
-                    if (!userData.username || userData.username === 'undefined') {
-                        userData.username = user.displayName || user.email.split('@')[0];
-                        await db.collection('users').doc(user.uid).update({ username: userData.username });
+                    const fallbackName = user.displayName || (user.email || '').split('@')[0] || 'Joueur';
+                    let userData = { uid: user.uid, username: fallbackName, email: user.email || '' };
+                    try {
+                        let storedUser = await loadUserFromFirestore(user.uid);
+                        if (!storedUser) {
+                            await createUserDoc(user, fallbackName);
+                            storedUser = await loadUserFromFirestore(user.uid);
+                        }
+                        if (storedUser) userData = storedUser;
+                        if (!userData.username || userData.username === 'undefined') {
+                            userData.username = fallbackName;
+                            await db.collection('users').doc(user.uid).update({ username: userData.username });
+                        }
+                    } catch (error) {
+                        console.warn('SupaChess profile document unavailable; continuing with Firebase auth:', error && error.code);
                     }
                     currentUser = userData;
                     updateUserUI();
-                    await syncLocalToCloud();
-                    showToast('Connecté: ' + (userData?.username || user.email), 'success');
+                    try { await syncLocalToCloud(); }
+                    catch (error) { console.warn('Progress sync unavailable:', error && error.code); }
+                    try { await syncLocalGamesToFirestore(); }
+                    catch (error) { console.warn('Local game migration to Firestore failed:', error && error.code); }
+                    showToast('Connecté: ' + (userData.username || user.email || fallbackName), 'success');
                 } else {
                     currentUser = null;
                     updateUserUI();
@@ -10251,6 +10323,23 @@
             }
         }
         async function saveGameToServer(result) {
+            const history = Array.isArray(window.gameHistory) ? window.gameHistory : [];
+            const ratings = history.map(move => Number(move && move.rating)).filter(Number.isFinite);
+            const avgRating = ratings.length ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length : null;
+            try {
+                await saveGameToFirestore({
+                    id: currentGameCloudId,
+                    date: new Date().toISOString(),
+                    opponent: window.currentOpponent || 'SupaChess',
+                    moves: game.history().length,
+                    avgRating,
+                    history,
+                    pgn: game.pgn(),
+                    result
+                });
+            } catch (error) {
+                console.warn('Game history Firestore save failed:', error && error.code);
+            }
             if (!currentUser || !sessionId) return;
             const duration = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : 0;
             try {
@@ -10312,6 +10401,7 @@
             try {
                 // Charger données
                 const loaded = loadFromLocalStorage();
+                if (auth && auth.currentUser) syncLocalGamesToFirestore().catch(error => console.warn('Local game sync failed:', error && error.code));
 
                 // Init interface
                 initBoard();

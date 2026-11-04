@@ -612,9 +612,12 @@
 
         <div class="card">
             <h3>Historique des Parties</h3>
+            <label for="analysis-player-select" style="display:block;margin:0 0 8px;color:#dffaff;font-weight:700;">Joueur à analyser</label>
+            <select id="analysis-player-select" onchange="selectProfileAnalysisPlayer(this.value)" style="width:100%;max-width:440px;padding:10px;border-radius:8px;background:#10202f;color:#fff;border:1px solid rgba(0,217,255,.4);margin-bottom:12px;" aria-label="Choisir le joueur à analyser"></select>
             <p id="analysis-selection-summary" class="analysis-selection-summary" aria-live="polite"></p>
             <div class="analysis-selection-actions">
                 <button type="button" onclick="selectUnaidedProfileGames()">Garder les parties sans aides</button>
+                <button type="button" onclick="selectAllProfileGames()">Inclure aussi toutes les parties avec aides</button>
                 <button type="button" onclick="resetProfileGameSelection()">Réinitialiser les choix</button>
             </div>
             <div class="filter-bar">
@@ -626,7 +629,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.149"></script>
+<script src="shared/player-analysis-data.js?v=1.13.150"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -665,7 +668,9 @@ async function loadAllData() {
 }
 
 const PLAYER_ANALYSIS_SELECTION_KEY = 'supachess_player_analysis_selection_v1';
+const PLAYER_ANALYSIS_SUBJECT_KEY = 'supachess_player_analysis_subject_v1';
 let profileGameSelection = {};
+let selectedProfilePlayer = '__me__';
 let currentGameFilter = 'all';
 
 function loadProfileGameSelection() {
@@ -675,18 +680,70 @@ function loadProfileGameSelection() {
     } catch (e) {
         profileGameSelection = {};
     }
+    try { selectedProfilePlayer = localStorage.getItem(PLAYER_ANALYSIS_SUBJECT_KEY) || '__me__'; }
+    catch (e) { selectedProfilePlayer = '__me__'; }
+}
+
+function normalizeProfilePlayerName(name) {
+    return String(name || '').trim().toLocaleLowerCase();
+}
+
+function getProfileGamePlayerColor(game) {
+    if (!game) return null;
+    if (selectedProfilePlayer === '__me__') return game.userColor === 'w' || game.userColor === 'b' ? game.userColor : null;
+    const requested = selectedProfilePlayer.slice('named:'.length);
+    if (normalizeProfilePlayerName(game.whitePlayer) === requested) return 'w';
+    if (normalizeProfilePlayerName(game.blackPlayer) === requested) return 'b';
+    return null;
+}
+
+function getProfileGamePlayerName(game, color) {
+    if (!game || !color) return '';
+    if (color === game.userColor) return 'Moi';
+    return String(color === 'w' ? game.whitePlayer : game.blackPlayer || '').trim();
+}
+
+function renderProfilePlayerOptions() {
+    const select = document.getElementById('analysis-player-select');
+    if (!select) return;
+    const players = new Map();
+    allGames.forEach(game => {
+        if (!Array.isArray(game.history)) return;
+        ['w', 'b'].forEach(color => {
+            if (color === game.userColor) return;
+            const name = String(color === 'w' ? game.whitePlayer : game.blackPlayer || '').trim();
+            if (!name || /^(?:moi|joueur|player|adversaire|partie locale)$/i.test(name)) return;
+            const id = 'named:' + normalizeProfilePlayerName(name);
+            if (!players.has(id)) players.set(id, name);
+        });
+    });
+    const availableIds = new Set(['__me__', ...players.keys()]);
+    if (!availableIds.has(selectedProfilePlayer)) selectedProfilePlayer = '__me__';
+    select.innerHTML = '<option value="__me__">Moi</option>' + Array.from(players, ([id, name]) =>
+        '<option value="' + escapePlayerText(id) + '">' + escapePlayerText(name) + '</option>'
+    ).join('');
+    select.value = selectedProfilePlayer;
+    try { localStorage.setItem(PLAYER_ANALYSIS_SUBJECT_KEY, selectedProfilePlayer); } catch (e) {}
+}
+
+function selectProfileAnalysisPlayer(playerId) {
+    const select = document.getElementById('analysis-player-select');
+    const valid = select && Array.from(select.options).some(option => option.value === playerId);
+    selectedProfilePlayer = valid ? playerId : '__me__';
+    try { localStorage.setItem(PLAYER_ANALYSIS_SUBJECT_KEY, selectedProfilePlayer); } catch (e) {}
+    refreshSelectedPlayerAnalysis();
 }
 
 function isProfileGameEligible(game) {
-    return !!(game && Array.isArray(game.history) && (game.userColor === 'w' || game.userColor === 'b') &&
-        game.history.some(move => move.color === game.userColor && move.rated));
+    const color = getProfileGamePlayerColor(game);
+    return !!(game && color && Array.isArray(game.history) &&
+        game.history.some(move => move.color === color && move.rated));
 }
 
 function isProfileGameIncluded(game) {
     if (!game) return false;
     const id = String(game.id || '');
     if (Object.prototype.hasOwnProperty.call(profileGameSelection, id)) return profileGameSelection[id] === true;
-    // Only games explicitly recorded as unaided enter the style profile by default.
     return game.trainingAidsUsed === false;
 }
 
@@ -696,7 +753,10 @@ function persistProfileGameSelection() {
 
 function profileMovesForSelectedGames() {
     return allGames.filter(game => isProfileGameEligible(game) && isProfileGameIncluded(game))
-        .map(game => game.history.filter(move => move.color === game.userColor && move.rated))
+        .map(game => {
+            const color = getProfileGamePlayerColor(game);
+            return game.history.filter(move => move.color === color && move.rated);
+        })
         .filter(moves => moves.length > 0);
 }
 
@@ -707,9 +767,11 @@ function updateProfileGameSelectionSummary() {
     const included = eligible.filter(isProfileGameIncluded).length;
     const aided = eligible.filter(game => game.trainingAidsUsed === true).length;
     const unknown = eligible.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
-    summary.textContent = included + ' partie(s) sélectionnée(s) sur ' + eligible.length +
+    const playerLabel = selectedProfilePlayer === '__me__' ? 'Moi' :
+        (document.getElementById('analysis-player-select')?.selectedOptions?.[0]?.textContent || 'Joueur');
+    summary.textContent = playerLabel + ' : ' + included + ' partie(s) sélectionnée(s) sur ' + eligible.length +
         ' analysable(s). ' + aided + ' avec aides et ' + unknown +
-        ' au statut inconnu sont exclues par défaut. Les parties sans coups évalués restent hors analyse.';
+        ' au statut inconnu sont exclues par défaut.';
 }
 
 function refreshSelectedPlayerAnalysis() {
@@ -725,7 +787,7 @@ function refreshSelectedPlayerAnalysis() {
         renderTrainingTab(trainingProgram, swAnalysis);
         renderThinkingTab(analyzeThinkingErrors(playerMovesByGame), playerMovesByGame);
     } else {
-        const emptyMessage = '<p style="color:#aab5c0;text-align:center;padding:18px;">Sélectionne au moins une partie avec des coups évalués et sans aides activées pour établir ce bilan.</p>';
+        const emptyMessage = '<p style="color:#aab5c0;text-align:center;padding:18px;">Aucune partie sélectionnée avec des coups évalués pour ce joueur. Coche une partie admissible dans la liste.</p>';
         ['strengths-list','weaknesses-list','training-exercises','weekly-plan','thinking-worst-moves'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerHTML = emptyMessage;
@@ -751,6 +813,14 @@ function togglePlayerAnalysisGame(index, included) {
 function selectUnaidedProfileGames() {
     allGames.filter(isProfileGameEligible).forEach(game => {
         profileGameSelection[String(game.id)] = game.trainingAidsUsed === false;
+    });
+    persistProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
+}
+
+function selectAllProfileGames() {
+    allGames.filter(isProfileGameEligible).forEach(game => {
+        profileGameSelection[String(game.id)] = true;
     });
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
@@ -1721,10 +1791,18 @@ function renderGamesList(filter) {
         return;
     }
 
-    let games = allGames.map((g, i) => ({
-        ...g, index: i,
-        avgRatingNum: g.avgRating !== null && g.avgRating !== undefined && Number.isFinite(Number(g.avgRating)) ? Number(g.avgRating) : null
-    }));
+    let games = allGames.map((g, i) => {
+        const color = getProfileGamePlayerColor(g);
+        const colorRating = color && g.avgRatingByColor ? g.avgRatingByColor[color] : null;
+        const colorAccuracy = color && g.accuracyByColor ? g.accuracyByColor[color] : null;
+        const average = Number.isFinite(Number(colorRating)) ? Number(colorRating) :
+            (selectedProfilePlayer === '__me__' ? g.avgRating : null);
+        return {
+            ...g, index: i, selectedPlayerColor: color,
+            avgRatingNum: average !== null && average !== undefined && Number.isFinite(Number(average)) ? Number(average) : null,
+            accuracyForSelectedPlayer: colorAccuracy,
+        };
+    });
     if (currentGameFilter === 'best') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
     else if (currentGameFilter === 'worst') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
 
@@ -1737,20 +1815,27 @@ function renderGamesList(filter) {
     listDiv.innerHTML = games.map(g => {
         const avgR = g.avgRatingNum;
         let ratingClass = 'rating-mid';
-        let resultIcon = g.result === 'win' ? '✅' : g.result === 'loss' ? '❌' : g.result === 'draw' ? '🤝' : '⬜';
+        const selectedColor = g.selectedPlayerColor;
+        const pgnResult = g.pgnResult || g.result;
+        const resultForSelectedPlayer = pgnResult === '1/2-1/2' ? 'draw' :
+            (pgnResult === '1-0' || pgnResult === '0-1') && selectedColor ?
+                ((pgnResult === '1-0') === (selectedColor === 'w') ? 'win' : 'loss') : 'unfinished';
+        let resultIcon = resultForSelectedPlayer === 'win' ? '✅' : resultForSelectedPlayer === 'loss' ? '❌' : resultForSelectedPlayer === 'draw' ? '🤝' : '⬜';
         if (avgR !== null && avgR >= 7) ratingClass = 'rating-high';
         else if (avgR !== null && avgR < 5) ratingClass = 'rating-low';
-        const opponent = escapePlayerText(g.opponent || 'Partie du profil');
+        const playerName = getProfileGamePlayerName(g, selectedColor);
+        const opponent = escapePlayerText(playerName || g.opponent || 'Partie du profil');
         const moves = escapePlayerText(g.moves || (g.history ? g.history.length : '?'));
         const date = escapePlayerText(formatProfileGameDate(g.date));
-        const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' : (g.accuracy !== null && g.accuracy !== undefined ? Math.round(g.accuracy) + '%' : 'Profil');
+        const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' :
+            (g.accuracyForSelectedPlayer !== null && g.accuracyForSelectedPlayer !== undefined ? Math.round(g.accuracyForSelectedPlayer) + '%' : 'Profil');
         const sourceLabel = g.profileGame ? 'Profil connecté' : 'Données détaillées';
         const aidLabel = g.trainingAidsUsed === true ? 'Aides actives' :
             g.trainingAidsUsed === false ? 'Sans aides' : 'Aides inconnues';
         const eligible = isProfileGameEligible(g);
         const checked = eligible && isProfileGameIncluded(g) ? 'checked' : '';
         const disabled = eligible ? '' : 'disabled';
-        const selectionLabel = eligible ? aidLabel : (g.reviewedPGN ? 'PGN sans coups évalués' : 'Non analysable');
+        const selectionLabel = eligible ? aidLabel : (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur' : 'Non analysable pour ce joueur');
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
@@ -2253,6 +2338,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     latestPlayerAnalysisData = data;
     updateProfileStatus(data);
     loadProfileGameSelection();
+    renderProfilePlayerOptions();
     refreshSelectedPlayerAnalysis();
 });
 </script>

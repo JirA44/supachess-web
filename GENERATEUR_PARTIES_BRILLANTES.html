@@ -297,7 +297,11 @@ function renderCustomProblemOptions(){
  phaseRoot.innerHTML=order.filter(phase=>phaseCounts.has(phase)).map(phase=>'<label class="theme-option"><input type="checkbox" value="'+phase+'"'+(selectedPhases.has(phase)?" checked":"")+'> <span>'+labels[phase]+' <span class="muted">('+phaseCounts.get(phase)+')</span></span></label>').join("")||"<em>Aucune phase disponible.</em>";
 }
 function filterCustomProblems(){const min=document.getElementById("custom-elo-min"),max=document.getElementById("custom-elo-max");customBankVisibleCount=12;if(min&&max&&Number(min.value)>Number(max.value)){document.getElementById("custom-problem-status").textContent="La cote minimum doit être inférieure ou égale à la cote maximum.";renderDefensePuzzleList();return;}renderCustomProblemOptions();renderDefensePuzzleList();const count=defensePuzzles.filter(p=>p.source==="training"&&customPuzzleMatches(p)).length,generated=defensePuzzles.filter(p=>p.source!=="training"&&customPuzzleThemeMatches(p)).length,ratings=tacticalTrainingPuzzles.map(p=>Number(p.rating)).filter(Number.isFinite),high=ratings.length?Math.max(...ratings):null;document.getElementById("custom-problem-status").textContent=count+" puzzle(s) de la banque correspondent aux filtres · "+generated+" puzzle(s) Stockfish généré(s) affichés séparément sans Elo de difficulté étalonné."+(high!==null?" Cote maximale enregistrée dans la banque : "+high+"; les cotes sont indicatives, pas un Elo FIDE.":"");}
-function startCustomProblem(){const matches=defensePuzzles.map((p,i)=>({p,i})).filter(x=>customPuzzleMatches(x.p));if(!matches.length){filterCustomProblems();return;}const chosen=matches[Math.floor(Math.random()*matches.length)],phase=window.SupaPuzzleRating.phaseLabel(chosen.p.phase);selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent="Exercice personnalisé lancé · "+phase+" · Elo puzzle estimé "+chosen.p.rating+" (provisoire) · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function customPhaseRank(phase){return ({opening:0,middlegame:1,endgame:2})[phase]??3;}
+function getOrderedCustomMatches(){return defensePuzzles.map((p,i)=>({p,i})).filter(x=>customPuzzleMatches(x.p)).sort((a,b)=>customPhaseRank(a.p.phase)-customPhaseRank(b.p.phase)||Number(a.p.rating)-Number(b.p.rating)||String(a.p.id).localeCompare(String(b.p.id)));}
+function showCustomPuzzle(chosen,prefix){const phase=window.SupaPuzzleRating.phaseLabel(chosen.p.phase);selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent=prefix+" · "+phase+" · Elo puzzle estimé "+chosen.p.rating+" (provisoire) · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function startCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}showCustomPuzzle(matches[0],"Première étape du parcours personnalisé");}
+function nextCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}const currentId=defensePuzzles[activeDefenseIndex]&&defensePuzzles[activeDefenseIndex].id,index=matches.findIndex(x=>x.p.id===currentId),chosen=matches[(index+1+matches.length)%matches.length];showCustomPuzzle(chosen,"Étape suivante du parcours personnalisé");}
 function refreshCustomPuzzlePool(){defensePuzzles=[...tacticalTrainingPuzzles,...generatedDefensePuzzles];renderCustomProblemOptions();renderDefensePuzzleList();filterCustomProblems();}
 function restoreDefensePuzzles(){
  try{
@@ -364,8 +368,9 @@ async function buildDefensePuzzles(){
 let customBankVisibleCount=12;
 function renderDefensePuzzleList(){
  const root=document.getElementById("defense-results");root.innerHTML="";
- const generated=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source!=="training"&&customPuzzleMatches(x.p));
- const bank=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p)).sort((a,b)=>Number(a.p.rating)-Number(b.p.rating));
+ const order=(a,b)=>customPhaseRank(a.p.phase)-customPhaseRank(b.p.phase)||Number(a.p.rating)-Number(b.p.rating)||String(a.p.id).localeCompare(String(b.p.id));
+ const generated=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source!=="training"&&customPuzzleMatches(x.p)).sort(order);
+ const bank=defensePuzzles.map((p,i)=>({p,i})).filter(x=>x.p.source==="training"&&customPuzzleMatches(x.p)).sort(order);
  function appendButton(entry,label,generatedPuzzle){
   const p=entry.p,i=entry.i,button=document.createElement("button");button.type="button";button.className="candidate";
   const lineLength=p.line.filter(m=>m.color===p.userColor).length;
@@ -410,6 +415,7 @@ function playDefenseSquare(square){const p=defensePuzzles[activeDefenseIndex];if
 document.getElementById("custom-elo-min").addEventListener("change",filterCustomProblems);
 document.getElementById("custom-elo-max").addEventListener("change",filterCustomProblems);
 document.getElementById("custom-theme-options").addEventListener("change",filterCustomProblems);
+document.getElementById("custom-phase-options").addEventListener("change",filterCustomProblems);
 document.getElementById("start-custom-problem").addEventListener("click",startCustomProblem);
 restoreGeneratedGames();
 restoreDefensePuzzles();
@@ -419,7 +425,7 @@ document.getElementById("export-library").addEventListener("click",()=>{const pa
 document.getElementById("import-library").addEventListener("change",async e=>{const file=e.target.files&&e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.format!=="SupaChessGeneratedLibrary"||!Array.isArray(data.games)||!Array.isArray(data.puzzles))throw Error("Format de banque invalide.");for(const game of data.games){if(Array.isArray(game.uci)&&Array.isArray(game.san))addGeneratedGame(game);}const known=new Set(generatedDefensePuzzles.map(p=>p.id));generatedDefensePuzzles.push(...data.puzzles.filter(p=>p&&typeof p.fen==="string"&&Array.isArray(p.line)&&!known.has(p.id)));saveDefensePuzzles();refreshCustomPuzzlePool();document.getElementById("defense-status").textContent="Banque importée et conservée sur cet appareil : "+generatedGameLibrary.length+" partie(s), "+generatedDefensePuzzles.length+" puzzle(s).";}catch(error){document.getElementById("defense-status").textContent="Import impossible : "+error.message;}finally{e.target.value="";}});
 document.getElementById("export-position-svg").addEventListener("click",()=>{const svg=document.querySelector("#defense-board svg")||document.querySelector("#board svg");if(!svg){document.getElementById("defense-status").textContent="Ouvre une position de partie ou un puzzle avant l’export SVG.";return;}const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:"image/svg+xml"})),a=document.createElement("a");a.href=url;a.download="supachess-position.svg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 document.getElementById("defense-reset").addEventListener("click",()=>selectDefensePuzzle(activeDefenseIndex));
-document.getElementById("defense-next").addEventListener("click",()=>selectDefensePuzzle((activeDefenseIndex+1)%defensePuzzles.length));
+document.getElementById("defense-next").addEventListener("click",nextCustomProblem);
 document.getElementById("generate").addEventListener("click",generate);
 document.getElementById("cancel").addEventListener("click",()=>{
  cancelRequested=true;document.getElementById("cancel").disabled=true;

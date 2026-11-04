@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyse de Style - SupaChess</title>
+    <title>Analyse du Joueur - SupaChess</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
@@ -329,9 +329,12 @@
 </head>
 <body>
     <div class="header">
-        <h1><span>SupaChess</span> | Analyse de Style</h1>
+        <h1><span>SupaChess</span> | Analyse du Joueur</h1>
+        <a href="CHESS_COACH.html" aria-label="Analyser une partie avec le Coach IA">Analyse de partie · Coach IA</a>
         <a href="index.html">Hub</a>
     </div>
+
+    <section id="player-profile-status" class="card" role="status" aria-live="polite" style="max-width:1200px;margin:16px auto 0;color:#cbd5e1">Chargement des parties du profil…</section>
 
     <div class="tabs">
         <button class="tab active" onclick="switchTab('style')">Profil de Style</button>
@@ -618,34 +621,59 @@ let puzzleBoard = null;
 let puzzles = [];
 let currentPuzzleIndex = 0;
 
-function loadAllData() {
-    // Source 1: chessnova_pro_data (main game data)
+async function loadAllData() {
+    const localGames = [];
+    let profile = null;
+    let profileGames = [];
+    let profileLoadError = '';
     try {
-        const proData = JSON.parse(localStorage.getItem('chessnova_pro_data'));
-        if (proData && proData.allGamesHistory) {
-            allGames = proData.allGamesHistory;
-        }
-    } catch(e) { console.warn('Pro data load failed:', e); }
-
-    // Source 2: chessnova_coach_progress (coach analyzed games)
+        const proData = JSON.parse(localStorage.getItem('chessnova_pro_data') || '{}');
+        if (Array.isArray(proData.allGamesHistory)) localGames.push(...proData.allGamesHistory);
+    } catch (e) { console.warn('Local game history load failed:', e); }
     let coachProgress = null;
-    try {
-        coachProgress = JSON.parse(localStorage.getItem('chessnova_coach_progress'));
-    } catch(e) {}
-
-    // Source 3: chessnova_progress (XP/badges)
+    try { coachProgress = JSON.parse(localStorage.getItem('chessnova_coach_progress') || 'null'); } catch (e) {}
     let gameProgress = null;
-    try {
-        gameProgress = JSON.parse(localStorage.getItem('chessnova_progress'));
-    } catch(e) {}
-
-    // Extract player moves from each game (filter out AI moves)
-    playerMovesByGame = allGames.map(game => {
-        if (!game.history) return [];
-        return game.history.filter(m => !m.isOpponent);
-    }).filter(moves => moves.length > 0);
-
-    return { allGames, playerMovesByGame, coachProgress, gameProgress };
+    try { gameProgress = JSON.parse(localStorage.getItem('chessnova_progress') || 'null'); } catch (e) {}
+    const sessionId = localStorage.getItem('chessnova_session');
+    if (sessionId) {
+        const apiUrl = 'https://aimix-api.hugo-padilla-pro.workers.dev';
+        try {
+            const headers = { Authorization: 'Bearer ' + sessionId };
+            const responses = await Promise.all([
+                fetch(apiUrl + '/api/profile', { headers }),
+                fetch(apiUrl + '/api/games', { headers })
+            ]);
+            if (!responses[0].ok || !responses[1].ok) throw new Error('Le profil ou son historique est indisponible.');
+            const payloads = await Promise.all(responses.map(response => response.json()));
+            profile = payloads[0].user || null;
+            profileGames = Array.isArray(payloads[1].games) ? payloads[1].games : [];
+        } catch (error) {
+            profileLoadError = error && error.message ? error.message : 'Historique du profil indisponible.';
+            console.warn('Profile game history load failed:', error);
+        }
+    }
+    const normalizePgn = value => String(value || '').replace(/\[[^\]]*\]/g, '').replace(/[0-9]+\.(\.\.)?/g, '').replace(/\s+/g, ' ').trim();
+    const knownGames = new Set(localGames.map(game => normalizePgn(
+        Array.isArray(game.history) ? game.history.map(move => move.san || move.move || '').join(' ') : game.pgn
+    )).filter(Boolean));
+    const cloudGames = profileGames.map((game, index) => {
+        const pgn = game.pgn || game.PGN || '';
+        const pgnKey = normalizePgn(pgn);
+        const key = pgnKey || [game.created_at || game.date || '', game.opponent || game.opponent_type || '', game.moves_count || ''].join('|');
+        if (key && knownGames.has(key)) return null;
+        if (key) knownGames.add(key);
+        return {
+            ...game, id: game.id || game.game_id || 'profile-game-' + index, profileGame: true,
+            avgRating: null,
+            opponent: game.opponent || game.opponent_username || game.opponent_type || 'Partie du profil',
+            date: game.created_at || game.date || '', moves: Number(game.moves_count || game.moves) || '?',
+            accuracy: Number.isFinite(Number(game.accuracy)) ? Number(game.accuracy) : null
+        };
+    }).filter(Boolean);
+    allGames = localGames.concat(cloudGames);
+    playerMovesByGame = localGames.map(game => Array.isArray(game.history)
+        ? game.history.filter(move => !move.isOpponent) : []).filter(moves => moves.length > 0);
+    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, profileLoadError, hasSession: !!sessionId };
 }
 
 // ==========================================
@@ -1569,6 +1597,37 @@ function renderHistoryTab(result) {
     renderGamesList('all');
 }
 
+function escapePlayerText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function formatProfileGameDate(value) {
+    if (!value) return 'Date inconnue';
+    if (typeof value === 'object' && Number.isFinite(Number(value._seconds))) value = Number(value._seconds) * 1000;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleString();
+}
+function updateProfileStatus(data) {
+    const status = document.getElementById('player-profile-status');
+    if (!status) return;
+    const detailedCount = data.localGames.length;
+    if (!data.hasSession) {
+        status.textContent = 'Historique du profil non chargé : connectez-vous dans SupaChess pour récupérer les parties associées à ce compte. Parties locales détaillées : ' + detailedCount + '.';
+        return;
+    }
+    const name = data.profile && (data.profile.username || data.profile.displayName) || 'Profil connecté';
+    if (data.profileLoadError) {
+        status.textContent = name + ' · ' + data.profileLoadError + ' Les parties locales détaillées restent affichées (' + detailedCount + ').';
+        return;
+    }
+    status.textContent = name + ' · ' + data.profileGames.length + ' partie(s) récupérée(s) du profil (' + detailedCount + ' avec historique détaillé local). Les filtres de précision ne portent que sur les parties détaillées.';
+}
+function openProfileGameInCoach(index) {
+    const game = allGames[index];
+    if (!game || !(game.pgn || game.PGN)) return;
+    sessionStorage.setItem('supachess_pending_pgn', game.pgn || game.PGN);
+    window.location.href = 'CHESS_COACH.html';
+}
+
 function renderGamesList(filter) {
     const listDiv = document.getElementById('games-list');
     if (allGames.length === 0) {
@@ -1577,16 +1636,11 @@ function renderGamesList(filter) {
     }
 
     let games = allGames.map((g, i) => ({
-        ...g,
-        index: i,
-        avgRatingNum: parseFloat(g.avgRating) || 5
+        ...g, index: i,
+        avgRatingNum: g.avgRating !== null && g.avgRating !== undefined && Number.isFinite(Number(g.avgRating)) ? Number(g.avgRating) : null
     }));
-
-    if (filter === 'best') {
-        games = games.filter(g => g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
-    } else if (filter === 'worst') {
-        games = games.filter(g => g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
-    }
+    if (filter === 'best') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
+    else if (filter === 'worst') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
 
     if (games.length === 0) {
         listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie dans ce filtre</p>';
@@ -1596,22 +1650,22 @@ function renderGamesList(filter) {
     listDiv.innerHTML = games.map(g => {
         const avgR = g.avgRatingNum;
         let ratingClass = 'rating-mid';
-        let resultIcon = '⬜';
-        if (avgR >= 7) ratingClass = 'rating-high';
-        else if (avgR < 5) ratingClass = 'rating-low';
-
-        // Try to determine result
-        const opponent = g.opponent || 'IA';
-        const moves = g.moves || (g.history ? g.history.length : '?');
-
+        let resultIcon = g.result === 'win' ? '✅' : g.result === 'loss' ? '❌' : g.result === 'draw' ? '🤝' : '⬜';
+        if (avgR !== null && avgR >= 7) ratingClass = 'rating-high';
+        else if (avgR !== null && avgR < 5) ratingClass = 'rating-low';
+        const opponent = escapePlayerText(g.opponent || 'Partie du profil');
+        const moves = escapePlayerText(g.moves || (g.history ? g.history.length : '?'));
+        const date = escapePlayerText(formatProfileGameDate(g.date));
+        const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' : (g.accuracy !== null && g.accuracy !== undefined ? Math.round(g.accuracy) + '%' : 'Profil');
+        const sourceLabel = g.profileGame ? 'Profil connecté' : 'Données détaillées';
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
                 <div class="game-info">
                     <div class="opponent">${opponent}</div>
-                    <div class="meta">${g.date || ''} | ${moves} coups</div>
+                    <div class="meta">${date} | ${moves} coups · ${sourceLabel}</div>
                 </div>
-                <div class="game-rating ${ratingClass}">${avgR.toFixed(1)}/10</div>
+                <div class="game-rating ${ratingClass}">${ratingLabel}</div>
             </div>
         `;
     }).join('');
@@ -1619,8 +1673,22 @@ function renderGamesList(filter) {
 
 function expandGame(index) {
     const game = allGames[index];
-    if (!game || !game.history) return;
-
+    if (!game) return;
+    if (!Array.isArray(game.history)) {
+        const detailId = 'game-detail-' + index;
+        const existing = document.getElementById(detailId);
+        if (existing) { existing.remove(); return; }
+        const detail = document.createElement('div');
+        detail.id = detailId; detail.className = 'card'; detail.style.marginBottom = '8px';
+        const result = game.result ? ' · Résultat : ' + game.result : '';
+        detail.innerHTML = '<h3>Détail de la partie du profil</h3><p>' + escapePlayerText(game.opponent || 'Adversaire indisponible') + ' · ' +
+            escapePlayerText(formatProfileGameDate(game.date)) + ' · ' + escapePlayerText(game.moves || '?') + ' coups' + escapePlayerText(result) +
+            '</p><p style="margin-top:8px;color:#aaa">Cette partie est enregistrée dans le profil, mais ses évaluations coup par coup ne sont pas disponibles dans cette page.</p>' +
+            ((game.pgn || game.PGN) ? '<button type="button" onclick="openProfileGameInCoach(' + index + ')">Analyser cette partie avec le Coach IA</button>' : '');
+        const row = Array.from(document.querySelectorAll('#games-list .game-row')).find(el => el.getAttribute('onclick') === 'expandGame(' + index + ')');
+        if (row) row.insertAdjacentElement('afterend', detail); else document.getElementById('games-list').appendChild(detail);
+        return;
+    }
     const playerMoves = game.history.filter(m => !m.isOpponent);
     const total = playerMoves.length;
     const avgRating = total > 0 ? (playerMoves.reduce((a, m) => a + (m.rating || 5), 0) / total) : 5;
@@ -2082,26 +2150,20 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
 // ==========================================
 // INITIALIZATION
 // ==========================================
-document.addEventListener('DOMContentLoaded', function() {
-    const data = loadAllData();
-
+document.addEventListener('DOMContentLoaded', async function() {
+    const data = await loadAllData();
+    updateProfileStatus(data);
     analysisResult = analyzeStyle(data.playerMovesByGame);
-
-    // Render all tabs
     renderStyleTab(analysisResult);
-
     if (analysisResult) {
         const swAnalysis = analyzeStrengthsWeaknesses(data.playerMovesByGame, analysisResult);
         renderStrengthsTab(swAnalysis, analysisResult);
-
         const trainingProgram = generateTrainingProgram(swAnalysis.weaknesses, data.playerMovesByGame);
         renderTrainingTab(trainingProgram, swAnalysis);
-
         const thinkingAnalysis = analyzeThinkingErrors(data.playerMovesByGame);
         renderThinkingTab(thinkingAnalysis, data.playerMovesByGame);
-
-        renderHistoryTab(analysisResult);
     }
+    renderHistoryTab(analysisResult);
 });
 </script>
 

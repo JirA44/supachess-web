@@ -129,27 +129,50 @@
     return (color === "w" ? whiteWon : !whiteWon) ? "win" : "loss";
   }
 
-  function resolveTrainingAidsUsed(raw, headers, grades) {
-    const values = [
+  function parseAidFlag(value) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number" && (value === 0 || value === 1)) return value === 1;
+    if (typeof value !== "string") return null;
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "oui", "used", "active"].includes(normalized)) return true;
+    if (["false", "0", "no", "non", "unused", "inactive"].includes(normalized)) return false;
+    return null;
+  }
+
+  function resolveTrainingAidsEvidence(raw, headers, grades) {
+    const explicit = [
       raw && raw.trainingAidsUsed,
       headers && headers.SupaChessTrainingAidsUsed,
       headers && headers.TrainingAidsUsed,
     ];
-    for (const value of values) {
-      if (typeof value === "boolean") return value;
-      if (typeof value === "number" && (value === 0 || value === 1)) return value === 1;
-      if (typeof value === "string") {
-        const normalized = value.trim().toLowerCase();
-        if (["true", "1", "yes", "oui", "used", "active"].includes(normalized)) return true;
-        if (["false", "0", "no", "non", "unused", "inactive"].includes(normalized)) return false;
-      }
+    for (const value of explicit) {
+      const parsed = parseAidFlag(value);
+      if (parsed !== null) return { value: parsed, source: "Indication explicite de la partie" };
     }
 
-    const aidTrackedGrades = Array.from(grades.values()).filter((grade) => typeof grade.noTrainingAids === "boolean");
-    if (aidTrackedGrades.some((grade) => grade.noTrainingAids === false)) return true;
-    if (aidTrackedGrades.length > 0 && aidTrackedGrades.length === grades.size &&
-        aidTrackedGrades.every((grade) => grade.noTrainingAids === true)) return false;
-    return null;
+    const unassisted = parseAidFlag(
+      raw && raw.unassistedMode !== undefined ? raw.unassistedMode :
+      headers && headers.SupaChessUnassistedMode
+    );
+    if (unassisted === true) return { value: false, source: "Mode sans aide enregistré" };
+
+    const stats = raw && raw.stats && typeof raw.stats === "object" ? raw.stats : {};
+    const aidInterventions = ["intercepts", "forced"].some((key) => Number(stats[key]) > 0);
+    if (aidInterventions) return { value: true, source: "Intervention du coach enregistrée" };
+
+    const gradeList = Array.from(grades.values());
+    if (gradeList.some((grade) => grade && grade.noTrainingAids === false)) {
+      return { value: true, source: "Aide détectée sur un demi-coup" };
+    }
+    if (gradeList.length > 0 && gradeList.length === grades.size &&
+        gradeList.every((grade) => grade && grade.noTrainingAids === true)) {
+      return { value: false, source: "Tous les demi-coups suivis sans aide" };
+    }
+    return { value: null, source: "Preuve insuffisante" };
+  }
+
+  function resolveTrainingAidsUsed(raw, headers, grades) {
+    return resolveTrainingAidsEvidence(raw, headers, grades).value;
   }
 
   function normalizePlayedGame(raw, index, ChessClass) {
@@ -162,7 +185,8 @@
     (Array.isArray(raw.moveGrades) ? raw.moveGrades : []).forEach((grade) => {
       if (grade && Number.isFinite(Number(grade.ply))) grades.set(Number(grade.ply), grade);
     });
-    const trainingAidsUsed = resolveTrainingAidsUsed(raw, headers, grades);
+    const trainingAidsEvidence = resolveTrainingAidsEvidence(raw, headers, grades);
+    const trainingAidsUsed = trainingAidsEvidence.value;
     const moves = parsed.moves.map((move, indexInGame) => {
       const ply = indexInGame + 1;
       const side = indexInGame % 2 === 0 ? "w" : "b";
@@ -220,6 +244,7 @@
       pgnResult,
       userColor: color,
       trainingAidsUsed,
+      trainingAidsEvidence: trainingAidsEvidence.source,
       whitePlayer,
       blackPlayer,
       opponent,
@@ -252,6 +277,8 @@
       accuracy: null,
       history: null,
       reviewedPGN: true,
+      trainingAidsUsed: resolveTrainingAidsEvidence(raw, headers, new Map()).value,
+      trainingAidsEvidence: resolveTrainingAidsEvidence(raw, headers, new Map()).source,
       analysis: raw.analysis || null,
       sourceLabel: "PGN analysé localement",
     };

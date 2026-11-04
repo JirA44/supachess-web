@@ -174,7 +174,7 @@
 
   function applyLanguage(lang) {
     current = lang === "en" ? "en" : "fr";
-    document.documentElement.lang = current;
+    if (document.documentElement.lang !== current) document.documentElement.lang = current;
     document.title = translate(originalTitle, current);
     translateTree(document.body, current, true);
   }

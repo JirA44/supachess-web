@@ -675,7 +675,7 @@ async function loadAllData() {
     const firebaseContext = await getFirebaseProfileContext();
     const firebaseUser = firebaseContext.user;
     const firestore = firebaseContext.db;
-    let profileLoadError = firebaseContext.error ? 'Le service Firestore est indisponible.' : '';
+    profileLoadError = firebaseContext.error ? 'Le service Firestore est indisponible.' : '';
     if (firebaseUser && firestore) {
         profile = {
             uid: firebaseUser.uid,

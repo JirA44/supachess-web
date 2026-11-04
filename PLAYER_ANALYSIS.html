@@ -347,9 +347,9 @@
     <!-- TAB 1: PROFIL DE STYLE -->
     <div class="tab-content active" id="tab-style">
         <div id="no-data-style" class="no-data" style="display:none;">
-            <div class="icon">???</div>
-            <h3>Pas encore de parties analysees</h3>
-            <p>Jouez des parties dans <a href="CHESSNOVA.html">SupaChess</a> ou analysez des parties dans <a href="CHESS_COACH.html">Chess Coach</a> pour generer votre profil.</p>
+            <div class="icon">♟</div>
+            <h3>Pas encore de coups classés pour établir le profil</h3>
+            <p>Les parties locales et PGN analysés apparaissent dans l’historique. Le profil de style nécessite des coups évalués associés à votre couleur de joueur.</p>
         </div>
 
         <div id="style-content">
@@ -610,6 +610,7 @@
         </div>
     </div>
 
+<script src="shared/player-analysis-data.js?v=1.13.148"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -620,60 +621,31 @@ let analysisResult = null;
 let puzzleBoard = null;
 let puzzles = [];
 let currentPuzzleIndex = 0;
+let latestPlayerAnalysisData = null;
+let playerAnalysisAuthUser = null;
+
+window.addEventListener('chessnova:auth-state', function(event) {
+    playerAnalysisAuthUser = event && event.detail ? event.detail.user || null : null;
+    if (latestPlayerAnalysisData) updateProfileStatus(latestPlayerAnalysisData);
+});
 
 async function loadAllData() {
-    const localGames = [];
-    let profile = null;
-    let profileGames = [];
-    let profileLoadError = '';
-    try {
-        const proData = JSON.parse(localStorage.getItem('chessnova_pro_data') || '{}');
-        if (Array.isArray(proData.allGamesHistory)) localGames.push(...proData.allGamesHistory);
-    } catch (e) { console.warn('Local game history load failed:', e); }
+    const localData = window.SupaPlayerAnalysisData.loadLocalAnalysis(localStorage, window.Chess);
     let coachProgress = null;
     try { coachProgress = JSON.parse(localStorage.getItem('chessnova_coach_progress') || 'null'); } catch (e) {}
     let gameProgress = null;
     try { gameProgress = JSON.parse(localStorage.getItem('chessnova_progress') || 'null'); } catch (e) {}
-    const sessionId = localStorage.getItem('chessnova_session');
-    if (sessionId) {
-        const apiUrl = 'https://aimix-api.hugo-padilla-pro.workers.dev';
-        try {
-            const headers = { Authorization: 'Bearer ' + sessionId };
-            const responses = await Promise.all([
-                fetch(apiUrl + '/api/profile', { headers }),
-                fetch(apiUrl + '/api/games', { headers })
-            ]);
-            if (!responses[0].ok || !responses[1].ok) throw new Error('Le profil ou son historique est indisponible.');
-            const payloads = await Promise.all(responses.map(response => response.json()));
-            profile = payloads[0].user || null;
-            profileGames = Array.isArray(payloads[1].games) ? payloads[1].games : [];
-        } catch (error) {
-            profileLoadError = error && error.message ? error.message : 'Historique du profil indisponible.';
-            console.warn('Profile game history load failed:', error);
-        }
-    }
-    const normalizePgn = value => String(value || '').replace(/\[[^\]]*\]/g, '').replace(/[0-9]+\.(\.\.)?/g, '').replace(/\s+/g, ' ').trim();
-    const knownGames = new Set(localGames.map(game => normalizePgn(
-        Array.isArray(game.history) ? game.history.map(move => move.san || move.move || '').join(' ') : game.pgn
-    )).filter(Boolean));
-    const cloudGames = profileGames.map((game, index) => {
-        const pgn = game.pgn || game.PGN || '';
-        const pgnKey = normalizePgn(pgn);
-        const key = pgnKey || [game.created_at || game.date || '', game.opponent || game.opponent_type || '', game.moves_count || ''].join('|');
-        if (key && knownGames.has(key)) return null;
-        if (key) knownGames.add(key);
-        return {
-            ...game, id: game.id || game.game_id || 'profile-game-' + index, profileGame: true,
-            avgRating: null,
-            opponent: game.opponent || game.opponent_username || game.opponent_type || 'Partie du profil',
-            date: game.created_at || game.date || '', moves: Number(game.moves_count || game.moves) || '?',
-            accuracy: Number.isFinite(Number(game.accuracy)) ? Number(game.accuracy) : null
-        };
-    }).filter(Boolean);
-    allGames = localGames.concat(cloudGames);
-    playerMovesByGame = localGames.map(game => Array.isArray(game.history)
-        ? game.history.filter(move => !move.isOpponent) : []).filter(moves => moves.length > 0);
-    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, profileLoadError, hasSession: !!sessionId };
+    allGames = localData.allGames;
+    playerMovesByGame = localData.playerMovesByGame;
+    return {
+        ...localData,
+        coachProgress,
+        gameProgress,
+        profile: playerAnalysisAuthUser,
+        profileGames: [],
+        profileLoadError: '',
+        hasSession: !!playerAnalysisAuthUser
+    };
 }
 
 // ==========================================
@@ -1609,17 +1581,13 @@ function formatProfileGameDate(value) {
 function updateProfileStatus(data) {
     const status = document.getElementById('player-profile-status');
     if (!status) return;
-    const detailedCount = data.localGames.length;
-    if (!data.hasSession) {
-        status.textContent = 'Historique du profil non chargé : connectez-vous dans SupaChess pour récupérer les parties associées à ce compte. Parties locales détaillées : ' + detailedCount + '.';
-        return;
-    }
-    const name = data.profile && (data.profile.username || data.profile.displayName) || 'Profil connecté';
-    if (data.profileLoadError) {
-        status.textContent = name + ' · ' + data.profileLoadError + ' Les parties locales détaillées restent affichées (' + detailedCount + ').';
-        return;
-    }
-    status.textContent = name + ' · ' + data.profileGames.length + ' partie(s) récupérée(s) du profil (' + detailedCount + ' avec historique détaillé local). Les filtres de précision ne portent que sur les parties détaillées.';
+    const playedCount = data.localGames.length;
+    const gradedCount = data.detailedGameCount || 0;
+    const importedCount = data.reviewedCount || 0;
+    const user = playerAnalysisAuthUser;
+    const name = user && (user.displayName || user.email) ? (user.displayName || user.email) + ' · ' : '';
+    const connection = user ? 'Compte connecté' : 'Session du compte non détectée';
+    status.textContent = name + connection + ' · Sur cet appareil : ' + playedCount + ' partie(s) jouée(s), ' + gradedCount + ' avec des coups classés, ' + importedCount + ' PGN analysé(s). Les parties locales sont lues même sans connexion.';
 }
 function openProfileGameInCoach(index) {
     const game = allGames[index];
@@ -1689,11 +1657,11 @@ function expandGame(index) {
         if (row) row.insertAdjacentElement('afterend', detail); else document.getElementById('games-list').appendChild(detail);
         return;
     }
-    const playerMoves = game.history.filter(m => !m.isOpponent);
-    const total = playerMoves.length;
-    const avgRating = total > 0 ? (playerMoves.reduce((a, m) => a + (m.rating || 5), 0) / total) : 5;
-    const brilliants = playerMoves.filter(m => (m.rating || 5) >= 10).length;
-    const blunders = playerMoves.filter(m => (m.rating || 5) <= 3).length;
+    const playerMoves = game.history.filter(m => !m.isOpponent && (!game.userColor || m.color === game.userColor));
+    const ratedMoves = playerMoves.filter(m => m.rated === true || Number.isFinite(Number(m.rating)));
+    const avgRating = ratedMoves.length ? ratedMoves.reduce((sum, move) => sum + Number(move.rating), 0) / ratedMoves.length : null;
+    const brilliants = ratedMoves.filter(m => m.category === 'brilliant' || Number(m.rating) >= 10).length;
+    const blunders = ratedMoves.filter(m => m.category === 'blunder' || Number(m.rating) <= 1).length;
 
     // Show inline detail
     const listDiv = document.getElementById('games-list');
@@ -1712,18 +1680,19 @@ function expandGame(index) {
     detail.innerHTML = `
         <h3>Detail - Partie #${index + 1}</h3>
         <div class="grid-3" style="margin-bottom:12px;">
-            <div class="stat-box"><div class="value" style="font-size:1.2rem;">${avgRating.toFixed(1)}</div><div class="label">Precision moy.</div></div>
+            <div class="stat-box"><div class="value" style="font-size:1.2rem;">${avgRating === null ? "—" : avgRating.toFixed(1) + "/10"}</div><div class="label">Note moyenne des coups classés</div></div>
             <div class="stat-box"><div class="value" style="font-size:1.2rem; color:#ffd700;">${brilliants}</div><div class="label">Brillants</div></div>
             <div class="stat-box"><div class="value" style="font-size:1.2rem; color:#e74c3c;">${blunders}</div><div class="label">Gaffes</div></div>
         </div>
         <div style="max-height:300px; overflow-y:auto;">
             ${playerMoves.map(m => {
-                const r = m.rating || 5;
-                const color = r >= 8 ? '#2ecc71' : r >= 6 ? '#3498db' : r >= 4 ? '#f39c12' : '#e74c3c';
+                const rated = m.rated === true || Number.isFinite(Number(m.rating));
+                const r = rated ? Number(m.rating) : null;
+                const color = !rated ? '#888' : r >= 8 ? '#2ecc71' : r >= 6 ? '#3498db' : r >= 4 ? '#f39c12' : '#e74c3c';
                 return `<div style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
-                    <span style="color:${color}; font-weight:700;">${r}/10</span>
-                    Coup ${m.moveNum}: <strong>${m.san}</strong>
-                    <span style="color:#666;"> ${m.quality || ''}</span>
+                    <span style="color:${color}; font-weight:700;">${rated ? r + '/10' : 'Non évalué'}</span>
+                    Coup ${m.moveNum}: <strong>${escapePlayerText(m.san)}</strong>
+                    <span style="color:#aaa;"> ${escapePlayerText(m.quality || '')}</span>
                 </div>`;
             }).join('')}
         </div>
@@ -2152,6 +2121,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', async function() {
     const data = await loadAllData();
+    latestPlayerAnalysisData = data;
     updateProfileStatus(data);
     analysisResult = analyzeStyle(data.playerMovesByGame);
     renderStyleTab(analysisResult);

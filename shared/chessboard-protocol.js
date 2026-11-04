@@ -157,8 +157,10 @@
     if(!options.allowUnmeasured&&(rect.width<140||rect.height<140)){
       result.pending=true;result.phase='attente du rendu';return result;
     }
+    if(!options.allowUnmeasured&&Math.abs(rect.width-rect.height)/Math.max(rect.width,rect.height)>.08){result.errors.push('Le plateau n’est pas carré dans son rendu.');return result;}
     if(element.tagName&&element.tagName.toLowerCase()==='canvas'){
       if(element.width<64||element.height<64){result.errors.push('La surface canvas ne possède pas de dimensions utiles.');return result;}
+      if(Math.abs(element.width-element.height)/Math.max(element.width,element.height)>.08){result.errors.push('Le canvas ne possède pas un rapport largeur/hauteur d’échiquier.');return result;}
     } else {
       result.phase='cases';
       var squares=element.querySelectorAll?Array.prototype.slice.call(element.querySelectorAll('[data-square],.square,[role="gridcell"]')):[];

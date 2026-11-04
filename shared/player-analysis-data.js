@@ -12,10 +12,10 @@
   const GRADE_RATINGS = {
     brilliant: 10,
     best: 9.5,
-    "very-good": 9,
+    "very-good": 10,
     good: 8,
     ok: 7,
-    inaccuracy: 5,
+    inaccuracy: 6,
     error: 3,
     mistake: 3,
     blunder: 1,
@@ -216,7 +216,8 @@
     if (!store) {
       return { allGames: [], localGames: [], reviewedGames: [], playerMovesByGame: [], detailedMoveCount: 0, reviewedCount: 0 };
     }
-    const playedRaw = readArray(store, PLAYED_KEY).concat(readLegacyGames(store));
+    const currentPlayed = readArray(store, PLAYED_KEY);
+    const playedRaw = currentPlayed.length ? currentPlayed : readLegacyGames(store);
     const localGames = playedRaw.map((game, index) => normalizePlayedGame(game, index, ChessClass)).filter(Boolean);
     const reviewedGames = readArray(store, REVIEWED_KEY)
       .map((game, index) => normalizeReviewedGame(game, index, ChessClass))

@@ -621,6 +621,39 @@ let puzzleBoard = null;
 let puzzles = [];
 let currentPuzzleIndex = 0;
 
+async function getFirebaseProfileUser() {
+    if (typeof firebase === 'undefined' || !firebase.auth) return null;
+    try {
+        const config = {
+            apiKey: "AIzaSyA8duVGo5Vgzn7VXyDTJcdkvThVElYmTss",
+            authDomain: "chessnova.firebaseapp.com",
+            projectId: "chessnova",
+            storageBucket: "chessnova.firebasestorage.app",
+            messagingSenderId: "260734552934",
+            appId: "1:260734552934:web:c2bf0995c1dd72d87896a7"
+        };
+        const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(config);
+        const auth = firebase.auth(app);
+        if (auth.currentUser) return auth.currentUser;
+        return await new Promise(resolve => {
+            let settled = false;
+            let unsubscribe = () => {};
+            const timer = window.setTimeout(() => finish(auth.currentUser), 8000);
+            const finish = user => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timer);
+                unsubscribe();
+                resolve(user || null);
+            };
+            unsubscribe = auth.onAuthStateChanged(finish, () => finish(null));
+        });
+    } catch (error) {
+        console.warn('Firebase profile auth check failed:', error);
+        return null;
+    }
+}
+
 async function loadAllData() {
     const localGames = [];
     let profile = null;
@@ -635,6 +668,7 @@ async function loadAllData() {
     let gameProgress = null;
     try { gameProgress = JSON.parse(localStorage.getItem('chessnova_progress') || 'null'); } catch (e) {}
     const sessionId = localStorage.getItem('chessnova_session');
+    const firebaseUser = sessionId ? null : await getFirebaseProfileUser();
     if (sessionId) {
         const apiUrl = 'https://aimix-api.hugo-padilla-pro.workers.dev';
         try {
@@ -673,7 +707,7 @@ async function loadAllData() {
     allGames = localGames.concat(cloudGames);
     playerMovesByGame = localGames.map(game => Array.isArray(game.history)
         ? game.history.filter(move => !move.isOpponent) : []).filter(moves => moves.length > 0);
-    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, profileLoadError, hasSession: !!sessionId };
+    return { allGames, playerMovesByGame, coachProgress, gameProgress, profile, profileGames, localGames, profileLoadError, hasSession: !!sessionId, firebaseUser, hasAccount: !!sessionId || !!firebaseUser };
 }
 
 // ==========================================
@@ -1610,8 +1644,13 @@ function updateProfileStatus(data) {
     const status = document.getElementById('player-profile-status');
     if (!status) return;
     const detailedCount = data.localGames.length;
-    if (!data.hasSession) {
+    if (!data.hasAccount) {
         status.textContent = 'Historique du profil non chargé : connectez-vous dans SupaChess pour récupérer les parties associées à ce compte. Parties locales détaillées : ' + detailedCount + '.';
+        return;
+    }
+    if (!data.hasSession && data.firebaseUser) {
+        const name = data.firebaseUser.displayName || data.firebaseUser.email || 'Compte SupaChess';
+        status.textContent = name + ' · Compte connecté, mais la session d’accès à l’historique des parties n’est pas disponible sur cette page. Parties locales détaillées : ' + detailedCount + '.';
         return;
     }
     const name = data.profile && (data.profile.username || data.profile.displayName) || 'Profil connecté';

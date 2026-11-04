@@ -256,6 +256,8 @@
         .analysis-selection-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
         .analysis-selection-actions button { border:1px solid rgba(0,217,255,.35); border-radius:7px; padding:8px 11px; background:rgba(0,217,255,.08); color:#dffaff; cursor:pointer; }
         .analysis-selection-actions button:hover { background:rgba(0,217,255,.16); }
+        .aid-filter-btn { padding:6px 12px; border:1px solid rgba(255,255,255,.2); border-radius:20px; background:none; color:#c9d5e0; cursor:pointer; font-size:.85rem; }
+        .aid-filter-btn:hover,.aid-filter-btn.active { border-color:#00d9ff; color:#00d9ff; background:rgba(0,217,255,.09); }
         .game-selection { display:flex; flex-direction:column; align-items:flex-start; min-width:116px; gap:3px; color:#ddd; }
         .game-selection label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.82rem; }
         .game-selection input { accent-color:#00d9ff; width:17px; height:17px; }
@@ -621,9 +623,17 @@
             <select id="analysis-player-select" onchange="selectProfileAnalysisPlayer(this.value)" style="width:100%;max-width:440px;padding:10px;border-radius:8px;background:#10202f;color:#fff;border:1px solid rgba(0,217,255,.4);margin-bottom:12px;" aria-label="Choisir le joueur à analyser"></select>
             <p id="analysis-selection-summary" class="analysis-selection-summary" aria-live="polite"></p>
             <div class="analysis-selection-actions">
-                <button type="button" onclick="selectUnaidedProfileGames()">Garder les parties sans aides</button>
-                <button type="button" onclick="selectAllProfileGames()">Inclure aussi toutes les parties avec aides</button>
+                <button type="button" onclick="selectUnaidedProfileGames()">Sélectionner les parties confirmées sans aides</button>
+                <button type="button" onclick="selectProfileGamesByAidStatus(true)">Sélectionner les parties confirmées avec aides</button>
+                <button type="button" onclick="selectProfileGamesByAidStatus(null)">Sélectionner les parties indéterminées</button>
+                <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties analysables</button>
                 <button type="button" onclick="resetProfileGameSelection()">Réinitialiser les choix</button>
+            </div>
+            <div class="filter-bar" aria-label="Filtrer les parties par aides utilisées">
+                <button class="aid-filter-btn active" data-aid-filter="all" onclick="filterGamesByAid('all')">Tous les statuts</button>
+                <button class="aid-filter-btn" data-aid-filter="false" onclick="filterGamesByAid('false')">Sans aides</button>
+                <button class="aid-filter-btn" data-aid-filter="true" onclick="filterGamesByAid('true')">Avec aides</button>
+                <button class="aid-filter-btn" data-aid-filter="unknown" onclick="filterGamesByAid('unknown')">Indéterminées</button>
             </div>
             <div class="filter-bar">
                 <button class="filter-btn active" onclick="filterGames('all')">Toutes</button>
@@ -634,7 +644,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.153"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14802"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -677,6 +687,7 @@ const PLAYER_ANALYSIS_SUBJECT_KEY = 'supachess_player_analysis_subject_v1';
 let profileGameSelection = {};
 let selectedProfilePlayer = '__me__';
 let currentGameFilter = 'all';
+let currentAidFilter = 'all';
 
 function loadProfileGameSelection() {
     try {
@@ -775,9 +786,11 @@ function updateProfileGameSelectionSummary() {
     const unknown = eligible.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
     const playerLabel = selectedProfilePlayer === '__me__' ? 'Moi' :
         (document.getElementById('analysis-player-select')?.selectedOptions?.[0]?.textContent || 'Joueur');
+    const unaided = eligible.filter(game => game.trainingAidsUsed === false).length;
     summary.textContent = playerLabel + ' : ' + included + ' partie(s) sélectionnée(s) sur ' + eligible.length +
-        ' analysable(s). ' + aided + ' avec aides et ' + unknown +
-        ' au statut inconnu sont exclues par défaut.';
+        ' analysable(s). Détection automatique : ' + unaided + ' sans aides confirmées, ' + aided +
+        ' avec aides confirmées, ' + unknown + ' indéterminée(s). Les statuts indéterminés restent exclus par défaut. ' +
+        'Les cases de sélection modifient l’analyse, pas le statut détecté.';
 }
 
 function refreshSelectedPlayerAnalysis() {
@@ -827,6 +840,17 @@ function selectUnaidedProfileGames() {
 function selectAllProfileGames() {
     allGames.filter(isProfileGameEligible).forEach(game => {
         profileGameSelection[String(game.id)] = true;
+    });
+    persistProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
+}
+
+function selectProfileGamesByAidStatus(status) {
+    allGames.filter(isProfileGameEligible).forEach(game => {
+        const isMatch = status === null
+            ? game.trainingAidsUsed !== true && game.trainingAidsUsed !== false
+            : game.trainingAidsUsed === status;
+        profileGameSelection[String(game.id)] = isMatch;
     });
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
@@ -1834,6 +1858,10 @@ function renderGamesList(filter) {
     if (currentGameFilter === 'best') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
     else if (currentGameFilter === 'worst') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
 
+    if (currentAidFilter === 'true') games = games.filter(g => g.trainingAidsUsed === true);
+    else if (currentAidFilter === 'false') games = games.filter(g => g.trainingAidsUsed === false);
+    else if (currentAidFilter === 'unknown') games = games.filter(g => g.trainingAidsUsed !== true && g.trainingAidsUsed !== false);
+
     if (games.length === 0) {
         listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie dans ce filtre</p>';
         updateProfileGameSelectionSummary();
@@ -1858,12 +1886,13 @@ function renderGamesList(filter) {
         const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' :
             (g.accuracyForSelectedPlayer !== null && g.accuracyForSelectedPlayer !== undefined ? Math.round(g.accuracyForSelectedPlayer) + '%' : 'Profil');
         const sourceLabel = g.profileGame ? 'Profil connecté' : 'Données détaillées';
-        const aidLabel = g.trainingAidsUsed === true ? 'Aides actives' :
-            g.trainingAidsUsed === false ? 'Sans aides' : 'Aides inconnues';
+        const aidLabel = g.trainingAidsUsed === true ? 'Avec aides confirmées' :
+            g.trainingAidsUsed === false ? 'Sans aides confirmé' : 'Statut indéterminé';
+        const aidEvidence = g.trainingAidsEvidence || 'Preuve insuffisante';
         const eligible = isProfileGameEligible(g);
         const checked = eligible && isProfileGameIncluded(g) ? 'checked' : '';
         const disabled = eligible ? '' : 'disabled';
-        const selectionLabel = eligible ? aidLabel : (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur' : 'Non analysable pour ce joueur');
+        const selectionLabel = eligible ? aidLabel + ' · ' + aidEvidence : (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur · ' + aidLabel : 'Non analysable pour ce joueur · ' + aidLabel);
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
@@ -1953,6 +1982,16 @@ function filterGames(filter) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     if (typeof event !== 'undefined' && event.target) event.target.classList.add('active');
     renderGamesList(filter);
+}
+
+function filterGamesByAid(filter) {
+    currentAidFilter = filter || 'all';
+    document.querySelectorAll('.aid-filter-btn').forEach(button => {
+        const active = button.dataset.aidFilter === currentAidFilter;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    renderGamesList(currentGameFilter);
 }
 
 // ==========================================

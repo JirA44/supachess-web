@@ -359,8 +359,13 @@
     <div class="tab-content active" id="tab-style">
         <div id="no-data-style" class="no-data" style="display:none;">
             <div class="icon">♟</div>
-            <h3>Pas encore de coups classés pour établir le profil</h3>
-            <p>Les parties locales et PGN analysés apparaissent dans l’historique. Le profil de style nécessite des coups évalués associés à votre couleur de joueur.</p>
+            <h3 id="no-data-style-title">Pas encore de coups classés pour établir le profil</h3>
+            <p id="no-data-style-description">Les parties locales et PGN analysés apparaissent dans l’historique. Le profil de style nécessite des coups évalués associés à votre couleur de joueur.</p>
+            <p id="no-data-style-selection-status" style="color:#b8c7d4;margin:12px 0;"></p>
+            <div id="no-data-style-actions" class="analysis-selection-actions" style="justify-content:center;margin-top:14px;">
+                <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties de ce joueur, aides comprises</button>
+                <button type="button" onclick="switchTab('history')">Choisir les parties à analyser</button>
+            </div>
         </div>
 
         <div id="style-content">
@@ -629,7 +634,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.152"></script>
+<script src="shared/player-analysis-data.js?v=1.13.153"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1376,6 +1381,27 @@ let accuracyLineChart = null;
 
 function renderStyleTab(result) {
     if (!result) {
+        const eligibleGames = allGames.filter(isProfileGameEligible);
+        const selectedGames = eligibleGames.filter(isProfileGameIncluded);
+        const safeGames = eligibleGames.filter(game => game.trainingAidsUsed === false).length;
+        const aidedGames = eligibleGames.filter(game => game.trainingAidsUsed === true).length;
+        const unknownGames = eligibleGames.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
+        const title = document.getElementById('no-data-style-title');
+        const description = document.getElementById('no-data-style-description');
+        const status = document.getElementById('no-data-style-selection-status');
+        const actions = document.getElementById('no-data-style-actions');
+        if (eligibleGames.length > 0) {
+            if (title) title.textContent = 'Aucune partie n’est incluse dans le profil de ce joueur';
+            if (description) description.textContent = 'Des coups classés existent, mais ils ne sont pas encore retenus pour cette analyse. Les parties sans aides sont incluses par défaut; celles aidées ou au statut inconnu restent décochées.';
+            if (status) status.textContent = selectedGames.length + ' incluse(s) sur ' + eligibleGames.length +
+                ' partie(s) analysable(s) · sans aides : ' + safeGames + ' · aides actives : ' + aidedGames + ' · statut inconnu : ' + unknownGames + '.';
+            if (actions) actions.style.display = 'flex';
+        } else {
+            if (title) title.textContent = 'Pas encore de coups classés pour ce joueur';
+            if (description) description.textContent = 'Aucun coup évalué associé à ce joueur n’a été trouvé. Les parties locales apparaissent dans l’historique lorsqu’elles contiennent des coups classés.';
+            if (status) status.textContent = '';
+            if (actions) actions.style.display = 'none';
+        }
         document.getElementById('no-data-style').style.display = 'block';
         document.getElementById('style-content').style.display = 'none';
         return;

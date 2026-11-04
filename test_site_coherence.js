@@ -142,13 +142,13 @@ function testInternalLinks() {
 // ── Test 4 : une version globale exacte sur chaque page ───────────────────────
 function testSiteVersionReferences() {
     console.log('\n🏷️ Test 4 — Version globale cohérente sur chaque page');
-    const expectedVersion = '1.13.146';
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.145.js'));
+    const expectedVersion = '1.13.147';
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.146.js'));
     if (!globalScript) {
-        fail('shared/site-global-v1.13.145.js manquant');
+        fail('shared/site-global-v1.13.146.js manquant');
         return;
     }
-    if (!/var SITE_VERSION = ['"]1\.13\.146['"]/.test(globalScript)) {
+    if (!/var SITE_VERSION = ['"]1\.13\.147['"]/.test(globalScript)) {
         fail('Le script global ne déclare pas la version ' + expectedVersion);
     }
     for (const page of getAllHtml(true)) {
@@ -159,8 +159,8 @@ function testSiteVersionReferences() {
             fail(page + ' — ' + refs.length + ' script(s) global(aux), un seul attendu');
             continue;
         }
-        if (refs[0][3] !== '145' || refs[0][4] !== '1.13.145') {
-            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.145 (version affichée : 1.13.146)');
+        if (refs[0][3] !== '146' || refs[0][4] !== '1.13.146') {
+            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.146 (version affichée : 1.13.147)');
         }
     }
     if (errors === 0) ok('Les ' + getAllHtml(true).length + ' pages HTML utilisent la même version');
@@ -169,7 +169,7 @@ function testSiteVersionReferences() {
 // ── Test 5 : validation commune de tous les échiquiers ───────────────────────
 function testBoardProtocolCoverage() {
     console.log('\n♟️ Test 5 — Vérificateur commun des échiquiers');
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.145.js'));
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.146.js'));
     const boardProtocol = readFile(path.join(DIR, 'shared', 'chessboard-protocol.js'));
     if (!globalScript || !/initializeBoardProtocol\(\);/.test(globalScript)) {
         fail('Le script global ne déclenche pas le vérificateur commun des échiquiers');
@@ -181,7 +181,7 @@ function testBoardProtocolCoverage() {
     }
     for (const page of getAllHtml(true)) {
         const content = readFile(path.join(DIR, page));
-        if (!content || !content.includes('site-global-v1.13.145.js?v=1.13.145')) {
+        if (!content || !content.includes('site-global-v1.13.146.js?v=1.13.145')) {
             fail(page + ' — chargement du vérificateur commun manquant');
         }
     }

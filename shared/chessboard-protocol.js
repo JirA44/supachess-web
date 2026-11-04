@@ -1,6 +1,6 @@
 (function (global) {
   'use strict';
-  var VERSION = '1.1.0';
+  var VERSION = '1.1.1';
   var FILES = 'abcdefgh';
   var RANKS = '12345678';
   var PIECES = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙', k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
@@ -256,6 +256,20 @@
   function ensureEvaluationBar(board) {
     if(!board||!board.parentNode)return null;
     var wrapper=board.closest&&board.closest('.supa-board-certified-layout');
+    var legacyLayout=board.closest&&board.closest('.supachess-eval-layout');
+    if(legacyLayout){
+      var legacyRail=legacyLayout.querySelector('.supachess-eval-rail'),legacyPanel=legacyLayout.querySelector('.supachess-eval-panel');
+      if(legacyRail&&legacyPanel){
+        legacyLayout.classList.add('supa-board-certified-layout');legacyRail.setAttribute('data-supa-evaluation-bar','true');
+        legacyRail.setAttribute('role','group');legacyRail.setAttribute('aria-label','Barre d’évaluation latérale');
+        var legacyToggle=legacyRail.querySelector('.supachess-eval-toggle');if(legacyToggle)legacyToggle.remove();
+        legacyPanel.hidden=false;legacyPanel.style.cssText+=';display:block!important;width:100%;max-width:none;margin:0;padding:6px;box-sizing:border-box';
+        var legacyTrack=legacyPanel.querySelector('.supachess-eval-track'),legacyFill=legacyPanel.querySelector('.supachess-eval-white');
+        if(legacyTrack)legacyTrack.style.cssText='position:relative;width:18px;height:100%;min-height:100px;margin:auto;overflow:hidden;border:1px solid #64748b;border-radius:4px;background:#111';
+        if(legacyFill)legacyFill.style.cssText='position:absolute;left:0;right:0;bottom:0;width:100%;height:50%;background:#f8fafc;transition:height .18s ease';
+        return legacyRail;
+      }
+    }
     if(!wrapper){
       wrapper=document.createElement('div');wrapper.className='supa-board-certified-layout';
       wrapper.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:10px;align-items:stretch;width:100%;max-width:100%;';
@@ -284,7 +298,7 @@
     var whiteScore=perspective==='b'?-centipawns:centipawns;
     var clamped=Math.max(-1000,Math.min(1000,whiteScore));
     var whitePercent=Math.max(5,Math.min(95,50+clamped/20));
-    var score=rail.querySelector('[data-supa-eval-score]'),fill=rail.querySelector('[data-supa-eval-white]');
+    var score=rail.querySelector('[data-supa-eval-score],.supachess-eval-track span'),fill=rail.querySelector('[data-supa-eval-white],.supachess-eval-white');
     var display=(whiteScore>0?'+':'')+(whiteScore/100).toFixed(1);
     score.textContent=display;fill.style.height=whitePercent+'%';
     rail.setAttribute('aria-label','Barre d’évaluation, avantage blancs '+display+' pion(s)');

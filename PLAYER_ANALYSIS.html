@@ -1658,7 +1658,7 @@ function expandGame(index) {
         return;
     }
     const playerMoves = game.history.filter(m => !m.isOpponent && (!game.userColor || m.color === game.userColor));
-    const ratedMoves = playerMoves.filter(m => m.rated === true || Number.isFinite(Number(m.rating)));
+    const ratedMoves = playerMoves.filter(m => m.rated === true || (m.rating !== null && m.rating !== undefined && m.rating !== "" && Number.isFinite(Number(m.rating))));
     const avgRating = ratedMoves.length ? ratedMoves.reduce((sum, move) => sum + Number(move.rating), 0) / ratedMoves.length : null;
     const brilliants = ratedMoves.filter(m => m.category === 'brilliant' || Number(m.rating) >= 10).length;
     const blunders = ratedMoves.filter(m => m.category === 'blunder' || Number(m.rating) <= 1).length;
@@ -1686,7 +1686,7 @@ function expandGame(index) {
         </div>
         <div style="max-height:300px; overflow-y:auto;">
             ${playerMoves.map(m => {
-                const rated = m.rated === true || Number.isFinite(Number(m.rating));
+                const rated = m.rated === true || (m.rating !== null && m.rating !== undefined && m.rating !== "" && Number.isFinite(Number(m.rating)));
                 const r = rated ? Number(m.rating) : null;
                 const color = !rated ? '#888' : r >= 8 ? '#2ecc71' : r >= 6 ? '#3498db' : r >= 4 ? '#f39c12' : '#e74c3c';
                 return `<div style="padding:4px 8px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">

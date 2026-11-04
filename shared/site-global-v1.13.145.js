@@ -2,7 +2,7 @@
   'use strict';
   var script = document.currentScript;
   var root = script && script.src ? new URL('../', script.src) : new URL('./', location.href);
-  var SITE_VERSION = '1.13.145';
+  var SITE_VERSION = '1.13.146';
   document.documentElement.setAttribute('data-supachess-version', SITE_VERSION);
   var style = document.createElement('style');
   style.id = 'supachess-global-ux';
@@ -199,6 +199,49 @@
     analysis.href = new URL('PLAYER_ANALYSIS.html', root).href;
     analysis.textContent = french ? '📊 Analyse' : '📊 Analysis';
     analysis.setAttribute('aria-label', french ? 'Ouvrir l’analyse de style SupaChess' : 'Open SupaChess player analysis');
+    var languageGroup = document.createElement('div');
+    languageGroup.className = 'supachess-language-control';
+    languageGroup.setAttribute('role', 'group');
+    languageGroup.setAttribute('aria-label', french ? 'Choisir la langue du site' : 'Choose site language');
+    ['fr', 'en'].forEach(function (language) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'supachess-language-button';
+      button.textContent = language.toUpperCase();
+      button.setAttribute('data-language', language);
+      button.setAttribute('aria-pressed', ((localStorage.getItem('chessnova_lang') || document.documentElement.lang || 'en').slice(0, 2).toLowerCase() === language) ? 'true' : 'false');
+      button.addEventListener('click', function () {
+        function applyLanguage() {
+          if (window.ChessNovaI18n && typeof window.ChessNovaI18n.switchLang === 'function') {
+            window.ChessNovaI18n.switchLang(language);
+            window.setTimeout(updateLanguageButtons, 50);
+          }
+        }
+        if (window.ChessNovaI18n && typeof window.ChessNovaI18n.switchLang === 'function') applyLanguage();
+        else {
+          var loader = document.querySelector('script[data-supachess-i18n-loader]');
+          if (!loader) {
+            loader = document.createElement('script');
+            loader.src = new URL('shared/i18n.js', root).href;
+            loader.setAttribute('data-supachess-i18n-loader', '');
+            loader.onload = applyLanguage;
+            document.body.appendChild(loader);
+          } else loader.addEventListener('load', applyLanguage, { once: true });
+        }
+      });
+      languageGroup.appendChild(button);
+    });
+    function updateLanguageButtons() {
+      var activeLanguage = (localStorage.getItem('chessnova_lang') || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
+      languageGroup.querySelectorAll('[data-language]').forEach(function (button) {
+        var active = button.getAttribute('data-language') === activeLanguage;
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    }
+    var languageStyle = document.createElement('style');
+    languageStyle.textContent = '.supachess-language-control{display:inline-flex;gap:4px;align-items:center;padding:3px;border:1px solid #7892ad;border-radius:999px;background:#0d1d30}.supachess-language-button{min-width:42px;min-height:40px;padding:7px 10px;border:0;border-radius:999px;background:transparent;color:#dbeafe;font:700 13px/1.2 system-ui,sans-serif;cursor:pointer}.supachess-language-button[aria-pressed="true"]{background:#0ea5e9;color:#06111f}.supachess-language-button:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}.cn-lang-toggle{display:none!important}';
+    document.head.appendChild(languageStyle);
+    nav.appendChild(languageGroup);
     nav.appendChild(appearance);
     nav.appendChild(analysis);
     var topBack = document.querySelector('.supachess-page-back--top');

@@ -272,7 +272,7 @@
       var track=document.createElement('span');track.setAttribute('data-supa-eval-track','');track.style.cssText='position:relative;display:block;flex:1;width:18px;min-height:100px;overflow:hidden;border:1px solid #64748b;border-radius:4px;background:#111;';
       var white=document.createElement('span');white.setAttribute('data-supa-eval-white','');white.style.cssText='position:absolute;left:0;right:0;bottom:0;height:50%;background:#f8fafc;transition:height .18s ease;';
       track.appendChild(white);rail.appendChild(score);rail.appendChild(track);
-      var caption=document.createElement('span');caption.textContent='Éval.'caption.setAttribute('aria-hidden','true');rail.appendChild(caption);
+      var caption=document.createElement('span');caption.textContent='Éval.';caption.setAttribute('aria-hidden','true');rail.appendChild(caption);
       wrapper.appendChild(rail);
     }
     return rail;

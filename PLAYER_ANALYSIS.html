@@ -629,7 +629,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.151"></script>
+<script src="shared/player-analysis-data.js?v=1.13.152"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1796,8 +1796,9 @@ function renderGamesList(filter) {
         const color = getProfileGamePlayerColor(g);
         const colorRating = color && g.avgRatingByColor ? g.avgRatingByColor[color] : null;
         const colorAccuracy = color && g.accuracyByColor ? g.accuracyByColor[color] : null;
-        const average = Number.isFinite(Number(colorRating)) ? Number(colorRating) :
-            (selectedProfilePlayer === '__me__' ? g.avgRating : null);
+        const average = colorRating !== null && colorRating !== undefined && colorRating !== '' && Number.isFinite(Number(colorRating))
+            ? Number(colorRating)
+            : (selectedProfilePlayer === '__me__' && g.avgRating !== null && g.avgRating !== undefined ? g.avgRating : null);
         return {
             ...g, index: i, selectedPlayerColor: color,
             avgRatingNum: average !== null && average !== undefined && Number.isFinite(Number(average)) ? Number(average) : null,

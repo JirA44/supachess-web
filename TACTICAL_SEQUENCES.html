@@ -21,4 +21,4 @@ function click(sq){const d=DATA[id];if(index>=d.line.length)return;const expecte
 function status(t,c=""){const e=document.getElementById("status");e.textContent=t;e.className="status "+c}
 function showLine(){const d=DATA[id],copy=new Chess(d.fen),san=[];d.line.forEach(([s,f,t])=>{const m=copy.move({from:f,to:t,promotion:"q"});san.push(m?m.san:"?")});document.getElementById("tip").textContent="Ligne complète : "+san.join(" ");status("Ligne affichée. Recommence pour la jouer toi-même.")}
 reset();
-</script><script defer src="shared/site-global-v1.13.145.js?v=1.13.145"></script></body></html>
+</script><script defer src="shared/site-global-v1.13.146.js?v=1.13.146"></script></body></html>

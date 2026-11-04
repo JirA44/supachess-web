@@ -87,7 +87,9 @@
   function categoryFor(grade) {
     const category = String(grade && (grade.category || grade.classification) || "").toLowerCase();
     if (Object.prototype.hasOwnProperty.call(GRADE_RATINGS, category)) return category;
-    const loss = Number(grade && grade.lossCp);
+    const rawLoss = grade && grade.lossCp;
+    if (rawLoss === null || rawLoss === undefined || rawLoss === "") return "unrated";
+    const loss = Number(rawLoss);
     if (!Number.isFinite(loss)) return "unrated";
     if (loss >= 200) return "blunder";
     if (loss >= 60) return "mistake";
@@ -166,7 +168,8 @@
       (opponentColor === "w" ? headers.White : opponentColor === "b" ? headers.Black : "") ||
       "Partie locale";
     const pgnResult = headers.Result || raw.result || "*";
-    const userAccuracy = color === "w" ? raw.accuracyW : color === "b" ? raw.accuracyB : null;
+    const accuracyValue = color === "w" ? raw.accuracyW : color === "b" ? raw.accuracyB : null;
+    const userAccuracy = accuracyValue === null || accuracyValue === undefined || accuracyValue === "" ? null : Number(accuracyValue);
     const moveCount = parsed.moves.length || (Array.isArray(raw.moveGrades) ? raw.moveGrades.length : 0);
     return Object.assign({}, raw, {
       id: String(raw.id || "local-game-" + index),
@@ -178,7 +181,7 @@
       opponent,
       moves: Math.ceil(moveCount / 2),
       avgRating: averageRating,
-      accuracy: Number.isFinite(Number(userAccuracy)) ? Number(userAccuracy) : null,
+      accuracy: Number.isFinite(userAccuracy) ? userAccuracy : null,
       history: moves,
       detailedMoveCount: ratedMoves.length,
       sourceLabel: "Partie enregistrée sur cet appareil",
@@ -225,7 +228,8 @@
       seen.add(key);
       return true;
     });
-    const playerMovesByGame = localGames.map((game) => game.history.filter((move) => move.rated))
+    const playerMovesByGame = localGames.filter((game) => game.userColor === "w" || game.userColor === "b")
+      .map((game) => game.history.filter((move) => move.color === game.userColor && move.rated))
       .filter((moves) => moves.length > 0);
     return {
       allGames: localGames.concat(uniqueReviewed),

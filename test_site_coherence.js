@@ -148,7 +148,7 @@ function testSiteVersionReferences() {
         fail('shared/site-global-v1.13.147.js manquant');
         return;
     }
-    if (!/var SITE_VERSION = ['"]1\.13\.147['"]/.test(globalScript)) {
+    if (!/var SITE_VERSION = ['"]1\.13\.148['"]/.test(globalScript)) {
         fail('Le script global ne déclare pas la version ' + expectedVersion);
     }
     for (const page of getAllHtml(true)) {
@@ -159,8 +159,8 @@ function testSiteVersionReferences() {
             fail(page + ' — ' + refs.length + ' script(s) global(aux), un seul attendu');
             continue;
         }
-        if (refs[0][3] !== '146' || refs[0][4] !== '1.13.146') {
-            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.146 (version affichée : 1.13.148)');
+        if (refs[0][3] !== '147' || refs[0][4] !== '1.13.147') {
+            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.147 (version affichée : 1.13.148)');
         }
     }
     if (errors === 0) ok('Les ' + getAllHtml(true).length + ' pages HTML utilisent la même version');

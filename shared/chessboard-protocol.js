@@ -220,10 +220,14 @@
     all.forEach(function(element){
       if(!element.hasAttribute('data-supa-original-visibility'))element.setAttribute('data-supa-original-visibility',element.style.visibility||'');
       var attempts=Number(element.dataset.supaBoardAttempts||0)+1;element.dataset.supaBoardAttempts=String(attempts);
-      ensureEvaluationBar(element);\n      var result=inspectBoard(element);
+      ensureEvaluationBar(element);
+      var result=inspectBoard(element);
       element.dataset.supaBoardPhase=result.phase;
       if(result.valid){
-        var certificate=certifyBoard(element,result);\n        element.dataset.supaBoardStatus=certificate.certified?(result.warnings.length?'ready-with-warning':'ready'):'rejected';\n        if(certificate.certified)element.dataset.supaBoardCertificate=certificate.protocolVersion+' · '+certificate.checks.join(', ');\n        else {mountStatus(element,(certificate.errors||[]).join(' '));return;}
+        var certificate=certifyBoard(element,result);
+        element.dataset.supaBoardStatus=certificate.certified?(result.warnings.length?'ready-with-warning':'ready'):'rejected';
+        if(certificate.certified)element.dataset.supaBoardCertificate=certificate.protocolVersion+' · '+certificate.checks.join(', ');
+        else {mountStatus(element,(certificate.errors||[]).join(' '));return;}
         element.dataset.supaBoardWarnings=result.warnings.join(' | ');
         element.style.visibility=element.getAttribute('data-supa-original-visibility')||'';
         if(element.__supaProtocolNotice){element.__supaProtocolNotice.remove();element.__supaProtocolNotice=null;}

@@ -142,13 +142,13 @@ function testInternalLinks() {
 // ── Test 4 : une version globale exacte sur chaque page ───────────────────────
 function testSiteVersionReferences() {
     console.log('\n🏷️ Test 4 — Version globale cohérente sur chaque page');
-    const expectedVersion = '1.13.142';
-    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.142.js'));
+    const expectedVersion = '1.13.145';
+    const globalScript = readFile(path.join(DIR, 'shared', 'site-global-v1.13.145.js'));
     if (!globalScript) {
-        fail('shared/site-global-v1.13.142.js manquant');
+        fail('shared/site-global-v1.13.145.js manquant');
         return;
     }
-    if (!/var SITE_VERSION = ['"]1\.13\.142['"]/.test(globalScript)) {
+    if (!/var SITE_VERSION = ['"]1\.13\.145['"]/.test(globalScript)) {
         fail('Le script global ne déclare pas la version ' + expectedVersion);
     }
     for (const page of getAllHtml(true)) {
@@ -159,8 +159,8 @@ function testSiteVersionReferences() {
             fail(page + ' — ' + refs.length + ' script(s) global(aux), un seul attendu');
             continue;
         }
-        if (refs[0][3] !== '142' || refs[0][4] !== expectedVersion) {
-            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.142');
+        if (refs[0][3] !== '145' || refs[0][4] !== expectedVersion) {
+            fail(page + ' — référence globale ' + refs[0][2] + ', attendu 1.13.145');
         }
     }
     if (errors === 0) ok('Les ' + getAllHtml(true).length + ' pages HTML utilisent la même version');

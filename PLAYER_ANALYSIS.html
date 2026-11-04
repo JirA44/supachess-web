@@ -345,6 +345,7 @@
             }
         }
     
+        .radar-note { margin-top:12px; color:#c6d0d9; font-size:.9rem; line-height:1.55; }
         .move-distribution-controls { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
         .move-distribution-controls button { border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 10px; background:rgba(20,30,40,.85); color:#d8e2ea; cursor:pointer; font:inherit; font-size:.82rem; }
         .move-distribution-controls button[aria-pressed="true"] { background:#146b43; border-color:#53c98a; color:#fff; }
@@ -403,7 +404,8 @@
             <div class="grid-2">
                 <div class="card">
                     <h3>Radar de Competences</h3>
-                    <canvas id="radarChart" height="300"></canvas>
+                    <canvas id="radarChart" height="420" aria-label="Radar des compétences observées et compétences à mesurer"></canvas>
+                    <p class="radar-note">Les phases sont estimées par tranche de coups joués, pas par la position réelle. Les axes avec « À mesurer » attendent des résultats d’exercices dédiés : ils ne sont pas déduits artificiellement des parties.</p>
                 </div>
                 <div class="card">
                     <h3>Votre Style</h3>
@@ -1087,7 +1089,12 @@ function analyzeStyle(playerMovesByGame) {
     const phaseAccuracy = {
         opening: average(openingRatings),
         middle: average(middleRatings),
-        endgame: average(endgameRatings)
+        endgame: average(endgameRatings),
+        counts: {
+            opening: openingRatings.length,
+            middle: middleRatings.length,
+            endgame: endgameRatings.length
+        }
     };
 
     // Overall accuracy
@@ -1550,30 +1557,53 @@ function renderStyleTab(result) {
     }
     document.getElementById('stat-elo').textContent = elo;
 
-    // Radar Chart
+    // Radar des compétences observées dans les parties.
     const ctx = document.getElementById('radarChart').getContext('2d');
     if (radarChart) radarChart.destroy();
+    const totalMovesForRadar = Number(result.totalMoves) || 0;
+    const distributionForRadar = result.moveDistribution || {};
+    const countForRadar = key => Number(distributionForRadar[key]) || 0;
+    const phaseValue = (key, value) => {
+        const count = Number(result.phaseAccuracy && result.phaseAccuracy.counts && result.phaseAccuracy.counts[key]) || 0;
+        return count ? Math.max(0, Math.min(100, Number(value) * 10)) : null;
+    };
+    const topMoveCount = countForRadar('excellent');
+    const okayOrBetterCount = topMoveCount + countForRadar('good');
+    const seriousErrorCount = countForRadar('mistake') + countForRadar('blunder');
+    const anyErrorCount = countForRadar('inaccuracy') + seriousErrorCount;
+    const radarLabels = [
+        'Ouverture', 'Milieu de partie', 'Finales',
+        'Précision globale', 'Coups excellents ou mieux', 'Coups OK ou mieux',
+        'Sans imprécision', 'Sans erreur ni gaffe',
+        'Tactique · à mesurer', 'Plans · à mesurer',
+        'Calcul · à mesurer', 'Anticipation · à mesurer'
+    ];
+    const radarValues = [
+        phaseValue('opening', result.phaseAccuracy.opening),
+        phaseValue('middle', result.phaseAccuracy.middle),
+        phaseValue('endgame', result.phaseAccuracy.endgame),
+        Math.max(0, Math.min(100, Number(result.overallAccuracy) || 0)),
+        totalMovesForRadar ? topMoveCount * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? okayOrBetterCount * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? (totalMovesForRadar - anyErrorCount) * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? (totalMovesForRadar - seriousErrorCount) * 100 / totalMovesForRadar : null,
+        null, null, null, null
+    ];
     radarChart = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['Tactique', 'Positionnement', 'Ouvertures', 'Finales', 'Defense', 'Agressivite'],
+            labels: radarLabels,
             datasets: [{
-                label: 'Votre Profil',
-                data: [
-                    result.scores.tactical,
-                    result.scores.positional,
-                    result.scores.opening,
-                    result.scores.endgame,
-                    result.scores.defense,
-                    result.scores.aggression
-                ],
+                label: 'Résultats des parties (% ou note /100)',
+                data: radarValues,
                 backgroundColor: 'rgba(255, 107, 107, 0.2)',
                 borderColor: '#ff6b6b',
                 borderWidth: 2,
                 pointBackgroundColor: '#ff6b6b',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 1,
-                pointRadius: 4
+                pointRadius: 4,
+                spanGaps: false
             }]
         },
         options: {
@@ -1582,20 +1612,21 @@ function renderStyleTab(result) {
                 r: {
                     beginAtZero: true,
                     max: 100,
-                    ticks: {
-                        stepSize: 20,
-                        color: '#666',
-                        backdropColor: 'transparent'
-                    },
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    pointLabels: {
-                        color: '#ccc',
-                        font: { size: 12, weight: '600' }
-                    }
+                    ticks: { stepSize: 20, color: '#a9b4bf', backdropColor: 'transparent' },
+                    grid: { color: 'rgba(255,255,255,0.14)' },
+                    angleLines: { color: 'rgba(255,255,255,0.14)' },
+                    pointLabels: { color: '#e1e7ed', font: { size: 12, weight: '600' } }
                 }
             },
             plugins: {
-                legend: { display: false }
+                legend: { display: true, labels: { color: '#e1e7ed' } },
+                tooltip: {
+                    callbacks: {
+                        label: context => context.raw == null
+                            ? context.label + ' : données d’exercices requises'
+                            : context.label + ' : ' + Number(context.raw).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '/100'
+                    }
+                }
             }
         }
     });

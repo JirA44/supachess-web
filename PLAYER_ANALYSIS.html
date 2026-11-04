@@ -344,7 +344,15 @@
                 grid-template-columns: 1fr !important;
             }
         }
-    </style>
+    
+        .move-distribution-controls { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+        .move-distribution-controls button { border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 10px; background:rgba(20,30,40,.85); color:#d8e2ea; cursor:pointer; font:inherit; font-size:.82rem; }
+        .move-distribution-controls button[aria-pressed="true"] { background:#146b43; border-color:#53c98a; color:#fff; }
+        .move-distribution-summary { margin:6px 0 10px; color:#c6d0d9; font-size:.9rem; line-height:1.5; }
+        .move-distribution-legend { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:7px; margin-top:10px; }
+        .move-distribution-legend-item { display:flex; align-items:center; gap:7px; color:#d8e2ea; font-size:.86rem; }
+        .move-distribution-swatch { width:10px; height:10px; border-radius:50%; flex:0 0 10px; }
+</style>
 </head>
 <body>
     <div class="header">
@@ -402,11 +410,14 @@
                     <div id="style-result">
                         <div id="style-badge-container"></div>
                         <p id="style-description" style="margin-top: 12px; color: #ccc; line-height: 1.6;"></p>
-                        <div id="gm-comparison"></div>
+                        <p style="margin-top: 12px; color: #9daab5; line-height: 1.5;">Description provisoire des tendances observées dans les parties sélectionnées. Elle ne signifie pas que votre style est comparable à celui d’un grand maître.</p>
                     </div>
                     <div style="margin-top: 20px;">
-                        <h3>Repartition des Coups</h3>
-                        <canvas id="moveDistChart" height="200"></canvas>
+                        <h3>Répartition des demi-coups</h3>
+                        <div id="move-distribution-controls" class="move-distribution-controls" aria-label="Période de la répartition"></div>
+                        <p id="move-distribution-summary" class="move-distribution-summary" aria-live="polite"></p>
+                        <canvas id="moveDistChart" height="220" aria-label="Pourcentage des types de demi-coups"></canvas>
+                        <div id="move-distribution-legend" class="move-distribution-legend"></div>
                     </div>
                 </div>
             </div>
@@ -1491,6 +1502,7 @@ let radarChart = null;
 let moveDistChart = null;
 let errorTypeChart = null;
 let accuracyLineChart = null;
+let selectedMoveDistributionWindow = "games:10";
 
 function renderStyleTab(result) {
     if (!result) {
@@ -1588,46 +1600,146 @@ function renderStyleTab(result) {
         }
     });
 
-    // Style badge
+    // Style badge — keep the classification descriptive and avoid unsupported GM comparisons.
     const style = result.style;
     document.getElementById('style-badge-container').innerHTML =
         `<div class="style-badge ${style.class}">${style.name}</div>`;
     document.getElementById('style-description').textContent = style.description;
-    document.getElementById('gm-comparison').innerHTML = `
-        <div class="gm-card">
-            <div class="gm-icon">${style.gm.icon}</div>
-            <div>
-                <div class="gm-name">Style proche de ${style.gm.name}</div>
-                <div class="gm-desc">${style.gm.desc}</div>
-            </div>
-        </div>`;
+    const gmComparison = document.getElementById('gm-comparison');
+    if (gmComparison) gmComparison.replaceChildren();
+    renderMoveDistribution();
 
-    // Move distribution chart
-    const distCtx = document.getElementById('moveDistChart').getContext('2d');
-    if (moveDistChart) moveDistChart.destroy();
-    const dist = result.moveDistribution;
-    moveDistChart = new Chart(distCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Brillant', 'Excellent', 'Bon', 'Imprecision', 'Erreur', 'Gaffe'],
-            datasets: [{
-                data: [dist.brilliant, dist.excellent, dist.good, dist.inaccuracy, dist.mistake, dist.blunder],
-                backgroundColor: [
-                    '#ffd700', '#2ecc71', '#3498db', '#f39c12', '#e67e22', '#e74c3c'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#ccc', padding: 10, font: { size: 11 } }
-                }
-            }
+}
+
+const PROFILE_MOVE_TYPES = [
+    { key: 'brilliant', label: 'Brillant', color: '#a86be8' },
+    { key: 'best', label: 'Meilleur coup', color: '#74d8ff' },
+    { key: 'very-good', label: 'Très bon coup', color: '#27ae60' },
+    { key: 'good', label: 'Bon coup', color: '#8bdc65' },
+    { key: 'ok', label: 'Coup OK', color: '#f4d03f' },
+    { key: 'inaccuracy', label: 'Imprécision', color: '#f39c12' },
+    { key: 'mistake', label: 'Erreur', color: '#e67e22' },
+    { key: 'blunder', label: 'Gaffe', color: '#e74c3c' },
+    { key: 'unrated', label: 'Non évalué', color: '#8c98a4' }
+];
+const PROFILE_MOVE_WINDOWS = [
+    ...[1, 3, 5, 10, 20, 50, 100].map(count => ({ key: 'games:' + count, label: count + (count === 1 ? ' dernière partie' : ' dernières parties'), type: 'games', value: count })),
+    ...[
+        { days: 1/24, label: '1 h' }, { days: 4/24, label: '4 h' },
+        { days: 1, label: '1 jour' }, { days: 3, label: '3 jours' },
+        { days: 7, label: '1 semaine' }, { days: 30, label: '1 mois' },
+        { days: 90, label: '1 trimestre' }, { days: 365, label: '1 an' },
+        { days: 730, label: '2 ans' }, { days: 1095, label: '3 ans' },
+        { days: 1460, label: '4 ans' }, { days: 1825, label: '5 ans' },
+        { days: 2555, label: '7 ans' }, { days: 2920, label: '8 ans' },
+        { days: 3650, label: '10 ans' }
+    ].map(period => ({ key: 'days:' + period.days, label: period.label, type: 'days', value: period.days }))
+];
+
+function profileMoveGamesForDistribution() {
+    return allGames.filter(game => isProfileGameEligible(game)).filter(game => {
+        const id = String(game.id || '');
+        if (Object.prototype.hasOwnProperty.call(profileGameSelection, id)) return profileGameSelection[id] === true;
+        return game.trainingAidsUsed === false;
+    }).map((game, order) => {
+        const color = getProfileGamePlayerColor(game);
+        const moves = game.history.filter(move => move.color === color);
+        return { game, moves, order, timestamp: profileGameTimestamp(game.date) };
+    }).filter(item => item.moves.length > 0);
+}
+
+function profileGameTimestamp(value) {
+    if (value instanceof Date) return value.getTime();
+    if (value && typeof value === 'object') {
+        if (typeof value.toDate === 'function') {
+            const date = value.toDate();
+            return date instanceof Date ? date.getTime() : NaN;
         }
-    });
+        const seconds = Number(value.seconds !== undefined ? value.seconds : value._seconds);
+        if (Number.isFinite(seconds)) return seconds * 1000;
+    }
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string' || !value.trim()) return NaN;
+    const asNumber = Number(value);
+    return Number.isFinite(asNumber) ? asNumber : new Date(value).getTime();
+}
+
+function profileMoveType(move) {
+    const category = String(move && move.category || '').toLowerCase();
+    if (category === 'error') return 'mistake';
+    if (category === 'excellent') return 'very-good';
+    if (PROFILE_MOVE_TYPES.some(type => type.key === category)) return category;
+    const quality = String(move && move.quality || '').toLowerCase();
+    if (quality.includes('brillant')) return 'brilliant';
+    if (quality.includes('meilleur')) return 'best';
+    if (quality.includes('très bon') || quality.includes('tres bon')) return 'very-good';
+    if (quality.includes('bon coup')) return 'good';
+    if (quality.includes('coup ok') || quality === 'ok') return 'ok';
+    if (quality.includes('imprécision') || quality.includes('imprecision')) return 'inaccuracy';
+    if (quality.includes('gaffe')) return 'blunder';
+    if (quality.includes('erreur')) return 'mistake';
+    return 'unrated';
+}
+
+function ensureMoveDistributionControls() {
+    const root = document.getElementById('move-distribution-controls');
+    if (!root) return null;
+    if (!root.dataset.ready) {
+        root.innerHTML = PROFILE_MOVE_WINDOWS.map(window => '<button type="button" data-window-key="' + window.key + '" aria-pressed="false">' + escapePlayerText(window.label) + '</button>').join('');
+        root.addEventListener('click', event => {
+            const button = event.target.closest && event.target.closest('button[data-window-key]');
+            if (!button) return;
+            selectedMoveDistributionWindow = button.dataset.windowKey;
+            renderMoveDistribution();
+        });
+        root.dataset.ready = '1';
+    }
+    root.querySelectorAll('button[data-window-key]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.windowKey === selectedMoveDistributionWindow)));
+    return root;
+}
+
+function renderMoveDistribution() {
+    const root = ensureMoveDistributionControls();
+    const summary = document.getElementById('move-distribution-summary');
+    const legend = document.getElementById('move-distribution-legend');
+    const canvas = document.getElementById('moveDistChart');
+    if (!root || !canvas) return;
+    const windowConfig = PROFILE_MOVE_WINDOWS.find(item => item.key === selectedMoveDistributionWindow) || PROFILE_MOVE_WINDOWS[3];
+    selectedMoveDistributionWindow = windowConfig.key;
+    const datedGames = profileMoveGamesForDistribution().filter(item => Number.isFinite(item.timestamp))
+        .sort((a, b) => b.timestamp - a.timestamp || a.order - b.order);
+    const now = Date.now();
+    const selectedGames = windowConfig.type === 'games'
+        ? datedGames.slice(0, windowConfig.value)
+        : datedGames.filter(item => item.timestamp >= now - windowConfig.value * 86400000 && item.timestamp <= now);
+    const counts = Object.fromEntries(PROFILE_MOVE_TYPES.map(type => [type.key, 0]));
+    let totalMoves = 0;
+    selectedGames.forEach(item => item.moves.forEach(move => { counts[profileMoveType(move)]++; totalMoves++; }));
+    const values = PROFILE_MOVE_TYPES.map(type => totalMoves ? counts[type.key] * 100 / totalMoves : 0);
+    const pct = value => Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+    if (summary) {
+        summary.textContent = windowConfig.label + ' · ' + selectedGames.length + ' partie(s) datée(s) · ' + totalMoves + ' demi-coup(s) · pourcentages calculés sur les demi-coups observés.';
+    }
+    if (legend) {
+        legend.innerHTML = PROFILE_MOVE_TYPES.map((type, index) => '<div class="move-distribution-legend-item"><span class="move-distribution-swatch" style="background:' + type.color + '" aria-hidden="true"></span><span>' + escapePlayerText(type.label) + ' : ' + pct(values[index]) + ' (' + counts[type.key] + '/' + totalMoves + ')</span></div>').join('');
+    }
+    const data = { labels: PROFILE_MOVE_TYPES.map(type => type.label), datasets: [{
+        data: values, backgroundColor: PROFILE_MOVE_TYPES.map(type => type.color), borderWidth: 0
+    }] };
+    const options = { responsive: true, plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: context => {
+            const type = PROFILE_MOVE_TYPES[context.dataIndex];
+            return type.label + ' : ' + pct(context.parsed) + ' (' + counts[type.key] + '/' + totalMoves + ')';
+        } } }
+    } };
+    if (moveDistChart) {
+        moveDistChart.data = data;
+        moveDistChart.options = options;
+        moveDistChart.update();
+    } else {
+        moveDistChart = new Chart(canvas.getContext('2d'), { type: 'doughnut', data, options });
+    }
 }
 
 function renderStrengthsTab(swAnalysis, result) {

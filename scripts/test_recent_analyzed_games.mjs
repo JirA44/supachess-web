@@ -30,7 +30,7 @@ const panelMarkup = await chromium.launch({ headless: true }).then(async (browse
 });
 assert.ok(panelMarkup.isAtTopOfRightColumn);
 
-const saveStart = html.indexOf('function saveRecentGame()');
+const saveStart = html.indexOf('function saveRecentGame(');
 const loadStart = html.indexOf('function loadRecentGames()', saveStart);
 const loadEnd = html.indexOf('function loadRecentGame(', loadStart);
 assert.ok(saveStart >= 0 && loadStart > saveStart && loadEnd > loadStart, 'recent game save/render functions exist');
@@ -45,13 +45,15 @@ try {
       header: () => ({ White: 'New White', Black: 'New Black', Result: '1-0' }),
       pgn: () => '[White "New White"]\n[Black "New Black"]\n\n1. e4 e5',
     };
-    const runSave = new Function('progress', 'game', 'analyzedMoves', 'analysisCache', 'getGameHash', 'saveProgress', 'document', source + '; saveRecentGame(); return progress;');
-    runSave(progress, game, [{ san: 'e4' }, { san: 'e5' }], {}, () => 'new-game', () => {}, document);
+    const runSave = new Function('progress', 'game', 'analyzedMoves', 'analysisCache', 'getGameHash', 'saveProgress', 'document', 'escapeHtml', source + '; saveRecentGame(91, 88); return progress;');
+    runSave(progress, game, [{ san: 'e4' }, { san: 'e5' }], {}, () => 'new-game', () => {}, document, (value) => String(value));
   }, functions);
   const rows = page.locator('#recent-games-list > div');
   assert.equal(await rows.count(), 2);
   assert.match(await rows.nth(0).textContent(), /New White\s+vs\s+New Black/);
-  assert.match(await rows.nth(0).textContent(), /2 coups/);
+  assert.match(await rows.nth(0).textContent(), /2 demi-coups/);
+  assert.match(await rows.nth(0).textContent(), /New White\s*:\s*91%/);
+  assert.match(await rows.nth(0).textContent(), /New Black\s*:\s*88%/);
   assert.match(await rows.nth(1).textContent(), /Older White\s+vs\s+Older Black/);
   console.log('Playwright analyzed games sidebar test passed');
 } finally {

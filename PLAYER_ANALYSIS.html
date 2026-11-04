@@ -713,6 +713,7 @@ function updateProfileGameSelectionSummary() {
 }
 
 function refreshSelectedPlayerAnalysis() {
+    const gameFilterToRestore = currentGameFilter;
     playerMovesByGame = profileMovesForSelectedGames();
     if (latestPlayerAnalysisData) latestPlayerAnalysisData.playerMovesByGame = playerMovesByGame;
     analysisResult = analyzeStyle(playerMovesByGame);
@@ -735,6 +736,7 @@ function refreshSelectedPlayerAnalysis() {
         renderThinkingTab(null, []);
     }
     renderHistoryTab(analysisResult);
+    if (gameFilterToRestore !== 'all') renderGamesList(gameFilterToRestore);
     updateProfileGameSelectionSummary();
 }
 
@@ -744,7 +746,6 @@ function togglePlayerAnalysisGame(index, included) {
     profileGameSelection[String(game.id)] = !!included;
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
-    renderGamesList(currentGameFilter);
 }
 
 function selectUnaidedProfileGames() {
@@ -753,14 +754,12 @@ function selectUnaidedProfileGames() {
     });
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
-    renderGamesList(currentGameFilter);
 }
 
 function resetProfileGameSelection() {
     profileGameSelection = {};
     try { localStorage.removeItem(PLAYER_ANALYSIS_SELECTION_KEY); } catch (e) {}
     refreshSelectedPlayerAnalysis();
-    renderGamesList(currentGameFilter);
 }
 
 // ==========================================
@@ -1504,7 +1503,7 @@ function renderTrainingTab(trainingProgram, swAnalysis) {
     if (!trainingProgram) return;
 
     const gamesCountEl = document.getElementById('training-games-count');
-    if (gamesCountEl) gamesCountEl.textContent = allGames.length;
+    if (gamesCountEl) gamesCountEl.textContent = allGames.filter(game => isProfileGameEligible(game) && isProfileGameIncluded(game)).length;
 
     const exercisesDiv = document.getElementById('training-exercises');
     if (!exercisesDiv) return;

@@ -1,6 +1,6 @@
 # Protocole commun des échiquiers SupaChess
 
-**Version du protocole : 1.1.0**  
+**Version du protocole : 1.1.1**  
 **Portée :** toutes les pages SupaChess qui affichent un échiquier ou un diagramme.
 
 ## Règle de publication

@@ -195,6 +195,8 @@
     ["Style proche de", "Style similar to"]
   ];
 
+  pairs.sort(function (a, b) { return b[0].length - a[0].length; });
+
   var originals = new WeakMap();
   var lastTranslated = new WeakMap();
   var originalAttributes = new WeakMap();

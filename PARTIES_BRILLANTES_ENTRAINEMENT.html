@@ -96,7 +96,7 @@ function loadGeneratedStudies(){
      playerColor:sideToMove,startFen:fen,lineUci,lineSan,white:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.whiteElo,
      black:"Stockfish "+(record.engineVersion||"")+" · Elo UCI "+record.blackElo,event:engine,
      date:String(record.createdAt||"").slice(0,10)||"date inconnue",source:"Partie générée dans le navigateur · "+engine,
-     sourcePath:"",moveCount,generated:true,phase});
+     sourcePath:"",moveCount,generated:true,phase,estimatedRating:window.SupaPuzzleRating.estimateElo(fen,lineUci,sideToMove)});
    });
   });
   sortStudiesByPhase();
@@ -114,7 +114,7 @@ function renderList(){
  STUDIES.forEach((study,index)=>{
   const phase=studyPhase(study),button=document.createElement("button");button.type="button";button.className="game-item"+(index===currentIndex?" active":"");
   const title=document.createElement("strong");title.textContent="Phase "+(phaseRank(phase)+1)+" · "+window.SupaPuzzleRating.phaseLabel(phase)+" · "+(index+1)+". "+study.title;
-  const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" coups à trouver";
+  const sub=document.createElement("small");sub.textContent=study.white+" — "+study.black+" · "+study.moveCount+" coups à trouver"+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
   button.appendChild(title);button.appendChild(sub);button.onclick=function(){loadStudy(index);};root.appendChild(button);
  });
 }
@@ -124,7 +124,7 @@ function label(text,strong){
 function loadStudy(index){
  currentIndex=index;const study=STUDIES[index];game=new Chess(study.startFen);cursor=0;selected=null;played=[];lastMove=null;
  document.getElementById("study-title").textContent=study.title;
- document.getElementById("study-meta").textContent="Phase "+(phaseRank(studyPhase(study))+1)+" · "+window.SupaPuzzleRating.phaseLabel(studyPhase(study))+" · "+study.event+" · "+study.date+" · "+study.white+" — "+study.black;
+ document.getElementById("study-meta").textContent="Phase "+(phaseRank(studyPhase(study))+1)+" · "+window.SupaPuzzleRating.phaseLabel(studyPhase(study))+" · "+study.event+" · "+study.date+" · "+study.white+" — "+study.black+(study.generated?" · Elo puzzle estimé ≈ "+study.estimatedRating+" (provisoire)":"");
  document.getElementById("turn-label").textContent=(study.playerColor==="w"?"⬜ Blancs jouent":"⬛ Noirs jouent")+" · séquence de "+study.lineUci.length+" demi-coups";
  document.getElementById("lesson").textContent=study.lesson;
  const source=document.getElementById("source");

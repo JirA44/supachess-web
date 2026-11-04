@@ -611,7 +611,7 @@
 
         <!-- RADAR DES HABITUDES DE REFLEXION -->
         <div class="card">
-            <h3>Profil de Reflexion</h3>
+            <h3>Profil de réflexion</h3>\n                    <p style="color:#aaa;font-size:.85rem;margin:-4px 0 10px;">Fréquence des motifs détectés parmi les demi-coups analysés (échelle 0–100 %). Les axes peuvent se chevaucher.</p>
             <div class="grid-2">
                 <div>
                     <canvas id="thinkingRadarChart" height="280"></canvas>
@@ -679,7 +679,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14802"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14803"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2436,30 +2436,30 @@ function analyzeThinkingErrors(playerMovesByGame) {
         }
     }
 
-    // Calculate severity (0-100) for each pattern
+    // Frequency is the share of player moves matching each detector.
+    // A zero means "no confirmed examples", never "mastered".
     for (const key of Object.keys(patterns)) {
         const p = patterns[key];
         p.severity = totalPlayerMoves > 0
-            ? Math.min(100, Math.round((p.count / totalPlayerMoves) * 1000))
+            ? Math.min(100, Math.round((p.count / totalPlayerMoves) * 100))
             : 0;
-        // Sort examples by worst first
         p.examples.sort((a, b) => (a.rating || 5) - (b.rating || 5));
         p.examples = p.examples.slice(0, 5);
     }
 
-    // Sort patterns by count (most frequent = biggest problem)
+    // Rank detected patterns by their raw occurrence count.
     const sorted = Object.values(patterns)
         .filter(p => p.count > 0)
         .sort((a, b) => b.count - a.count);
 
-    // Thinking scores (inverse of errors)
+    // Radar values show detected weakness frequency, not skill or mastery.
     const thinkingScores = {
-        threatCheck: Math.max(10, 100 - patterns.notCheckingThreats.severity * 3),
-        calculation: Math.max(10, 100 - patterns.noCalculation.severity * 3),
-        boardVision: Math.max(10, 100 - patterns.tunnelVision.severity * 2),
-        concentration: Math.max(10, 100 - patterns.overconfidence.severity * 3),
-        resilience: Math.max(10, 100 - patterns.panicInDefense.severity * 3),
-        objectivity: Math.max(10, 100 - patterns.wishfulThinking.severity * 3)
+        threatCheck: patterns.notCheckingThreats.severity,
+        calculation: patterns.noCalculation.severity,
+        boardVision: patterns.tunnelVision.severity,
+        concentration: patterns.overconfidence.severity,
+        resilience: patterns.panicInDefense.severity,
+        objectivity: patterns.wishfulThinking.severity
     };
 
     return { patterns: sorted, allPatterns: patterns, thinkingScores, totalPlayerMoves, totalErrors };
@@ -2525,15 +2525,15 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
         type: 'radar',
         data: {
             labels: [
-                'Verification menaces',
-                'Calcul',
-                'Vision globale',
+                'Menaces non vérifiées',
+                'Calcul insuffisant',
+                'Vision de l’échiquier',
                 'Concentration',
-                'Resilience',
-                'Objectivite'
+                'Défense sous pression',
+                'Menace espérée'
             ],
             datasets: [{
-                label: 'Reflexion',
+                label: 'Motifs détectés (% des demi-coups)',
                 data: [
                     scores.threatCheck,
                     scores.calculation,
@@ -2566,43 +2566,24 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
         }
     });
 
-    // Thinking summary
+    // Explain the evidence behind the radar and rank only confirmed patterns.
     const summaryDiv = document.getElementById('thinking-summary');
-    const worstThinking = Object.entries(scores).sort((a, b) => a[1] - b[1]);
-    const labels = {
-        threatCheck: 'Verification des menaces',
-        calculation: 'Profondeur de calcul',
-        boardVision: 'Vision de l\'echiquier',
-        concentration: 'Concentration',
-        resilience: 'Resilience defensive',
-        objectivity: 'Objectivite'
-    };
-
-    summaryDiv.innerHTML = `
-        <div style="margin-bottom:15px;">
-            <h3 style="color:#00d9ff; margin-bottom:10px;">Diagnostic</h3>
-            <p style="color:#aaa; font-size:0.9rem; margin-bottom:12px;">
-                Sur ${thinkingAnalysis.totalPlayerMoves} coups analyses, ${thinkingAnalysis.totalErrors} erreurs detectees
-                (${thinkingAnalysis.totalPlayerMoves > 0 ? Math.round(thinkingAnalysis.totalErrors / thinkingAnalysis.totalPlayerMoves * 100) : 0}%).
-            </p>
-        </div>
-        <div>
-            <div style="font-weight:700; color:#e74c3c; margin-bottom:8px;">Priorite #1 a travailler:</div>
-            <div style="padding:12px; background:rgba(231,76,60,0.1); border-radius:8px; border:1px solid rgba(231,76,60,0.3);">
-                <strong>${labels[worstThinking[0][0]]}</strong>
-                <span style="color:#e74c3c;"> (${worstThinking[0][1]}/100)</span>
-                <p style="color:#aaa; font-size:0.85rem; margin-top:4px;">C'est votre plus grande source d'erreurs. Concentrez-vous sur ce point.</p>
-            </div>
-        </div>
-        <div style="margin-top:12px;">
-            <div style="font-weight:700; color:#f39c12; margin-bottom:8px;">Priorite #2:</div>
-            <div style="padding:12px; background:rgba(243,156,18,0.1); border-radius:8px; border:1px solid rgba(243,156,18,0.3);">
-                <strong>${labels[worstThinking[1][0]]}</strong>
-                <span style="color:#f39c12;"> (${worstThinking[1][1]}/100)</span>
-            </div>
-        </div>
-    `;
-
+    const rankedThinking = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const labels = { threatCheck: 'Vérification des menaces', calculation: 'Profondeur de calcul', boardVision: 'Vision de l’échiquier', concentration: 'Concentration', resilience: 'Résistance défensive', objectivity: 'Réponse adverse anticipée' };
+    const patternKeys = { threatCheck: 'notCheckingThreats', calculation: 'noCalculation', boardVision: 'tunnelVision', concentration: 'overconfidence', resilience: 'panicInDefense', objectivity: 'wishfulThinking' };
+    const confirmedPriorities = rankedThinking.filter(([, value]) => value > 0).slice(0, 2);
+    const classifiedOccurrences = thinkingAnalysis.patterns.reduce((sum, pattern) => sum + pattern.count, 0);
+    const priorityHtml = confirmedPriorities.map((entry, index) => {
+        const key = entry[0], value = entry[1], count = thinkingAnalysis.allPatterns[patternKeys[key]].count;
+        return '<div style="padding:12px;background:rgba(231,76,60,.1);border-radius:8px;border:1px solid rgba(231,76,60,.3);margin-top:8px;">' +
+            '<strong>Priorité #' + (index + 1) + ' · ' + labels[key] + '</strong>' +
+            '<span style="color:#e74c3c;"> · ' + count + ' occurrence(s), ' + value + '% des demi-coups analysés</span></div>';
+    }).join('');
+    summaryDiv.innerHTML = '<div style="margin-bottom:15px;">' +
+        '<h3 style="color:#00d9ff;margin-bottom:10px;">Diagnostic</h3>' +
+        '<p style="color:#aaa;font-size:.9rem;margin-bottom:8px;">Sur ' + thinkingAnalysis.totalPlayerMoves + ' demi-coups analysés, ' + thinkingAnalysis.totalErrors + ' erreurs détectées (' + (thinkingAnalysis.totalPlayerMoves > 0 ? Math.round(thinkingAnalysis.totalErrors / thinkingAnalysis.totalPlayerMoves * 100) : 0) + '%).</p>' +
+        '<p style="color:#aaa;font-size:.85rem;">' + classifiedOccurrences + ' occurrence(s) de motifs détectées; un demi-coup peut relever de plusieurs motifs. Un axe à 0 signifie qu’aucun cas n’a été confirmé par les détecteurs, pas que la compétence est maîtrisée.</p></div>' +
+        (priorityHtml || '<div style="padding:12px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.3);border-radius:8px;color:#f3c969;">Aucune priorité précise n’est confirmée par les détecteurs actuels. Les erreurs restent visibles dans la liste à retravailler.</div>');
     // Worst moves for mental exercise
     const worstDiv = document.getElementById('thinking-worst-moves');
     const allErrors = [];
@@ -2698,10 +2679,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <link rel="stylesheet" href="shared/community.css">
 <script src="shared/i18n.js"></script>
-<script src="shared/community-v1.13.14801.js?v=1.13.14802"></script>
+<script src="shared/community-v1.13.14801.js?v=1.13.14803"></script>
 <!-- /ChessNova Community -->
 <script src="supa-dots-widget-v1.13.138.js?v=1.13.138"></script>
 
-<script defer src="shared/site-global-v1.13.14801.js?v=1.13.14802"></script>
+<script defer src="shared/site-global-v1.13.14801.js?v=1.13.14803"></script>
 </body>
 </html>

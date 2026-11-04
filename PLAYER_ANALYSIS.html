@@ -253,6 +253,12 @@
         }
 
         .analysis-selection-summary { color:#c9d5e0; margin:0 0 10px; line-height:1.5; }
+        .analysis-scope-controls { display:flex; align-items:flex-end; flex-wrap:wrap; gap:12px; margin:0 0 12px; padding:12px; border:1px solid rgba(0,217,255,.2); border-radius:9px; background:rgba(0,0,0,.16); }
+        .analysis-scope-controls label { display:flex; flex-direction:column; gap:5px; color:#dffaff; font-size:.82rem; font-weight:700; }
+        .analysis-scope-controls select,.analysis-scope-controls input { min-width:190px; padding:8px 10px; border:1px solid rgba(0,217,255,.35); border-radius:7px; color:#fff; background:#10202f; font:inherit; }
+        .analysis-scope-controls input { min-width:130px; width:150px; }
+        .analysis-scope-controls span { color:#aab5c0; font-size:.78rem; }
+        @media (max-width:600px) { .analysis-scope-controls { align-items:stretch; } .analysis-scope-controls label,.analysis-scope-controls select,.analysis-scope-controls input { width:100%; } }
         .analysis-selection-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
         .analysis-selection-actions button { border:1px solid rgba(0,217,255,.35); border-radius:7px; padding:8px 11px; background:rgba(0,217,255,.08); color:#dffaff; cursor:pointer; }
         .analysis-selection-actions button:hover { background:rgba(0,217,255,.16); }
@@ -622,6 +628,22 @@
             <label for="analysis-player-select" style="display:block;margin:0 0 8px;color:#dffaff;font-weight:700;">Joueur à analyser</label>
             <select id="analysis-player-select" onchange="selectProfileAnalysisPlayer(this.value)" style="width:100%;max-width:440px;padding:10px;border-radius:8px;background:#10202f;color:#fff;border:1px solid rgba(0,217,255,.4);margin-bottom:12px;" aria-label="Choisir le joueur à analyser"></select>
             <p id="analysis-selection-summary" class="analysis-selection-summary" aria-live="polite"></p>
+            <div class="analysis-scope-controls">
+                <label for="analysis-period-filter">Période du profil
+                    <select id="analysis-period-filter" onchange="updateProfileScopeFromControls()">
+                        <option value="all">Tout l’historique</option>
+                        <option value="day">Dernières 24 heures</option>
+                        <option value="week">7 derniers jours</option>
+                        <option value="month">30 derniers jours</option>
+                        <option value="quarter">90 derniers jours</option>
+                        <option value="year">365 derniers jours</option>
+                    </select>
+                </label>
+                <label for="analysis-game-limit">Nombre de parties récentes
+                    <input id="analysis-game-limit" type="number" min="0" step="1" inputmode="numeric" placeholder="0 = toutes" onchange="updateProfileScopeFromControls()" onkeydown="if(event.key==='Enter'){this.blur();}">
+                </label>
+                <span>0 = toutes les parties sans aides confirmées dans la période.</span>
+            </div>
             <div class="analysis-selection-actions">
                 <button type="button" onclick="selectUnaidedProfileGames()">Sélectionner les parties confirmées sans aides</button>
                 <button type="button" onclick="selectProfileGamesByAidStatus(true)">Sélectionner les parties confirmées avec aides</button>
@@ -683,8 +705,11 @@ async function loadAllData() {
 }
 
 const PLAYER_ANALYSIS_SELECTION_KEY = 'supachess_player_analysis_selection_v1';
+const PLAYER_ANALYSIS_SCOPE_KEY = 'supachess_player_analysis_scope_v1';
 const PLAYER_ANALYSIS_SUBJECT_KEY = 'supachess_player_analysis_subject_v1';
 let profileGameSelection = {};
+let profileScope = { period: 'all', maxGames: 0 };
+let currentScopeGameIds = new Set();
 let selectedProfilePlayer = '__me__';
 let currentGameFilter = 'all';
 let currentAidFilter = 'all';
@@ -699,6 +724,57 @@ function loadProfileGameSelection() {
     try { selectedProfilePlayer = localStorage.getItem(PLAYER_ANALYSIS_SUBJECT_KEY) || '__me__'; }
     catch (e) { selectedProfilePlayer = '__me__'; }
 }
+function loadProfileScope() {
+    const allowedPeriods = new Set(['all', 'day', 'week', 'month', 'quarter', 'year']);
+    try {
+        const saved = JSON.parse(localStorage.getItem(PLAYER_ANALYSIS_SCOPE_KEY) || '{}');
+        profileScope = {
+            period: allowedPeriods.has(saved.period) ? saved.period : 'all',
+            maxGames: Math.max(0, Math.floor(Number(saved.maxGames) || 0)),
+        };
+    } catch (e) { profileScope = { period: 'all', maxGames: 0 }; }
+    const period = document.getElementById('analysis-period-filter');
+    const limit = document.getElementById('analysis-game-limit');
+    if (period) period.value = profileScope.period;
+    if (limit) limit.value = profileScope.maxGames || '';
+}
+
+function updateProfileScopeFromControls() {
+    const period = document.getElementById('analysis-period-filter');
+    const limit = document.getElementById('analysis-game-limit');
+    const rawLimit = limit ? Number(limit.value) : 0;
+    profileScope = {
+        period: period && ['all', 'day', 'week', 'month', 'quarter', 'year'].includes(period.value) ? period.value : 'all',
+        maxGames: Number.isFinite(rawLimit) ? Math.max(0, Math.min(10000, Math.floor(rawLimit))) : 0,
+    };
+    try { localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify(profileScope)); } catch (e) {}
+    if (limit) limit.value = profileScope.maxGames || '';
+    refreshSelectedPlayerAnalysis();
+}
+
+function profileGameTimestamp(game) {
+    const raw = game && (game.date || game.createdAt || game.analyzedAt || game.timestamp);
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw < 100000000000 ? raw * 1000 : raw;
+    const parsed = Date.parse(String(raw || ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function updateProfileScopeGameIds() {
+    const now = Date.now();
+    const periodMs = { day: 86400000, week: 7 * 86400000, month: 30 * 86400000, quarter: 90 * 86400000, year: 365 * 86400000 };
+    const range = periodMs[profileScope.period] || 0;
+    let candidates = allGames.filter(game => isProfileGameEligible(game) && getProfileGamePlayerColor(game));
+    if (range) candidates = candidates.filter(game => {
+        const timestamp = profileGameTimestamp(game);
+        return timestamp > 0 && timestamp >= now - range && timestamp <= now;
+    });
+    if (profileScope.maxGames > 0) candidates = candidates.filter(game => profileGameTimestamp(game) > 0);
+    candidates.sort((a, b) => profileGameTimestamp(b) - profileGameTimestamp(a));
+    if (profileScope.maxGames > 0) candidates = candidates.slice(0, profileScope.maxGames);
+    currentScopeGameIds = new Set(candidates.map(game => String(game.id)));
+}
+
+
 
 function normalizeProfilePlayerName(name) {
     return String(name || '').trim().toLocaleLowerCase();
@@ -758,7 +834,7 @@ function isProfileGameEligible(game) {
 }
 
 function isProfileGameIncluded(game) {
-    if (!game) return false;
+    if (!game || !currentScopeGameIds.has(String(game.id || ''))) return false;
     const id = String(game.id || '');
     if (Object.prototype.hasOwnProperty.call(profileGameSelection, id)) return profileGameSelection[id] === true;
     return game.trainingAidsUsed === false;
@@ -781,20 +857,24 @@ function updateProfileGameSelectionSummary() {
     const summary = document.getElementById('analysis-selection-summary');
     if (!summary) return;
     const eligible = allGames.filter(isProfileGameEligible);
-    const included = eligible.filter(isProfileGameIncluded).length;
-    const aided = eligible.filter(game => game.trainingAidsUsed === true).length;
-    const unknown = eligible.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
+    const inScope = eligible.filter(game => currentScopeGameIds.has(String(game.id || '')));
+    const included = inScope.filter(isProfileGameIncluded).length;
+    const aided = inScope.filter(game => game.trainingAidsUsed === true).length;
+    const unknown = inScope.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
     const playerLabel = selectedProfilePlayer === '__me__' ? 'Moi' :
         (document.getElementById('analysis-player-select')?.selectedOptions?.[0]?.textContent || 'Joueur');
-    const unaided = eligible.filter(game => game.trainingAidsUsed === false).length;
-    summary.textContent = playerLabel + ' : ' + included + ' partie(s) sélectionnée(s) sur ' + eligible.length +
-        ' analysable(s). Détection automatique : ' + unaided + ' sans aides confirmées, ' + aided +
-        ' avec aides confirmées, ' + unknown + ' indéterminée(s). Les statuts indéterminés restent exclus par défaut. ' +
-        'Les cases de sélection modifient l’analyse, pas le statut détecté.';
+    const unaided = inScope.filter(game => game.trainingAidsUsed === false).length;
+    const periodLabels = { all: 'tout l’historique', day: 'les dernières 24 h', week: 'les 7 derniers jours', month: 'les 30 derniers jours', quarter: 'les 90 derniers jours', year: 'les 365 derniers jours' };
+    const volumeLabel = profileScope.maxGames > 0 ? ' · ' + profileScope.maxGames + ' partie(s) récente(s) maximum' : ' · toutes les parties de la période';
+    summary.textContent = playerLabel + ' : profil calculé automatiquement sur ' + included + ' partie(s) sélectionnée(s) parmi ' +
+        inScope.length + ' analysable(s) dans ' + (periodLabels[profileScope.period] || periodLabels.all) + volumeLabel +
+        '. Sans aides confirmées : ' + unaided + ' ; avec aides : ' + aided + ' ; indéterminées : ' + unknown +
+        '. Les indéterminées sont exclues par défaut. Les cases permettent une sélection manuelle dans la période et le volume choisis.';
 }
 
 function refreshSelectedPlayerAnalysis() {
     const gameFilterToRestore = currentGameFilter;
+    updateProfileScopeGameIds();
     playerMovesByGame = profileMovesForSelectedGames();
     if (latestPlayerAnalysisData) latestPlayerAnalysisData.playerMovesByGame = playerMovesByGame;
     analysisResult = analyzeStyle(playerMovesByGame);
@@ -823,14 +903,14 @@ function refreshSelectedPlayerAnalysis() {
 
 function togglePlayerAnalysisGame(index, included) {
     const game = allGames[Number(index)];
-    if (!game || !isProfileGameEligible(game)) return;
+    if (!game || !isProfileGameEligible(game) || !currentScopeGameIds.has(String(game.id))) return;
     profileGameSelection[String(game.id)] = !!included;
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
 }
 
 function selectUnaidedProfileGames() {
-    allGames.filter(isProfileGameEligible).forEach(game => {
+    allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id))).forEach(game => {
         profileGameSelection[String(game.id)] = game.trainingAidsUsed === false;
     });
     persistProfileGameSelection();
@@ -838,7 +918,7 @@ function selectUnaidedProfileGames() {
 }
 
 function selectAllProfileGames() {
-    allGames.filter(isProfileGameEligible).forEach(game => {
+    allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id))).forEach(game => {
         profileGameSelection[String(game.id)] = true;
     });
     persistProfileGameSelection();
@@ -846,7 +926,7 @@ function selectAllProfileGames() {
 }
 
 function selectProfileGamesByAidStatus(status) {
-    allGames.filter(isProfileGameEligible).forEach(game => {
+    allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id))).forEach(game => {
         const isMatch = status === null
             ? game.trainingAidsUsed !== true && game.trainingAidsUsed !== false
             : game.trainingAidsUsed === status;
@@ -1890,9 +1970,12 @@ function renderGamesList(filter) {
             g.trainingAidsUsed === false ? 'Sans aides confirmé' : 'Statut indéterminé';
         const aidEvidence = g.trainingAidsEvidence || 'Preuve insuffisante';
         const eligible = isProfileGameEligible(g);
-        const checked = eligible && isProfileGameIncluded(g) ? 'checked' : '';
-        const disabled = eligible ? '' : 'disabled';
-        const selectionLabel = eligible ? aidLabel + ' · ' + aidEvidence : (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur · ' + aidLabel : 'Non analysable pour ce joueur · ' + aidLabel);
+        const inScope = currentScopeGameIds.has(String(g.id || ''));
+        const checked = eligible && inScope && isProfileGameIncluded(g) ? 'checked' : '';
+        const disabled = eligible && inScope ? '' : 'disabled';
+        const selectionLabel = !eligible
+            ? (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur · ' + aidLabel : 'Non analysable pour ce joueur · ' + aidLabel)
+            : inScope ? aidLabel + ' · ' + aidEvidence : 'Hors période ou limite de parties · ' + aidLabel;
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
@@ -2405,6 +2488,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     latestPlayerAnalysisData = data;
     updateProfileStatus(data);
     loadProfileGameSelection();
+    loadProfileScope();
     renderProfilePlayerOptions();
     refreshSelectedPlayerAnalysis();
 });

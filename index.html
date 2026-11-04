@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupaChess — Académie des erreurs</title>
+    <title data-i18n="page_title">SupaChess — Académie des erreurs</title>
     <style>
         * {
             margin: 0;
@@ -320,16 +320,16 @@
         </section>
 
         <div class="quick-actions">
-            <button class="action-btn" data-section="fischer-academy" onclick="window.location.href='FISCHER_ACADEMY.html'" style="background: linear-gradient(90deg, #f4c95d, #d08c22);">♟️ Méthode Fischer</button>
+            <button class="action-btn" data-section="fischer-academy" onclick="window.location.href='FISCHER_ACADEMY.html'" style="background: linear-gradient(90deg, #f4c95d, #d08c22);">♟️ <span data-i18n="action_fischer">Méthode Fischer</span></button>
             <button class="action-btn" data-section="supaengine" onclick="window.location.href='SUPAENGINE.html'" style="background: linear-gradient(90deg, #37e0a1, #1687a7);">♟️ <span data-i18n="action_supaengine">SupaEngine</span></button>
             <button class="action-btn" data-section="chess-coach" onclick="window.location.href='CHESS_COACH.html'" style="background: linear-gradient(90deg, #00d9ff, #667eea);">
-                &#x1F393; <span data-i18n="action_chess_coach">Chess Coach</span>
+                &#x1F393; <span data-i18n="action_chess_coach">AI Coach · Game analysis</span>
             </button>
             <button class="action-btn" data-section="generated-puzzle-lab" onclick="window.location.href='GENERATEUR_PARTIES_BRILLANTES.html'" style="background: linear-gradient(90deg, #f093fb, #8b5cf6);">
-                🧩 Générer puzzles & parties
+                🧩 <span data-i18n="action_generate_puzzles">Générer puzzles & parties</span>
             </button>
             <button class="action-btn secondary" data-section="generated-games-practice" onclick="window.location.href='PARTIES_BRILLANTES_ENTRAINEMENT.html'">
-                ♟️ Résoudre les parties générées
+                ♟️ <span data-i18n="action_solve_generated">Résoudre les parties générées</span>
             </button>
             <button class="action-btn" data-section="live-training" onclick="window.location.href='TRAINING_DASHBOARD.html'">
                 &#x1F534; <span data-i18n="action_live_training">LIVE Training</span>
@@ -353,10 +353,10 @@
                 &#x1F4DA; <span data-i18n="action_lessons">Enseignements</span>
             </button>
             <button class="action-btn secondary" data-section="variant-course" onclick="window.location.href='ENTRAINEMENT_VARIANTES_STRATEGIE.html'" style="background: linear-gradient(90deg, #3c8f79, #276b82);">
-                &#x265F; Calcul, ouvertures & finales
+                &#x265F; <span data-i18n="action_variant_course">Calcul, ouvertures & finales</span>
             </button>
             <button class="action-btn secondary" data-section="chess-history" onclick="window.location.href='HISTOIRE_REGLES_ECHECS.html'">
-                &#x265C; Histoire des règles
+                &#x265C; <span data-i18n="action_chess_history">Histoire des règles</span>
             </button>
             <button class="action-btn" data-section="style-analysis" onclick="window.location.href='PLAYER_ANALYSIS.html'" style="background: linear-gradient(90deg, #ff6b6b, #ee5a6f);">
                 &#x1F4CA; <span data-i18n="action_style_analysis">Analyse de Style</span>
@@ -490,12 +490,12 @@
                 </div>
             </a>
 
-            <div class="menu-card" data-section="propose-game" style="background: rgba(76, 175, 80, 0.15); cursor: pointer;" onclick="alert('Pour proposer une partie legendaire:\n\n1. Trouvez le PGN de la partie\n2. Verifiez qu\'elle a des coups brillants ou instructifs\n3. Envoyez-la avec le contexte historique\n\nParties recherchees:\n- Parties de Grands Maitres celebres\n- Sacrifices spectaculaires\n- Finales instructives\n- Matchs de championnat du monde')">
+            <button type="button" class="menu-card" data-section="propose-game" style="background: rgba(76, 175, 80, 0.15); cursor: pointer; width:100%; text-align:left; font:inherit;" onclick="openSuggestGame()" aria-haspopup="dialog" aria-controls="suggest-game-dialog">
                 <span class="icon">&#x2795;</span>
-                <h3 data-i18n="card_propose_title">Proposer une Partie</h3>
-                <p data-i18n="card_propose_desc">Vous avez une suggestion de partie legendaire a ajouter ? Les parties avec des coups brillants sont privilegiees !</p>
-                <span class="badge" data-i18n="card_propose_badge">Cliquez pour plus d'infos</span>
-            </div>
+                <h3 data-i18n="card_propose_title">Suggest a Game</h3>
+                <p data-i18n="card_propose_desc">Suggest a legendary game: share details and paste the PGN.</p>
+                <span class="badge" data-i18n="card_propose_badge">Open the form</span>
+            </button>
         </div>
 
         <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_training">Programmes d'Entrainement</h2>
@@ -552,8 +552,8 @@
             <a href="CHESS_COACH.html">
                 <div class="menu-card" data-section="chess-coach" style="border: 2px solid #00d9ff; box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);">
                     <span class="icon">&#x1F393;</span>
-                    <h3 data-i18n="card_chess_coach_title">Chess Coach - Entrainement Personnalise</h3>
-                    <p data-i18n="card_chess_coach_desc">Analysez vos parties et progressez ! Import PGN/Lichess, analyse profonde.</p>
+                    <h3 data-i18n="card_chess_coach_title">AI Coach · Game analysis</h3>
+                    <p data-i18n="card_chess_coach_desc">Analyze a game or load a PGN with the AI Coach.</p>
                     <span class="badge new" style="background: rgba(0, 217, 255, 0.3); border-color: rgba(0, 217, 255, 0.5); animation: pulse 1.5s infinite;">&#x1F393; NOUVEAU!</span>
                 </div>
             </a>
@@ -810,7 +810,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <link rel="stylesheet" href="shared/community.css?v=supaengine-hub-i18n-fix-20261101-v2">
-<script src="shared/i18n.js?v=profile-dashboard-20261026"></script>
+<script src="shared/i18n.js?v=language-sync-20261104"></script>
 <script src="shared/community.js?v=profile-dashboard-20261026"></script>
 <script src="shared/profiles.js?v=global-site-search-20261031"></script>
 <script>document.addEventListener('DOMContentLoaded', function(){ if(window.SupaProfiles) SupaProfiles.initSearchBar(); if(window.SupaProfiles&&typeof firebase!=='undefined'&&firebase){ var a=firebase.auth(), d=firebase.firestore(); SupaProfiles.init(a,d); SupaProfiles.initRankingSection(); a.onAuthStateChanged(function(u){ if(u) SupaProfiles.ensureUserProfile(u); }); if(new URLSearchParams(location.search).get('openProfile')==='1'){a.onAuthStateChanged(function(u){history.replaceState(null,'',location.pathname+location.hash);if(!u){var login=document.getElementById('cn-auth-bar-login');if(login)login.click();return;}SupaProfiles.getProfile(u.uid).then(function(profile){if(profile)SupaProfiles.renderProfileModal(profile);else SupaProfiles.renderOwnProfileFallback(u);}).catch(function(){SupaProfiles.renderOwnProfileFallback(u);});});} }});</script>
@@ -821,5 +821,40 @@
 <script src="supa-quick-solve.js"></script>
     <script src="js/decision_audit.js"></script>
     <script defer src="shared/site-global-v1.13.145.js?v=1.13.145"></script>
+<dialog id="suggest-game-dialog" aria-labelledby="suggest-game-title" style="max-width:min(640px,calc(100vw - 24px));width:100%;border:1px solid #4b6b86;border-radius:16px;padding:0;background:#101827;color:#f8fafc">
+<form id="suggest-game-form" style="padding:22px">
+<header style="display:flex;justify-content:space-between;gap:16px;align-items:center"><h2 id="suggest-game-title" data-i18n="suggest_game_title">Suggest a legendary game</h2><button type="button" onclick="closeSuggestGame()" aria-label="Close" data-i18n="close" data-i18n-attr="aria-label">×</button></header>
+<p data-i18n="suggest_game_help" style="color:#cbd5e1;margin:10px 0 16px">Add a title and context, then paste the PGN and/or a source. Your suggestion will be sent for review.</p>
+<label for="suggest-game-name" data-i18n="suggest_game_name">Game title</label><input id="suggest-game-name" required maxlength="160" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
+<label for="suggest-game-context" data-i18n="suggest_game_context">Historical or tactical context</label><textarea id="suggest-game-context" maxlength="2000" rows="3" style="display:block;width:100%;padding:10px;margin:5px 0 12px"></textarea>
+<label for="suggest-game-source" data-i18n="suggest_game_source">Source link</label><input id="suggest-game-source" type="url" maxlength="1000" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
+<label for="suggest-game-pgn" data-i18n="suggest_game_pgn">Game PGN</label><textarea id="suggest-game-pgn" maxlength="100000" rows="8" style="display:block;width:100%;padding:10px;margin:5px 0 12px;font-family:monospace"></textarea>
+<p id="suggest-game-status" role="status" aria-live="polite" style="min-height:1.5em;color:#fbbf24"></p>
+<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap"><button type="button" onclick="closeSuggestGame()" data-i18n="suggest_game_cancel">Cancel</button><button type="submit" id="suggest-game-submit" data-i18n="suggest_game_submit">Send suggestion</button></div>
+</form></dialog>
+<script>
+function openSuggestGame() { const dialog=document.getElementById('suggest-game-dialog'); if(dialog&&dialog.showModal)dialog.showModal(); }
+function closeSuggestGame() { const dialog=document.getElementById('suggest-game-dialog'); if(dialog&&dialog.close)dialog.close(); }
+document.addEventListener('DOMContentLoaded',function(){
+ const dialog=document.getElementById('suggest-game-dialog');
+ if(location.hash==='#suggest-game')openSuggestGame();
+ document.getElementById('suggest-game-form').addEventListener('submit',async function(event){
+  event.preventDefault();
+  const status=document.getElementById('suggest-game-status');
+  const button=document.getElementById('suggest-game-submit');
+  const data={title:document.getElementById('suggest-game-name').value.trim(),context:document.getElementById('suggest-game-context').value.trim(),source:document.getElementById('suggest-game-source').value.trim(),pgn:document.getElementById('suggest-game-pgn').value.trim()};
+  if(!data.pgn&&!data.source){status.textContent=window.ChessNovaI18n?window.ChessNovaI18n.t('suggest_game_need_source'):'Add a PGN or a source link.';return;}
+  button.disabled=true;status.textContent=window.ChessNovaI18n?window.ChessNovaI18n.t('suggest_game_sending'):'Sending…';
+  try {
+   if(!window.ChessNovaCommunity||typeof window.ChessNovaCommunity.submitGameSuggestion!=='function')throw new Error('Community service unavailable');
+   await window.ChessNovaCommunity.submitGameSuggestion(data);
+   status.textContent=window.ChessNovaI18n?window.ChessNovaI18n.t('suggest_game_success'):'Suggestion sent for review.';
+   this.reset();setTimeout(closeSuggestGame,900);
+  } catch(error) {
+   status.textContent=window.ChessNovaI18n?window.ChessNovaI18n.t('suggest_game_error'):'Could not send. Check your connection and try again.';
+  } finally {button.disabled=false;}
+ });
+});
+</script>
 </body>
 </html>

@@ -252,6 +252,17 @@
             color: #bbb;
         }
 
+        .analysis-selection-summary { color:#c9d5e0; margin:0 0 10px; line-height:1.5; }
+        .analysis-selection-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+        .analysis-selection-actions button { border:1px solid rgba(0,217,255,.35); border-radius:7px; padding:8px 11px; background:rgba(0,217,255,.08); color:#dffaff; cursor:pointer; }
+        .analysis-selection-actions button:hover { background:rgba(0,217,255,.16); }
+        .game-selection { display:flex; flex-direction:column; align-items:flex-start; min-width:116px; gap:3px; color:#ddd; }
+        .game-selection label { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:.82rem; }
+        .game-selection input { accent-color:#00d9ff; width:17px; height:17px; }
+        .game-selection small { color:#aab5c0; font-size:.72rem; }
+        .game-selection input:disabled { cursor:not-allowed; }
+        @media (max-width:600px) { .game-row { gap:8px; padding:10px; } .game-selection { min-width:88px; } .game-selection small { max-width:100px; } }
+
         /* History */
         .game-row {
             display: flex;
@@ -601,6 +612,11 @@
 
         <div class="card">
             <h3>Historique des Parties</h3>
+            <p id="analysis-selection-summary" class="analysis-selection-summary" aria-live="polite"></p>
+            <div class="analysis-selection-actions">
+                <button type="button" onclick="selectUnaidedProfileGames()">Garder les parties sans aides</button>
+                <button type="button" onclick="resetProfileGameSelection()">Réinitialiser les choix</button>
+            </div>
             <div class="filter-bar">
                 <button class="filter-btn active" onclick="filterGames('all')">Toutes</button>
                 <button class="filter-btn" onclick="filterGames('best')">Meilleures</button>
@@ -610,7 +626,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.148"></script>
+<script src="shared/player-analysis-data.js?v=1.13.149"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -646,6 +662,105 @@ async function loadAllData() {
         profileLoadError: '',
         hasSession: !!playerAnalysisAuthUser
     };
+}
+
+const PLAYER_ANALYSIS_SELECTION_KEY = 'supachess_player_analysis_selection_v1';
+let profileGameSelection = {};
+let currentGameFilter = 'all';
+
+function loadProfileGameSelection() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(PLAYER_ANALYSIS_SELECTION_KEY) || '{}');
+        profileGameSelection = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+    } catch (e) {
+        profileGameSelection = {};
+    }
+}
+
+function isProfileGameEligible(game) {
+    return !!(game && Array.isArray(game.history) && (game.userColor === 'w' || game.userColor === 'b') &&
+        game.history.some(move => move.color === game.userColor && move.rated));
+}
+
+function isProfileGameIncluded(game) {
+    if (!game) return false;
+    const id = String(game.id || '');
+    if (Object.prototype.hasOwnProperty.call(profileGameSelection, id)) return profileGameSelection[id] === true;
+    // Only games explicitly recorded as unaided enter the style profile by default.
+    return game.trainingAidsUsed === false;
+}
+
+function persistProfileGameSelection() {
+    try { localStorage.setItem(PLAYER_ANALYSIS_SELECTION_KEY, JSON.stringify(profileGameSelection)); } catch (e) {}
+}
+
+function profileMovesForSelectedGames() {
+    return allGames.filter(game => isProfileGameEligible(game) && isProfileGameIncluded(game))
+        .map(game => game.history.filter(move => move.color === game.userColor && move.rated))
+        .filter(moves => moves.length > 0);
+}
+
+function updateProfileGameSelectionSummary() {
+    const summary = document.getElementById('analysis-selection-summary');
+    if (!summary) return;
+    const eligible = allGames.filter(isProfileGameEligible);
+    const included = eligible.filter(isProfileGameIncluded).length;
+    const aided = eligible.filter(game => game.trainingAidsUsed === true).length;
+    const unknown = eligible.filter(game => game.trainingAidsUsed !== true && game.trainingAidsUsed !== false).length;
+    summary.textContent = included + ' partie(s) sélectionnée(s) sur ' + eligible.length +
+        ' analysable(s). ' + aided + ' avec aides et ' + unknown +
+        ' au statut inconnu sont exclues par défaut. Les parties sans coups évalués restent hors analyse.';
+}
+
+function refreshSelectedPlayerAnalysis() {
+    playerMovesByGame = profileMovesForSelectedGames();
+    if (latestPlayerAnalysisData) latestPlayerAnalysisData.playerMovesByGame = playerMovesByGame;
+    analysisResult = analyzeStyle(playerMovesByGame);
+    renderStyleTab(analysisResult);
+    if (analysisResult) {
+        const swAnalysis = analyzeStrengthsWeaknesses(playerMovesByGame, analysisResult);
+        renderStrengthsTab(swAnalysis, analysisResult);
+        const trainingProgram = generateTrainingProgram(swAnalysis.weaknesses, playerMovesByGame);
+        renderTrainingTab(trainingProgram, swAnalysis);
+        renderThinkingTab(analyzeThinkingErrors(playerMovesByGame), playerMovesByGame);
+    } else {
+        const emptyMessage = '<p style="color:#aab5c0;text-align:center;padding:18px;">Sélectionne au moins une partie avec des coups évalués et sans aides activées pour établir ce bilan.</p>';
+        ['strengths-list','weaknesses-list','training-exercises','weekly-plan','thinking-worst-moves'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = emptyMessage;
+        });
+        if (errorTypeChart) { errorTypeChart.destroy(); errorTypeChart = null; }
+        const thinkingSummary = document.getElementById('thinking-errors-list');
+        if (thinkingSummary) thinkingSummary.innerHTML = emptyMessage;
+        renderThinkingTab(null, []);
+    }
+    renderHistoryTab(analysisResult);
+    updateProfileGameSelectionSummary();
+}
+
+function togglePlayerAnalysisGame(index, included) {
+    const game = allGames[Number(index)];
+    if (!game || !isProfileGameEligible(game)) return;
+    profileGameSelection[String(game.id)] = !!included;
+    persistProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
+    renderGamesList(currentGameFilter);
+}
+
+function selectUnaidedProfileGames() {
+    allGames.filter(isProfileGameEligible).forEach(game => {
+        profileGameSelection[String(game.id)] = game.trainingAidsUsed === false;
+    });
+    persistProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
+    renderGamesList(currentGameFilter);
+}
+
+function resetProfileGameSelection() {
+    profileGameSelection = {};
+    try { localStorage.removeItem(PLAYER_ANALYSIS_SELECTION_KEY); } catch (e) {}
+    refreshSelectedPlayerAnalysis();
+    renderGamesList(currentGameFilter);
 }
 
 // ==========================================
@@ -1563,6 +1678,8 @@ function renderHistoryTab(result) {
                 }
             }
         });
+    } else {
+        if (accuracyLineChart) { accuracyLineChart.destroy(); accuracyLineChart = null; }
     }
 
     // Games list
@@ -1598,8 +1715,10 @@ function openProfileGameInCoach(index) {
 
 function renderGamesList(filter) {
     const listDiv = document.getElementById('games-list');
+    currentGameFilter = filter || 'all';
     if (allGames.length === 0) {
         listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie enregistree</p>';
+        updateProfileGameSelectionSummary();
         return;
     }
 
@@ -1607,11 +1726,12 @@ function renderGamesList(filter) {
         ...g, index: i,
         avgRatingNum: g.avgRating !== null && g.avgRating !== undefined && Number.isFinite(Number(g.avgRating)) ? Number(g.avgRating) : null
     }));
-    if (filter === 'best') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
-    else if (filter === 'worst') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
+    if (currentGameFilter === 'best') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum >= 7).sort((a, b) => b.avgRatingNum - a.avgRatingNum);
+    else if (currentGameFilter === 'worst') games = games.filter(g => g.avgRatingNum !== null && g.avgRatingNum < 6).sort((a, b) => a.avgRatingNum - b.avgRatingNum);
 
     if (games.length === 0) {
         listDiv.innerHTML = '<p style="color:#666; text-align:center; padding:20px;">Aucune partie dans ce filtre</p>';
+        updateProfileGameSelectionSummary();
         return;
     }
 
@@ -1626,6 +1746,12 @@ function renderGamesList(filter) {
         const date = escapePlayerText(formatProfileGameDate(g.date));
         const ratingLabel = avgR !== null ? avgR.toFixed(1) + '/10' : (g.accuracy !== null && g.accuracy !== undefined ? Math.round(g.accuracy) + '%' : 'Profil');
         const sourceLabel = g.profileGame ? 'Profil connecté' : 'Données détaillées';
+        const aidLabel = g.trainingAidsUsed === true ? 'Aides actives' :
+            g.trainingAidsUsed === false ? 'Sans aides' : 'Aides inconnues';
+        const eligible = isProfileGameEligible(g);
+        const checked = eligible && isProfileGameIncluded(g) ? 'checked' : '';
+        const disabled = eligible ? '' : 'disabled';
+        const selectionLabel = eligible ? aidLabel : (g.reviewedPGN ? 'PGN sans coups évalués' : 'Non analysable');
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
@@ -1634,11 +1760,15 @@ function renderGamesList(filter) {
                     <div class="meta">${date} | ${moves} coups · ${sourceLabel}</div>
                 </div>
                 <div class="game-rating ${ratingClass}">${ratingLabel}</div>
+                <div class="game-selection" onclick="event.stopPropagation()">
+                    <label><input type="checkbox" ${checked} ${disabled} onchange="togglePlayerAnalysisGame(${g.index}, this.checked)" aria-label="Inclure ${opponent} dans l’analyse du profil"><span>Inclure</span></label>
+                    <small>${selectionLabel}</small>
+                </div>
             </div>
         `;
     }).join('');
+    updateProfileGameSelectionSummary();
 }
-
 function expandGame(index) {
     const game = allGames[index];
     if (!game) return;
@@ -1709,7 +1839,7 @@ function expandGame(index) {
 
 function filterGames(filter) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    if (typeof event !== 'undefined' && event.target) event.target.classList.add('active');
     renderGamesList(filter);
 }
 
@@ -2123,17 +2253,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const data = await loadAllData();
     latestPlayerAnalysisData = data;
     updateProfileStatus(data);
-    analysisResult = analyzeStyle(data.playerMovesByGame);
-    renderStyleTab(analysisResult);
-    if (analysisResult) {
-        const swAnalysis = analyzeStrengthsWeaknesses(data.playerMovesByGame, analysisResult);
-        renderStrengthsTab(swAnalysis, analysisResult);
-        const trainingProgram = generateTrainingProgram(swAnalysis.weaknesses, data.playerMovesByGame);
-        renderTrainingTab(trainingProgram, swAnalysis);
-        const thinkingAnalysis = analyzeThinkingErrors(data.playerMovesByGame);
-        renderThinkingTab(thinkingAnalysis, data.playerMovesByGame);
-    }
-    renderHistoryTab(analysisResult);
+    loadProfileGameSelection();
+    refreshSelectedPlayerAnalysis();
 });
 </script>
 

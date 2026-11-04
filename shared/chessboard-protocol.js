@@ -141,6 +141,27 @@
     var result={valid:false,pending:false,phase:'repérage',errors:[],warnings:[],fen:null};
     if(!element||!element.nodeType){result.errors.push('Échiquier introuvable.');return result;}
     result.phase='position';
+    if(element.classList&&element.classList.contains('chess-diagram')){
+      var lines=String(element.textContent||'').replace(/\u00a0/g,' ').split(/\r?\n/),rows=[];
+      lines.forEach(function(line){
+        var match=line.match(/^\s*([1-8])\s+(.+)$/);if(!match)return;
+        rows.push({rank:Number(match[1]),tokens:match[2].trim().split(/\s+/).slice(0,8)});
+      });
+      if(rows.length!==8){result.phase='cases';result.errors.push('Le diagramme doit contenir exactement huit rangées de huit cases.');return result;}
+      var placement=[];
+      for(var ri=0;ri<8;ri++){
+        if(rows[ri].rank!==8-ri||rows[ri].tokens.length!==8||rows[ri].tokens.some(function(token){return !/^[.prnbqkPRNBQK]$/.test(token);})){result.phase='cases';result.errors.push('La notation du diagramme doit décrire huit rangées complètes de cases.');return result;}
+        var rankFen='',empty=0;
+        rows[ri].tokens.forEach(function(token){if(token==='.')empty++;else{if(empty){rankFen+=String(empty);empty=0;}rankFen+=token;}});
+        if(empty)rankFen+=String(empty);
+        placement.push(rankFen);
+      }
+      var asciiFen=placement.join('/')+' w - - 0 1',asciiCheck=parseFen(asciiFen);
+      if(!asciiCheck.valid){result.phase='position';result.errors=result.errors.concat(asciiCheck.errors);return result;}
+      result.fen=asciiCheck.fen;result.phase='validé';result.valid=true;
+      result.warnings.push('Diagramme textuel contrôlé : huit rangées et 64 cases.');
+      return result;
+    }
     var fen=options.fen||element.getAttribute('data-fen')||element.getAttribute('data-position');
     if(!fen){
       var ancestor=element.closest&&element.closest('[data-fen],[data-position]');
@@ -188,8 +209,9 @@
     element.__supaProtocolNotice=status;
   }
   function candidatesIn(root) {
-    return Array.prototype.slice.call(root.querySelectorAll('#board,#chessboard,#lesson-board,[data-chessboard="true"],.chess-board,.board')).filter(function(element){
-      if(element.matches('[data-chessboard="true"],#board,#chessboard,#lesson-board,.chess-board'))return true;
+    return Array.prototype.slice.call(root.querySelectorAll('#board,#chessboard,#lesson-board,#analysisBoard,#complexBoard,[data-chessboard="true"],.chess-board,.board,.analysis-board,.complex-board,.chess-diagram')).filter(function(element){
+      if(element.hasAttribute('data-supa-board-ignore'))return false;
+      if(element.matches('[data-chessboard="true"],#board,#chessboard,#lesson-board,#analysisBoard,#complexBoard,.chess-board,.analysis-board,.complex-board,.chess-diagram'))return true;
       return !!element.querySelector('[data-square],.square,[role="gridcell"]');
     });
   }

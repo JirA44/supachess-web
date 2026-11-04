@@ -100,6 +100,7 @@
   var originalAttributes = new WeakMap();
   var lastAttributes = new WeakMap();
   var current = "fr";
+  var originalTitle = document.title;
 
   function translate(value, lang) {
     if (lang !== "en") return value;
@@ -174,7 +175,7 @@
   function applyLanguage(lang) {
     current = lang === "en" ? "en" : "fr";
     document.documentElement.lang = current;
-    document.title = translate(document.title, current);
+    document.title = translate(originalTitle, current);
     translateTree(document.body, current, true);
   }
 

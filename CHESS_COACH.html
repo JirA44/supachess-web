@@ -2974,8 +2974,8 @@ Exemple:
             // Generate puzzles from errors
             generatePuzzlesFromErrors();
 
-            // Save to recent games
-            saveRecentGame();
+            // Save to recent games with the calculated player accuracies
+            saveRecentGame(whiteAcc, blackAcc);
 
             // Update progress
             updateProgressFromAnalysis(whiteAcc, blackAcc, errors);

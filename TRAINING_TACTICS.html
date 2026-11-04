@@ -6160,6 +6160,8 @@ if (challengeNameInput) { challengeNameInput.value=getChallengeName(); challenge
 renderChallengeRankings();
 challengeStatus();
 updateStats();
+const requestedTheme = new URLSearchParams(location.search).get('theme');
+if (THEMES.some(theme => theme.id === requestedTheme)) activeTheme = requestedTheme;
 renderTabs();
 renderGrid();
 const requestedPuzzle = new URLSearchParams(location.search).get('puzzle');

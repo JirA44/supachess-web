@@ -293,6 +293,21 @@
         revisionFallback.replaceWith(link);
       })
       .catch(function () { revisionFallback.textContent = french ? 'indisponible' : 'unavailable'; });
+    var libraryLink = document.createElement('a');
+    libraryLink.href = new URL('CHESS_LIBRARY.html', root).href;
+    libraryLink.textContent = french ? 'Bibliothèque d’exercices' : 'Exercise library';
+    libraryLink.style.cssText = 'margin:0 10px;color:inherit;text-decoration:underline';
+    label.appendChild(libraryLink);
+    var generatedLink = document.createElement('a');
+    generatedLink.href = new URL('TRAINING_TACTICS.html?theme=generated', root).href;
+    generatedLink.textContent = french ? 'Puzzles générés' : 'Generated puzzles';
+    generatedLink.style.cssText = 'margin:0 10px;color:inherit;text-decoration:underline';
+    label.appendChild(generatedLink);
+    var generatorLink = document.createElement('a');
+    generatorLink.href = new URL('GENERATEUR_PARTIES_BRILLANTES.html', root).href;
+    generatorLink.textContent = french ? 'Créer un exercice' : 'Create an exercise';
+    generatorLink.style.cssText = 'margin:0 10px;color:inherit;text-decoration:underline';
+    label.appendChild(generatorLink);
     var footer = document.querySelector('.footer, footer');
     var bottomLink = document.querySelector('.supachess-page-back--bottom');
     if (footer) footer.appendChild(label);

@@ -321,8 +321,14 @@
     panel.setAttribute('aria-live', 'polite');
     panel.innerHTML = '<div class="supachess-eval-track" aria-label="Évaluation Stockfish"><div class="supachess-eval-white"></div><span></span></div><p class="supachess-eval-note"></p>';
     var host = board.parentElement || board;
-    host.insertAdjacentElement('afterend', button);
-    button.insertAdjacentElement('afterend', panel);
+    if ((location.pathname || '').endsWith('/PARTIES_BRILLANTES_ENTRAINEMENT.html') && host.classList && host.classList.contains('board-area')) {
+      var side = host.querySelector('.side');
+      host.insertBefore(button, side || null);
+      host.insertBefore(panel, side || null);
+    } else {
+      host.insertAdjacentElement('afterend', button);
+      button.insertAdjacentElement('afterend', panel);
+    }
     var track = panel.querySelector('.supachess-eval-track');
     var fill = panel.querySelector('.supachess-eval-white');
     var score = track.querySelector('span');

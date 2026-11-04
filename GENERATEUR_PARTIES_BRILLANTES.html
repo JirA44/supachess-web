@@ -204,8 +204,8 @@ function inspectSacrifice(game,move,movingType){
  return game.moves({verbose:true}).some(reply=>reply.to===move.to);
 }
 function renderBoard(game,lastMove){
- const board=document.getElementById("board"),matrix=game.board();let html='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Position d’échecs en SVG">';
- for(let r=0;r<8;r++)for(let c=0;c<8;c++){const piece=matrix[r][c],sq=String.fromCharCode(97+c)+(8-r),light=(r+c)%2===0,x=c*100,y=r*100,highlight=lastMove&&(lastMove.from===sq||lastMove.to===sq);html+='<rect x="'+x+'" y="'+y+'" width="100" height="100" fill="'+(highlight?"#facc15":light?"#f0d9b5":"#b58863")+'"/>';if(piece){const white=piece.color==="w";html+='<text x="'+(x+50)+'" y="'+(y+77)+'" text-anchor="middle" font-size="82" fill="'+(white?"#fff":"#171717")+'" stroke="'+(white?"#111":"#fff")+'" stroke-width="2.5" paint-order="stroke fill">'+STARTING_PIECES[piece.type]+'</text>';}}
+ const board=document.getElementById("board"),matrix=game.board();board.setAttribute("data-fen",game.fen());board.setAttribute("role","grid");board.setAttribute("aria-label","Échiquier validé");let html='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Position d’échecs en SVG">';
+ for(let r=0;r<8;r++)for(let c=0;c<8;c++){const piece=matrix[r][c],sq=String.fromCharCode(97+c)+(8-r),light=(r+c)%2===0,x=c*100,y=r*100,highlight=lastMove&&(lastMove.from===sq||lastMove.to===sq);html+='<rect data-square="'+sq+'" role="gridcell" aria-label="'+sq+'" x="'+x+'" y="'+y+'" width="100" height="100" fill="'+(highlight?"#facc15":light?"#f0d9b5":"#b58863")+'"/>';if(piece){const white=piece.color==="w";html+='<text x="'+(x+50)+'" y="'+(y+77)+'" text-anchor="middle" font-size="82" fill="'+(white?"#fff":"#171717")+'" stroke="'+(white?"#111":"#fff")+'" stroke-width="2.5" paint-order="stroke fill">'+STARTING_PIECES[piece.type]+'</text>';}}
  board.innerHTML=html+'</svg>';
 }
 function renderReplay(){

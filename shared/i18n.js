@@ -41,7 +41,7 @@
             callback();
             return;
         }
-        var url = basePath + '/translations/' + lang + '.json?v=supaengine-hub-20261101';
+        var url = basePath + '/translations/' + lang + '.json?v=supaengine-hub-20261104';
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.onreadystatechange = function () {
@@ -84,6 +84,8 @@
         if (toggleLabel) {
             toggleLabel.textContent = currentLang.toUpperCase();
         }
+        var toggle = document.querySelector('.cn-lang-toggle');
+        if (toggle) toggle.setAttribute('aria-label', currentLang === 'fr' ? 'Changer de langue' : 'Switch language');
         if (typeof window.ChessNovaPageTranslate === 'function') window.ChessNovaPageTranslate(currentLang);
         var toggleFlag = document.querySelector('.cn-lang-flag');
         if (toggleFlag) {
@@ -113,7 +115,7 @@
         var toggle = document.createElement('div');
         toggle.className = 'cn-lang-toggle';
         toggle.setAttribute('role', 'button');
-        toggle.setAttribute('aria-label', 'Switch language');
+        toggle.setAttribute('aria-label', currentLang === 'fr' ? 'Changer de langue' : 'Switch language');
         toggle.setAttribute('tabindex', '0');
         toggle.innerHTML =
             '<span class="cn-lang-flag">' + (currentLang === 'fr' ? '\uD83C\uDDEB\uD83C\uDDF7' : '\uD83C\uDDEC\uD83C\uDDE7') + '</span>' +

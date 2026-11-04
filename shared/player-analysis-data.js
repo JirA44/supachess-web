@@ -196,8 +196,15 @@
     const opponent = raw.opponent || raw.engineName ||
       (opponentColor === "w" ? headers.White : opponentColor === "b" ? headers.Black : "") ||
       "Partie locale";
-    const whitePlayer = color === "w" ? "Moi" : (headers.White || (opponentColor === "w" ? opponent : ""));
-    const blackPlayer = color === "b" ? "Moi" : (headers.Black || (opponentColor === "b" ? opponent : ""));
+    const playerNameForSide = (side) => {
+      if (color === side) return "Moi";
+      const headerName = side === "w" ? headers.White : headers.Black;
+      if (headerName && !/^(?:joueur|player)$/i.test(headerName)) return headerName;
+      if (opponentColor === side) return opponent;
+      return headerName || "";
+    };
+    const whitePlayer = playerNameForSide("w");
+    const blackPlayer = playerNameForSide("b");
     const pgnResult = headers.Result || raw.result || "*";
     const accuracyByColor = {
       w: raw.accuracyW == null || raw.accuracyW === "" ? null : Number(raw.accuracyW),

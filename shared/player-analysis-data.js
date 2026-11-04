@@ -166,7 +166,6 @@
     const moves = parsed.moves.map((move, indexInGame) => {
       const ply = indexInGame + 1;
       const side = indexInGame % 2 === 0 ? "w" : "b";
-      if (color && side !== color) return null;
       const grade = grades.get(ply) || {};
       const category = categoryFor(grade);
       const rating = ratingFor(category);
@@ -183,17 +182,28 @@
         tactical: [],
       };
     }).filter(Boolean);
-    const ratedMoves = moves.filter((move) => move.rated);
-    const averageRating = ratedMoves.length
-      ? ratedMoves.reduce((sum, move) => sum + move.rating, 0) / ratedMoves.length
-      : null;
+    const ratedMovesByColor = {
+      w: moves.filter((move) => move.color === "w" && move.rated),
+      b: moves.filter((move) => move.color === "b" && move.rated),
+    };
+    const averageRatingByColor = Object.fromEntries(["w", "b"].map((side) => {
+      const sideMoves = ratedMovesByColor[side];
+      return [side, sideMoves.length ? sideMoves.reduce((sum, move) => sum + move.rating, 0) / sideMoves.length : null];
+    }));
+    const ratedMoves = color ? ratedMovesByColor[color] : [];
+    const averageRating = color ? averageRatingByColor[color] : null;
     const opponentColor = color === "w" ? "b" : color === "b" ? "w" : null;
     const opponent = raw.opponent || raw.engineName ||
       (opponentColor === "w" ? headers.White : opponentColor === "b" ? headers.Black : "") ||
       "Partie locale";
+    const whitePlayer = color === "w" ? "Moi" : (headers.White || (opponentColor === "w" ? opponent : ""));
+    const blackPlayer = color === "b" ? "Moi" : (headers.Black || (opponentColor === "b" ? opponent : ""));
     const pgnResult = headers.Result || raw.result || "*";
-    const accuracyValue = color === "w" ? raw.accuracyW : color === "b" ? raw.accuracyB : null;
-    const userAccuracy = accuracyValue === null || accuracyValue === undefined || accuracyValue === "" ? null : Number(accuracyValue);
+    const accuracyByColor = {
+      w: raw.accuracyW == null || raw.accuracyW === "" ? null : Number(raw.accuracyW),
+      b: raw.accuracyB == null || raw.accuracyB === "" ? null : Number(raw.accuracyB),
+    };
+    const userAccuracy = color ? accuracyByColor[color] : null;
     const moveCount = parsed.moves.length || (Array.isArray(raw.moveGrades) ? raw.moveGrades.length : 0);
     return Object.assign({}, raw, {
       id: String(raw.id || "local-game-" + index),
@@ -203,10 +213,14 @@
       pgnResult,
       userColor: color,
       trainingAidsUsed,
+      whitePlayer,
+      blackPlayer,
       opponent,
       moves: Math.ceil(moveCount / 2),
       avgRating: averageRating,
+      avgRatingByColor: averageRatingByColor,
       accuracy: Number.isFinite(userAccuracy) ? userAccuracy : null,
+      accuracyByColor: accuracyByColor,
       history: moves,
       detailedMoveCount: ratedMoves.length,
       sourceLabel: "Partie enregistrée sur cet appareil",

@@ -103,7 +103,7 @@
     [" sélectionné. Télécharge puis choisis les deux fichiers correspondants.", " selected. Download and select the matching two files."],
     [" sélectionné. Télécharge et choisis les fichiers affichés avant de générer ou vérifier.", " selected. Download and select the displayed files before generating or verifying."],
     [" vérifiés par taille. Tu peux générer.", " verified by size. You can generate."],
-    [" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.", " selected; the UCI ID will be checked at startup."]
+    [" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.", " selected; the UCI ID will be checked at startup."],
     ["Générateur de parties brillantes 2800+ — SupaChess", "Brilliant Game Generator 2800+ — SupaChess"],
     ["Générateur de parties brillantes · Elo 2 800+", "Brilliant game generator · Elo 2,800+"],
     ["Générateur de parties brillantes", "Brilliant game generator"],

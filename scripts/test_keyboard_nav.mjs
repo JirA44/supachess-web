@@ -149,7 +149,7 @@ console.log('--- coverage across game pages ---');
     const src = readFileSync(join(root, f), 'utf8');
     const hasNavFn = /function (nextMove|prevMove|previousMove)\s*\(/.test(src);
     if (!hasNavFn) continue;
-    const loadsCommunity = /shared\\/community(?:-v[^\"']+)?\\.js(?:[?\"'])/.test(src);
+    const loadsCommunity = src.includes('shared/community');
     const hasInline = src.includes('ArrowLeft');
     if (!loadsCommunity && !hasInline) missing.push(f);
   }

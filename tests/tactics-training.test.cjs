@@ -167,3 +167,25 @@ test('puzzle discovery rankings sort solved puzzles by rating and players by hig
   assert.ok(rankingHtml.indexOf('<strong>A &amp; S</strong>') < rankingHtml.indexOf('<strong>B</strong>'));
   dom.window.close();
 });
+
+
+test('community puzzle records are scoped to the signed-in account and deduplicate solved puzzles', () => {
+  const dom = new JSDOM('<div id="puzzle-elo-ranking"><div id="puzzle-discovered-ranking"></div><div id="puzzle-player-ranking"></div></div>', {
+    url: 'https://supachess.test/TRAINING_TACTICS.html',
+    runScripts: 'dangerously'
+  });
+  const { window } = dom;
+  const rankingSource = fs.readFileSync(path.join(__dirname, '../shared/puzzle-elo-ranking.js'), 'utf8');
+  window.eval(rankingSource);
+  const ranking = window.SupaChessPuzzleEloRanking;
+
+  ranking.recordAccountPuzzle('account-a', { id: 'puzzle-1', rating: 1800, estimated: false });
+  ranking.recordAccountPuzzle('account-a', { id: 'puzzle-1', rating: 1800, estimated: false });
+  ranking.recordAccountPuzzle('account-a', { id: 'generated-1', rating: 2500, estimated: true });
+  assert.deepEqual(ranking.getAccountStats('account-a').puzzleIds, ['puzzle-1', 'generated-1']);
+  assert.equal(ranking.getAccountStats('account-a').puzzlesSolved, 2);
+  assert.equal(ranking.getAccountStats('account-a').puzzleElo, 1800);
+  assert.deepEqual(ranking.getAccountStats('account-b').puzzleIds, []);
+  assert.equal(ranking.getAccountStats('account-b').puzzleElo, 0);
+  dom.window.close();
+});

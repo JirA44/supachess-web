@@ -151,7 +151,7 @@ test('puzzle discovery rankings sort solved puzzles by rating and players by hig
   assert.equal(stats.puzzlesSolved, expectedSolved.length);
   assert.equal(stats.puzzleElo, Math.max(...expectedSolved.filter(puzzle => !puzzle.generated).map(puzzle => Number(puzzle.rating))));
   assert.match(html, /Top ranking · puzzles découverts par Elo/);
-  assert.match(html, /La cote décrit la difficulté du puzzle, pas l’Elo FIDE du joueur/);
+  assert.match(html, /Cette cote mesure la difficulté du puzzle, pas l’Elo FIDE du joueur/);
   assert.ok(window.document.getElementById('puzzle-discovered-ranking'));
   assert.ok(window.document.getElementById('puzzle-player-ranking'));
 

@@ -17,6 +17,35 @@
     }
   }
 
+  const ACCOUNT_STATS_PREFIX = "supachess_puzzle_elo_account_v1:";
+
+  function getAccountStats(uid) {
+    if (!uid) return { puzzlesSolved: 0, puzzleElo: 0, puzzleIds: [] };
+    try {
+      const stored = JSON.parse(root.localStorage.getItem(ACCOUNT_STATS_PREFIX + encodeURIComponent(uid)) || "{}");
+      const puzzleIds = Array.isArray(stored.puzzleIds)
+        ? [...new Set(stored.puzzleIds.filter((id) => typeof id === "string" && id.length > 0 && id.length <= 120))].slice(-5000)
+        : [];
+      const puzzleElo = Number.isSafeInteger(Number(stored.puzzleElo)) ? Number(stored.puzzleElo) : 0;
+      return { puzzlesSolved: puzzleIds.length, puzzleElo, puzzleIds };
+    } catch (_) {
+      return { puzzlesSolved: 0, puzzleElo: 0, puzzleIds: [] };
+    }
+  }
+
+  function recordAccountPuzzle(uid, puzzle) {
+    if (!uid || !puzzle || !puzzle.id) return getAccountStats(uid);
+    const current = getAccountStats(uid);
+    const puzzleIds = new Set(current.puzzleIds);
+    puzzleIds.add(String(puzzle.id).slice(0, 120));
+    const rating = Number(puzzle.rating);
+    const validRating = !puzzle.estimated && Number.isSafeInteger(rating) && rating >= 400 && rating <= 4000;
+    const puzzleElo = validRating ? Math.max(current.puzzleElo, rating) : current.puzzleElo;
+    const next = { puzzleIds: [...puzzleIds].slice(-5000), puzzleElo };
+    try { root.localStorage.setItem(ACCOUNT_STATS_PREFIX + encodeURIComponent(uid), JSON.stringify(next)); } catch (_) {}
+    return { puzzlesSolved: next.puzzleIds.length, puzzleElo: next.puzzleElo, puzzleIds: next.puzzleIds };
+  }
+
   function renderDiscoveredPuzzles() {
     const target = document.getElementById("puzzle-discovered-ranking");
     if (!target) return;
@@ -67,18 +96,16 @@
 
   async function syncCurrentPlayer(db, user) {
     if (!user || !db || !user.uid) return;
-    const local = getLocalStats();
+    const local = getAccountStats(user.uid);
     const playerRef = db.collection("puzzle_leaderboard").doc(user.uid);
     const input = document.getElementById("challenge-player-name");
     const typedName = input && input.value && input.value.trim() !== "Joueur" ? input.value : "";
     const displayName = cleanName(typedName || user.displayName);
-    const localRating = Number(local.puzzleElo) || 0;
-    const localSolved = Number(local.puzzlesSolved) || 0;
     await db.runTransaction(async (transaction) => {
       const snapshot = await transaction.get(playerRef);
       const previous = snapshot.exists ? (snapshot.data() || {}) : {};
-      const bestRating = Math.max(Number(previous.puzzleElo) || 0, localRating);
-      const puzzlesSolved = Math.max(Number(previous.puzzlesSolved) || 0, localSolved);
+      const bestRating = Math.max(Number(previous.puzzleElo) || 0, local.puzzleElo);
+      const puzzlesSolved = Math.max(Number(previous.puzzlesSolved) || 0, local.puzzlesSolved);
       if (!bestRating || !puzzlesSolved) return;
       const changed = !snapshot.exists
         || Number(previous.puzzleElo) !== Math.round(bestRating)
@@ -133,10 +160,12 @@
         try { await syncCurrentPlayer(db, user); } catch (_) {}
         await loadPlayers(db);
       });
-      root.addEventListener("supa:puzzle-solved", async () => {
+      root.addEventListener("supa:puzzle-solved", async (event) => {
         renderDiscoveredPuzzles();
         const user = firebase.auth().currentUser;
         if (!user) return;
+        const puzzle = event && event.detail ? event.detail : {};
+        recordAccountPuzzle(user.uid, puzzle);
         try { await syncCurrentPlayer(db, user); } catch (_) {}
         await loadPlayers(db);
       });
@@ -152,7 +181,7 @@
     }
   }
 
-  root.SupaChessPuzzleEloRanking = { renderDiscoveredPuzzles, renderPlayers };
+  root.SupaChessPuzzleEloRanking = { renderDiscoveredPuzzles, renderPlayers, getAccountStats, recordAccountPuzzle };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
   else init();
 })(window);

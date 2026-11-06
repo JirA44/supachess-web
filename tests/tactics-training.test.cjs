@@ -182,10 +182,10 @@ test('community puzzle records are scoped to the signed-in account and deduplica
   ranking.recordAccountPuzzle('account-a', { id: 'puzzle-1', rating: 1800, estimated: false });
   ranking.recordAccountPuzzle('account-a', { id: 'puzzle-1', rating: 1800, estimated: false });
   ranking.recordAccountPuzzle('account-a', { id: 'generated-1', rating: 2500, estimated: true });
-  assert.deepEqual(ranking.getAccountStats('account-a').puzzleIds, ['puzzle-1', 'generated-1']);
+  assert.deepEqual(Array.from(ranking.getAccountStats('account-a').puzzleIds), ['puzzle-1', 'generated-1']);
   assert.equal(ranking.getAccountStats('account-a').puzzlesSolved, 2);
   assert.equal(ranking.getAccountStats('account-a').puzzleElo, 1800);
-  assert.deepEqual(ranking.getAccountStats('account-b').puzzleIds, []);
+  assert.deepEqual(Array.from(ranking.getAccountStats('account-b').puzzleIds), []);
   assert.equal(ranking.getAccountStats('account-b').puzzleElo, 0);
   dom.window.close();
 });

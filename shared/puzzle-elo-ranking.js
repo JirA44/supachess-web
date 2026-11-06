@@ -21,7 +21,10 @@
     const target = document.getElementById("puzzle-discovered-ranking");
     if (!target) return;
     const data = getLocalStats();
-    const puzzles = Array.isArray(data.topPuzzles) ? data.topPuzzles.slice(0, 10) : [];
+    const puzzles = (Array.isArray(data.topPuzzles) ? data.topPuzzles.slice() : [])
+      .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0)
+        || String(a.title || "").localeCompare(String(b.title || ""), "fr"))
+      .slice(0, 10);
     if (!puzzles.length) {
       target.innerHTML = '<p class="empty">Résous un puzzle pour commencer ton classement personnel.</p>';
       return;
@@ -95,7 +98,8 @@
     target.setAttribute("aria-busy", "true");
     target.innerHTML = '<p class="empty">Chargement du classement communautaire…</p>';
     try {
-      const snapshot = await db.collection("puzzle_leaderboard").get();
+      const snapshot = await db.collection("puzzle_leaderboard")
+        .orderBy("puzzleElo", "desc").limit(100).get();
       renderPlayers(snapshot.docs.map((doc) => doc.data()));
     } catch (_) {
       target.innerHTML = '<p class="empty">Classement communautaire indisponible pour le moment. Les puzzles réussis restent visibles dans le classement personnel.</p>';

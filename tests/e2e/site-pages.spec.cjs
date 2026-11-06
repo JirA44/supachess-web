@@ -852,3 +852,53 @@ test('brilliant candidate generator enforces Elo 2800 minimum and loads the engi
   await expect(page.locator('#generate')).toBeEnabled();
   expect(errors).toEqual([]);
 });
+
+
+test('player analysis diagnoses only the selected games', async ({ page }) => {
+  await isolateExternalServices(page);
+  await page.addInitScript(() => {
+    const now = new Date().toISOString();
+    const makeGame = (id, aided) => ({
+      id,
+      date: now,
+      result: '*',
+      userColor: 'w',
+      trainingAidsUsed: aided,
+      moveGrades: [{ ply: 1, color: 'w', san: 'e4', category: 'best', lossCp: 0 }],
+      pgn: [
+        '[Event "Diagnostic selection test"]',
+        '[White "Test User"]',
+        '[Black "Stockfish 19"]',
+        '[Result "*"]',
+        '[SupaChessUserColor "w"]',
+        '[SupaChessTrainingAidsUsed "' + (aided ? 'true' : 'false') + '"]',
+        '',
+        '1. e4 e5 2. Nf3 Nc6 *'
+      ].join('\\n'),
+    });
+    localStorage.setItem('supachess_games', JSON.stringify([
+      makeGame('diagnostic-unaided', false),
+      makeGame('diagnostic-aided', true),
+    ]));
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/PLAYER_ANALYSIS.html', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#games-list .game-row')).toHaveCount(2);
+
+  const checks = page.locator('#games-list input[type="checkbox"]');
+  await expect(checks.nth(0)).toBeChecked();
+  await expect(checks.nth(1)).not.toBeChecked();
+  await checks.nth(0).uncheck();
+  await checks.nth(1).check();
+  await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click();
+  await expect(page.locator('#selected-games-diagnostic-result')).toBeVisible();
+  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 partie(s) sélectionnée(s)');
+  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 avec aides');
+  await expect(page.locator('#tab-style')).toHaveClass(/active/);
+
+  await checks.nth(1).uncheck();
+  await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click();
+  await expect(page.locator('#selected-games-diagnostic-status')).toContainText('coche au moins une partie');
+  expect(errors).toEqual([]);
+});

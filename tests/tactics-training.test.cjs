@@ -133,3 +133,37 @@ test('closing the puzzle modal cancels a pending automatic advance', async () =>
   assert.equal(window.document.getElementById('modal-bg').classList.contains('open'), false);
   dom.window.close();
 });
+
+
+test('puzzle discovery rankings sort solved puzzles by rating and players by highest rated puzzle', () => {
+  const solvedIds = [puzzles[0].id, puzzles[1].id, puzzles[2].id];
+  const dom = new JSDOM(html, {
+    url: 'https://supachess.test/TRAINING_TACTICS.html',
+    runScripts: 'dangerously',
+    beforeParse(window) {
+      window.Chess = Chess;
+      window.localStorage.setItem('supachess_tactics_v2', JSON.stringify(solvedIds));
+    }
+  });
+  const { window } = dom;
+  const stats = window.getSupaPuzzleRankStats();
+  const expectedSolved = puzzles.filter(puzzle => solvedIds.includes(puzzle.id));
+  assert.equal(stats.puzzlesSolved, expectedSolved.length);
+  assert.equal(stats.puzzleElo, Math.max(...expectedSolved.filter(puzzle => !puzzle.generated).map(puzzle => Number(puzzle.rating))));
+  assert.match(html, /Top ranking · puzzles découverts par Elo/);
+  assert.match(html, /Cette cote mesure la difficulté du puzzle, pas l’Elo FIDE du joueur/);
+  assert.ok(window.document.getElementById('puzzle-discovered-ranking'));
+  assert.ok(window.document.getElementById('puzzle-player-ranking'));
+
+  const rankingSource = fs.readFileSync(path.join(__dirname, '../shared/puzzle-elo-ranking.js'), 'utf8');
+  window.eval(rankingSource);
+  window.SupaChessPuzzleEloRanking.renderPlayers([
+    { displayName: 'B', puzzleElo: 2000, puzzlesSolved: 6 },
+    { displayName: 'A & S', puzzleElo: 2200, puzzlesSolved: 3 },
+    { displayName: 'C', puzzleElo: 2200, puzzlesSolved: 8 }
+  ]);
+  const rankingHtml = window.document.getElementById('puzzle-player-ranking').innerHTML;
+  assert.ok(rankingHtml.indexOf('<strong>C</strong>') < rankingHtml.indexOf('<strong>A &amp; S</strong>'));
+  assert.ok(rankingHtml.indexOf('<strong>A &amp; S</strong>') < rankingHtml.indexOf('<strong>B</strong>'));
+  dom.window.close();
+});

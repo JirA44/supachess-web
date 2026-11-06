@@ -232,6 +232,16 @@
         .challenge-ranking ol { padding-left:22px; }
         .challenge-ranking li { padding:2px 0; overflow-wrap:anywhere; font-size:.86rem; }
         .challenge-ranking .empty { opacity:.7; font-size:.83rem; }
+        .puzzle-elo-section { margin-top:16px; }
+        .puzzle-elo-section > p { color:#dbeafe; max-width:900px; }
+        .puzzle-elo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:12px; margin-top:14px; }
+        .puzzle-elo-grid .challenge-ranking { min-width:0; }
+        .puzzle-elo-list,.puzzle-player-list { padding-left:24px; }
+        .puzzle-elo-list li,.puzzle-player-list li { padding:7px 0; border-bottom:1px solid rgba(255,255,255,.1); }
+        .puzzle-elo-list a { color:#fff; font-weight:700; }
+        .puzzle-elo-meta,.puzzle-player-list li span { display:block; color:#dbeafe; font-size:.88rem; }
+        .puzzle-elo-meta strong,.puzzle-player-list li b { color:#fde68a; }
+        .puzzle-elo-section .empty { color:#dbeafe; opacity:.85; }
         .challenge-stop[hidden] { display:none; }
         @media(max-width:700px) {
             .difficulty-filter { align-items:stretch; flex-direction:column; }
@@ -293,6 +303,21 @@
         </label>
         <div id="puzzle-challenge-status" class="challenge-status" role="status" aria-live="polite">Choisis un défi pour commencer.</div>
         <div id="puzzle-challenge-rankings" class="challenge-rankings" aria-label="Classements locaux"></div>
+    </section>
+    <section id="puzzle-elo-ranking" class="puzzle-challenge puzzle-elo-section" aria-labelledby="puzzle-elo-title">
+        <h2 id="puzzle-elo-title">Top ranking · puzzles découverts par Elo</h2>
+        <p>Deux classements : tes puzzles résolus, du plus difficile au plus facile, et les joueurs selon la cote maximale de puzzle qu’ils ont résolue. Cette cote mesure la difficulté du puzzle, pas l’Elo FIDE du joueur. Le classement communautaire synchronise un pseudo, le meilleur niveau de puzzle résolu et le nombre de puzzles validés; il est réservé aux comptes connectés. Les puzzles générés avec une cote estimée sont signalés et ne déterminent pas le classement communautaire.</p>
+        <div class="puzzle-elo-grid">
+            <section class="challenge-ranking" aria-labelledby="puzzle-discovered-title">
+                <h3 id="puzzle-discovered-title">Tes puzzles découverts · top 10</h3>
+                <div id="puzzle-discovered-ranking" role="status" aria-live="polite"></div>
+            </section>
+            <section class="challenge-ranking" aria-labelledby="puzzle-player-title">
+                <h3 id="puzzle-player-title">Joueurs · cote maximale résolue</h3>
+                <p class="empty">Classement communautaire réservé aux comptes connectés.</p>
+                <div id="puzzle-player-ranking" role="status" aria-live="polite"></div>
+            </section>
+        </div>
     </section>
     <div class="difficulty-filter"><label for="difficulty-filter">Niveau des puzzles</label> <select id="difficulty-filter" onchange="setDifficulty(this.value)"><option value="all">Tous les niveaux</option><option value="high">Haut · 1800–1999</option><option value="very-high">Très haut · 2000–2199</option><option value="very-very-high">Très très haut · 2200–2399</option><option value="elite">Élite · 2400–2599</option><option value="world-class">Maître mondial · 2600–2799</option><option value="legend">Légende · 2800+</option></select></div>
     <div class="theme-tabs" id="theme-tabs"></div>
@@ -5763,6 +5788,22 @@ function updateStats() {
     document.getElementById('prog-bar').style.width = (total ? s/total*100 : 0)+'%';
 }
 
+window.getSupaPuzzleRankStats = function () {
+    const completed = PUZZLES.filter(puzzle => solved.includes(puzzle.id));
+    const topPuzzles = completed.map(puzzle => ({
+        id: puzzle.id,
+        title: puzzle.title || puzzle.themeLabel || ('Puzzle ' + puzzle.id),
+        rating: Number(puzzle.rating),
+        estimated: !!puzzle.generated,
+        phase: puzzle.phase || puzzle.themeLabel || puzzle.theme || ''
+    })).sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    const ranked = completed.filter(puzzle => !puzzle.generated
+        && Number.isSafeInteger(Number(puzzle.rating))
+        && Number(puzzle.rating) >= 400 && Number(puzzle.rating) <= 4000);
+    const puzzleElo = ranked.reduce((highest, puzzle) => Math.max(highest, Number(puzzle.rating)), 0);
+    return { puzzlesSolved: completed.length, puzzleElo, topPuzzles };
+};
+
 function renderTabs() {
     const tabs = document.getElementById('theme-tabs');
     tabs.innerHTML = THEMES.map(t => {
@@ -5974,6 +6015,9 @@ function markSolved(id) {
     if (!solved.includes(id)) {
         solved.push(id);
         saveSolved(solved);
+        if (window.dispatchEvent && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('supa:puzzle-solved'));
+        }
         streak++;
         if (window.ChessNovaProgress) {
             ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique maîtrisée');
@@ -6169,6 +6213,7 @@ if (requestedPuzzle && PUZZLES.some(p => p.id === requestedPuzzle)) openPuzzle(r
 </script>
 <script src="shared/i18n.js?v=tactics-community-i18n-20261030"></script>
 <script src="shared/community-v1.13.14801.js?v=1.13.14801"></script>
+<script defer src="shared/puzzle-elo-ranking.js?v=puzzle-elo-ranking-20261106-v1"></script>
 
 <script defer src="shared/site-global-v1.13.14801.js?v=1.13.14801"></script>
 </body>

@@ -306,7 +306,7 @@
     </section>
     <section id="puzzle-elo-ranking" class="puzzle-challenge puzzle-elo-section" aria-labelledby="puzzle-elo-title">
         <h2 id="puzzle-elo-title">Top ranking · puzzles découverts par Elo</h2>
-        <p>Deux classements : tes puzzles résolus, du plus difficile au plus facile, et les joueurs selon la cote maximale de puzzle qu’ils ont résolue. Cette cote mesure la difficulté du puzzle, pas l’Elo FIDE du joueur. Le classement communautaire synchronise un pseudo, le meilleur niveau de puzzle résolu et le nombre de puzzles validés; il est réservé aux comptes connectés. Les puzzles générés avec une cote estimée sont signalés et ne déterminent pas le classement communautaire.</p>
+        <p>Deux classements : tes puzzles résolus, du plus difficile au plus facile, et les joueurs selon la cote maximale de puzzle qu’ils ont résolue. Cette cote mesure la difficulté du puzzle, pas l’Elo FIDE du joueur. Le classement communautaire enregistre les puzzles résolus pendant que tu es connecté et synchronise ton pseudo, ta cote maximale validée et ton nombre de puzzles; il est réservé aux comptes connectés. Les puzzles générés avec une cote estimée sont signalés et ne déterminent pas le classement communautaire.</p>
         <div class="puzzle-elo-grid">
             <section class="challenge-ranking" aria-labelledby="puzzle-discovered-title">
                 <h3 id="puzzle-discovered-title">Tes puzzles découverts · top 10</h3>
@@ -6015,13 +6015,16 @@ function markSolved(id) {
     if (!solved.includes(id)) {
         solved.push(id);
         saveSolved(solved);
-        if (window.dispatchEvent && typeof CustomEvent === 'function') {
-            window.dispatchEvent(new CustomEvent('supa:puzzle-solved'));
-        }
         streak++;
         if (window.ChessNovaProgress) {
             ChessNovaProgress.recordPractice('tactiques', 10, 'Tactique maîtrisée');
         }
+    }
+    if (window.dispatchEvent && typeof CustomEvent === 'function') {
+        const puzzle = PUZZLES.find(item => item.id === id);
+        window.dispatchEvent(new CustomEvent('supa:puzzle-solved', {
+            detail: puzzle ? { id: puzzle.id, rating: Number(puzzle.rating), estimated: !!puzzle.generated } : null
+        }));
     }
     syncTacticsMastery();
     if (window.ChessNovaProgress) ChessNovaProgress.checkTrainingBadges();

@@ -68,27 +68,29 @@
   async function syncCurrentPlayer(db, user) {
     if (!user || !db || !user.uid) return;
     const local = getLocalStats();
-    const previousRef = db.collection("puzzle_leaderboard").doc(user.uid);
-    const snapshot = await previousRef.get();
-    const previous = snapshot.exists ? (snapshot.data() || {}) : {};
-    const localRating = Number(local.puzzleElo) || 0;
-    const bestRating = Math.max(Number(previous.puzzleElo) || 0, localRating);
-    const puzzlesSolved = Math.max(Number(previous.puzzlesSolved) || 0, Number(local.puzzlesSolved) || 0);
-    if (!bestRating || !puzzlesSolved) return;
-
+    const playerRef = db.collection("puzzle_leaderboard").doc(user.uid);
     const input = document.getElementById("challenge-player-name");
     const typedName = input && input.value && input.value.trim() !== "Joueur" ? input.value : "";
     const displayName = cleanName(typedName || user.displayName);
-    const changed = !snapshot.exists
-      || Number(previous.puzzleElo) !== bestRating
-      || Number(previous.puzzlesSolved) !== puzzlesSolved
-      || cleanName(previous.displayName) !== displayName;
-    if (!changed) return;
-    await previousRef.set({
-      displayName,
-      puzzleElo: Math.round(bestRating),
-      puzzlesSolved: Math.floor(puzzlesSolved),
-      updatedAt: root.firebase.firestore.FieldValue.serverTimestamp()
+    const localRating = Number(local.puzzleElo) || 0;
+    const localSolved = Number(local.puzzlesSolved) || 0;
+    await db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(playerRef);
+      const previous = snapshot.exists ? (snapshot.data() || {}) : {};
+      const bestRating = Math.max(Number(previous.puzzleElo) || 0, localRating);
+      const puzzlesSolved = Math.max(Number(previous.puzzlesSolved) || 0, localSolved);
+      if (!bestRating || !puzzlesSolved) return;
+      const changed = !snapshot.exists
+        || Number(previous.puzzleElo) !== Math.round(bestRating)
+        || Number(previous.puzzlesSolved) !== Math.floor(puzzlesSolved)
+        || cleanName(previous.displayName) !== displayName;
+      if (!changed) return;
+      transaction.set(playerRef, {
+        displayName,
+        puzzleElo: Math.round(bestRating),
+        puzzlesSolved: Math.floor(puzzlesSolved),
+        updatedAt: root.firebase.firestore.FieldValue.serverTimestamp()
+      });
     });
   }
 

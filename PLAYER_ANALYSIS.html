@@ -714,7 +714,11 @@ let playerAnalysisAuthUser = null;
 
 window.addEventListener('chessnova:auth-state', function(event) {
     playerAnalysisAuthUser = event && event.detail ? event.detail.user || null : null;
-    if (latestPlayerAnalysisData) updateProfileStatus(latestPlayerAnalysisData);
+    if (latestPlayerAnalysisData) {
+        updateProfileStatus(latestPlayerAnalysisData);
+        renderProfilePlayerOptions();
+        refreshSelectedPlayerAnalysis();
+    }
 });
 
 async function loadAllData() {
@@ -809,12 +813,28 @@ function updateProfileScopeGameIds() {
 
 
 function normalizeProfilePlayerName(name) {
-    return String(name || '').trim().toLocaleLowerCase();
+    return String(name || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
+
+function profileCurrentIdentityNames() {
+    const user = playerAnalysisAuthUser || {};
+    const names = [user.displayName, user.email, user.reloadUserInfo && user.reloadUserInfo.screenName];
+    Array.from(user.providerData || []).forEach(provider => {
+        names.push(provider && provider.displayName, provider && provider.email);
+    });
+    return new Set(names.map(normalizeProfilePlayerName).filter(Boolean));
 }
 
 function getProfileGamePlayerColor(game) {
     if (!game) return null;
-    if (selectedProfilePlayer === '__me__') return game.userColor === 'w' || game.userColor === 'b' ? game.userColor : null;
+    if (selectedProfilePlayer === '__me__') {
+        if (game.userColor === 'w' || game.userColor === 'b') return game.userColor;
+        const identityNames = profileCurrentIdentityNames();
+        const whiteMatches = identityNames.has(normalizeProfilePlayerName(game.whitePlayer));
+        const blackMatches = identityNames.has(normalizeProfilePlayerName(game.blackPlayer));
+        if (whiteMatches !== blackMatches) return whiteMatches ? 'w' : 'b';
+        return null;
+    }
     const requested = selectedProfilePlayer.slice('named:'.length);
     if (normalizeProfilePlayerName(game.whitePlayer) === requested) return 'w';
     if (normalizeProfilePlayerName(game.blackPlayer) === requested) return 'b';
@@ -831,13 +851,15 @@ function renderProfilePlayerOptions() {
     const select = document.getElementById('analysis-player-select');
     if (!select) return;
     const players = new Map();
+    const identityNames = profileCurrentIdentityNames();
     allGames.forEach(game => {
         if (!Array.isArray(game.history)) return;
         ['w', 'b'].forEach(color => {
             if (color === game.userColor) return;
             if (!game.history.some(move => move.color === color && move.rated)) return;
             const name = String((color === 'w' ? game.whitePlayer : game.blackPlayer) || '').trim();
-            if (!name || /^(?:moi|joueur|player|adversaire|partie locale)$/i.test(name)) return;
+            if (!name || identityNames.has(normalizeProfilePlayerName(name)) ||
+                /^(?:moi|joueur|player|adversaire|partie locale)$/i.test(name)) return;
             const id = 'named:' + normalizeProfilePlayerName(name);
             if (!players.has(id)) players.set(id, name);
         });

@@ -417,7 +417,8 @@
                 <div class="card">
                     <h3>Radar de compétences</h3>
                     <canvas id="radarChart" height="420" aria-label="Radar des compétences observées et compétences à mesurer"></canvas>
-                    <p class="radar-note">Les phases sont estimées par tranche de coups joués, pas par la position réelle. Les axes avec « À mesurer » attendent des résultats d’exercices dédiés : ils ne sont pas déduits artificiellement des parties.</p>
+                    <p id="radar-data-summary" class="radar-note" aria-live="polite">Le radar se met à jour depuis les parties et les demi-coups classés retenus dans Historique.</p>
+                    <p class="radar-note">L’ouverture est estimée sur les 12 premiers coups complets; la finale est détectée prudemment par le matériel visible dans le PGN. Une phase non présente dans les données reste non mesurée. Tactique, plans, calcul et anticipation demandent des exercices dédiés.</p>
                 </div>
                 <div class="card">
                     <h3>Votre Style</h3>
@@ -697,7 +698,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14860"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14862"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1058,13 +1059,16 @@ function analyzeStyle(playerMovesByGame) {
     let totalMoves = 0;
     let totalRating = 0;
     let brilliantCount = 0;
+    let bestCount = 0;
+    let veryGoodCount = 0;
+    let goodCount = 0;
+    let okCount = 0;
     let blunderCount = 0;
     let mistakeCount = 0;
     let inaccuracyCount = 0;
-    let goodCount = 0;
-    let excellentCount = 0;
+    const phaseGameCounts = { opening: 0, middle: 0, endgame: 0 };
 
-    // Phase accuracy accumulators
+    // Phase accuracy uses the phase attached to each actual PGN position.
     let openingRatings = [];
     let middleRatings = [];
     let endgameRatings = [];
@@ -1078,6 +1082,7 @@ function analyzeStyle(playerMovesByGame) {
         let gameRecoveries = 0;
         let wasLosing = false;
         let gameSacrifices = 0;
+        const gamePhaseCounts = { opening: 0, middle: 0, endgame: 0 };
 
         for (let i = 0; i < moves.length; i++) {
             const m = moves[i];
@@ -1085,19 +1090,23 @@ function analyzeStyle(playerMovesByGame) {
             totalRating += rating;
             totalMoves++;
 
-            // Count move types
-            if (rating >= 10) brilliantCount++;
-            else if (rating >= 9) excellentCount++;
-            else if (rating >= 7) goodCount++;
-            else if (rating >= 5) inaccuracyCount++;
-            else if (rating >= 3) mistakeCount++;
-            else blunderCount++;
+            // Use the stored classification, not overlapping rating thresholds.
+            switch (String(m.category || '').toLowerCase()) {
+                case 'brilliant': brilliantCount++; break;
+                case 'best': bestCount++; break;
+                case 'very-good': veryGoodCount++; break;
+                case 'good': goodCount++; break;
+                case 'ok': okCount++; break;
+                case 'inaccuracy': inaccuracyCount++; break;
+                case 'mistake':
+                case 'error': mistakeCount++; break;
+                case 'blunder': blunderCount++; break;
+            }
 
-            // Phase classification (by move number in the game)
-            const moveIdx = i;
-            if (moveIdx < 8) openingRatings.push(rating);      // ~first 15 plies = 8 player moves
-            else if (moveIdx < 20) middleRatings.push(rating);  // ~moves 16-40
-            else endgameRatings.push(rating);                    // finale
+            const phase = m.phase;
+            if (phase === 'opening') { openingRatings.push(rating); gamePhaseCounts.opening++; }
+            else if (phase === 'middle') { middleRatings.push(rating); gamePhaseCounts.middle++; }
+            else if (phase === 'endgame') { endgameRatings.push(rating); gamePhaseCounts.endgame++; }
 
             // Tactical detection
             if (m.tactical && m.tactical.length > 0) {
@@ -1124,6 +1133,9 @@ function analyzeStyle(playerMovesByGame) {
             }
         }
 
+        Object.keys(gamePhaseCounts).forEach(phase => {
+            if (gamePhaseCounts[phase] > 0) phaseGameCounts[phase]++;
+        });
         const moveCount = moves.length || 1;
         gameAnalyses.push({
             tacticalRate: gameTactical / moveCount,
@@ -1142,15 +1154,10 @@ function analyzeStyle(playerMovesByGame) {
 
     scores.tactical = Math.min(100, Math.round(avgTactical * 300 + (brilliantCount / totalMoves) * 500));
     scores.positional = Math.min(100, Math.round(avgPositional * 150));
-    scores.opening = Math.min(100, Math.round(average(openingRatings) * 10));
-    scores.endgame = Math.min(100, Math.round(average(endgameRatings) * 10));
-    scores.defense = Math.min(100, Math.round(avgRecoveries * 40 + 30));
+    scores.opening = openingRatings.length ? Math.min(100, Math.round(average(openingRatings) * 10)) : null;
+    scores.endgame = endgameRatings.length ? Math.min(100, Math.round(average(endgameRatings) * 10)) : null;
+    scores.defense = Math.min(100, Math.round(avgRecoveries * 40));
     scores.aggression = Math.min(100, Math.round(avgSacrifices * 60 + avgTactical * 200));
-
-    // Ensure minimum scores
-    for (const key of Object.keys(scores)) {
-        scores[key] = Math.max(10, scores[key]);
-    }
 
     // Determine dominant style
     const style = determineStyle(scores);
@@ -1158,8 +1165,11 @@ function analyzeStyle(playerMovesByGame) {
     // Move distribution
     const moveDistribution = {
         brilliant: brilliantCount,
-        excellent: excellentCount,
+        best: bestCount,
+        veryGood: veryGoodCount,
+        excellent: brilliantCount + bestCount,
         good: goodCount,
+        ok: okCount,
         inaccuracy: inaccuracyCount,
         mistake: mistakeCount,
         blunder: blunderCount
@@ -1174,7 +1184,8 @@ function analyzeStyle(playerMovesByGame) {
             opening: openingRatings.length,
             middle: middleRatings.length,
             endgame: endgameRatings.length
-        }
+        },
+        gameCounts: phaseGameCounts
     };
 
     // Overall accuracy
@@ -1193,7 +1204,7 @@ function analyzeStyle(playerMovesByGame) {
 }
 
 function average(arr) {
-    if (!arr || arr.length === 0) return 5;
+    if (!arr || arr.length === 0) return null;
     return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
@@ -1310,7 +1321,7 @@ function analyzeStrengthsWeaknesses(playerMovesByGame, analysisResult) {
     ];
 
     // Sort by score
-    const sorted = [...candidates].sort((a, b) => b.score - a.score);
+    const sorted = candidates.filter(candidate => Number.isFinite(candidate.score)).sort((a, b) => b.score - a.score);
     const strengths = sorted.slice(0, 3).map(c => ({
         ...c,
         description: c.goodDesc,
@@ -1647,14 +1658,15 @@ function renderStyleTab(result) {
         const count = Number(result.phaseAccuracy && result.phaseAccuracy.counts && result.phaseAccuracy.counts[key]) || 0;
         return count ? Math.max(0, Math.min(100, Number(value) * 10)) : null;
     };
-    const topMoveCount = countForRadar('excellent');
-    const okayOrBetterCount = topMoveCount + countForRadar('good');
-    const seriousErrorCount = countForRadar('mistake') + countForRadar('blunder');
-    const anyErrorCount = countForRadar('inaccuracy') + seriousErrorCount;
+    const bestOrBrilliant = countForRadar('brilliant') + countForRadar('best');
+    const veryGoodOrBetter = bestOrBrilliant + countForRadar('veryGood');
+    const goodOrBetter = veryGoodOrBetter + countForRadar('good');
+    const noInaccuracy = totalMovesForRadar - countForRadar('inaccuracy') - countForRadar('mistake') - countForRadar('blunder');
+    const noMajorError = totalMovesForRadar - countForRadar('mistake') - countForRadar('blunder');
     const radarLabels = [
-        'Ouverture', 'Milieu de partie', 'Finales',
-        'Précision globale', 'Coups excellents ou mieux', 'Coups OK ou mieux',
-        'Sans imprécision', 'Sans erreur ni gaffe',
+        'Ouverture', 'Milieu de partie', 'Finales détectées',
+        'Précision moyenne', 'Brillant ou meilleur', 'Très bon ou mieux',
+        'Bon ou mieux', 'Sans imprécision', 'Sans erreur ni gaffe',
         'Tactique · à mesurer', 'Plans · à mesurer',
         'Calcul · à mesurer', 'Anticipation · à mesurer'
     ];
@@ -1663,18 +1675,44 @@ function renderStyleTab(result) {
         phaseValue('middle', result.phaseAccuracy.middle),
         phaseValue('endgame', result.phaseAccuracy.endgame),
         Math.max(0, Math.min(100, Number(result.overallAccuracy) || 0)),
-        totalMovesForRadar ? topMoveCount * 100 / totalMovesForRadar : null,
-        totalMovesForRadar ? okayOrBetterCount * 100 / totalMovesForRadar : null,
-        totalMovesForRadar ? (totalMovesForRadar - anyErrorCount) * 100 / totalMovesForRadar : null,
-        totalMovesForRadar ? (totalMovesForRadar - seriousErrorCount) * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? bestOrBrilliant * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? veryGoodOrBetter * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? goodOrBetter * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? noInaccuracy * 100 / totalMovesForRadar : null,
+        totalMovesForRadar ? noMajorError * 100 / totalMovesForRadar : null,
         null, null, null, null
     ];
+    const radarSamples = [
+        result.phaseAccuracy.counts.opening,
+        result.phaseAccuracy.counts.middle,
+        result.phaseAccuracy.counts.endgame,
+        totalMovesForRadar,
+        totalMovesForRadar, totalMovesForRadar, totalMovesForRadar,
+        totalMovesForRadar, totalMovesForRadar,
+        0, 0, 0, 0
+    ];
+    const radarGameSamples = [
+        result.phaseAccuracy.gameCounts.opening,
+        result.phaseAccuracy.gameCounts.middle,
+        result.phaseAccuracy.gameCounts.endgame,
+        result.totalGames,
+        result.totalGames, result.totalGames, result.totalGames,
+        result.totalGames, result.totalGames,
+        0, 0, 0, 0
+    ];
+    const radarSummary = document.getElementById('radar-data-summary');
+    if (radarSummary) {
+        radarSummary.textContent = 'Échantillon retenu : ' + result.totalGames + ' partie(s), ' + totalMovesForRadar +
+            ' demi-coups classés. Phases mesurées : ouverture ' + radarSamples[0] + ' demi-coups (' + radarGameSamples[0] +
+            ' partie(s)), milieu ' + radarSamples[1] + ' (' + radarGameSamples[1] + '), finale détectée ' + radarSamples[2] +
+            ' (' + radarGameSamples[2] + ' partie(s)). Les axes de compétence tactique et de réflexion restent à mesurer par exercices.';
+    }
     radarChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: radarLabels,
             datasets: [{
-                label: 'Résultats des parties (% ou note /100)',
+                label: 'Résultats des parties retenues',
                 data: radarValues,
                 backgroundColor: 'rgba(255, 107, 107, 0.2)',
                 borderColor: '#ff6b6b',
@@ -1702,9 +1740,15 @@ function renderStyleTab(result) {
                 legend: { display: true, labels: { color: '#e1e7ed' } },
                 tooltip: {
                     callbacks: {
-                        label: context => context.raw == null
-                            ? context.label + ' : données d’exercices requises'
-                            : context.label + ' : ' + Number(context.raw).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '/100'
+                        label: context => {
+                            const index = context.dataIndex;
+                            if (context.raw == null) return context.label + (index < 3
+                                ? ' : aucune position de cette phase n’est mesurable dans l’échantillon'
+                                : ' : exercices dédiés requis');
+                            return context.label + ' : ' +
+                                Number(context.raw).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '/100 · ' +
+                                radarSamples[index] + ' demi-coups dans ' + radarGameSamples[index] + ' partie(s)';
+                        }
                     }
                 }
             }
@@ -1924,12 +1968,16 @@ function renderStrengthsTab(swAnalysis, result) {
 }
 
 function setPhaseBar(id, score) {
-    const pct = Math.max(5, Math.min(100, Math.round(score * 10)));
     const el = document.getElementById(id);
-    if (el) {
-        el.style.width = pct + '%';
-        el.textContent = (score || 0).toFixed(1) + '/10';
+    if (!el) return;
+    if (!Number.isFinite(score)) {
+        el.style.width = '0%';
+        el.textContent = 'Non mesuré';
+        return;
     }
+    const pct = Math.max(0, Math.min(100, Math.round(score * 10)));
+    el.style.width = pct + '%';
+    el.textContent = score.toFixed(1) + '/10';
 }
 
 function renderTrainingTab(trainingProgram, swAnalysis) {

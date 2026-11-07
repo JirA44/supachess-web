@@ -122,6 +122,53 @@
     }
   }
 
+  function classifyPhaseFromFen(fen, fullMoveNumber) {
+    const fields = String(fen || "").split(" ");
+    const placement = fields[0];
+    if (!placement || !placement.includes("/")) return null;
+    const pieces = placement.replace(/[1-8/]/g, "");
+    const queens = (pieces.match(/[qQ]/g) || []).length;
+    const rooksAndMinors = (pieces.match(/[rRnNbB]/g) || []).length;
+    const moveNumber = Number(fields[5]) || Number(fullMoveNumber) || 0;
+    // Conservatively call it an endgame only once queens are gone and few
+    // rooks/minors remain; otherwise keep late, non-endgame play in the middlegame.
+    if (moveNumber >= 12 && queens === 0 && rooksAndMinors <= 6) return "endgame";
+    return moveNumber > 0 && moveNumber <= 12 ? "opening" : "middle";
+  }
+
+  function phasesFromParsedMoves(parsed, ChessClass, headers) {
+    const ChessCtor = ChessClass || (typeof Chess === "function" ? Chess : null);
+    if (!ChessCtor || !parsed || !Array.isArray(parsed.moves) || parsed.moves.length === 0) return [];
+    try {
+      const startFen = headers && headers.FEN;
+      const replay = startFen ? new ChessCtor(startFen) : new ChessCtor();
+      return parsed.moves.map((move, index) => {
+        const fullMoveNumber = Math.floor(index / 2) + 1;
+        const phase = classifyPhaseFromFen(replay.fen(), fullMoveNumber);
+        let replayed = null;
+        if (move && move.from && move.to) {
+          try {
+            replayed = replay.move({ from: move.from, to: move.to, promotion: move.promotion });
+          } catch (_) {}
+        }
+        if (!replayed && move && move.san) {
+          try { replayed = replay.move(move.san); } catch (_) {}
+        }
+        return phase;
+      });
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function normalizePhase(phase) {
+    const value = String(phase || "").trim().toLowerCase();
+    if (["opening", "ouverture"].includes(value)) return "opening";
+    if (["middle", "middlegame", "milieu", "milieu de jeu"].includes(value)) return "middle";
+    if (["endgame", "finale", "end"].includes(value)) return "endgame";
+    return null;
+  }
+
   function resultForPlayer(result, color) {
     if (result === "1/2-1/2") return "draw";
     if (result !== "1-0" && result !== "0-1") return "unfinished";
@@ -187,6 +234,7 @@
     });
     const trainingAidsEvidence = resolveTrainingAidsEvidence(raw, headers, grades);
     const trainingAidsUsed = trainingAidsEvidence.value;
+    const parsedPhases = phasesFromParsedMoves(parsed, ChessClass, headers);
     const movesFromStoredGrades = Array.from(grades.entries())
       .sort((a, b) => a[0] - b[0])
       .map(([ply, grade]) => {
@@ -206,6 +254,7 @@
           rated: rating !== null,
           lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
           tactical: [],
+          phase: normalizePhase(grade.phase) || classifyPhaseFromFen(grade.fen || grade.beforeFen || grade.positionFen, Math.ceil(ply / 2)),
         };
       });
     const moves = parsed.moves.length
@@ -226,6 +275,7 @@
             rated: rating !== null,
             lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
             tactical: [],
+            phase: parsedPhases[indexInGame] || normalizePhase(move && move.phase) || null,
           };
         }).filter(Boolean)
       : movesFromStoredGrades;
@@ -345,6 +395,7 @@
     GRADE_RATINGS,
     normalizePgn,
     parsePgnMoves,
+    classifyPhaseFromFen,
     normalizePlayedGame,
     loadLocalAnalysis,
   };

@@ -675,7 +675,8 @@
             <div class="analysis-selection-actions">
                 <button type="button" class="profile-diagnostic-button" onclick="launchSelectedGamesDiagnostic()">Diagnostiquer les parties sélectionnées</button>
                 <button type="button" onclick="launchUnaidedLevelDiagnostic()">Diagnostic de niveau · parties sans aides confirmées</button>
-                <button type="button" onclick="selectUnaidedProfileGames()">Sélectionner les parties confirmées sans aides</button>
+                <button type="button" onclick="selectMyUnaidedProfileGames()">Mes parties confirmées sans aides</button>
+                <button type="button" onclick="selectUnaidedProfileGames()">Sélectionner les parties confirmées sans aides du joueur choisi</button>
                 <button type="button" onclick="selectProfileGamesByAidStatus(true)">Sélectionner les parties confirmées avec aides</button>
                 <button type="button" onclick="selectProfileGamesByAidStatus(null)">Sélectionner les parties indéterminées</button>
                 <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties analysables</button>
@@ -698,7 +699,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14862"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14863"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -969,6 +970,21 @@ function togglePlayerAnalysisGame(index, included) {
     profileGameSelection[String(game.id)] = !!included;
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
+}
+
+function selectMyUnaidedProfileGames() {
+    selectedProfilePlayer = '__me__';
+    try { localStorage.setItem(PLAYER_ANALYSIS_SUBJECT_KEY, selectedProfilePlayer); } catch (e) {}
+    const select = document.getElementById('analysis-player-select');
+    if (select) select.value = selectedProfilePlayer;
+    currentAidFilter = 'all';
+    document.querySelectorAll('.aid-filter-btn').forEach(button => {
+        const active = button.dataset.aidFilter === 'all';
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    updateProfileScopeGameIds();
+    selectUnaidedProfileGames();
 }
 
 function selectUnaidedProfileGames() {

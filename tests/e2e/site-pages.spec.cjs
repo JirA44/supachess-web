@@ -864,7 +864,12 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
       result: '*',
       userColor: 'w',
       trainingAidsUsed: aided,
-      moveGrades: [{ ply: 1, color: 'w', san: 'e4', category: 'best', lossCp: 0 }],
+      moveGrades: aided
+        ? [
+            { ply: 1, color: 'w', san: 'e4', category: 'best', lossCp: 0 },
+            { ply: 3, color: 'w', san: 'Nf3', category: 'good', lossCp: 12 },
+          ]
+        : [{ ply: 1, color: 'w', san: 'e4', category: 'best', lossCp: 0 }],
       pgn: [
         '[Event "Diagnostic selection test"]',
         '[White "Test User"]',
@@ -885,6 +890,7 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/PLAYER_ANALYSIS.html', { waitUntil: 'domcontentloaded', timeout: 10000 });
   console.log('player analysis: page loaded');
+  await expect(page.locator('#radar-data-summary')).toContainText('1 partie(s), 1 demi-coups classés');
   await page.getByRole('button', { name: 'Historique' }).click({ timeout: 5000 });
   console.log('player analysis: history opened');
   await expect(page.locator('#games-list .game-row')).toHaveCount(2, { timeout: 5000 });
@@ -897,6 +903,7 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
   await checks.nth(0).uncheck({ timeout: 5000 });
   await checks.nth(1).check({ timeout: 5000 });
   console.log('player analysis: manual selection changed');
+  await expect(page.locator('#radar-data-summary')).toContainText('1 partie(s), 2 demi-coups classés');
   await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click({ timeout: 5000 });
   console.log('player analysis: diagnostic launched');
   await expect(page.locator('#selected-games-diagnostic-result')).toBeVisible({ timeout: 5000 });

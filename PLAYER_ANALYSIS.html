@@ -376,6 +376,16 @@
     <div class="tab-content active" id="tab-style">
         <p id="selected-games-diagnostic-result" hidden role="status" aria-live="polite" style="margin:0 0 14px;padding:12px 14px;border:1px solid #38bdf8;border-radius:10px;background:#082638;color:#e6f7ff;"></p>
         <p id="level-diagnostic-result" hidden role="status" aria-live="polite" style="margin:0 0 14px;padding:12px 14px;border:1px solid #38bdf8;border-radius:10px;background:#082638;color:#e6f7ff;"></p>
+        <div class="card" id="profile-game-selection-card">
+            <h3>Parties prises en compte dans ton profil</h3>
+            <p id="profile-selection-summary" class="analysis-selection-summary" aria-live="polite">Chargement des parties analysables…</p>
+            <div class="analysis-selection-actions">
+                <button type="button" onclick="selectUnaidedProfileGames()">Inclure toutes les parties sans aides confirmées</button>
+                <button type="button" onclick="switchTab('history')">Choisir les parties une par une</button>
+                <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties, aides comprises</button>
+            </div>
+            <p style="margin:0;color:#aab5c0;font-size:.82rem;">Par défaut, seules les parties confirmées sans aides alimentent le profil. Les choix manuels restent enregistrés. La période « Tout l’historique » et la limite « 0 = toutes » incluent toutes les parties analysables du joueur.</p>
+        </div>
         <div id="no-data-style" class="no-data" style="display:none;">
             <div class="icon">♟</div>
             <h3 id="no-data-style-title">Pas encore de coups classés pour établir le profil</h3>
@@ -687,7 +697,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14804"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14860"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -880,7 +890,8 @@ function profileMovesForSelectedGames() {
 
 function updateProfileGameSelectionSummary() {
     const summary = document.getElementById('analysis-selection-summary');
-    if (!summary) return;
+    const profileSummary = document.getElementById('profile-selection-summary');
+    if (!summary && !profileSummary) return;
     const eligible = allGames.filter(isProfileGameEligible);
     const inScope = eligible.filter(game => currentScopeGameIds.has(String(game.id || '')));
     const included = inScope.filter(isProfileGameIncluded).length;
@@ -890,11 +901,13 @@ function updateProfileGameSelectionSummary() {
         (document.getElementById('analysis-player-select')?.selectedOptions?.[0]?.textContent || 'Joueur');
     const unaided = inScope.filter(game => game.trainingAidsUsed === false).length;
     const periodLabels = { all: 'tout l’historique', day: 'les dernières 24 h', week: 'les 7 derniers jours', month: 'les 30 derniers jours', quarter: 'les 90 derniers jours', year: 'les 365 derniers jours' };
-    const volumeLabel = profileScope.maxGames > 0 ? ' · ' + profileScope.maxGames + ' partie(s) récente(s) maximum' : ' · toutes les parties de la période';
-    summary.textContent = playerLabel + ' : profil calculé automatiquement sur ' + included + ' partie(s) sélectionnée(s) parmi ' +
+    const volumeLabel = profileScope.maxGames > 0 ? ' · limite : ' + profileScope.maxGames + ' partie(s) récente(s)' : ' · aucune limite de parties';
+    const text = playerLabel + ' : ' + included + ' partie(s) incluse(s) parmi ' +
         inScope.length + ' analysable(s) dans ' + (periodLabels[profileScope.period] || periodLabels.all) + volumeLabel +
-        '. Sans aides confirmées : ' + unaided + ' ; avec aides : ' + aided + ' ; indéterminées : ' + unknown +
-        '. Les indéterminées sont exclues par défaut. Les cases permettent une sélection manuelle dans la période et le volume choisis.';
+        '. Sans aides confirmées : ' + unaided + ' ; avec aides : ' + aided + ' ; statut inconnu : ' + unknown +
+        '. Les parties aidées ou indéterminées sont exclues par défaut. Coche une partie dans Historique pour l’ajouter ou la retirer.';
+    if (summary) summary.textContent = text;
+    if (profileSummary) profileSummary.textContent = text;
 }
 
 function refreshSelectedPlayerAnalysis() {

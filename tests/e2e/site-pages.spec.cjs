@@ -899,13 +899,15 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
   console.log('player analysis: manual selection changed');
   await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click({ timeout: 5000 });
   console.log('player analysis: diagnostic launched');
-  await expect(page.locator('#selected-games-diagnostic-result')).toBeVisible();
-  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 partie(s) sélectionnée(s)');
-  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 avec aides');
-  await expect(page.locator('#tab-style')).toHaveClass(/active/);
+  await expect(page.locator('#selected-games-diagnostic-result')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 partie(s) sélectionnée(s)', { timeout: 5000 });
+  await expect(page.locator('#selected-games-diagnostic-result')).toContainText('1 avec aides', { timeout: 5000 });
+  await expect(page.locator('#tab-style')).toHaveClass(/active/, { timeout: 5000 });
+  console.log('player analysis: selected-gamelist diagnostic assertions passed');
 
-  await checks.nth(1).uncheck();
-  await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click();
+  await page.getByRole('button', { name: 'Historique' }).click({ timeout: 5000 });
+  await checks.nth(1).uncheck({ timeout: 5000 });
+  await page.getByRole('button', { name: 'Diagnostiquer les parties sélectionnées' }).click({ timeout: 5000 });
   await expect(page.locator('#selected-games-diagnostic-status')).toContainText('coche au moins une partie');
   expect(errors).toEqual([]);
 });

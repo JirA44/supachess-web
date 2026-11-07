@@ -1660,7 +1660,7 @@ function renderStyleTab(result) {
     };
     const bestOrBrilliant = countForRadar('brilliant') + countForRadar('best');
     const veryGoodOrBetter = bestOrBrilliant + countForRadar('veryGood');
-    const goodOrBetter = veryGoodOrBetter + countForRadar('good') + countForRadar('ok');
+    const goodOrBetter = veryGoodOrBetter + countForRadar('good');
     const noInaccuracy = totalMovesForRadar - countForRadar('inaccuracy') - countForRadar('mistake') - countForRadar('blunder');
     const noMajorError = totalMovesForRadar - countForRadar('mistake') - countForRadar('blunder');
     const radarLabels = [

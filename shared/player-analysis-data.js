@@ -187,25 +187,48 @@
     });
     const trainingAidsEvidence = resolveTrainingAidsEvidence(raw, headers, grades);
     const trainingAidsUsed = trainingAidsEvidence.value;
-    const moves = parsed.moves.map((move, indexInGame) => {
-      const ply = indexInGame + 1;
-      const side = indexInGame % 2 === 0 ? "w" : "b";
-      const grade = grades.get(ply) || {};
-      const category = categoryFor(grade);
-      const rating = ratingFor(category);
-      return {
-        ply,
-        color: side,
-        moveNum: Math.floor(indexInGame / 2) + 1,
-        san: move && move.san ? move.san : String(grade.san || "?"),
-        rating,
-        quality: GRADE_LABELS[category],
-        category,
-        rated: rating !== null,
-        lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
-        tactical: [],
-      };
-    }).filter(Boolean);
+    const movesFromStoredGrades = Array.from(grades.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([ply, grade]) => {
+        const category = categoryFor(grade);
+        const rating = ratingFor(category);
+        const side = grade.color === "w" || grade.color === "b"
+          ? grade.color
+          : (ply % 2 === 1 ? "w" : "b");
+        return {
+          ply,
+          color: side,
+          moveNum: Math.ceil(ply / 2),
+          san: String(grade.san || "?"),
+          rating,
+          quality: GRADE_LABELS[category],
+          category,
+          rated: rating !== null,
+          lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
+          tactical: [],
+        };
+      });
+    const moves = parsed.moves.length
+      ? parsed.moves.map((move, indexInGame) => {
+          const ply = indexInGame + 1;
+          const side = indexInGame % 2 === 0 ? "w" : "b";
+          const grade = grades.get(ply) || {};
+          const category = categoryFor(grade);
+          const rating = ratingFor(category);
+          return {
+            ply,
+            color: side,
+            moveNum: Math.floor(indexInGame / 2) + 1,
+            san: move && move.san ? move.san : String(grade.san || "?"),
+            rating,
+            quality: GRADE_LABELS[category],
+            category,
+            rated: rating !== null,
+            lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
+            tactical: [],
+          };
+        }).filter(Boolean)
+      : movesFromStoredGrades;
     const ratedMovesByColor = {
       w: moves.filter((move) => move.color === "w" && move.rated),
       b: moves.filter((move) => move.color === "b" && move.rated),

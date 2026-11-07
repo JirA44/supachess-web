@@ -877,7 +877,7 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
         '[SupaChessTrainingAidsUsed "' + (aided ? 'true' : 'false') + '"]',
         '',
         '1. e4 e5 2. Nf3 Nc6 *'
-      ].join('\\n'),
+      ].join(String.fromCharCode(10)),
     });
     localStorage.setItem('supachess_games', JSON.stringify([
       makeGame('diagnostic-unaided', false),

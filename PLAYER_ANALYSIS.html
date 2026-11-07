@@ -1658,10 +1658,6 @@ function renderStyleTab(result) {
         const count = Number(result.phaseAccuracy && result.phaseAccuracy.counts && result.phaseAccuracy.counts[key]) || 0;
         return count ? Math.max(0, Math.min(100, Number(value) * 10)) : null;
     };
-    const topMoveCount = countForRadar('excellent');
-    const okayOrBetterCount = topMoveCount + countForRadar('good');
-    const seriousErrorCount = countForRadar('mistake') + countForRadar('blunder');
-    const anyErrorCount = countForRadar('inaccuracy') + seriousErrorCount;
     const bestOrBrilliant = countForRadar('brilliant') + countForRadar('best');
     const veryGoodOrBetter = bestOrBrilliant + countForRadar('veryGood');
     const goodOrBetter = veryGoodOrBetter + countForRadar('good') + countForRadar('ok');

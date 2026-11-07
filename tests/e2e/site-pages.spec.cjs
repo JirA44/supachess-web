@@ -888,16 +888,18 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/PLAYER_ANALYSIS.html', { waitUntil: 'domcontentloaded', timeout: 10000 });
   console.log('player analysis: page loaded');
+  const checks = page.locator('#games-list input[type="checkbox"]');
+  await expect(page.locator('#games-list .game-row')).toHaveCount(2, { timeout: 5000 });
+  await expect(checks.nth(0)).toBeDisabled({ timeout: 5000 });
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('chessnova:auth-state', {
     detail: { user: { displayName: 'Test User', email: 'test@example.com' } }
   })));
+  await expect(checks.nth(0)).toBeEnabled({ timeout: 5000 });
   await expect(page.locator('#radar-data-summary')).toContainText('1 partie(s), 1 demi-coups classés');
   await page.getByRole('button', { name: 'Historique' }).click({ timeout: 5000 });
   console.log('player analysis: history opened');
-  await expect(page.locator('#games-list .game-row')).toHaveCount(2, { timeout: 5000 });
   console.log('player analysis: two rows rendered');
 
-  const checks = page.locator('#games-list input[type="checkbox"]');
   await expect(checks.nth(0)).toBeChecked({ timeout: 5000 });
   await expect(checks.nth(1)).not.toBeChecked({ timeout: 5000 });
   console.log('player analysis: default selection verified');

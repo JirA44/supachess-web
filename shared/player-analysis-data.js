@@ -74,11 +74,34 @@
       .toLowerCase();
   }
 
+  function normalizePlayerName(name) {
+    return String(name || "").normalize("NFKC").trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+  }
+
+  function normalizePlayerColor(color) {
+    const value = String(color || "").trim().toLowerCase();
+    if (["w", "white", "blanc", "blancs"].includes(value)) return "w";
+    if (["b", "black", "noir", "noirs"].includes(value)) return "b";
+    return null;
+  }
+
   function resolveUserColor(game, headers) {
-    const explicit = game && game.userColor;
-    if (explicit === "w" || explicit === "b") return explicit;
-    const tagged = headers.SupaChessUserColor;
-    if (tagged === "w" || tagged === "b") return tagged;
+    const explicit = normalizePlayerColor(game && (game.userColor || game.playerColor || game.color));
+    if (explicit) return explicit;
+    const tagged = normalizePlayerColor(headers.SupaChessUserColor);
+    if (tagged) return tagged;
+
+    // Older saved games sometimes have playerName but no userColor. Recover the
+    // side only when that name matches exactly one PGN player; never guess.
+    const savedPlayerName = normalizePlayerName(game && (
+      game.playerName || game.userName || game.profileName || game.accountName
+    ));
+    if (savedPlayerName) {
+      const whiteMatches = savedPlayerName === normalizePlayerName(headers.White);
+      const blackMatches = savedPlayerName === normalizePlayerName(headers.Black);
+      if (whiteMatches !== blackMatches) return whiteMatches ? "w" : "b";
+    }
+
     if (/^(?:joueur|player)$/i.test(headers.White || "")) return "w";
     if (/^(?:joueur|player)$/i.test(headers.Black || "")) return "b";
     return null;

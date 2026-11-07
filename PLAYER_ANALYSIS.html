@@ -742,6 +742,7 @@ async function loadAllData() {
 }
 
 const PLAYER_ANALYSIS_SELECTION_KEY = 'supachess_player_analysis_selection_v1';
+const PLAYER_ANALYSIS_SELECTION_VERSION_KEY = 'supachess_player_analysis_selection_version_v1';
 const PLAYER_ANALYSIS_SCOPE_KEY = 'supachess_player_analysis_scope_v1';
 const PLAYER_ANALYSIS_SUBJECT_KEY = 'supachess_player_analysis_subject_v1';
 let profileGameSelection = {};
@@ -760,6 +761,23 @@ function loadProfileGameSelection() {
     }
     try { selectedProfilePlayer = localStorage.getItem(PLAYER_ANALYSIS_SUBJECT_KEY) || '__me__'; }
     catch (e) { selectedProfilePlayer = '__me__'; }
+    // Older versions could save a false checkbox for games that are now
+    // positively confirmed as unaided. Restore the expected default once;
+    // after this migration, the user's own checkbox changes remain respected.
+    try {
+        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '2') {
+            allGames.forEach(game => {
+                const id = String(game.id || '');
+                if (game.trainingAidsUsed === false &&
+                    Object.prototype.hasOwnProperty.call(profileGameSelection, id) &&
+                    profileGameSelection[id] === false) {
+                    delete profileGameSelection[id];
+                }
+            });
+            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '2');
+            persistProfileGameSelection();
+        }
+    } catch (e) {}
 }
 function loadProfileScope() {
     const allowedPeriods = new Set(['all', 'day', 'week', 'month', 'quarter', 'year']);

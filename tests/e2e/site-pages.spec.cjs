@@ -884,6 +884,7 @@ test('player analysis diagnoses only the selected games', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/PLAYER_ANALYSIS.html', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Historique' }).click();
   await expect(page.locator('#games-list .game-row')).toHaveCount(2);
 
   const checks = page.locator('#games-list input[type="checkbox"]');

@@ -813,7 +813,7 @@ function updateProfileScopeGameIds() {
 
 
 function normalizeProfilePlayerName(name) {
-    return String(name || '').normalize('NFKC').trim().replace(/\\s+/g, ' ').toLocaleLowerCase();
+    return String(name || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 }
 
 function profileCurrentIdentityNames() {

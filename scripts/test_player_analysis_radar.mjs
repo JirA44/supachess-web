@@ -54,6 +54,8 @@ const page = await readFile(new URL('../PLAYER_ANALYSIS.html', import.meta.url),
 assert.match(page, /const phase = m\.phase;/);
 assert.match(page, /gamePhaseCounts\.opening\+\+/);
 assert.match(page, /const bestOrBrilliant = countForRadar\('brilliant'\) \+ countForRadar\('best'\)/);
+assert.match(page, /const goodOrBetter = veryGoodOrBetter \+ countForRadar\('good'\);/);
+assert.doesNotMatch(page, /const goodOrBetter = .*countForRadar\('ok'\)/);
 assert.match(page, /radar-data-summary/);
 assert.doesNotMatch(page, /moveIdx < 8/);
 assert.doesNotMatch(page, /Ensure minimum scores/);

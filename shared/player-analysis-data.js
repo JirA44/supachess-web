@@ -123,7 +123,7 @@
   }
 
   function classifyPhaseFromFen(fen, fullMoveNumber) {
-    const placement = String(fen || "").split(/\\s+/)[0];
+    const placement = String(fen || "").split(" ")[0];
     if (!placement || !placement.includes("/")) return null;
     const pieces = placement.replace(/[1-8/]/g, "");
     const queens = (pieces.match(/[qQ]/g) || []).length;

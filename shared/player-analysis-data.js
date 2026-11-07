@@ -123,12 +123,13 @@
   }
 
   function classifyPhaseFromFen(fen, fullMoveNumber) {
-    const placement = String(fen || "").split(" ")[0];
+    const fields = String(fen || "").split(" ");
+    const placement = fields[0];
     if (!placement || !placement.includes("/")) return null;
     const pieces = placement.replace(/[1-8/]/g, "");
     const queens = (pieces.match(/[qQ]/g) || []).length;
     const rooksAndMinors = (pieces.match(/[rRnNbB]/g) || []).length;
-    const moveNumber = Number(fullMoveNumber) || 0;
+    const moveNumber = Number(fields[5]) || Number(fullMoveNumber) || 0;
     // Conservatively call it an endgame only once queens are gone and few
     // rooks/minors remain; otherwise keep late, non-endgame play in the middlegame.
     if (moveNumber >= 12 && queens === 0 && rooksAndMinors <= 6) return "endgame";

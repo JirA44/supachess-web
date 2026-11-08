@@ -9,6 +9,7 @@
   const PLAYED_KEY = "supachess_games";
   const REVIEWED_KEY = "supachess_reviewed_pgns";
   const LEGACY_KEY = "chessnova_pro_data";
+  const AID_OVERRIDE_KEY = "supachess_player_analysis_aid_overrides_v1";
   const GRADE_RATINGS = {
     brilliant: 10,
     best: 9.5,
@@ -387,7 +388,22 @@
     }
     const currentPlayed = readArray(store, PLAYED_KEY);
     const playedRaw = currentPlayed.length ? currentPlayed : readLegacyGames(store);
-    const localGames = playedRaw.map((game, index) => normalizePlayedGame(game, index, ChessClass)).filter(Boolean);
+    const aidOverrides = (() => {
+      try {
+        const parsed = JSON.parse(store.getItem(AID_OVERRIDE_KEY) || "{}");
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch (_) { return {}; }
+    })();
+    const localGames = playedRaw.map((game, index) => {
+      const normalized = normalizePlayedGame(game, index, ChessClass);
+      if (!normalized) return null;
+      const override = aidOverrides[String(normalized.id)];
+      if (override === true || override === false) {
+        normalized.trainingAidsUsed = override;
+        normalized.trainingAidsEvidence = "Statut confirmé par le joueur";
+      }
+      return normalized;
+    }).filter(Boolean);
     const reviewedGames = readArray(store, REVIEWED_KEY)
       .map((game, index) => normalizeReviewedGame(game, index, ChessClass))
       .filter((game) => game && game.pgn);

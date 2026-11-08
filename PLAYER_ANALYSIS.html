@@ -262,6 +262,11 @@
         .analysis-selection-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
         .analysis-selection-actions button { border:1px solid rgba(0,217,255,.35); border-radius:7px; padding:8px 11px; background:rgba(0,217,255,.08); color:#dffaff; cursor:pointer; }
         .analysis-selection-actions button:hover { background:rgba(0,217,255,.16); }
+        .profile-games-selection-list { display:grid; gap:7px; margin:12px 0; }
+        .profile-game-choice { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid rgba(0,217,255,.22); border-radius:8px; background:rgba(0,0,0,.18); color:#e8f3fb; cursor:pointer; }
+        .profile-game-choice input { width:20px; height:20px; flex:0 0 auto; accent-color:#00d9ff; cursor:pointer; }
+        .profile-game-choice span { flex:1; }
+        .profile-game-choice small { color:#aec0cf; }
         .aid-filter-btn { padding:6px 12px; border:1px solid rgba(255,255,255,.2); border-radius:20px; background:none; color:#c9d5e0; cursor:pointer; font-size:.85rem; }
         .aid-filter-btn:hover,.aid-filter-btn.active { border-color:#00d9ff; color:#00d9ff; background:rgba(0,217,255,.09); }
         .game-selection { display:flex; flex-direction:column; align-items:flex-start; min-width:116px; gap:3px; color:#ddd; }
@@ -384,6 +389,7 @@
         <div class="card" id="profile-game-selection-card">
             <h3>Parties prises en compte dans ton profil</h3>
             <p id="profile-selection-summary" class="analysis-selection-summary" aria-live="polite">Chargement des parties analysables…</p>
+            <div id="profile-games-selection-list" class="profile-games-selection-list" aria-label="Choisir les parties du profil"></div>
             <div class="analysis-selection-actions">
                 <button type="button" onclick="selectUnaidedProfileGames()">Inclure toutes les parties sans aides confirmées</button>
                 <button type="button" onclick="switchTab('history')">Choisir les parties une par une</button>
@@ -704,7 +710,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14867"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14868"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -935,6 +941,28 @@ function profileMovesForSelectedGames() {
         .filter(moves => moves.length > 0);
 }
 
+function renderProfileGameSelectionControls() {
+    const host = document.getElementById('profile-games-selection-list');
+    if (!host) return;
+    const eligible = allGames.map((game, index) => ({ game, index }))
+        .filter(item => isProfileGameEligible(item.game));
+    if (!eligible.length) {
+        host.innerHTML = '<p style="margin:0;color:#aab5c0;">Aucune partie avec des coups classés n’est disponible pour ce joueur.</p>';
+        return;
+    }
+    host.innerHTML = eligible.map(({ game, index }) => {
+        const checked = isProfileGameIncluded(game);
+        const playerColor = getProfileGamePlayerColor(game);
+        const opponentColor = playerColor === 'w' ? 'b' : playerColor === 'b' ? 'w' : null;
+        const opponent = escapePlayerText(getProfileGamePlayerName(game, opponentColor) || game.opponent || 'Partie');
+        const aid = game.trainingAidsUsed === false ? 'Sans aide confirmée' :
+            game.trainingAidsUsed === true ? 'Aides utilisées' : 'Statut des aides à confirmer';
+        return '<label class="profile-game-choice"><input type="checkbox" ' + (checked ? 'checked' : '') +
+            ' onchange="togglePlayerAnalysisGame(' + index + ', this.checked)" aria-label="Inclure ' + opponent +
+            ' dans le profil"><span>' + opponent + '</span><small>' + aid + '</small></label>';
+    }).join('');
+}
+
 function updateProfileGameSelectionSummary() {
     const summary = document.getElementById('analysis-selection-summary');
     const profileSummary = document.getElementById('profile-selection-summary');
@@ -955,6 +983,7 @@ function updateProfileGameSelectionSummary() {
         '. Les parties aidées ou indéterminées sont exclues par défaut. Coche une partie dans Historique pour l’ajouter ou la retirer.';
     if (summary) summary.textContent = text;
     if (profileSummary) profileSummary.textContent = text;
+    renderProfileGameSelectionControls();
 }
 
 function refreshSelectedPlayerAnalysis() {

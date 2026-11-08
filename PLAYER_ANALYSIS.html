@@ -395,7 +395,13 @@
                 <button type="button" onclick="switchTab('history')">Choisir les parties une par une</button>
                 <button type="button" onclick="selectAllProfileGames()">Inclure toutes les parties, aides comprises</button>
             </div>
-            <p style="margin:0;color:#aab5c0;font-size:.82rem;">Par défaut, seules les parties confirmées sans aides alimentent le profil. Les choix manuels restent enregistrés. La période « Tout l’historique » et la limite « 0 = toutes » incluent toutes les parties analysables du joueur.</p>
+            <div style="margin-top:14px;padding:14px;border:1px solid #31546b;border-radius:12px;background:#0c1c29;">
+                <strong>Analyser les parties encore sans analyse</strong>
+                <p style="margin:6px 0 10px;color:#aab5c0;">Stockfish local évaluera les parties enregistrées sans demi-coups notés, puis le profil de style sera recalculé. Laisse SupaChess ouvert jusqu’au retour automatique.</p>
+                <button type="button" class="profile-diagnostic-button" onclick="startProfileUnanalyzedBatch()">Analyser toutes les parties non analysées</button>
+                <p id="profile-batch-analysis-status" role="status" aria-live="polite" style="margin:8px 0 0;color:#cbd5e1;"></p>
+            </div>
+            <p style="margin:10px 0 0;color:#aab5c0;font-size:.82rem;">Par défaut, seules les parties confirmées sans aides alimentent le profil. Les choix manuels restent enregistrés. La période « Tout l’historique » et la limite « 0 = toutes » incluent toutes les parties analysables du joueur.</p>
         </div>
         <div id="no-data-style" class="no-data" style="display:none;">
             <div class="icon">♟</div>
@@ -710,7 +716,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14869"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14870"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -909,6 +915,70 @@ function selectProfileAnalysisPlayer(playerId) {
     selectedProfilePlayer = valid ? playerId : '__me__';
     try { localStorage.setItem(PLAYER_ANALYSIS_SUBJECT_KEY, selectedProfilePlayer); } catch (e) {}
     refreshSelectedPlayerAnalysis();
+}
+
+function startProfileUnanalyzedBatch() {
+    const status = document.getElementById('profile-batch-analysis-status');
+    if (selectedProfilePlayer !== '__me__') {
+        if (status) status.textContent = 'Choisis « Moi » pour analyser les parties enregistrées sur ce compte.';
+        return false;
+    }
+    const candidates = allGames.filter(game => {
+        if (!game || game.reviewedPGN || typeof game.pgn !== 'string' || !game.pgn.trim() ||
+            !Array.isArray(game.history) || !game.history.length) return false;
+        const color = getProfileGamePlayerColor(game);
+        return !!color && !game.history.some(move => move.color === color && move.rated);
+    });
+    if (!candidates.length) {
+        if (status) status.textContent = 'Aucune partie non analysée disponible pour ce joueur.';
+        return false;
+    }
+    const token = 'profile-batch-' + Date.now().toString(36);
+    const items = candidates.map(game => {
+        const color = getProfileGamePlayerColor(game);
+        const trainingAidsUsed = game.trainingAidsUsed;
+        return {
+            pgn: game.pgn,
+            headers: {
+                White: game.whitePlayer || 'Blancs',
+                Black: game.blackPlayer || 'Noirs',
+                Result: game.result || '*',
+                SupaChessSourceGameId: String(game.id || ''),
+                SupaChessUserColor: color,
+                SupaChessTrainingAidsUsed: typeof trainingAidsUsed === 'boolean' ? String(trainingAidsUsed) : '',
+                SupaChessUnassistedMode: trainingAidsUsed === false ? 'true' : 'false',
+            },
+        };
+    });
+    const batch = {
+        token, status: 'queued', items, nextIndex: 0, completed: 0,
+        returnUrl: window.location.origin + '/supachess-web/PLAYER_ANALYSIS.html',
+        createdAt: new Date().toISOString(),
+    };
+    try {
+        localStorage.setItem('supachess_profile_analysis_batch_v1', JSON.stringify(batch));
+    } catch (error) {
+        if (status) status.textContent = 'Impossible de préparer le lot : espace de stockage local insuffisant.';
+        return false;
+    }
+    if (status) status.textContent = items.length + ' partie(s) prête(s). Ouverture de SupaChess pour l’analyse Stockfish locale…';
+    window.location.href = 'https://jira44.github.io/supachess/index.html?profile-analysis-batch=' + encodeURIComponent(token);
+    return true;
+}
+
+function showProfileBatchResult() {
+    const status = document.getElementById('profile-batch-analysis-status');
+    if (!status) return;
+    const token = new URLSearchParams(window.location.search).get('analysis-batch');
+    if (!token) return;
+    try {
+        const result = JSON.parse(localStorage.getItem('supachess_profile_analysis_batch_result_v1') || 'null');
+        if (!result || result.token !== token) return;
+        status.textContent = result.status === 'completed'
+            ? 'Analyse terminée : ' + result.completed + '/' + result.total + ' partie(s). Le profil a été actualisé avec les coups évalués.'
+            : 'Analyse partielle : ' + result.completed + '/' + result.total + ' partie(s) terminée(s). ' +
+              (result.error || 'Relance le bouton pour reprendre les parties encore sans analyse.');
+    } catch (_) {}
 }
 
 function isProfileGameEligible(game) {
@@ -3010,6 +3080,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadProfileScope();
     renderProfilePlayerOptions();
     refreshSelectedPlayerAnalysis();
+    showProfileBatchResult();
 });
 </script>
 

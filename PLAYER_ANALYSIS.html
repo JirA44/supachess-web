@@ -701,7 +701,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14865"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14866"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -984,8 +984,7 @@ function refreshSelectedPlayerAnalysis() {
     updateProfileGameSelectionSummary();
 }
 
-function ensureGameIsInProfileScope(game) {
-    if (currentScopeGameIds.has(String(game.id || ''))) return;
+function resetProfileScopeToAll() {
     profileScope = { period: 'all', maxGames: 0 };
     try { localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify(profileScope)); } catch (e) {}
     const period = document.getElementById('analysis-period-filter');
@@ -993,6 +992,11 @@ function ensureGameIsInProfileScope(game) {
     if (period) period.value = 'all';
     if (limit) limit.value = '';
     updateProfileScopeGameIds();
+}
+
+function ensureGameIsInProfileScope(game) {
+    if (currentScopeGameIds.has(String(game.id || ''))) return;
+    resetProfileScopeToAll();
 }
 
 function setProfileGameAidStatus(index, value) {
@@ -1037,11 +1041,12 @@ function selectMyUnaidedProfileGames() {
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
-    updateProfileScopeGameIds();
+    resetProfileScopeToAll();
     selectUnaidedProfileGames();
 }
 
 function selectUnaidedProfileGames() {
+    resetProfileScopeToAll();
     allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id))).forEach(game => {
         profileGameSelection[String(game.id)] = game.trainingAidsUsed === false;
     });
@@ -1108,6 +1113,7 @@ function launchUnaidedLevelDiagnostic() {
 }
 
 function selectAllProfileGames() {
+    resetProfileScopeToAll();
     allGames.filter(game => isProfileGameEligible(game) && currentScopeGameIds.has(String(game.id))).forEach(game => {
         profileGameSelection[String(game.id)] = true;
     });

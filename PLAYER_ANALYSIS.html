@@ -397,7 +397,7 @@
             </div>
             <div style="margin-top:14px;padding:14px;border:1px solid #31546b;border-radius:12px;background:#0c1c29;">
                 <strong>Analyser les parties encore sans analyse</strong>
-                <p style="margin:6px 0 10px;color:#aab5c0;">Stockfish local évaluera les parties enregistrées sans demi-coups notés, puis le profil de style sera recalculé. Laisse SupaChess ouvert jusqu’au retour automatique.</p>
+                <p style="margin:6px 0 10px;color:#aab5c0;">Stockfish local évalue automatiquement à l’ouverture du profil les parties enregistrées sans demi-coups notés, puis recalcule le profil. Tu peux aussi relancer l’analyse ici. Laisse SupaChess ouvert jusqu’au retour automatique.</p>
                 <button type="button" class="profile-diagnostic-button" onclick="startProfileUnanalyzedBatch()">Analyser toutes les parties non analysées</button>
                 <p id="profile-batch-analysis-status" role="status" aria-live="polite" style="margin:8px 0 0;color:#cbd5e1;"></p>
             </div>
@@ -782,7 +782,7 @@ function loadProfileGameSelection() {
     // profile selection states left them unchecked. Manual changes remain
     // respected after this one-time migration.
     try {
-        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '3') {
+        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '4') {
             allGames.forEach(game => {
                 const id = String(game.id || '');
                 if (game.trainingAidsUsed === false &&
@@ -791,7 +791,7 @@ function loadProfileGameSelection() {
                     delete profileGameSelection[id];
                 }
             });
-            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '3');
+            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '4');
             persistProfileGameSelection();
         }
     } catch (e) {}
@@ -3094,6 +3094,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     renderProfilePlayerOptions();
     refreshSelectedPlayerAnalysis();
     showProfileBatchResult();
+    const batchReturn = new URLSearchParams(window.location.search).has('analysis-batch');
+    if (!batchReturn && selectedProfilePlayer === '__me__') {
+        const queuedBatch = (() => {
+            try { return JSON.parse(localStorage.getItem('supachess_profile_analysis_batch_v1') || 'null'); }
+            catch (_) { return null; }
+        })();
+        if (!queuedBatch || !['queued', 'running'].includes(queuedBatch.status)) {
+            const pendingCount = allGames.filter(game => {
+                if (!game || game.reviewedPGN || typeof game.pgn !== 'string' || !game.pgn.trim() ||
+                    !Array.isArray(game.history) || !game.history.length) return false;
+                const color = getProfileGamePlayerColor(game);
+                return !!color && !game.history.some(move => move.color === color && move.rated);
+            }).length;
+            if (pendingCount) startProfileUnanalyzedBatch();
+        } else if (queuedBatch.token) {
+            window.location.href = 'https://jira44.github.io/supachess/index.html?profile-analysis-batch=' +
+                encodeURIComponent(queuedBatch.token);
+        }
+    }
 });
 </script>
 

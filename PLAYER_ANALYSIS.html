@@ -772,11 +772,11 @@ function loadProfileGameSelection() {
     }
     try { selectedProfilePlayer = localStorage.getItem(PLAYER_ANALYSIS_SUBJECT_KEY) || '__me__'; }
     catch (e) { selectedProfilePlayer = '__me__'; }
-    // Older versions could save a false checkbox for games that are now
-    // positively confirmed as unaided. Restore the expected default once;
-    // after this migration, the user's own checkbox changes remain respected.
+    // Re-include all games explicitly confirmed as unaided after older
+    // profile selection states left them unchecked. Manual changes remain
+    // respected after this one-time migration.
     try {
-        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '2') {
+        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '3') {
             allGames.forEach(game => {
                 const id = String(game.id || '');
                 if (game.trainingAidsUsed === false &&
@@ -785,7 +785,7 @@ function loadProfileGameSelection() {
                     delete profileGameSelection[id];
                 }
             });
-            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '2');
+            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '3');
             persistProfileGameSelection();
         }
     } catch (e) {}

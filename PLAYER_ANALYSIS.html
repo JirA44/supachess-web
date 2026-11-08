@@ -784,16 +784,20 @@ function loadProfileGameSelection() {
     // profile selection states left them unchecked. Manual changes remain
     // respected after this one-time migration.
     try {
-        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '5') {
+        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '6') {
             allGames.forEach(game => {
                 const id = String(game.id || '');
-                if (game.trainingAidsUsed === false &&
-                    Object.prototype.hasOwnProperty.call(profileGameSelection, id) &&
-                    profileGameSelection[id] === false) {
+                const hasSavedChoice = Object.prototype.hasOwnProperty.call(profileGameSelection, id);
+                if (game.trainingAidsUsed === false && hasSavedChoice && profileGameSelection[id] === false) {
+                    // Confirmed no-aid games return to the default included state.
+                    delete profileGameSelection[id];
+                } else if (game.trainingAidsUsed !== false && hasSavedChoice) {
+                    // Remove stale inclusions for aided or unverified games. The user can still
+                    // include them explicitly with the "aides comprises" control afterward.
                     delete profileGameSelection[id];
                 }
             });
-            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '5');
+            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '6');
             localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify({ period: 'all', maxGames: 0 }));
             persistProfileGameSelection();
         }

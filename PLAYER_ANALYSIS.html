@@ -271,6 +271,9 @@
         .game-aid-status select { max-width:140px; padding:4px 6px; border:1px solid rgba(0,217,255,.35); border-radius:6px; background:#10202f; color:#fff; }
         .game-selection small { color:#aab5c0; font-size:.72rem; }
         .game-selection input:disabled { cursor:not-allowed; }
+        .game-include-toggle { margin-top:4px; padding:5px 9px; border:1px solid #00d9ff; border-radius:6px; background:rgba(0,217,255,.12); color:#e9fbff; font-weight:700; cursor:pointer; }
+        .game-include-toggle:hover { background:rgba(0,217,255,.24); }
+        .game-include-toggle:disabled { opacity:.45; cursor:not-allowed; }
         @media (max-width:600px) { .game-row { gap:8px; padding:10px; } .game-selection { min-width:88px; } .game-selection small { max-width:100px; } }
 
         /* History */
@@ -701,7 +704,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14866"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14867"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2362,6 +2365,7 @@ function renderGamesList(filter) {
         const inScope = currentScopeGameIds.has(String(g.id || ''));
         const checked = eligible && inScope && isProfileGameIncluded(g) ? 'checked' : '';
         const disabled = eligible ? '' : 'disabled';
+        const includeButtonLabel = checked ? 'Retirer du profil' : 'Inclure au profil';
         const selectionLabel = !eligible
             ? (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur · ' + aidLabel : 'Non analysable pour ce joueur · ' + aidLabel)
             : aidLabel + ' · ' + aidEvidence + (inScope ? '' : ' · hors période : la sélectionner élargira la période');
@@ -2382,6 +2386,7 @@ function renderGamesList(filter) {
                 <div class="game-selection" onclick="event.stopPropagation()">
                     <label><input type="checkbox" ${checked} ${disabled} onclick="event.stopPropagation()" onchange="togglePlayerAnalysisGame(${g.index}, this.checked)" aria-label="Sélectionner ${opponent} pour le diagnostic"><span>À diagnostiquer</span></label>
                     <small>${selectionLabel}</small>
+                    <button type="button" class="game-include-toggle" ${disabled} onclick="event.stopPropagation(); togglePlayerAnalysisGame(${g.index}, !isProfileGameIncluded(allGames[${g.index}]))">${includeButtonLabel}</button>
                     ${aidControl}
                 </div>
             </div>

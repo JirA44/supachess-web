@@ -361,21 +361,44 @@
     const pgn = String(raw.pgn || raw.PGN || "");
     const parsed = parsePgnMoves(pgn, ChessClass);
     const headers = Object.assign({}, parsed.headers, pgnHeaders(pgn));
-    const playerNames = [raw.white || headers.White, raw.black || headers.Black].filter(Boolean);
+    const color = resolveUserColor(raw, headers);
+    const grades = new Map();
+    (Array.isArray(raw.moveGrades) ? raw.moveGrades : []).forEach((grade) => {
+      if (grade && Number.isFinite(Number(grade.ply))) grades.set(Number(grade.ply), grade);
+    });
+    const history = parsed.moves.map((move, moveIndex) => {
+      const ply = moveIndex + 1;
+      const grade = grades.get(ply) || {};
+      const category = categoryFor(grade);
+      const rating = ratingFor(category);
+      return {
+        ply, color: move.color || (moveIndex % 2 === 0 ? "w" : "b"),
+        moveNum: Math.floor(moveIndex / 2) + 1,
+        san: move.san || String(grade.san || "?"),
+        rating, quality: GRADE_LABELS[category], category, rated: rating !== null,
+        lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
+        tactical: [], phase: normalizePhase(grade.phase) ||
+          (typeof Chess === "function" ? phasesFromParsedMoves(parsed, ChessClass, headers)[moveIndex] : null),
+      };
+    });
+    const evidence = resolveTrainingAidsEvidence(raw, headers, grades);
+    const whitePlayer = String(raw.white || headers.White || "Blancs");
+    const blackPlayer = String(raw.black || headers.Black || "Noirs");
     return {
+      ...raw,
       id: String(raw.id || "reviewed-pgn-" + index),
-      pgn,
+      pgn, userColor: color,
+      whitePlayer, blackPlayer,
       date: raw.analyzedAt || raw.date || "",
       result: headers.Result || raw.result || "*",
       pgnResult: headers.Result || raw.result || "*",
-      opponent: playerNames.length ? playerNames.join(" vs ") : "PGN analysé",
+      opponent: whitePlayer + " vs " + blackPlayer,
       moves: Math.ceil(parsed.moves.length / 2) || "?",
-      avgRating: null,
-      accuracy: null,
-      history: null,
+      avgRating: null, accuracy: null,
+      history, moveGrades: Array.isArray(raw.moveGrades) ? raw.moveGrades : [],
       reviewedPGN: true,
-      trainingAidsUsed: resolveTrainingAidsEvidence(raw, headers, new Map()).value,
-      trainingAidsEvidence: resolveTrainingAidsEvidence(raw, headers, new Map()).source,
+      trainingAidsUsed: evidence.value,
+      trainingAidsEvidence: evidence.source,
       analysis: raw.analysis || null,
       sourceLabel: "PGN analysé localement",
     };
@@ -407,6 +430,27 @@
     const reviewedGames = readArray(store, REVIEWED_KEY)
       .map((game, index) => normalizeReviewedGame(game, index, ChessClass))
       .filter((game) => game && game.pgn);
+    const reviewedByPgn = new Map(reviewedGames.map((game) => [normalizePgn(game.pgn), game]));
+    localGames.forEach((game, index) => {
+      const reviewed = reviewedByPgn.get(normalizePgn(game.pgn));
+      const color = game.userColor;
+      const localHasGrades = color && Array.isArray(game.history) &&
+        game.history.some((move) => move.color === color && move.rated);
+      const reviewedHasGrades = reviewed && Array.isArray(reviewed.moveGrades) &&
+        reviewed.moveGrades.some((grade) => grade && ratingFor(categoryFor(grade)) !== null);
+      if (!localHasGrades && reviewedHasGrades) {
+        const enriched = normalizePlayedGame({
+          ...game,
+          moveGrades: reviewed.moveGrades,
+          analysis: reviewed.analysis || game.analysis || null,
+        }, index, ChessClass);
+        if (enriched) {
+          enriched.trainingAidsUsed = game.trainingAidsUsed;
+          enriched.trainingAidsEvidence = game.trainingAidsEvidence;
+          localGames[index] = enriched;
+        }
+      }
+    });
     const seen = new Set(localGames.map((game) => normalizePgn(game.pgn)).filter(Boolean));
     const uniqueReviewed = reviewedGames.filter((game) => {
       const key = normalizePgn(game.pgn);

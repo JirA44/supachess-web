@@ -681,8 +681,10 @@
             .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[adresse masquée]")
             .replace(/https?:\/\/[^\s]+/gi, "[lien masqué]")
             .replace(/\b(?:api[_ -]?key|token|authorization|bearer)\s*[:=]?\s*\S+/gi, "[secret masqué]")
-            .replace(/\b(?:FEN|PGN)\s*[:=].*$/i, "[détails de position omis]")
-            .replace(/\b[a-h][1-8][a-h][1-8][qrbn]?\b/gi, "[coup]")
+            .replace(/\b(?:FEN|PGN)\b.*$/i, "[données d’échecs omises]")
+            .replace(/\[[^\]]+\]/g, "[données omises]")
+            .replace(/\b[prnbqk1-8]+(?:\/[prnbqk1-8]+){7}\b/gi, "[position omise]")
+            .replace(/\b(?:O-O(?:-O)?|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](?:=[QRBN])?[+#]?|[a-h][1-8][a-h][1-8][qrbn]?)\b/gi, "[coup]")
             .replace(/\s+/g, " ")
             .trim()
             .slice(0, 240);

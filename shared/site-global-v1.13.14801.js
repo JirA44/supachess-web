@@ -143,6 +143,14 @@
       });
     }).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
   }
+  function getSelectedLanguage() {
+    var stored = '';
+    try { stored = (localStorage.getItem('chessnova_lang') || '').slice(0, 2).toLowerCase(); } catch (_) {}
+    if (stored === 'fr' || stored === 'en') return stored;
+    var pageLanguage = (document.documentElement.lang || '').slice(0, 2).toLowerCase();
+    if (pageLanguage === 'fr' || pageLanguage === 'en') return pageLanguage;
+    return (navigator.language || 'en').slice(0, 2).toLowerCase() === 'fr' ? 'fr' : 'en';
+  }
   function addBackLinks() {
     if (!document.body || document.querySelector('.supachess-page-back')) return;
     var target = document.body.getAttribute('data-page-back-url') || root.href + 'index.html';
@@ -156,7 +164,7 @@
       var link = document.createElement('a');
       link.className = 'supachess-page-back supachess-page-back--' + position;
       link.href = target;
-      var selectedLang = (localStorage.getItem('chessnova_lang') || document.documentElement.lang || navigator.language || 'en').slice(0, 2).toLowerCase();
+      var selectedLang = getSelectedLanguage();
       link.textContent = selectedLang === 'fr' ? '← Page précédente' : '← Previous page';
       link.setAttribute('aria-label', selectedLang === 'fr' ? 'Revenir à la page précédente' : 'Return to the hub');
       return link;
@@ -184,8 +192,7 @@
   }
   function addSettingsLinks() {
     if (!document.body || document.querySelector('.supachess-global-settings')) return;
-    var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr')
-      || (localStorage.getItem('chessnova_lang') || '').slice(0, 2).toLowerCase() === 'fr';
+    var french = getSelectedLanguage() === 'fr';
     var nav = document.createElement('nav');
     nav.className = 'supachess-global-settings';
     nav.setAttribute('aria-label', french ? 'Réglages SupaChess' : 'SupaChess settings');
@@ -209,7 +216,7 @@
       button.className = 'supachess-language-button';
       button.textContent = language.toUpperCase();
       button.setAttribute('data-language', language);
-      button.setAttribute('aria-pressed', ((localStorage.getItem('chessnova_lang') || document.documentElement.lang || 'en').slice(0, 2).toLowerCase() === language) ? 'true' : 'false');
+      button.setAttribute('aria-pressed', (getSelectedLanguage() === language) ? 'true' : 'false');
       button.addEventListener('click', function () {
         function applyLanguage() {
           if (window.ChessNovaI18n && typeof window.ChessNovaI18n.switchLang === 'function') {
@@ -310,7 +317,7 @@
     label.className = 'supachess-site-version';
     label.setAttribute('data-supachess-version-label', '');
     label.setAttribute('aria-label', 'SupaChess site version ' + SITE_VERSION);
-    var french = (document.documentElement.lang || '').toLowerCase().startsWith('fr');
+    var french = getSelectedLanguage() === 'fr';
     label.textContent = (french ? 'Version du site : ' : 'Site version: ') + SITE_VERSION;
     var pagePath = (location.pathname || '/').replace(/\/$/, '').split('/').pop() || 'index.html';
     var pageLabel = document.createElement('span');
@@ -372,7 +379,7 @@
     button.type = 'button';
     button.className = 'supachess-eval-toggle';
     button.setAttribute('aria-pressed', 'false');
-    var isEnglish = /^en\b/i.test(document.documentElement.lang || '');
+    var isEnglish = getSelectedLanguage() === 'en';
     var panel = document.createElement('section');
     panel.id = 'supachess-optional-eval';
     panel.className = 'supachess-eval-panel';
@@ -682,7 +689,7 @@
     loader.onerror = function () {
       var warning = document.createElement('p');
       warning.setAttribute('role', 'status');
-      warning.textContent = (document.documentElement.lang || '').toLowerCase().startsWith('fr')
+      warning.textContent = getSelectedLanguage() === 'fr'
         ? 'Le protocole de vérification des échiquiers est indisponible.'
         : 'The chessboard validation protocol is unavailable.';
       warning.style.cssText = 'margin:12px auto;padding:10px;max-width:60rem;border:1px solid #b42318;color:#b42318;text-align:center';

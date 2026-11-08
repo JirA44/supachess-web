@@ -1401,3 +1401,5 @@
 .profile-learning-list li,.profile-learning-note{padding:8px 10px;border-left:3px solid #fbbf24;background:rgba(255,255,255,.045);color:#e5e7eb}
 .profile-learning-chart{display:block;width:100%;height:96px;padding:8px;border-radius:8px;background:rgba(255,255,255,.035)}
 @media(max-width:520px){#profile-box{padding:18px!important}.profile-learning-actions a{flex:1 1 100%}}
+
+.cn-footer-error-report-note { flex: 1 1 100%; max-width: 900px; color: #b8c4d8; font-size: 11px; line-height: 1.4; text-align: center; }

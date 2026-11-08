@@ -770,13 +770,18 @@
                     if (mutation.type === "characterData" && mutation.target.parentElement) nodes.push(mutation.target.parentElement);
                     if (mutation.type === "childList") nodes = nodes.concat(Array.from(mutation.addedNodes).filter(function (node) { return node.nodeType === 1; }));
                     nodes.forEach(function (node) {
-                        var selector = '[role="alert"], .error-message, .error-banner, .toast--error, [data-error="true"]';
+                        var selector = '[role="alert"], [role="status"], .error-message, .error-banner, .toast--error, [data-error="true"]';
                         var candidates = [];
                         if (node.matches && node.matches(selector)) candidates.push(node);
                         if (node.querySelectorAll) candidates = candidates.concat(Array.from(node.querySelectorAll(selector)));
                         candidates.forEach(function (el) {
                             var text = (el.innerText || el.textContent || "").trim();
-                            if (text && el.getClientRects().length) queueClientError("visible-message", text);
+                            var isStatusError = el.getAttribute("role") === "status" &&
+                                /erreur|impossible|échec|échou|indisponible|réessay|failed|error|unavailable|cannot|could not/i.test(text);
+                            if (text && el.getClientRects().length &&
+                                (el.getAttribute("role") !== "status" || isStatusError)) {
+                                queueClientError("visible-message", text);
+                            }
                         });
                     });
                 });

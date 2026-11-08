@@ -145,6 +145,32 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Authenticated client error reports contain only sanitized technical fields.
+    match /client_error_reports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'source', 'message', 'page', 'version', 'language', 'created_at'
+        ])
+        && request.resource.data.keys().hasAll([
+          'source', 'message', 'page', 'version', 'language', 'created_at'
+        ])
+        && request.resource.data.source in [
+          'toast', 'javascript', 'resource', 'promise', 'visible-message'
+        ]
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 240
+        && request.resource.data.page is string
+        && request.resource.data.page.matches('^/.*')
+        && !request.resource.data.page.matches('.*[?].*')
+        && !request.resource.data.page.matches('.*#.*')
+        && request.resource.data.version is string
+        && request.resource.data.version.size() <= 40
+        && request.resource.data.language in ['fr', 'en', 'unknown']
+        && request.resource.data.created_at == request.time;
+      allow read, update, delete: if false;
+    }
+
     // All other collections remain denied until their access patterns are
     // separately reviewed and given least-privilege rules.
   }

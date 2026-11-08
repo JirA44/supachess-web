@@ -431,6 +431,7 @@
   return {
     PLAYED_KEY,
     REVIEWED_KEY,
+    AID_OVERRIDE_KEY,
     GRADE_RATINGS,
     normalizePgn,
     parsePgnMoves,

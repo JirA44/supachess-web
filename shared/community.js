@@ -12,7 +12,7 @@
 (function () {
     'use strict';
 
-    var SITE_VERSION = '1.13.14801';
+    var SITE_VERSION = '1.13.14802';
     // Capture this script's URL now; init() may run after document.currentScript is cleared.
     var communityScriptUrl = document.currentScript ? document.currentScript.src : null;
 
@@ -131,6 +131,7 @@
 
                 auth.onAuthStateChanged(function (user) {
                     currentUser = user;
+                    if (user) flushClientErrorQueue();
                     if (user) recordRegisteredUser(user);
                     window.dispatchEvent(new CustomEvent('chessnova:auth-state', { detail: { user: user } }));
                     if (user && window.ChessNovaProgress && window.ChessNovaProgress.syncWithCloud) {
@@ -636,6 +637,7 @@
                 '<span class="cn-stat-value" id="cn-members-count">-</span>' +
             '</span>' +
             '<span class="cn-footer-brand" data-i18n="footer_brand">' + t('footer_brand') + '</span>' +
+            '<span class="cn-footer-error-report-note">' + (document.documentElement.lang === 'en' ? 'Visible technical errors are automatically sent to SupaChess when signed in. PGN, FEN, account identifiers and URL parameters are excluded.' : 'Les erreurs techniques visibles sont envoyées automatiquement à SupaChess lorsque tu es connecté. PGN, FEN, identifiants de compte et paramètres d’URL sont exclus.') + '</span>' +
             '<span class="cn-footer-stat" data-site-version><span data-i18n="footer_site_version">' + t('footer_site_version') + '</span> <span class="cn-stat-value">' + SITE_VERSION + '</span></span>';
         document.body.appendChild(footer);
 
@@ -669,8 +671,123 @@
         return new Intl.NumberFormat(locale).format(value);
     }
 
+    // --- Automatic, privacy-minimized client error reports ---
+    var CLIENT_ERROR_QUEUE_KEY = "supachess_client_error_queue_v1";
+    var recentClientErrorReports = Object.create(null);
+    var clientErrorFlushActive = false;
+
+    function sanitizeClientErrorMessage(value) {
+        return String(value || "Erreur sans détail")
+            .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[adresse masquée]")
+            .replace(/https?:\/\/[^\s]+/gi, "[lien masqué]")
+            .replace(/\b(?:api[_ -]?key|token|authorization|bearer)\s*[:=]?\s*\S+/gi, "[secret masqué]")
+            .replace(/\b(?:FEN|PGN)\s*[:=].*$/i, "[détails de position omis]")
+            .replace(/\b[a-h][1-8][a-h][1-8][qrbn]?\b/gi, "[coup]")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 240);
+    }
+
+    function readClientErrorQueue() {
+        try {
+            var queue = JSON.parse(localStorage.getItem(CLIENT_ERROR_QUEUE_KEY) || "[]");
+            return Array.isArray(queue) ? queue.slice(-20) : [];
+        } catch (_) { return []; }
+    }
+
+    function saveClientErrorQueue(queue) {
+        try { localStorage.setItem(CLIENT_ERROR_QUEUE_KEY, JSON.stringify(queue.slice(-20))); }
+        catch (_) {}
+    }
+
+    function queueClientError(source, rawMessage) {
+        var message = sanitizeClientErrorMessage(rawMessage);
+        if (!message) return;
+        var page = location.pathname.slice(0, 180);
+        var signature = page + "|" + message;
+        var now = Date.now();
+        if (recentClientErrorReports[signature] && now - recentClientErrorReports[signature] < 30000) return;
+        recentClientErrorReports[signature] = now;
+        var queue = readClientErrorQueue();
+        if (queue.some(function (item) { return item.signature === signature; })) return;
+        var language = document.documentElement.lang === "fr" ? "fr"
+            : document.documentElement.lang === "en" ? "en" : "unknown";
+        var versionMatch = document.body && document.body.innerText.match(/(?:Version(?: SupaChess| du site)?\s*:?\s*)(1\.\d+\.\d+)/i);
+        queue.push({
+            signature: signature,
+            source: source,
+            message: message,
+            page: page,
+            version: versionMatch ? versionMatch[1] : SITE_VERSION,
+            language: language
+        });
+        saveClientErrorQueue(queue);
+        flushClientErrorQueue();
+    }
+
+    function flushClientErrorQueue() {
+        if (clientErrorFlushActive || !db || !currentUser) return;
+        var queue = readClientErrorQueue();
+        if (!queue.length) return;
+        clientErrorFlushActive = true;
+        var item = queue[0];
+        db.collection("client_error_reports").add({
+            source: item.source,
+            message: item.message,
+            page: item.page,
+            version: item.version,
+            language: item.language,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function () {
+            var remaining = readClientErrorQueue();
+            remaining.shift();
+            saveClientErrorQueue(remaining);
+            clientErrorFlushActive = false;
+            flushClientErrorQueue();
+        }).catch(function (err) {
+            clientErrorFlushActive = false;
+            // Keep the sanitized report locally; never report reporter failures recursively.
+            console.warn("[Community] Automatic error report is waiting for Firestore access:", err && err.code);
+        });
+    }
+
+    function installClientErrorMonitoring() {
+        window.addEventListener("error", function (event) {
+            if (event && event.message) queueClientError("javascript", event.message);
+            else if (event && event.target && event.target !== window) {
+                queueClientError("resource", "Échec du chargement d’une ressource");
+            }
+        }, true);
+        window.addEventListener("unhandledrejection", function (event) {
+            var reason = event && event.reason;
+            queueClientError("promise", reason && reason.message ? reason.message : String(reason || "Promesse rejetée"));
+        });
+        window.addEventListener("online", flushClientErrorQueue);
+        if (typeof MutationObserver !== "undefined" && document.documentElement) {
+            var observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    var nodes = [];
+                    if (mutation.type === "characterData" && mutation.target.parentElement) nodes.push(mutation.target.parentElement);
+                    if (mutation.type === "childList") nodes = nodes.concat(Array.from(mutation.addedNodes).filter(function (node) { return node.nodeType === 1; }));
+                    nodes.forEach(function (node) {
+                        var selector = '[role="alert"], .error-message, .error-banner, .toast--error, [data-error="true"]';
+                        var candidates = [];
+                        if (node.matches && node.matches(selector)) candidates.push(node);
+                        if (node.querySelectorAll) candidates = candidates.concat(Array.from(node.querySelectorAll(selector)));
+                        candidates.forEach(function (el) {
+                            var text = (el.innerText || el.textContent || "").trim();
+                            if (text && el.getClientRects().length) queueClientError("visible-message", text);
+                        });
+                    });
+                });
+            });
+            observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true });
+        }
+    }
+
     // --- Toast ---
     function showToast(msg, isError) {
+        if (isError) queueClientError("toast", msg);
         var existing = document.querySelector('.cn-toast');
         if (existing) existing.remove();
 
@@ -1580,6 +1697,7 @@
             document.body.appendChild(progressScript);
         }
         initKeyboardNav();
+        installClientErrorMonitoring();
         var firebaseReady = initFirebase();
         if (firebaseReady) {
             trackVisit();

@@ -442,7 +442,8 @@
                     <div id="style-result">
                         <div id="style-badge-container"></div>
                         <p id="style-description" style="margin-top: 12px; color: #ccc; line-height: 1.6;"></p>
-                        <p style="margin-top: 12px; color: #9daab5; line-height: 1.5;">Description provisoire des tendances observées dans les parties sélectionnées. Elle ne signifie pas que votre style est comparable à celui d’un grand maître.</p>
+                        <p style="margin-top: 12px; color: #9daab5; line-height: 1.5;">Le profil donne une première tendance dès qu’une partie est analysée, puis l’affine avec les parties sans aides. Il décrit les coups observés et ne prétend pas connaître votre réflexion intérieure.</p>
+                        <div id="style-evolution" class="radar-note" aria-live="polite" style="margin-top:14px;"></div>
                     </div>
                     <div style="margin-top: 20px;">
                         <h3>Répartition des demi-coups</h3>
@@ -2051,6 +2052,7 @@ function renderStyleTab(result) {
     document.getElementById('style-badge-container').innerHTML =
         `<div class="style-badge ${style.class}">${style.name}</div>`;
     document.getElementById('style-description').textContent = style.description;
+    renderStyleEvolution(result);
     const gmComparison = document.getElementById('gm-comparison');
     if (gmComparison) gmComparison.replaceChildren();
     renderMoveDistribution();
@@ -2159,6 +2161,103 @@ function ensureMoveDistributionControls() {
     }
     root.querySelectorAll('button[data-window-key]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.windowKey === selectedMoveDistributionWindow)));
     return root;
+}
+
+function renderStyleEvolution(result) {
+    const host = document.getElementById('style-evolution');
+    if (!host) return;
+
+    let lessonProgress = {};
+    try {
+        const saved = JSON.parse(localStorage.getItem('supachess-book-lessons-v1') || '{}');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) lessonProgress = saved;
+    } catch (_) {}
+
+    const lessonRecords = Object.values(lessonProgress).filter(record => record && typeof record === 'object');
+    const completedLessons = lessonRecords.filter(record => record.completed || Number(record.completions) > 0).length;
+    const integratedLessons = lessonRecords.filter(record =>
+        record.review && (record.review.mastered === true || Number(record.review.streak) >= 3)
+    ).length;
+
+    const gamesById = new Map(allGames.map(game => [String(game.id || ''), game]));
+    const selectedGames = playerMovesByGame.map(moves => {
+        const gameId = String(moves[0] && moves[0].sourceGameId || '');
+        const game = gamesById.get(gameId);
+        return game ? { game, moves, timestamp: profileGameTimestamp(game) } : null;
+    }).filter(item => item && item.moves.length && Number.isFinite(item.timestamp))
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    const confirmedUnaided = selectedGames.filter(item => item.game.trainingAidsUsed === false);
+    const sample = confirmedUnaided.length ? confirmedUnaided : selectedGames;
+    const sourceLabel = confirmedUnaided.length
+        ? 'parties confirmées sans aides'
+        : 'parties sélectionnées; statut sans aides non confirmé';
+    const sampleCount = sample.length;
+
+    function summarize(group) {
+        const moves = group.flatMap(item => item.moves).filter(move => move && move.rated);
+        if (!moves.length) return { moves: 0, goodRate: null, errorRate: null };
+        const good = moves.filter(move => ['brilliant', 'best', 'very-good', 'good'].includes(profileMoveType(move))).length;
+        const errors = moves.filter(move => ['inaccuracy', 'mistake', 'blunder'].includes(profileMoveType(move))).length;
+        return { moves: moves.length, goodRate: good * 100 / moves.length, errorRate: errors * 100 / moves.length };
+    }
+    const pct = value => value === null
+        ? '—'
+        : Number(value).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+    const startCount = Math.floor(sampleCount / 2);
+    const early = sample.slice(0, Math.max(1, startCount));
+    const recent = sampleCount > 1 ? sample.slice(Math.max(1, startCount)) : sample;
+    const earlyStats = summarize(early);
+    const recentStats = summarize(recent);
+    const earlyStyle = early.length ? analyzeStyle(early.map(item => item.moves))?.style : null;
+    const recentStyle = recent.length ? analyzeStyle(recent.map(item => item.moves))?.style : result.style;
+    const confidence = sampleCount === 1
+        ? 'Première indication · 1 partie'
+        : sampleCount < 5
+            ? 'Tendance initiale · ' + sampleCount + ' parties'
+            : 'Tendance affinée · ' + sampleCount + ' parties';
+
+    let evolution;
+    if (sampleCount === 1) {
+        evolution = '<p style="margin:8px 0">Tendance de départ : <strong>' + escapePlayerText(recentStyle && recentStyle.name || result.style.name) +
+            '</strong>. Une partie suffit à poser un premier repère; chaque nouvelle partie sans aides permettra de voir si cette tendance se confirme ou évolue.</p>';
+    } else {
+        const earlyName = earlyStyle && earlyStyle.name || 'profil initial';
+        const recentName = recentStyle && recentStyle.name || 'profil récent';
+        const deltaGood = earlyStats.goodRate === null || recentStats.goodRate === null
+            ? null : recentStats.goodRate - earlyStats.goodRate;
+        const deltaErrors = earlyStats.errorRate === null || recentStats.errorRate === null
+            ? null : recentStats.errorRate - earlyStats.errorRate;
+        let feedback = 'Les tendances sont comparées entre la première moitié et la période récente de l’échantillon.';
+        if (deltaGood !== null && deltaGood >= 1 && deltaErrors !== null && deltaErrors <= 0) {
+            feedback = 'Bravo : la part de coups bons ou meilleurs progresse, et les imprécisions, erreurs et gaffes ne progressent pas dans cette comparaison.';
+        } else if (deltaGood !== null && deltaGood >= 3) {
+            feedback = 'Bravo : la part de coups classés bons ou meilleurs progresse dans les parties récentes.';
+        } else if (deltaErrors !== null && deltaErrors <= -3) {
+            feedback = 'Bravo : la part d’imprécisions, erreurs et gaffes recule dans les parties récentes.';
+        }
+        evolution = '<p style="margin:8px 0"><strong>Évolution du style :</strong> ' + escapePlayerText(earlyName) + ' → ' +
+            escapePlayerText(recentName) + '.</p><p style="margin:8px 0">Coups bons ou meilleurs : ' + pct(earlyStats.goodRate) +
+            ' → ' + pct(recentStats.goodRate) + ' · imprécisions, erreurs et gaffes : ' + pct(earlyStats.errorRate) +
+            ' → ' + pct(recentStats.errorRate) + ' · ' + escapePlayerText(feedback) + '</p>';
+    }
+
+    let learning;
+    if (integratedLessons > 0) {
+        learning = '<p style="margin:10px 0 0"><strong>Bravo : ' + integratedLessons +
+            (integratedLessons === 1 ? ' leçon consolidée.' : ' leçons consolidées.') +
+            '</strong> La réussite a été répétée sans aide dans des positions différentes; c’est un signe concret de transfert du concept.</p>';
+    } else if (completedLessons > 0) {
+        learning = '<p style="margin:10px 0 0">' + completedLessons +
+            (completedLessons === 1 ? ' leçon terminée.' : ' leçons terminées.') +
+            ' Les révisions sur des positions différentes permettront de confirmer que les notions sont intégrées.</p>';
+    } else {
+        learning = '<p style="margin:10px 0 0">Les leçons et leurs révisions sur positions différentes apparaîtront ici lorsqu’elles auront été enregistrées.</p>';
+    }
+
+    host.innerHTML = '<strong>' + confidence + '</strong> · ' + sampleCount + ' ' +
+        escapePlayerText(sourceLabel) + ', ' + sample.reduce((sum, item) => sum + item.moves.length, 0) +
+        ' demi-coups classés.' + evolution + learning;
 }
 
 function renderMoveDistribution() {

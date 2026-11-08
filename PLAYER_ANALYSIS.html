@@ -1883,12 +1883,63 @@ function renderStyleTab(result) {
     const goodOrBetter = veryGoodOrBetter + countForRadar('good');
     const noInaccuracy = totalMovesForRadar - countForRadar('inaccuracy') - countForRadar('mistake') - countForRadar('blunder');
     const noMajorError = totalMovesForRadar - countForRadar('mistake') - countForRadar('blunder');
+    const ratedRadarMoves = playerMovesByGame.flat().filter(move =>
+        move && move.rated && Number.isFinite(Number(move.rating))
+    );
+    const forcingRadarMoves = ratedRadarMoves.filter(move => {
+        const san = String(move.san || '').trim();
+        const lossCp = Number(move.lossCp);
+        return /[x+#=]/.test(san) || (Number.isFinite(lossCp) && lossCp >= 30);
+    });
+    const middleRadarMoves = ratedRadarMoves.filter(move => move.phase === 'middle');
+    const quietMiddleRadarMoves = middleRadarMoves.filter(move => !/[x+#=]/.test(String(move.san || '').trim()));
+    const axisGameCount = samples => new Set(samples.map(move => String(move.sourceGameId || '')).filter(Boolean)).size;
+    const averageMoveQuality = samples => samples.length
+        ? Math.max(0, Math.min(100, samples.reduce((sum, move) => sum + Number(move.rating), 0) * 10 / samples.length))
+        : null;
+    const goodOrBetterRate = samples => samples.length
+        ? samples.filter(move => Number(move.rating) >= 8).length * 100 / samples.length
+        : null;
+    const useFallback = forcingRadarMoves.length < 5;
+    const tacticalSamples = useFallback ? ratedRadarMoves : forcingRadarMoves;
+    const calculationSamples = useFallback ? ratedRadarMoves : forcingRadarMoves;
+    const planningSamples = quietMiddleRadarMoves.length >= 5 ? quietMiddleRadarMoves : middleRadarMoves;
+    const anticipationSamples = ratedRadarMoves;
+    const competencyAxes = [
+        {
+            label: 'Tactique · partie',
+            samples: tacticalSamples,
+            score: goodOrBetterRate(tacticalSamples),
+            method: useFallback
+                ? 'Indicateur indirect : part des coups classés bons ou meilleurs sur l’ensemble des coups évalués, faute de cinq signaux tactiques identifiables.'
+                : 'Part des coups classés bons ou meilleurs après un signal observable : prise, échec, promotion ou perte d’au moins 30 centipions.'
+        },
+        {
+            label: 'Plans · milieu',
+            samples: planningSamples,
+            score: averageMoveQuality(planningSamples),
+            method: 'Qualité des coups classés dans les positions calmes du milieu de partie; indicateur de résultat, pas preuve du plan pensé.'
+        },
+        {
+            label: 'Calcul · partie',
+            samples: calculationSamples,
+            score: averageMoveQuality(calculationSamples),
+            method: useFallback
+                ? 'Indicateur indirect : qualité moyenne de tous les coups classés, faute de cinq positions de calcul forcé identifiables.'
+                : 'Qualité Stockfish dans les positions avec un signal de calcul observable : prise, échec, promotion ou perte d’au moins 30 centipions.'
+        },
+        {
+            label: 'Anticipation · réponses',
+            samples: anticipationSamples,
+            score: averageMoveQuality(anticipationSamples),
+            method: 'Qualité des coups classés joués après les coups adverses; indicateur de réponse, sans prétendre connaître la réflexion interne.'
+        }
+    ];
     const radarLabels = [
         'Ouverture', 'Milieu de partie', 'Finales détectées',
         'Précision moyenne', 'Brillant ou meilleur', 'Très bon ou mieux',
         'Bon ou mieux', 'Sans imprécision', 'Sans erreur ni gaffe',
-        'Tactique · à mesurer', 'Plans · à mesurer',
-        'Calcul · à mesurer', 'Anticipation · à mesurer'
+        ...competencyAxes.map(axis => axis.label + ' · ' + axis.samples.length)
     ];
     const radarValues = [
         phaseValue('opening', result.phaseAccuracy.opening),
@@ -1900,7 +1951,7 @@ function renderStyleTab(result) {
         totalMovesForRadar ? goodOrBetter * 100 / totalMovesForRadar : null,
         totalMovesForRadar ? noInaccuracy * 100 / totalMovesForRadar : null,
         totalMovesForRadar ? noMajorError * 100 / totalMovesForRadar : null,
-        null, null, null, null
+        ...competencyAxes.map(axis => axis.score)
     ];
     const radarSamples = [
         result.phaseAccuracy.counts.opening,
@@ -1909,7 +1960,7 @@ function renderStyleTab(result) {
         totalMovesForRadar,
         totalMovesForRadar, totalMovesForRadar, totalMovesForRadar,
         totalMovesForRadar, totalMovesForRadar,
-        0, 0, 0, 0
+        ...competencyAxes.map(axis => axis.samples.length)
     ];
     const radarGameSamples = [
         result.phaseAccuracy.gameCounts.opening,
@@ -1918,14 +1969,26 @@ function renderStyleTab(result) {
         result.totalGames,
         result.totalGames, result.totalGames, result.totalGames,
         result.totalGames, result.totalGames,
-        0, 0, 0, 0
+        ...competencyAxes.map(axis => axisGameCount(axis.samples))
+    ];
+    const radarMethods = [
+        'Coups évalués dans l’ouverture.',
+        'Coups évalués dans le milieu de partie.',
+        'Coups classés dans les finales identifiées par les données.',
+        'Précision moyenne calculée à partir des coups classés.',
+        'Part des coups brillants ou meilleurs.',
+        'Part des coups très bons ou meilleurs.',
+        'Part des coups bons ou meilleurs.',
+        'Part des coups sans imprécision, erreur ou gaffe.',
+        'Part des coups sans erreur ni gaffe.',
+        ...competencyAxes.map(axis => axis.method)
     ];
     const radarSummary = document.getElementById('radar-data-summary');
     if (radarSummary) {
         radarSummary.textContent = 'Échantillon retenu : ' + result.totalGames + ' partie(s), ' + totalMovesForRadar +
             ' demi-coups classés. Phases mesurées : ouverture ' + radarSamples[0] + ' demi-coups (' + radarGameSamples[0] +
             ' partie(s)), milieu ' + radarSamples[1] + ' (' + radarGameSamples[1] + '), finale détectée ' + radarSamples[2] +
-            ' (' + radarGameSamples[2] + ' partie(s)). Les axes de compétence tactique et de réflexion restent à mesurer par exercices.';
+            ' (' + radarGameSamples[2] + ' partie(s)). Tactique, calcul, plans et anticipation ont aussi une première indication issue des coups classés; ces scores décrivent des résultats observés, pas le processus mental ni une maîtrise durable. Les exercices dédiés servent à confirmer les savoir-faire.';
     }
     radarChart = new Chart(ctx, {
         type: 'radar',
@@ -1962,12 +2025,11 @@ function renderStyleTab(result) {
                     callbacks: {
                         label: context => {
                             const index = context.dataIndex;
-                            if (context.raw == null) return context.label + (index < 3
-                                ? ' : aucune position de cette phase n’est mesurable dans l’échantillon'
-                                : ' : exercices dédiés requis');
+                            if (context.raw == null) return context.label + ' : échantillon insuffisant pour calculer un indicateur';
                             return context.label + ' : ' +
                                 Number(context.raw).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '/100 · ' +
-                                radarSamples[index] + ' demi-coups dans ' + radarGameSamples[index] + ' partie(s)';
+                                radarSamples[index] + ' demi-coups dans ' + radarGameSamples[index] + ' partie(s). ' +
+                                (radarMethods[index] || '');
                         }
                     }
                 }

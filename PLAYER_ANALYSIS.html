@@ -974,10 +974,23 @@ function showProfileBatchResult() {
     try {
         const result = JSON.parse(localStorage.getItem('supachess_profile_analysis_batch_result_v1') || 'null');
         if (!result || result.token !== token) return;
+        if (Array.isArray(result.gameIds) && result.gameIds.length) {
+            const includedNow = new Set(result.gameIds.map(String));
+            allGames.forEach(game => {
+                const id = String(game.id || '');
+                if (includedNow.has(id) && game.trainingAidsUsed === false &&
+                    Object.prototype.hasOwnProperty.call(profileGameSelection, id) &&
+                    profileGameSelection[id] === false) {
+                    delete profileGameSelection[id];
+                }
+            });
+            persistProfileGameSelection();
+            refreshSelectedPlayerAnalysis();
+        }
         status.textContent = result.status === 'completed'
-            ? 'Analyse terminée : ' + result.completed + '/' + result.total + ' partie(s). Le profil a été actualisé avec les coups évalués.'
+            ? 'Analyse terminée : ' + result.completed + '/' + result.total + ' partie(s). Le profil a été recalculé avec les coups évalués.'
             : 'Analyse partielle : ' + result.completed + '/' + result.total + ' partie(s) terminée(s). ' +
-              (result.error || 'Relance le bouton pour reprendre les parties encore sans analyse.');
+              (result.error || 'Relance le bouton pour analyser les parties restantes.');
     } catch (_) {}
 }
 

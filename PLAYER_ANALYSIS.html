@@ -776,13 +776,15 @@ function loadProfileGameSelection() {
     } catch (e) {
         profileGameSelection = {};
     }
-    try { selectedProfilePlayer = localStorage.getItem(PLAYER_ANALYSIS_SUBJECT_KEY) || '__me__'; }
-    catch (e) { selectedProfilePlayer = '__me__'; }
+    // Chaque nouvelle ouverture du profil commence par l’utilisateur connecté.
+    // Un joueur adverse peut toujours être choisi ensuite dans la liste.
+    selectedProfilePlayer = '__me__';
+    try { localStorage.setItem(PLAYER_ANALYSIS_SUBJECT_KEY, selectedProfilePlayer); } catch (e) {}
     // Re-include all games explicitly confirmed as unaided after older
     // profile selection states left them unchecked. Manual changes remain
     // respected after this one-time migration.
     try {
-        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '4') {
+        if (localStorage.getItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY) !== '5') {
             allGames.forEach(game => {
                 const id = String(game.id || '');
                 if (game.trainingAidsUsed === false &&
@@ -791,7 +793,7 @@ function loadProfileGameSelection() {
                     delete profileGameSelection[id];
                 }
             });
-            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '4');
+            localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '5');
             localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify({ period: 'all', maxGames: 0 }));
             persistProfileGameSelection();
         }

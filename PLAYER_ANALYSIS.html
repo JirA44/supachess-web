@@ -792,6 +792,7 @@ function loadProfileGameSelection() {
                 }
             });
             localStorage.setItem(PLAYER_ANALYSIS_SELECTION_VERSION_KEY, '4');
+            localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify({ period: 'all', maxGames: 0 }));
             persistProfileGameSelection();
         }
     } catch (e) {}

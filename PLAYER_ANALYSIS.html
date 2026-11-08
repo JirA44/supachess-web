@@ -710,7 +710,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14868"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14869"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2945,6 +2945,62 @@ function installProfileCorrectionLinks() {
 // ==========================================
 // INITIALIZATION
 // ==========================================
+function installReliableProfileSelectionEvents() {
+    if (document.documentElement.dataset.profileSelectionEvents === 'on') return;
+    document.documentElement.dataset.profileSelectionEvents = 'on';
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const includeButton = target.closest('.game-include-toggle');
+        if (includeButton) {
+            event.preventDefault(); event.stopImmediatePropagation();
+            const source = includeButton.getAttribute('onclick') || '';
+            const match = source.match(/togglePlayerAnalysisGame\((\d+),/);
+            const index = match ? Number(match[1]) : -1;
+            const game = allGames[index];
+            if (game) togglePlayerAnalysisGame(index, !isProfileGameIncluded(game));
+            return;
+        }
+        const actionButton = target.closest('.analysis-selection-actions button');
+        if (!actionButton) return;
+        const source = actionButton.getAttribute('onclick') || '';
+        let action = null;
+        if (source.includes('selectMyUnaidedProfileGames')) action = selectMyUnaidedProfileGames;
+        else if (source.includes('selectUnaidedProfileGames')) action = selectUnaidedProfileGames;
+        else if (source.includes('selectAllProfileGames')) action = selectAllProfileGames;
+        else if (source.includes('launchSelectedGamesDiagnostic')) action = launchSelectedGamesDiagnostic;
+        else if (source.includes('launchUnaidedLevelDiagnostic')) action = launchUnaidedLevelDiagnostic;
+        else if (source.includes('selectProfileGamesByAidStatus(true)')) action = function() { selectProfileGamesByAidStatus(true); };
+        else if (source.includes('selectProfileGamesByAidStatus(null)')) action = function() { selectProfileGamesByAidStatus(null); };
+        else if (source.includes('resetProfileGameSelection')) action = resetProfileGameSelection;
+        else if (source.includes("switchTab('history')")) action = function() { switchTab('history'); };
+        if (!action) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        try { action(); } catch (error) {
+            const status = document.getElementById('selected-games-diagnostic-status');
+            if (status) status.textContent = 'Action impossible : ' + (error && error.message ? error.message : 'erreur inconnue');
+        }
+    }, true);
+    document.addEventListener('change', function(event) {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const handler = target.getAttribute('onchange') || '';
+        if (target.matches('input[type=checkbox]') && handler.includes('togglePlayerAnalysisGame')) {
+            const match = handler.match(/togglePlayerAnalysisGame\((\d+),/);
+            if (!match) return;
+            event.stopImmediatePropagation();
+            togglePlayerAnalysisGame(Number(match[1]), target.checked);
+            return;
+        }
+        if (target.matches('.game-aid-status select') && handler.includes('setProfileGameAidStatus')) {
+            const match = handler.match(/setProfileGameAidStatus\((\d+),/);
+            if (!match) return;
+            event.stopImmediatePropagation();
+            setProfileGameAidStatus(Number(match[1]), target.value);
+        }
+    }, true);
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     installProfileCorrectionLinks();
     const data = await loadAllData();

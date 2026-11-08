@@ -833,8 +833,7 @@ function updateProfileScopeFromControls() {
 
 function profileGameTimestamp(game) {
     const raw = game && (game.date || game.createdAt || game.analyzedAt || game.timestamp);
-    if (typeof raw === 'number' && Number.isFinite(raw)) return raw < 100000000000 ? raw * 1000 : raw;
-    const parsed = Date.parse(String(raw || ''));
+    const parsed = profileTimestampValue(raw);
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -1472,11 +1471,21 @@ function determineStyle(scores) {
         };
     }
 
+    const tendencies = [
+        { key: 'tactical', name: 'Tendance tactique observée', class: 'style-aggressive' },
+        { key: 'positional', name: 'Tendance positionnelle observée', class: 'style-positional' },
+        { key: 'defense', name: 'Tendance défensive observée', class: 'style-defensive' },
+        { key: 'aggression', name: 'Tendance dynamique observée', class: 'style-aggressive' }
+    ].sort((a, b) => (Number(scores[b.key]) || 0) - (Number(scores[a.key]) || 0));
+    const strongest = tendencies[0];
+    const second = tendencies[1];
+    const hasClearLead = (Number(scores[strongest.key]) || 0) > (Number(scores[second.key]) || 0);
     return {
-        name: 'En Developpement',
-        class: 'style-universal',
-        description: 'Votre style est encore en formation. Continuez a jouer pour affiner votre profil. Explorez differentes approches pour trouver votre identite echiquenne.',
-        gm: { name: 'Bobby Fischer', icon: '👑', desc: 'Le Genie - Perfectionniste absolu, le meilleur coup dans chaque position' }
+        name: hasClearLead ? strongest.name : 'Tendance équilibrée observée',
+        class: hasClearLead ? strongest.class : 'style-universal',
+        description: hasClearLead
+            ? 'Première tendance tirée des coups classés : l’axe ' + strongest.name.replace('Tendance ', '').replace(' observée', '').toLowerCase() + ' ressort le plus dans cet échantillon. Cette indication est provisoire et peut évoluer avec les prochaines parties.'
+            : 'Aucune dominante nette ne ressort encore des axes calculés; le profil affiche une première tendance équilibrée à partir des coups classés. Elle peut évoluer avec les prochaines parties.'
     };
 }
 
@@ -2081,24 +2090,41 @@ function profileMoveGamesForDistribution() {
     }).map((game, order) => {
         const color = getProfileGamePlayerColor(game);
         const moves = game.history.filter(move => move.color === color);
-        return { game, moves, order, timestamp: profileGameTimestamp(game.date) };
+        return { game, moves, order, timestamp: profileGameTimestamp(game) };
     }).filter(item => item.moves.length > 0);
 }
 
-function profileGameTimestamp(value) {
+function profileTimestampValue(value) {
     if (value instanceof Date) return value.getTime();
     if (value && typeof value === 'object') {
         if (typeof value.toDate === 'function') {
-            const date = value.toDate();
-            return date instanceof Date ? date.getTime() : NaN;
+            try {
+                const date = value.toDate();
+                if (date instanceof Date) return date.getTime();
+            } catch (_) {}
         }
         const seconds = Number(value.seconds !== undefined ? value.seconds : value._seconds);
         if (Number.isFinite(seconds)) return seconds * 1000;
     }
-    if (typeof value === 'number') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return value < 100000000000 ? value * 1000 : value;
     if (typeof value !== 'string' || !value.trim()) return NaN;
-    const asNumber = Number(value);
-    return Number.isFinite(asNumber) ? asNumber : new Date(value).getTime();
+    const text = value.trim();
+    const frenchDate = text.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (frenchDate) {
+        const day = Number(frenchDate[1]);
+        const month = Number(frenchDate[2]);
+        let year = Number(frenchDate[3]);
+        if (year < 100) year += year < 50 ? 2000 : 1900;
+        const hour = Number(frenchDate[4] || 0);
+        const minute = Number(frenchDate[5] || 0);
+        const second = Number(frenchDate[6] || 0);
+        const date = new Date(year, month - 1, day, hour, minute, second);
+        if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) return date.getTime();
+        return NaN;
+    }
+    const asNumber = Number(text);
+    if (Number.isFinite(asNumber)) return asNumber < 100000000000 ? asNumber * 1000 : asNumber;
+    return Date.parse(text);
 }
 
 function profileMoveType(move) {

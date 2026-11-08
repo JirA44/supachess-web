@@ -366,6 +366,7 @@
     (Array.isArray(raw.moveGrades) ? raw.moveGrades : []).forEach((grade) => {
       if (grade && Number.isFinite(Number(grade.ply))) grades.set(Number(grade.ply), grade);
     });
+    const parsedPhases = phasesFromParsedMoves(parsed, ChessClass, headers);
     const history = parsed.moves.map((move, moveIndex) => {
       const ply = moveIndex + 1;
       const grade = grades.get(ply) || {};
@@ -377,8 +378,7 @@
         san: move.san || String(grade.san || "?"),
         rating, quality: GRADE_LABELS[category], category, rated: rating !== null,
         lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
-        tactical: [], phase: normalizePhase(grade.phase) ||
-          (typeof Chess === "function" ? phasesFromParsedMoves(parsed, ChessClass, headers)[moveIndex] : null),
+        tactical: [], phase: normalizePhase(grade.phase) || parsedPhases[moveIndex] || null,
       };
     });
     const evidence = resolveTrainingAidsEvidence(raw, headers, grades);

@@ -671,7 +671,7 @@
                 <span>0 = toutes les parties sans aides confirmées dans la période.</span>
             </div>
             <h3>Diagnostic de parties</h3>
-            <p>Sélectionne les parties à diagnostiquer avec les cases de la liste, puis lance l’analyse. Le résultat de style et les lacunes seront calculés uniquement à partir des parties sélectionnées.</p>
+            <p>Sélectionne les parties avec les cases. Pour une partie dont le statut est inconnu, choisis dans sa ligne « Sans aide » ou « Avec aide » pour l’enregistrer sur cet appareil. Les parties analysables restent sélectionnables même si elles sont hors de la période affichée.</p>
             <div class="analysis-selection-actions">
                 <button type="button" class="profile-diagnostic-button" onclick="launchSelectedGamesDiagnostic()">Diagnostiquer les parties sélectionnées</button>
                 <button type="button" onclick="launchUnaidedLevelDiagnostic()">Diagnostic de niveau · parties sans aides confirmées</button>
@@ -699,7 +699,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14863"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14864"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -982,9 +982,43 @@ function refreshSelectedPlayerAnalysis() {
     updateProfileGameSelectionSummary();
 }
 
+function ensureGameIsInProfileScope(game) {
+    if (currentScopeGameIds.has(String(game.id || ''))) return;
+    profileScope = { period: 'all', maxGames: 0 };
+    try { localStorage.setItem(PLAYER_ANALYSIS_SCOPE_KEY, JSON.stringify(profileScope)); } catch (e) {}
+    const period = document.getElementById('analysis-period-filter');
+    const limit = document.getElementById('analysis-game-limit');
+    if (period) period.value = 'all';
+    if (limit) limit.value = '';
+    updateProfileScopeGameIds();
+}
+
+function setProfileGameAidStatus(index, value) {
+    const game = allGames[Number(index)];
+    if (!game || game.reviewedPGN) return;
+    const status = value === 'false' ? false : value === 'true' ? true : null;
+    let overrides = {};
+    try {
+        overrides = JSON.parse(localStorage.getItem(window.SupaPlayerAnalysisData.AID_OVERRIDE_KEY) || '{}');
+        if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) overrides = {};
+    } catch (e) { overrides = {}; }
+    const id = String(game.id || '');
+    if (status === null) delete overrides[id];
+    else overrides[id] = status;
+    try { localStorage.setItem(window.SupaPlayerAnalysisData.AID_OVERRIDE_KEY, JSON.stringify(overrides)); } catch (e) {}
+    game.trainingAidsUsed = status;
+    game.trainingAidsEvidence = status === null ? 'Preuve insuffisante' : 'Statut confirmé par le joueur';
+    if (status === true) profileGameSelection[id] = false;
+    else delete profileGameSelection[id];
+    persistProfileGameSelection();
+    ensureGameIsInProfileScope(game);
+    refreshSelectedPlayerAnalysis();
+}
+
 function togglePlayerAnalysisGame(index, included) {
     const game = allGames[Number(index)];
-    if (!game || !isProfileGameEligible(game) || !currentScopeGameIds.has(String(game.id))) return;
+    if (!game || !isProfileGameEligible(game)) return;
+    ensureGameIsInProfileScope(game);
     profileGameSelection[String(game.id)] = !!included;
     persistProfileGameSelection();
     refreshSelectedPlayerAnalysis();
@@ -2319,10 +2353,16 @@ function renderGamesList(filter) {
         const eligible = isProfileGameEligible(g);
         const inScope = currentScopeGameIds.has(String(g.id || ''));
         const checked = eligible && inScope && isProfileGameIncluded(g) ? 'checked' : '';
-        const disabled = eligible && inScope ? '' : 'disabled';
+        const disabled = eligible ? '' : 'disabled';
         const selectionLabel = !eligible
             ? (g.reviewedPGN ? 'PGN sans coups évalués pour ce joueur · ' + aidLabel : 'Non analysable pour ce joueur · ' + aidLabel)
-            : inScope ? aidLabel + ' · ' + aidEvidence : 'Hors période ou limite de parties · ' + aidLabel;
+            : aidLabel + ' · ' + aidEvidence + (inScope ? '' : ' · hors période : la sélectionner élargira la période');
+        const aidControl = !g.reviewedPGN
+            ? '<label class="game-aid-status">Aides utilisées : <select onclick="event.stopPropagation()" onchange="setProfileGameAidStatus(' + g.index + ', this.value); event.stopPropagation()" aria-label="Confirmer le statut des aides pour ' + opponent + '">' +
+              '<option value=""' + (g.trainingAidsEvidence === 'Statut confirmé par le joueur' ? '' : ' selected') + '>À confirmer</option>' +
+              '<option value="false"' + (g.trainingAidsUsed === false ? ' selected' : '') + '>Aucune aide</option>' +
+              '<option value="true"' + (g.trainingAidsUsed === true ? ' selected' : '') + '>Aides utilisées</option></select></label>'
+            : '';
         return `
             <div class="game-row" onclick="expandGame(${g.index})">
                 <div class="game-result">${resultIcon}</div>
@@ -2332,8 +2372,9 @@ function renderGamesList(filter) {
                 </div>
                 <div class="game-rating ${ratingClass}">${ratingLabel}</div>
                 <div class="game-selection" onclick="event.stopPropagation()">
-                    <label><input type="checkbox" ${checked} ${disabled} onchange="togglePlayerAnalysisGame(${g.index}, this.checked)" aria-label="Sélectionner ${opponent} pour le diagnostic"><span>À diagnostiquer</span></label>
+                    <label><input type="checkbox" ${checked} ${disabled} onclick="event.stopPropagation()" onchange="togglePlayerAnalysisGame(${g.index}, this.checked)" aria-label="Sélectionner ${opponent} pour le diagnostic"><span>À diagnostiquer</span></label>
                     <small>${selectionLabel}</small>
+                    ${aidControl}
                 </div>
             </div>
         `;

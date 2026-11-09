@@ -52,6 +52,36 @@
     }
   }
 
+  function mergePlayedSources(currentGames, legacyGames) {
+    const merged = [];
+    const indexes = new Map();
+    const add = (raw, source) => {
+      if (!raw || typeof raw !== "object") return;
+      const pgnKey = normalizePgn(raw.pgn || raw.PGN || "");
+      const idKey = String(raw.id || raw.gameId || "");
+      const key = pgnKey ? "pgn:" + pgnKey : idKey ? "id:" + idKey : "";
+      if (!key || !indexes.has(key)) {
+        const item = { ...raw, _historySource: source };
+        if (key) indexes.set(key, merged.length);
+        merged.push(item);
+        return;
+      }
+      const index = indexes.get(key);
+      const existing = merged[index];
+      const currentGrades = Array.isArray(existing.moveGrades) ? existing.moveGrades : [];
+      const addedGrades = Array.isArray(raw.moveGrades) ? raw.moveGrades : [];
+      const mergedGrades = currentGrades.length >= addedGrades.length ? currentGrades : addedGrades;
+      const aidValue = typeof existing.trainingAidsUsed === "boolean"
+        ? existing.trainingAidsUsed
+        : typeof raw.trainingAidsUsed === "boolean" ? raw.trainingAidsUsed : null;
+      merged[index] = { ...raw, ...existing, moveGrades: mergedGrades, trainingAidsUsed: aidValue,
+        _historySource: existing._historySource + "+" + source };
+    };
+    (Array.isArray(currentGames) ? currentGames : []).forEach(game => add(game, "parties locales"));
+    (Array.isArray(legacyGames) ? legacyGames : []).forEach(game => add(game, "historique ancien"));
+    return merged;
+  }
+
   function pgnHeaders(pgn) {
     const headers = {};
     String(pgn || "").replace(/^\s*\[([^\s]+)\s+"((?:[^"\\]|\\.)*)"\]\s*$/gm, (_, key, value) => {
@@ -432,7 +462,8 @@
       return { allGames: [], localGames: [], reviewedGames: [], playerMovesByGame: [], detailedMoveCount: 0, reviewedCount: 0 };
     }
     const currentPlayed = readArray(store, PLAYED_KEY);
-    const playedRaw = currentPlayed.length ? currentPlayed : readLegacyGames(store);
+    const legacyPlayed = readLegacyGames(store);
+    const playedRaw = mergePlayedSources(currentPlayed, legacyPlayed);
     const aidOverrides = (() => {
       try {
         const parsed = JSON.parse(store.getItem(AID_OVERRIDE_KEY) || "{}");
@@ -491,6 +522,12 @@
       detailedMoveCount: playerMovesByGame.reduce((sum, moves) => sum + moves.length, 0),
       detailedGameCount: playerMovesByGame.length,
       reviewedCount: uniqueReviewed.length,
+      sourceCounts: {
+        current: currentPlayed.length,
+        legacy: legacyPlayed.length,
+        mergedPlayed: playedRaw.length,
+        reviewed: reviewedGames.length,
+      },
     };
   }
 

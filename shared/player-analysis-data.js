@@ -277,8 +277,15 @@
           category,
           rated: rating !== null,
           lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
-          tactical: [],
-          phase: normalizePhase(grade.phase) || classifyPhaseFromFen(grade.fen || grade.beforeFen || grade.positionFen, Math.ceil(ply / 2)),
+          bestMove: grade.bestMove === true || category === "best",
+          playedUci: String(grade.playedUci || grade.uci || ""),
+          bestMoveUci: String(grade.bestMoveUci || ""),
+          opponentBestReplyUci: String(grade.opponentBestReplyUci || ""),
+          opponentBestReplyLine: Array.isArray(grade.opponentBestReplyLine) ? grade.opponentBestReplyLine.slice(0, 8) : [],
+          fenBefore: String(grade.fenBefore || grade.beforeFen || grade.fen || move.before || ""),
+          fenAfter: String(grade.fenAfter || move.after || ""),
+          tactical: Array.isArray(grade.tactical) ? grade.tactical : [],
+          phase: normalizePhase(grade.phase) || classifyPhaseFromFen(grade.fenBefore || grade.fen || grade.beforeFen || move.before, Math.ceil(ply / 2)),
         };
       });
     const moves = parsed.moves.length
@@ -378,7 +385,15 @@
         san: move.san || String(grade.san || "?"),
         rating, quality: GRADE_LABELS[category], category, rated: rating !== null,
         lossCp: Number.isFinite(Number(grade.lossCp)) ? Number(grade.lossCp) : null,
-        tactical: [], phase: normalizePhase(grade.phase) || parsedPhases[moveIndex] || null,
+        bestMove: grade.bestMove === true || category === "best",
+        playedUci: String(grade.playedUci || grade.uci || (move.from && move.to ? move.from + move.to + (move.promotion || "") : "")),
+        bestMoveUci: String(grade.bestMoveUci || ""),
+        opponentBestReplyUci: String(grade.opponentBestReplyUci || ""),
+        opponentBestReplyLine: Array.isArray(grade.opponentBestReplyLine) ? grade.opponentBestReplyLine.slice(0, 8) : [],
+        fenBefore: String(grade.fenBefore || grade.beforeFen || move.before || ""),
+        fenAfter: String(grade.fenAfter || move.after || ""),
+        tactical: Array.isArray(grade.tactical) ? grade.tactical : [],
+        phase: normalizePhase(grade.phase) || parsedPhases[moveIndex] || null,
       };
     });
     const evidence = resolveTrainingAidsEvidence(raw, headers, grades);

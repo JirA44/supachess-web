@@ -470,19 +470,28 @@
         return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
       } catch (_) { return {}; }
     })();
+    let rejectedPlayedCount = 0;
     const localGames = playedRaw.map((game, index) => {
-      const normalized = normalizePlayedGame(game, index, ChessClass);
-      if (!normalized) return null;
-      const override = aidOverrides[String(normalized.id)];
-      if (override === true || override === false) {
-        normalized.trainingAidsUsed = override;
-        normalized.trainingAidsEvidence = "Statut confirmé par le joueur";
+      try {
+        const normalized = normalizePlayedGame(game, index, ChessClass);
+        if (!normalized) return null;
+        const override = aidOverrides[String(normalized.id)];
+        if (override === true || override === false) {
+          normalized.trainingAidsUsed = override;
+          normalized.trainingAidsEvidence = "Statut confirmé par le joueur";
+        }
+        return normalized;
+      } catch (_) {
+        rejectedPlayedCount++;
+        return null;
       }
-      return normalized;
     }).filter(Boolean);
-    const reviewedGames = readArray(store, REVIEWED_KEY)
-      .map((game, index) => normalizeReviewedGame(game, index, ChessClass))
-      .filter((game) => game && game.pgn);
+    let rejectedReviewedCount = 0;
+    const reviewedRaw = readArray(store, REVIEWED_KEY);
+    const reviewedGames = reviewedRaw.map((game, index) => {
+      try { return normalizeReviewedGame(game, index, ChessClass); }
+      catch (_) { rejectedReviewedCount++; return null; }
+    }).filter((game) => game && game.pgn);
     const reviewedByPgn = new Map(reviewedGames.map((game) => [normalizePgn(game.pgn), game]));
     localGames.forEach((game, index) => {
       const reviewed = reviewedByPgn.get(normalizePgn(game.pgn));
@@ -526,7 +535,9 @@
         current: currentPlayed.length,
         legacy: legacyPlayed.length,
         mergedPlayed: playedRaw.length,
-        reviewed: reviewedGames.length,
+        reviewed: reviewedRaw.length,
+        rejectedPlayed: rejectedPlayedCount,
+        rejectedReviewed: rejectedReviewedCount,
       },
     };
   }

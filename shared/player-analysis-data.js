@@ -106,7 +106,7 @@
   }
 
   function normalizePlayerName(name) {
-    return String(name || "").normalize("NFKC").trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+    return String(name || "").normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
   }
 
   function normalizePlayerColor(color) {

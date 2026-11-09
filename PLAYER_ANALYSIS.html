@@ -537,8 +537,8 @@
     <div class="tab-content" id="tab-thinking">
         <!-- METHODE POUR TROUVER LE MEILLEUR COUP -->
         <div class="card" style="border: 2px solid rgba(255,215,0,0.3); background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,152,0,0.05));">
-            <h3 style="color: #ffd700; font-size: 1.3rem;">Methode: Comment Trouver le Meilleur Coup</h3>
-            <p style="color: #aaa; margin-bottom: 15px;">Suivez ces 5 etapes AVANT chaque coup. Avec la pratique, ca devient automatique.</p>
+            <h3 style="color: #ffd700; font-size: 1.3rem;">Méthode : trouver le meilleur coup et réfuter ses propres candidats</h3>
+            <p style="color: #aaa; margin-bottom: 15px;">Suivez ces étapes avant chaque coup : observez la position, comparez des candidats et cherchez activement la meilleure réfutation adverse.</p>
 
             <div id="method-steps">
                 <div style="display:flex; gap:15px; padding:15px; background:rgba(231,76,60,0.1); border-radius:10px; margin-bottom:12px; border-left:4px solid #e74c3c;">
@@ -589,9 +589,11 @@
                         <div style="font-weight:700; color:#3498db; font-size:1.05rem;">CALCULER CHAQUE CANDIDAT</div>
                         <div style="color:#ccc; margin-top:4px;">Pour chaque coup candidat, visualisez mentalement:</div>
                         <ul style="margin-top:8px; padding-left:18px; color:#aaa; font-size:0.9rem;">
-                            <li><strong>Mon coup</strong> → <strong>Sa reponse</strong> → <strong>Mon coup suivant</strong> (minimum 3 demi-coups)</li>
-                            <li>Considerer ses MEILLEURES reponses, pas ce que vous esperez qu'il joue</li>
-                            <li>Si c'est un echange: compter le materiel des 2 cotes</li>
+                            <li><strong>Mon candidat</strong> → <strong>sa meilleure réponse légale possible</strong> → <strong>ma meilleure réponse</strong> → <strong>sa suite la plus forte</strong>.</li>
+                            <li>Pour l’adversaire, examinez échecs, captures, menaces, contre-attaques et coups intermédiaires; ne confondez pas sa meilleure réponse avec le coup réellement joué.</li>
+                            <li>Après votre réponse, inversez encore les rôles : cherchez le meilleur coup adverse suivant et poursuivez la variante jusqu’à ce que la position se stabilise.</li>
+                            <li>Avec Stockfish, comparez plusieurs lignes candidates (MultiPV) : une seule variante ne suffit pas à départager les plans.</li>
+                            <li>Dans un échange, comptez le matériel final et vérifiez aussi les menaces qui apparaissent après la reprise.</li>
                         </ul>
                     </div>
                 </div>
@@ -600,7 +602,7 @@
                     <div style="font-size:2rem; font-weight:900; color:#2ecc71; min-width:40px;">4</div>
                     <div>
                         <div style="font-weight:700; color:#2ecc71; font-size:1.05rem;">COMPARER & CHOISIR</div>
-                        <div style="color:#ccc; margin-top:4px;">Comparez les resultats de chaque candidat:</div>
+                        <div style="color:#ccc; margin-top:4px;">Comparez chaque candidat après la meilleure défense adverse, pas seulement après la réponse espérée:</div>
                         <ul style="margin-top:8px; padding-left:18px; color:#aaa; font-size:0.9rem;">
                             <li>Lequel me donne la meilleure position finale?</li>
                             <li>Lequel cree le plus de problemes a l'adversaire?</li>
@@ -613,7 +615,7 @@
                     <div style="font-size:2rem; font-weight:900; color:#9b59b6; min-width:40px;">5</div>
                     <div>
                         <div style="font-weight:700; color:#9b59b6; font-size:1.05rem;">VERIFICATION FINALE (BLUNDER CHECK)</div>
-                        <div style="color:#ccc; margin-top:4px;">AVANT de jouer, verifiez une derniere fois:</div>
+                        <div style="color:#ccc; margin-top:4px;">Avant de jouer, réfutez votre propre idée une dernière fois : <strong>« Si j’étais l’adversaire, quel est le meilleur coup légal pour rendre mon candidat mauvais ? »</strong> Puis vérifiez :</div>
                         <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                             <div style="padding:8px; background:rgba(231,76,60,0.15); border-radius:6px;">
                                 <div style="color:#e74c3c; font-weight:600; font-size:0.85rem;">Mon coup laisse-t-il une piece en prise?</div>
@@ -2931,6 +2933,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                             <span style="color:#e74c3c;">${ex.quality || 'Erreur'}</span>
                             Coup ${ex.moveNum}: <strong>${ex.san}</strong>
                             ${ex.lossCp !== null && ex.lossCp !== undefined ? ` (perte mesurée: ${Math.round(ex.lossCp)} cp)` : ''}
+                            ${ex.opponentBestReplyUci ? '<br><span style="color:#87ceeb;">Meilleure réponse adverse Stockfish après ce coup : ' + ex.opponentBestReplyUci + (ex.opponentBestReplyLine.length > 1 ? ' · ligne ' + ex.opponentBestReplyLine.join(' ') : '') + '</span>' : ''}
                             ${ex.comment ? `<br><span style="color:#777;">${ex.comment.substring(0, 80)}</span>` : ''}
                         </div>
                     `).join('')}
@@ -3015,7 +3018,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
             if ((m.rating || 5) <= 3) {
                 allErrors.push({
                     san: m.san, moveNum: m.moveNum || i+1, rating: m.rating,
-                    quality: m.quality, comment: m.comment, evalDiff: m.evalDiff, moveIndex: i
+                    quality: m.quality, comment: m.comment, lossCp: m.lossCp, opponentBestReplyUci: m.opponentBestReplyUci, opponentBestReplyLine: m.opponentBestReplyLine || [], moveIndex: i
                 });
             }
         }
@@ -3029,6 +3032,8 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                     <strong>Erreur #${idx+1}: Coup ${err.moveNum} - ${err.san}</strong>
                     <span style="color:#e74c3c;">${err.quality || 'Gaffe'}</span>
                 </div>
+                ${err.lossCp !== null && err.lossCp !== undefined ? `<p style="color:#aaa; font-size:0.85rem; margin-top:4px;">Perte mesurée par Stockfish : ${Math.round(err.lossCp)} cp</p>` : ''}
+                ${err.opponentBestReplyUci ? `<p style="color:#87ceeb; font-size:0.85rem; margin-top:4px;">Meilleure réponse adverse après ce coup : <strong>${err.opponentBestReplyUci}</strong>${err.opponentBestReplyLine.length > 1 ? ' · ligne ' + err.opponentBestReplyLine.join(' ') : ''}</p>` : '<p style="color:#888;font-size:.82rem;margin-top:4px;">La meilleure réponse adverse n’est pas enregistrée pour cette analyse. Relance une analyse PGN pour la calculer.</p>'}
                 ${err.comment ? `<p style="color:#aaa; font-size:0.85rem; margin-top:4px;">${err.comment.substring(0, 120)}</p>` : ''}
                 <div style="margin-top:8px; padding:8px; background:rgba(255,215,0,0.1); border-radius:6px; font-size:0.85rem;">
                     <strong style="color:#ffd700;">Rejouez mentalement:</strong>
@@ -3170,6 +3175,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14876</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

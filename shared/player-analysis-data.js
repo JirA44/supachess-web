@@ -312,10 +312,10 @@
           bestMoveUci: String(grade.bestMoveUci || ""),
           opponentBestReplyUci: String(grade.opponentBestReplyUci || ""),
           opponentBestReplyLine: Array.isArray(grade.opponentBestReplyLine) ? grade.opponentBestReplyLine.slice(0, 8) : [],
-          fenBefore: String(grade.fenBefore || grade.beforeFen || grade.fen || move.before || ""),
-          fenAfter: String(grade.fenAfter || move.after || ""),
+          fenBefore: String(grade.fenBefore || grade.beforeFen || grade.fen || ""),
+          fenAfter: String(grade.fenAfter || ""),
           tactical: Array.isArray(grade.tactical) ? grade.tactical : [],
-          phase: normalizePhase(grade.phase) || classifyPhaseFromFen(grade.fenBefore || grade.fen || grade.beforeFen || move.before, Math.ceil(ply / 2)),
+          phase: normalizePhase(grade.phase) || classifyPhaseFromFen(grade.fenBefore || grade.fen || grade.beforeFen, Math.ceil(ply / 2)),
         };
       });
     const moves = parsed.moves.length

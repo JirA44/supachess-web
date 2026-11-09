@@ -719,7 +719,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14877"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14878"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2604,7 +2604,15 @@ function updateProfileStatus(data) {
     const user = playerAnalysisAuthUser;
     const name = user && (user.displayName || user.email) ? (user.displayName || user.email) + ' · ' : '';
     const connection = user ? 'Compte connecté' : 'Session du compte non détectée';
-    status.textContent = name + connection + ' · Sur cet appareil : ' + playedCount + ' partie(s) jouée(s), ' + gradedCount + ' avec des coups classés, ' + importedCount + ' PGN analysé(s). Les parties locales sont lues même sans connexion.';
+    const sources = data.sourceCounts || {};
+    const sourceSummary = (Number(sources.current) || 0) + ' parties récentes + ' +
+        (Number(sources.legacy) || 0) + ' historiques anciens + ' +
+        (Number(sources.reviewed) || importedCount) + ' PGN analysés';
+    const rejected = (Number(sources.rejectedPlayed) || 0) + (Number(sources.rejectedReviewed) || 0);
+    status.textContent = name + connection + ' · Sur cet appareil : ' + playedCount + ' partie(s) jouée(s), ' +
+        gradedCount + ' avec des coups classés, ' + importedCount + ' PGN analysé(s). Sources fusionnées : ' +
+        sourceSummary + (rejected ? ' · ' + rejected + ' entrée(s) illisible(s) ignorée(s)' : '') +
+        '. Les parties locales restent disponibles sans connexion.';
 }
 function openProfileGameInCoach(index) {
     const game = allGames[index];
@@ -3146,7 +3154,16 @@ function installReliableProfileSelectionEvents() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     installProfileCorrectionLinks();
-    const data = await loadAllData();
+    const loadStatus = document.getElementById('player-profile-status');
+    if (loadStatus) loadStatus.textContent = 'Lecture des parties locales, de l’historique ancien et des PGN analysés…';
+    let data;
+    try {
+        data = await loadAllData();
+    } catch (error) {
+        console.error('SupaChess player profile load failed:', error);
+        if (loadStatus) loadStatus.innerHTML = 'Le chargement des parties a échoué. Réessaie après actualisation; aucune partie locale n’a été supprimée. <button type="button" onclick="window.location.reload()">Réessayer</button>';
+        return;
+    }
     latestPlayerAnalysisData = data;
     updateProfileStatus(data);
     loadProfileGameSelection();
@@ -3175,7 +3192,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
-<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14877</footer>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14878</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

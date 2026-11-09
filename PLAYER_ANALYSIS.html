@@ -717,7 +717,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14870"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14876"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2804,211 +2804,72 @@ function switchTab(tabName) {
 // ==========================================
 function analyzeThinkingErrors(playerMovesByGame) {
     const patterns = {
-        notCheckingThreats: {
-            name: 'Pas de verification des menaces',
-            icon: '🚨',
-            description: 'Vous jouez sans verifier ce que l\'adversaire menace. Le dernier coup adverse n\'est pas analyse.',
-            fix: 'AVANT chaque coup, demandez-vous: "Pourquoi a-t-il joue ca? Que menace-t-il?"',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        hangingPieces: {
-            name: 'Pieces laissees en prise',
-            icon: '💀',
-            description: 'Vous deplacez une piece sans verifier si elle reste protegee, ou vous oubliez qu\'une autre piece est attaquee.',
-            fix: 'Etape 5 de la methode: AVANT de confirmer, scannez tout l\'echiquier pour les pieces non protegees.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        tunnelVision: {
-            name: 'Vision tunnel',
-            icon: '🔭',
-            description: 'Vous vous focalisez sur un secteur de l\'echiquier et oubliez le reste. Les erreurs viennent souvent de l\'autre aile.',
-            fix: 'Apres avoir choisi votre coup, regardez TOUT l\'echiquier pendant 5 secondes. Les menaces oubliees sont souvent loin de votre zone d\'attention.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        noCalculation: {
-            name: 'Pas assez de calcul',
-            icon: '🧮',
-            description: 'Vous jouez le premier coup qui "semble" bon sans calculer les consequences. Le "feeling" remplace le calcul.',
-            fix: 'Forcez-vous a trouver AU MOINS 3 coups candidats et a calculer 2 coups a l\'avance pour chacun avant de choisir.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        overconfidence: {
-            name: 'Relachement en position gagnante',
-            icon: '😴',
-            description: 'Quand vous avez un avantage, vous relacchez votre attention et faites des erreurs. "C\'est gagne" → gaffe.',
-            fix: 'Position gagnante = PLUS de concentration, pas moins. Cherchez le coup le plus simple et le plus sur, pas le plus spectaculaire.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        panicInDefense: {
-            name: 'Panique en defense',
-            icon: '😰',
-            description: 'Quand vous etes sous pression, vous jouez trop vite et accumulez les erreurs au lieu de vous battre.',
-            fix: 'En position difficile: RALENTISSEZ. Cherchez les echanges de pieces pour simplifier. Une piece de moins n\'est pas perdu si le roi est en securite.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        wishfulThinking: {
-            name: 'Pensee magique',
-            icon: '🪄',
-            description: 'Vous esperez que l\'adversaire ne verra pas votre menace au lieu de considerer sa meilleure reponse.',
-            fix: 'Toujours supposer que l\'adversaire fera le MEILLEUR coup. Si votre plan ne marche que si l\'adversaire fait une erreur, c\'est un mauvais plan.',
-            count: 0,
-            examples: [],
-            severity: 0
-        },
-        noEndgamePlan: {
-            name: 'Pas de plan en finale',
-            icon: '🗺️',
-            description: 'En finale vous jouez au coup par coup sans plan clair. Roi passif, pions qui n\'avancent pas.',
-            fix: 'En finale, identifiez TOUJOURS: (1) ou va mon roi? (2) quel pion peut devenir dame? (3) comment bloquer ses pions passes?',
-            count: 0,
-            examples: [],
-            severity: 0
-        }
+        notCheckingThreats: { name: 'Coups classés à retravailler', icon: '🔎',
+            description: 'Classement objectif de l’analyse de partie; il signale les coups à revoir, sans prouver la cause de réflexion.',
+            fix: 'Rejouez la position, comparez plusieurs candidats et cherchez la meilleure réponse légale de l’adversaire.',
+            count: 0, examples: [], severity: 0 },
+        noCalculation: { name: 'Écart mesuré au meilleur coup (≥ 30 cp)', icon: '📉',
+            description: 'Stockfish a mesuré au moins 30 centipions de perte par rapport au meilleur coup de sa recherche. Ce résultat ne prouve pas ce que le joueur a pensé.',
+            fix: 'Pour chaque candidat, calculez la meilleure réfutation adverse, puis la meilleure réponse pour les deux camps.',
+            count: 0, examples: [], severity: 0 },
+        hangingPieces: { name: 'Écart important (≥ 200 cp)', icon: '⚠️',
+            description: 'Une perte d’au moins 200 centipions a été mesurée. Cela ne prouve pas qu’une pièce était en prise : vérifiez la variante et ses conséquences.',
+            fix: 'Comparez la meilleure ligne avant le coup avec la meilleure réponse adverse après le coup joué.',
+            count: 0, examples: [], severity: 0 }
     };
-
-    let totalPlayerMoves = 0;
-    let totalErrors = 0;
-
-    for (const moves of playerMovesByGame) {
-        let prevEval = 0;
-        let wasWinning = false;
-
-        for (let i = 0; i < moves.length; i++) {
-            const m = moves[i];
-            const rating = m.rating || 5;
-            const evalDiff = m.evalDiff || 0;
-            const evalNow = m.eval || 0;
-            const comment = (m.comment || '').toLowerCase();
-            const quality = (m.quality || '').toLowerCase();
-            totalPlayerMoves++;
-
-            const isError = rating <= 4;
-            if (isError) totalErrors++;
-
-            // Pattern: Hanging pieces (big eval drop, likely left piece en prise)
-            if (isError && evalDiff > 150) {
+    const totals = { moves: 0, errors: 0, loss30: 0, loss60: 0, loss200: 0, lossKnown: 0, replies: 0, best: 0, rated: 0 };
+    let gamesAnalyzed = 0;
+    for (const moves of (Array.isArray(playerMovesByGame) ? playerMovesByGame : [])) {
+        if (!Array.isArray(moves) || !moves.length) continue;
+        gamesAnalyzed++;
+        moves.forEach((m, i) => {
+            m = m || {};
+            const rating = Number.isFinite(Number(m.rating)) ? Number(m.rating) : 5;
+            const category = String(m.category || '').toLowerCase();
+            const lossCp = m.lossCp !== null && m.lossCp !== undefined && m.lossCp !== '' && Number.isFinite(Number(m.lossCp))
+                ? Math.max(0, Number(m.lossCp)) : null;
+            const isError = rating <= 4 || ['inaccuracy', 'mistake', 'error', 'blunder'].includes(category);
+            const ex = { san: m.san || '?', moveNum: m.moveNum || i + 1, rating,
+                quality: m.quality || (isError ? 'À retravailler' : 'Coup évalué'),
+                lossCp, opponentBestReplyUci: m.opponentBestReplyUci || '',
+                opponentBestReplyLine: Array.isArray(m.opponentBestReplyLine) ? m.opponentBestReplyLine.slice(0, 8) : [],
+                sourceGameId: m.sourceGameId || '' };
+            totals.moves++;
+            if (m.rated) totals.rated++;
+            if (m.bestMove === true || category === 'best') totals.best++;
+            if (ex.opponentBestReplyUci) totals.replies++;
+            if (isError) {
+                totals.errors++;
+                patterns.notCheckingThreats.count++;
+                patterns.notCheckingThreats.examples.push(ex);
+            }
+            if (lossCp !== null) {
+                totals.lossKnown++;
+                if (lossCp >= 30) { totals.loss30++; patterns.noCalculation.count++; patterns.noCalculation.examples.push(ex); }
+                if (lossCp >= 60) totals.loss60++;
+                if (lossCp >= 200) { totals.loss200++; patterns.hangingPieces.count++; patterns.hangingPieces.examples.push(ex); }
+            } else if (category === 'blunder') {
+                totals.loss200++;
                 patterns.hangingPieces.count++;
-                patterns.hangingPieces.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
+                patterns.hangingPieces.examples.push(ex);
             }
-
-            // Pattern: Not checking threats (error right after opponent created a threat)
-            if (isError && i > 0) {
-                const prevMove = i > 0 ? moves[i-1] : null;
-                // If prev move had tactical info or was opponent creating threats
-                if (comment.includes('prise') || comment.includes('menace') || comment.includes('attaq') ||
-                    comment.includes('pendu') || evalDiff > 100) {
-                    patterns.notCheckingThreats.count++;
-                    patterns.notCheckingThreats.examples.push({
-                        san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                        comment: m.comment, evalDiff
-                    });
-                }
-            }
-
-            // Pattern: Tunnel vision (error in endgame/late middlegame, far from previous activity)
-            if (isError && i > 15 && evalDiff > 80) {
-                patterns.tunnelVision.count++;
-                patterns.tunnelVision.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Pattern: No calculation (moderate errors, not huge blunders - "didn't look deep enough")
-            if (isError && evalDiff > 50 && evalDiff <= 200 && rating >= 3) {
-                patterns.noCalculation.count++;
-                patterns.noCalculation.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Pattern: Overconfidence (was winning, then made error)
-            if (wasWinning && isError) {
-                patterns.overconfidence.count++;
-                patterns.overconfidence.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Pattern: Panic in defense (error while already losing)
-            if (!wasWinning && prevEval < -1.0 && isError) {
-                patterns.panicInDefense.count++;
-                patterns.panicInDefense.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Pattern: Wishful thinking (played a move that "threatens" but drops material)
-            if (isError && m.tactical && m.tactical.length > 0 && evalDiff > 80) {
-                patterns.wishfulThinking.count++;
-                patterns.wishfulThinking.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Pattern: No endgame plan (errors late in game)
-            if (isError && i >= 20) {
-                patterns.noEndgamePlan.count++;
-                patterns.noEndgamePlan.examples.push({
-                    san: m.san, moveNum: m.moveNum || i+1, rating, quality: m.quality,
-                    comment: m.comment, evalDiff
-                });
-            }
-
-            // Track state
-            wasWinning = evalNow > 1.5;
-            prevEval = evalNow;
-        }
+        });
     }
-
-    // Frequency is the share of player moves matching each detector.
-    // A zero means "no confirmed examples", never "mastered".
-    for (const key of Object.keys(patterns)) {
-        const p = patterns[key];
-        p.severity = totalPlayerMoves > 0
-            ? Math.min(100, Math.round((p.count / totalPlayerMoves) * 100))
-            : 0;
-        p.examples.sort((a, b) => (a.rating || 5) - (b.rating || 5));
+    Object.values(patterns).forEach(p => {
+        p.severity = totals.moves ? Math.round(p.count / totals.moves * 100) : 0;
+        p.examples.sort((a, b) => (b.lossCp ?? -1) - (a.lossCp ?? -1) || a.rating - b.rating);
         p.examples = p.examples.slice(0, 5);
-    }
-
-    // Rank detected patterns by their raw occurrence count.
-    const sorted = Object.values(patterns)
-        .filter(p => p.count > 0)
-        .sort((a, b) => b.count - a.count);
-
-    // Radar values show detected weakness frequency, not skill or mastery.
-    const thinkingScores = {
-        threatCheck: patterns.notCheckingThreats.severity,
-        calculation: patterns.noCalculation.severity,
-        boardVision: patterns.tunnelVision.severity,
-        concentration: patterns.overconfidence.severity,
-        resilience: patterns.panicInDefense.severity,
-        objectivity: patterns.wishfulThinking.severity
-    };
-
-    return { patterns: sorted, allPatterns: patterns, thinkingScores, totalPlayerMoves, totalErrors };
+    });
+    const sorted = Object.values(patterns).filter(p => p.count > 0).sort((a, b) => b.count - a.count);
+    const pct = n => totals.moves ? Math.round(n / totals.moves * 100) : 0;
+    const thinkingScores = { threatCheck: pct(totals.errors), calculation: pct(totals.loss30),
+        boardVision: pct(totals.loss60), concentration: pct(totals.loss200),
+        resilience: pct(totals.replies), objectivity: pct(totals.best) };
+    return { patterns: sorted, allPatterns: patterns, thinkingScores, totalPlayerMoves: totals.moves,
+        totalErrors: totals.errors, gamesAnalyzed, lossKnown: totals.lossKnown,
+        measuredLosses: totals.loss30, majorLosses: totals.loss60, blunders: totals.loss200,
+        opponentReplies: totals.replies, bestMoves: totals.best, ratedMoves: totals.rated };
 }
-
 let thinkingRadarChart = null;
 
 function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
@@ -3069,7 +2930,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                         <div style="padding:6px 8px; background:rgba(0,0,0,0.2); border-radius:4px; margin-bottom:4px; font-size:0.85rem;">
                             <span style="color:#e74c3c;">${ex.quality || 'Erreur'}</span>
                             Coup ${ex.moveNum}: <strong>${ex.san}</strong>
-                            ${ex.evalDiff ? ` (perte: ${Math.abs(ex.evalDiff).toFixed(0)}cp)` : ''}
+                            ${ex.lossCp !== null && ex.lossCp !== undefined ? ` (perte mesurée: ${Math.round(ex.lossCp)} cp)` : ''}
                             ${ex.comment ? `<br><span style="color:#777;">${ex.comment.substring(0, 80)}</span>` : ''}
                         </div>
                     `).join('')}
@@ -3086,12 +2947,12 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
         type: 'radar',
         data: {
             labels: [
-                'Menaces non vérifiées',
-                'Calcul insuffisant',
-                'Vision de l’échiquier',
-                'Concentration',
-                'Défense sous pression',
-                'Menace espérée'
+                'Coups classés à revoir',
+                'Écart moteur ≥30 cp',
+                'Écart moteur ≥60 cp',
+                'Écart moteur ≥200 cp',
+                'Réponse adverse enregistrée',
+                'Meilleur coup joué'
             ],
             datasets: [{
                 label: 'Motifs détectés (% des demi-coups)',
@@ -3130,20 +2991,20 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
     // Explain the evidence behind the radar and rank only confirmed patterns.
     const summaryDiv = document.getElementById('thinking-summary');
     const rankedThinking = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const labels = { threatCheck: 'Vérification des menaces', calculation: 'Profondeur de calcul', boardVision: 'Vision de l’échiquier', concentration: 'Concentration', resilience: 'Résistance défensive', objectivity: 'Réponse adverse anticipée' };
-    const patternKeys = { threatCheck: 'notCheckingThreats', calculation: 'noCalculation', boardVision: 'tunnelVision', concentration: 'overconfidence', resilience: 'panicInDefense', objectivity: 'wishfulThinking' };
-    const confirmedPriorities = rankedThinking.filter(([, value]) => value > 0).slice(0, 2);
+    const labels = { threatCheck: 'Coups classés à retravailler', calculation: 'Écart mesuré ≥30 cp', boardVision: 'Écart mesuré ≥60 cp', concentration: 'Écart mesuré ≥200 cp', resilience: 'Réponse adverse enregistrée', objectivity: 'Meilleur coup joué' };
+    const patternKeys = { threatCheck: 'notCheckingThreats', calculation: 'noCalculation', boardVision: 'noCalculation', concentration: 'hangingPieces', resilience: 'notCheckingThreats', objectivity: 'notCheckingThreats' };
+    const confirmedPriorities = rankedThinking.filter(([key, value]) => ['threatCheck', 'calculation', 'boardVision', 'concentration'].includes(key) && value > 0).slice(0, 2);
     const classifiedOccurrences = thinkingAnalysis.patterns.reduce((sum, pattern) => sum + pattern.count, 0);
     const priorityHtml = confirmedPriorities.map((entry, index) => {
-        const key = entry[0], value = entry[1], count = thinkingAnalysis.allPatterns[patternKeys[key]].count;
+        const key = entry[0], value = entry[1], count = key === 'threatCheck' ? thinkingAnalysis.totalErrors : key === 'calculation' ? thinkingAnalysis.measuredLosses : key === 'boardVision' ? thinkingAnalysis.majorLosses : thinkingAnalysis.blunders;
         return '<div style="padding:12px;background:rgba(231,76,60,.1);border-radius:8px;border:1px solid rgba(231,76,60,.3);margin-top:8px;">' +
             '<strong>Priorité #' + (index + 1) + ' · ' + labels[key] + '</strong>' +
             '<span style="color:#e74c3c;"> · ' + count + ' occurrence(s), ' + value + '% des demi-coups analysés</span></div>';
     }).join('');
     summaryDiv.innerHTML = '<div style="margin-bottom:15px;">' +
         '<h3 style="color:#00d9ff;margin-bottom:10px;">Diagnostic</h3>' +
-        '<p style="color:#aaa;font-size:.9rem;margin-bottom:8px;">Sur ' + thinkingAnalysis.totalPlayerMoves + ' demi-coups analysés, ' + thinkingAnalysis.totalErrors + ' erreurs détectées (' + (thinkingAnalysis.totalPlayerMoves > 0 ? Math.round(thinkingAnalysis.totalErrors / thinkingAnalysis.totalPlayerMoves * 100) : 0) + '%).</p>' +
-        '<p style="color:#aaa;font-size:.85rem;">' + classifiedOccurrences + ' occurrence(s) de motifs détectées; un demi-coup peut relever de plusieurs motifs. Un axe à 0 signifie qu’aucun cas n’a été confirmé par les détecteurs, pas que la compétence est maîtrisée.</p></div>' +
+        '<p style="color:#aaa;font-size:.9rem;margin-bottom:8px;">Sur ' + thinkingAnalysis.totalPlayerMoves + ' demi-coups analysés dans ' + thinkingAnalysis.gamesAnalyzed + ' partie(s) incluse(s), ' + thinkingAnalysis.totalErrors + ' coups classés à retravailler (' + (thinkingAnalysis.totalPlayerMoves > 0 ? Math.round(thinkingAnalysis.totalErrors / thinkingAnalysis.totalPlayerMoves * 100) : 0) + '%).</p>' +
+        '<p style="color:#aaa;font-size:.85rem;">' + classifiedOccurrences + ' occurrences documentées. Pertes mesurées : ≥30 cp ' + thinkingAnalysis.measuredLosses + ' · ≥60 cp ' + thinkingAnalysis.majorLosses + ' · ≥200 cp ' + thinkingAnalysis.blunders + '. Meilleures réponses adverses enregistrées : ' + thinkingAnalysis.opponentReplies + '. Ces chiffres décrivent les analyses moteur; ils ne prouvent pas une cause de réflexion.</p></div>' +
         (priorityHtml || '<div style="padding:12px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.3);border-radius:8px;color:#f3c969;">Aucune priorité précise n’est confirmée par les détecteurs actuels. Les erreurs restent visibles dans la liste à retravailler.</div>');
     // Worst moves for mental exercise
     const worstDiv = document.getElementById('thinking-worst-moves');

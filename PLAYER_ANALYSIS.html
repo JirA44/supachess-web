@@ -719,7 +719,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14876"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14877"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -2878,7 +2878,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
     const errListDiv = document.getElementById('thinking-errors-list');
     if (!errListDiv) return;
 
-    if (!thinkingAnalysis || thinkingAnalysis.patterns.length === 0) {
+    if (!thinkingAnalysis || thinkingAnalysis.totalPlayerMoves === 0) {
         errListDiv.innerHTML = !thinkingAnalysis
             ? '<p style="color:#666;text-align:center;padding:20px;">Aucune partie sélectionnée avec des coups évalués.</p>'
             : '<p style="color:#bfcbd6;text-align:center;padding:20px;">' + thinkingAnalysis.totalErrors +
@@ -2958,7 +2958,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                 'Meilleur coup joué'
             ],
             datasets: [{
-                label: 'Motifs détectés (% des demi-coups)',
+                label: 'Indicateurs issus de l’analyse (% des demi-coups)',
                 data: [
                     scores.threatCheck,
                     scores.calculation,
@@ -2995,7 +2995,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
     const summaryDiv = document.getElementById('thinking-summary');
     const rankedThinking = Object.entries(scores).sort((a, b) => b[1] - a[1]);
     const labels = { threatCheck: 'Coups classés à retravailler', calculation: 'Écart mesuré ≥30 cp', boardVision: 'Écart mesuré ≥60 cp', concentration: 'Écart mesuré ≥200 cp', resilience: 'Réponse adverse enregistrée', objectivity: 'Meilleur coup joué' };
-    const patternKeys = { threatCheck: 'notCheckingThreats', calculation: 'noCalculation', boardVision: 'noCalculation', concentration: 'hangingPieces', resilience: 'notCheckingThreats', objectivity: 'notCheckingThreats' };
+    
     const confirmedPriorities = rankedThinking.filter(([key, value]) => ['threatCheck', 'calculation', 'boardVision', 'concentration'].includes(key) && value > 0).slice(0, 2);
     const classifiedOccurrences = thinkingAnalysis.patterns.reduce((sum, pattern) => sum + pattern.count, 0);
     const priorityHtml = confirmedPriorities.map((entry, index) => {
@@ -3175,7 +3175,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
-<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14876</footer>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14877</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

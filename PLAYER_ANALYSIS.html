@@ -1659,7 +1659,7 @@ function analyzeStrengthsWeaknesses(playerMovesByGame, analysisResult) {
                 m.comment, m.quality, m.errorType, m.cause, m.explanation,
                 Array.isArray(m.diagnostics) ? m.diagnostics.map(item => item && (item.text || item.code)).join(' ') : m.diagnostics
             ].filter(Boolean).join(' '));
-            const tacticalSignal = Array.isArray(m.tactical) ? m.tactical.length > 0 : !!m.tactical;
+            const tacticalSignal = !!(m.tactical && Number(m.tactical.length) > 0);
             let cause;
             if (/\b(prise|pendu|hanging|unprotected|undefended|piece en l'air|piece non protegee)\b/.test(evidence)) {
                 cause = 'Pièces laissées en prise';

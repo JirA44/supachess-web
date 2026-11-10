@@ -363,6 +363,20 @@
         .move-distribution-legend { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:7px; margin-top:10px; }
         .move-distribution-legend-item { display:flex; align-items:center; gap:7px; color:#d8e2ea; font-size:.86rem; }
         .move-distribution-swatch { width:10px; height:10px; border-radius:50%; flex:0 0 10px; }
+        .activity-calendar-scroll { overflow-x:auto; padding:4px 0; }
+        .activity-calendar-months { display:grid; grid-template-columns:repeat(53,12px); gap:3px; min-width:max-content; margin:0 0 5px 28px; color:#aab5c0; font-size:10px; }
+        .activity-calendar-grid { display:flex; align-items:flex-start; gap:6px; }
+        .activity-day-labels { display:grid; grid-template-rows:repeat(7,12px); gap:3px; width:22px; color:#aab5c0; font-size:9px; }
+        .activity-day-labels span { line-height:12px; }
+        .activity-calendar-weeks { display:grid; grid-auto-flow:column; grid-auto-columns:12px; grid-template-rows:repeat(7,12px); gap:3px; min-width:max-content; }
+        .activity-week { display:grid; grid-template-rows:repeat(7,12px); gap:3px; }
+        .activity-day { display:block; width:12px; height:12px; border-radius:3px; background:#15232c; border:1px solid rgba(255,255,255,.04); }
+        .activity-day.activity-level-1 { background:#1b6e42; }
+        .activity-day.activity-level-2 { background:#239653; }
+        .activity-day.activity-level-3 { background:#48bd6a; }
+        .activity-day.activity-level-4 { background:#8be28b; }
+        .activity-calendar-legend { display:flex; align-items:center; justify-content:flex-end; gap:5px; margin-top:8px; color:#aab5c0; font-size:.78rem; }
+        .activity-calendar-legend .activity-day { width:10px; height:10px; }
 </style>
 </head>
 <body>
@@ -454,6 +468,19 @@
                     </div>
                 </div>
             </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Activité de jeu · 12 derniers mois</h3>
+                    <p class="radar-note">Chaque case représente un jour et compte uniquement les parties retenues dans ce profil.</p>
+                    <div id="profile-activity-heatmap" role="img" aria-label="Calendrier d’activité de jeu des parties sélectionnées"></div>
+                </div>
+                <div class="card">
+                    <h3>Parties · qualité et erreurs</h3>
+                    <p class="radar-note">Chaque bulle est une partie. Axe horizontal : note moyenne des coups classés sur 10. Axe vertical : part des imprécisions, erreurs et gaffes. Taille : nombre de ces coups.</p>
+                    <canvas id="gameQualityBubbleChart" height="250" aria-label="Nuage de bulles comparant note moyenne et part d’erreurs par partie"></canvas>
+                    <p id="game-quality-bubble-note" class="radar-note" aria-live="polite"></p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -497,6 +524,20 @@
         <div class="card">
             <h3>Types d'Erreurs</h3>
             <canvas id="errorTypeChart" height="250"></canvas>
+        </div>
+        <div class="grid-2">
+            <div class="card">
+                <h3>Qualité des coups par phase · barres empilées</h3>
+                <p class="radar-note">Répartition des catégories reconnues dans chaque phase. Une phase sans coups classés reconnus n’est pas estimée.</p>
+                <canvas id="phaseQualityStackChart" height="270" aria-label="Répartition empilée des qualités de coups en ouverture, milieu et finale"></canvas>
+                <p id="phase-quality-stack-note" class="radar-note" aria-live="polite"></p>
+            </div>
+            <div class="card">
+                <h3>Priorité de révision · Pareto</h3>
+                <p class="radar-note">Les barres classent les imprécisions, erreurs et gaffes. La ligne montre leur part cumulée.</p>
+                <canvas id="errorParetoChart" height="270" aria-label="Diagramme de Pareto des demi-coups à retravailler"></canvas>
+                <p id="error-pareto-note" class="radar-note" aria-live="polite"></p>
+            </div>
         </div>
     </div>
 
@@ -719,7 +760,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14880"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14881"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1832,10 +1873,14 @@ let radarChart = null;
 let moveDistChart = null;
 let errorTypeChart = null;
 let accuracyLineChart = null;
+let phaseQualityStackChart = null;
+let errorParetoChart = null;
+let gameQualityBubbleChart = null;
 let selectedMoveDistributionWindow = "games:10";
 
 function renderStyleTab(result) {
     if (!result) {
+        renderAdvancedPlayerCharts([]);
         const eligibleGames = allGames.filter(isProfileGameEligible);
         const selectedGames = eligibleGames.filter(isProfileGameIncluded);
         const safeGames = eligibleGames.filter(game => game.trainingAidsUsed === false).length;
@@ -2058,6 +2103,7 @@ function renderStyleTab(result) {
     const gmComparison = document.getElementById('gm-comparison');
     if (gmComparison) gmComparison.replaceChildren();
     renderMoveDistribution();
+    renderAdvancedPlayerCharts(playerMovesByGame);
 
 }
 
@@ -2260,6 +2306,216 @@ function renderStyleEvolution(result) {
     host.innerHTML = '<strong>' + confidence + '</strong> · ' + sampleCount + ' ' +
         escapePlayerText(sourceLabel) + ', ' + sample.reduce((sum, item) => sum + item.moves.length, 0) +
         ' demi-coups classés.' + evolution + learning;
+}
+
+function renderAdvancedPlayerCharts(gameMoveGroups) {
+    const destroyChart = chart => { if (chart) chart.destroy(); };
+    const phaseNote = document.getElementById('phase-quality-stack-note');
+    const paretoNote = document.getElementById('error-pareto-note');
+    const bubbleNote = document.getElementById('game-quality-bubble-note');
+    const heatmap = document.getElementById('profile-activity-heatmap');
+    const groups = Array.isArray(gameMoveGroups) ? gameMoveGroups : [];
+
+    // 100% stacked bars: compare the observed quality mix in each phase.
+    const phaseKeys = ['opening', 'middle', 'endgame'];
+    const phaseLabels = ['Ouverture', 'Milieu de partie', 'Finale'];
+    const qualityBands = [
+        { label: 'Brillant / meilleur', keys: ['brilliant', 'best'], color: '#5bc0eb' },
+        { label: 'Très bon / bon', keys: ['very-good', 'good'], color: '#54c571' },
+        { label: 'Coup OK', keys: ['ok'], color: '#f4d03f' },
+        { label: 'À retravailler', keys: ['inaccuracy', 'mistake', 'blunder'], color: '#ed795f' }
+    ];
+    const phaseCounts = Object.fromEntries(phaseKeys.map(key => [key, { total: 0, bands: [0, 0, 0, 0] }]));
+    const allMoves = groups.flatMap(moves => Array.isArray(moves) ? moves : []).filter(move => move && move.rated);
+    allMoves.forEach(move => {
+        const phase = move.phase;
+        if (!phaseCounts[phase]) return;
+        const type = profileMoveType(move);
+        const bandIndex = qualityBands.findIndex(band => band.keys.includes(type));
+        if (bandIndex < 0) return;
+        phaseCounts[phase].bands[bandIndex]++;
+        phaseCounts[phase].total++;
+    });
+    const phaseCanvas = document.getElementById('phaseQualityStackChart');
+    const phasesWithData = phaseKeys.filter(key => phaseCounts[key].total > 0);
+    if (phaseCanvas && typeof Chart !== 'undefined') {
+        destroyChart(phaseQualityStackChart);
+        phaseQualityStackChart = new Chart(phaseCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: phasesWithData.map(key => phaseLabels[phaseKeys.indexOf(key)]),
+                datasets: qualityBands.map((band, index) => ({
+                    label: band.label,
+                    data: phasesWithData.map(key => phaseCounts[key].bands[index] * 100 / phaseCounts[key].total),
+                    backgroundColor: band.color,
+                    borderWidth: 0
+                }))
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { stacked: true, title: { display: true, text: 'Phase de la partie', color: '#cbd5e1' }, ticks: { color: '#d7e2eb' }, grid: { display: false } },
+                    y: { stacked: true, min: 0, max: 100, title: { display: true, text: 'Part des coups classés (%)', color: '#cbd5e1' }, ticks: { color: '#d7e2eb', callback: value => value + '%' }, grid: { color: 'rgba(255,255,255,.08)' } }
+                },
+                plugins: { legend: { position: 'bottom', labels: { color: '#e5edf4', boxWidth: 12 } } }
+            }
+        });
+    } else destroyChart(phaseQualityStackChart), phaseQualityStackChart = null;
+    if (phaseNote) phaseNote.textContent = phasesWithData.length
+        ? phasesWithData.map(key => phaseLabels[phaseKeys.indexOf(key)] + ' : ' + phaseCounts[key].total + ' demi-coup(s) classé(s)').join(' · ') + '.'
+        : 'Données insuffisantes : aucun demi-coup classé avec phase exploitable.';
+
+    // Pareto: show which of the three error grades account for most review work.
+    const errorDefs = [
+        { key: 'inaccuracy', label: 'Imprécisions', color: '#f4b942' },
+        { key: 'mistake', label: 'Erreurs', color: '#f08a4b' },
+        { key: 'blunder', label: 'Gaffes', color: '#e45b67' }
+    ];
+    const errorCounts = Object.fromEntries(errorDefs.map(item => [item.key, 0]));
+    allMoves.forEach(move => {
+        const type = profileMoveType(move);
+        if (Object.prototype.hasOwnProperty.call(errorCounts, type)) errorCounts[type]++;
+    });
+    const sortedErrors = errorDefs.map(item => ({ ...item, count: errorCounts[item.key] }))
+        .sort((a, b) => b.count - a.count);
+    const errorTotal = sortedErrors.reduce((sum, item) => sum + item.count, 0);
+    const paretoCanvas = document.getElementById('errorParetoChart');
+    if (paretoCanvas && typeof Chart !== 'undefined') {
+        destroyChart(errorParetoChart);
+        let cumulative = 0;
+        const cumulativePct = sortedErrors.map(item => {
+            cumulative += item.count;
+            return errorTotal ? cumulative * 100 / errorTotal : 0;
+        });
+        errorParetoChart = new Chart(paretoCanvas.getContext('2d'), {
+            data: {
+                labels: sortedErrors.map(item => item.label),
+                datasets: [
+                    { type: 'bar', label: 'Demi-coups à retravailler', data: sortedErrors.map(item => item.count), backgroundColor: sortedErrors.map(item => item.color), yAxisID: 'y', borderRadius: 5 },
+                    { type: 'line', label: 'Part cumulée', data: cumulativePct, yAxisID: 'y1', borderColor: '#69d5ff', backgroundColor: '#69d5ff', pointRadius: 4, tension: 0.15 }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Type de demi-coup', color: '#cbd5e1' }, ticks: { color: '#d7e2eb' }, grid: { display: false } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Nombre de demi-coups', color: '#cbd5e1' }, ticks: { precision: 0, color: '#d7e2eb' }, grid: { color: 'rgba(255,255,255,.08)' } },
+                    y1: { beginAtZero: true, max: 100, position: 'right', title: { display: true, text: 'Part cumulée (%)', color: '#cbd5e1' }, ticks: { color: '#d7e2eb', callback: value => value + '%' }, grid: { drawOnChartArea: false } }
+                },
+                plugins: { legend: { position: 'bottom', labels: { color: '#e5edf4', boxWidth: 12 } } }
+            }
+        });
+    } else destroyChart(errorParetoChart), errorParetoChart = null;
+    if (paretoNote) paretoNote.textContent = errorTotal
+        ? errorTotal + ' demi-coup(s) classé(s) comme imprécision, erreur ou gaffe dans les parties retenues.'
+        : 'Aucune imprécision, erreur ou gaffe classée dans les parties retenues.';
+
+    // Bubble chart: one real point per selected game; no point is fabricated.
+    const bubblePoints = groups.map((moves, index) => {
+        const rated = (Array.isArray(moves) ? moves : []).filter(move => move && move.rated && Number.isFinite(Number(move.rating)));
+        if (!rated.length) return null;
+        const typeCounts = { inaccuracy: 0, mistake: 0, blunder: 0 };
+        rated.forEach(move => {
+            const type = profileMoveType(move);
+            if (Object.prototype.hasOwnProperty.call(typeCounts, type)) typeCounts[type]++;
+        });
+        const errors = typeCounts.inaccuracy + typeCounts.mistake + typeCounts.blunder;
+        const averageRating = rated.reduce((sum, move) => sum + Number(move.rating), 0) / rated.length;
+        const gameId = String(rated[0].sourceGameId || '');
+        const game = allGames.find(item => String(item.id || '') === gameId);
+        const playerColor = game ? getProfileGamePlayerColor(game) : null;
+        const opponentColor = playerColor === 'w' ? 'b' : playerColor === 'b' ? 'w' : null;
+        const opponent = game ? getProfileGamePlayerName(game, opponentColor) : '';
+        const label = opponent || (game && game.opponent) || ('Partie ' + (index + 1));
+        return {
+            x: Math.max(0, Math.min(10, averageRating)),
+            y: errors * 100 / rated.length,
+            r: Math.max(4, Math.min(18, 4 + Math.sqrt(errors) * 3)),
+            gameLabel: String(label),
+            moveCount: rated.length,
+            errorCount: errors,
+            averageRating
+        };
+    }).filter(Boolean);
+    const bubbleCanvas = document.getElementById('gameQualityBubbleChart');
+    if (bubbleCanvas && typeof Chart !== 'undefined') {
+        destroyChart(gameQualityBubbleChart);
+        gameQualityBubbleChart = new Chart(bubbleCanvas.getContext('2d'), {
+            type: 'bubble',
+            data: { datasets: [{
+                label: 'Partie sélectionnée',
+                data: bubblePoints,
+                backgroundColor: 'rgba(91,192,235,.55)',
+                borderColor: '#5bc0eb',
+                borderWidth: 1
+            }] },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { min: 0, max: 10, title: { display: true, text: 'Note moyenne des coups classés (/10)', color: '#cbd5e1' }, ticks: { color: '#d7e2eb' }, grid: { color: 'rgba(255,255,255,.08)' } },
+                    y: { min: 0, max: 100, title: { display: true, text: 'Part des coups à retravailler (%)', color: '#cbd5e1' }, ticks: { color: '#d7e2eb', callback: value => value + '%' }, grid: { color: 'rgba(255,255,255,.08)' } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: context => {
+                        const point = context.raw;
+                        return point.gameLabel + ' · ' + point.moveCount + ' coups classés · note ' +
+                            point.averageRating.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + '/10 · ' +
+                            point.errorCount + ' à retravailler';
+                    } } }
+                }
+            }
+        });
+    } else destroyChart(gameQualityBubbleChart), gameQualityBubbleChart = null;
+    if (bubbleNote) bubbleNote.textContent = bubblePoints.length
+        ? bubblePoints.length + ' partie(s) avec coups notés et classés. La note est une moyenne des évaluations de coups stockées; elle n’est pas un Elo.'
+        : 'Aucune partie sélectionnée ne contient assez de coups classés pour tracer une bulle.';
+
+    // Calendar heatmap: selected games only, grouped by their real recorded date.
+    if (heatmap) {
+        const selected = typeof profileMoveGamesForDistribution === 'function' ? profileMoveGamesForDistribution() : [];
+        const dated = selected.filter(item => Number.isFinite(item.timestamp));
+        const counts = new Map();
+        dated.forEach(item => {
+            const date = new Date(item.timestamp);
+            date.setHours(0, 0, 0, 0);
+            const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            counts.set(key, (counts.get(key) || 0) + 1);
+        });
+        const end = new Date();
+        end.setHours(0, 0, 0, 0);
+        const alignedStart = new Date(end);
+        alignedStart.setDate(end.getDate() - 364 - end.getDay());
+        const weeks = [];
+        for (let week = 0; week < 53; week++) {
+            const days = [];
+            for (let day = 0; day < 7; day++) {
+                const date = new Date(alignedStart);
+                date.setDate(alignedStart.getDate() + week * 7 + ((day + 1) % 7));
+                if (date > end) { days.push(''); continue; }
+                const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+                const count = counts.get(key) || 0;
+                const level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 6 ? 3 : 4;
+                days.push('<span class="activity-day activity-level-' + level + '" title="' +
+                    count + ' partie(s) · ' + escapePlayerText(date.toLocaleDateString('fr-FR')) +
+                    '" aria-label="' + count + ' partie(s), ' + escapePlayerText(date.toLocaleDateString('fr-FR')) + '"></span>');
+            }
+            weeks.push('<div class="activity-week">' + days.join('') + '</div>');
+        }
+        const monthLabels = [];
+        for (let week = 0; week < 53; week++) {
+            const date = new Date(alignedStart);
+            date.setDate(alignedStart.getDate() + week * 7);
+            if (date.getDate() <= 7) monthLabels.push('<span style="grid-column:' + (week + 1) + ';">' +
+                escapePlayerText(date.toLocaleDateString('fr-FR', { month: 'short' })) + '</span>');
+        }
+        heatmap.innerHTML =
+            '<div class="activity-calendar-scroll"><div class="activity-calendar-months">' + monthLabels.join('') + '</div>' +
+            '<div class="activity-calendar-grid"><div class="activity-day-labels"><span>Lun</span><span></span><span>Mer</span><span></span><span>Ven</span><span></span><span></span></div>' +
+            '<div class="activity-calendar-weeks">' + weeks.join('') + '</div></div></div>' +
+            '<div class="activity-calendar-legend"><span>Moins</span><i class="activity-level-0"></i><i class="activity-level-1"></i><i class="activity-level-2"></i><i class="activity-level-3"></i><i class="activity-level-4"></i><span>Plus</span></div>' +
+            '<p class="radar-note">' + dated.length + ' partie(s) datée(s) retenue(s) dans ce profil sur la période affichée; les jours sans partie restent vides.</p>';
+    }
 }
 
 function renderMoveDistribution() {

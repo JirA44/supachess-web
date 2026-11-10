@@ -223,6 +223,9 @@
         .recommended-drill-link { display:block; padding:6px 8px; border-radius:6px; color:#b9eaff; text-decoration:underline; text-decoration-color:rgba(0,217,255,.45); text-underline-offset:3px; line-height:1.45; }
         .recommended-drill-link:hover { color:#fff; background:rgba(0,217,255,.12); text-decoration-color:#00d9ff; }
         .recommended-drill-link:focus-visible { outline:2px solid #00d9ff; outline-offset:2px; background:rgba(0,217,255,.14); }
+        .thinking-drill-link,.thinking-correction-link { display:inline-flex; align-items:center; gap:5px; margin-top:9px; padding:7px 10px; border:1px solid rgba(0,217,255,.4); border-radius:7px; color:#b9eaff; background:rgba(0,217,255,.08); font-weight:700; line-height:1.35; text-decoration:none; }
+        .thinking-drill-link:hover,.thinking-correction-link:hover { color:#fff; background:rgba(0,217,255,.18); }
+        .thinking-drill-link:focus-visible,.thinking-correction-link:focus-visible { outline:2px solid #00d9ff; outline-offset:2px; }
         .tip-box {
             background: rgba(46,204,113,0.1);
             border: 1px solid rgba(46,204,113,0.3);
@@ -773,7 +776,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14883"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14884"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -3195,17 +3198,35 @@ function switchTab(tabName) {
 // ==========================================
 // THINKING ERRORS ANALYSIS
 // ==========================================
+function getThinkingDrillHref(lessonId) {
+    const safeLessonId = /^[a-z0-9-]+$/i.test(String(lessonId || '')) ? String(lessonId) : 'precision-05-best-reply';
+    return 'https://jira44.github.io/supachess/book-lessons.html?lesson=' + encodeURIComponent(safeLessonId);
+}
+
+function renderThinkingCorrectionLink(example) {
+    if (!example || !example.sourceGameId || !Number.isInteger(Number(example.ply)) || Number(example.ply) < 1) return '';
+    const category = ['inaccuracy', 'mistake', 'blunder'].includes(example.correctionCategory)
+        ? example.correctionCategory : 'mistake';
+    const url = 'https://jira44.github.io/supachess/index.html?resume-correction-profile=1&focus-category=' +
+        encodeURIComponent(category) + '&focus-ply=' + encodeURIComponent(String(example.ply));
+    return '<a class="thinking-correction-link" href="' + escapePlayerText(url) +
+        '" data-correction-game-id="' + escapePlayerText(example.sourceGameId) +
+        '" data-correction-ply="' + Number(example.ply) +
+        '" data-correction-category="' + category +
+        '">Rejouer cette position et chercher la correction →</a>';
+}
+
 function analyzeThinkingErrors(playerMovesByGame) {
     const patterns = {
-        notCheckingThreats: { name: 'Coups classés à retravailler', icon: '🔎',
+        notCheckingThreats: { name: 'Coups classés à retravailler', lessonId: 'precision-02-opponent-threat', icon: '🔎',
             description: 'Classement objectif de l’analyse de partie; il signale les coups à revoir, sans prouver la cause de réflexion.',
             fix: 'Rejouez la position, comparez plusieurs candidats et cherchez la meilleure réponse légale de l’adversaire.',
             count: 0, examples: [], severity: 0 },
-        noCalculation: { name: 'Écart mesuré au meilleur coup (≥ 30 cp)', icon: '📉',
+        noCalculation: { name: 'Écart mesuré au meilleur coup (≥ 30 cp)', lessonId: 'precision-05-best-reply', icon: '📉',
             description: 'Stockfish a mesuré au moins 30 centipions de perte par rapport au meilleur coup de sa recherche. Ce résultat ne prouve pas ce que le joueur a pensé.',
             fix: 'Pour chaque candidat, calculez la meilleure réfutation adverse, puis la meilleure réponse pour les deux camps.',
             count: 0, examples: [], severity: 0 },
-        hangingPieces: { name: 'Écart important (≥ 200 cp)', icon: '⚠️',
+        hangingPieces: { name: 'Écart important (≥ 200 cp)', lessonId: 'precision-03-piece-safety', icon: '⚠️',
             description: 'Une perte d’au moins 200 centipions a été mesurée. Cela ne prouve pas qu’une pièce était en prise : vérifiez la variante et ses conséquences.',
             fix: 'Comparez la meilleure ligne avant le coup avec la meilleure réponse adverse après le coup joué.',
             count: 0, examples: [], severity: 0 }
@@ -3226,7 +3247,9 @@ function analyzeThinkingErrors(playerMovesByGame) {
                 quality: m.quality || (isError ? 'À retravailler' : 'Coup évalué'),
                 lossCp, opponentBestReplyUci: m.opponentBestReplyUci || '',
                 opponentBestReplyLine: Array.isArray(m.opponentBestReplyLine) ? m.opponentBestReplyLine.slice(0, 8) : [],
-                sourceGameId: m.sourceGameId || '' };
+                sourceGameId: m.sourceGameId || '', ply: Number(m.ply) || null,
+                correctionCategory: Number(lossCp) >= 200 || category === 'blunder' ? 'blunder'
+                    : Number(lossCp) >= 60 || category === 'mistake' || category === 'error' ? 'mistake' : 'inaccuracy' };
             totals.moves++;
             if (m.rated) totals.rated++;
             if (m.bestMove === true || category === 'best') totals.best++;
@@ -3315,6 +3338,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                 <strong style="color:#2ecc71;">Comment corriger:</strong>
                 <p style="color:#ccc; margin-top:4px; font-size:0.9rem;">${p.fix}</p>
             </div>
+            <a class="thinking-drill-link" href="${escapePlayerText(getThinkingDrillHref(p.lessonId))}">Travailler cette faiblesse dans une leçon →</a>
             ${p.examples.length > 0 ? `
             <details style="margin-top:8px;">
                 <summary style="cursor:pointer; color:#888; font-size:0.85rem;">Voir les exemples (${p.examples.length})</summary>
@@ -3326,6 +3350,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                             ${ex.lossCp !== null && ex.lossCp !== undefined ? ` (perte mesurée: ${Math.round(ex.lossCp)} cp)` : ''}
                             ${ex.opponentBestReplyUci ? '<br><span style="color:#87ceeb;">Meilleure réponse adverse Stockfish après ce coup : ' + ex.opponentBestReplyUci + (ex.opponentBestReplyLine.length > 1 ? ' · ligne ' + ex.opponentBestReplyLine.join(' ') : '') + '</span>' : ''}
                             ${ex.comment ? `<br><span style="color:#777;">${ex.comment.substring(0, 80)}</span>` : ''}
+                            ${renderThinkingCorrectionLink(ex)}
                         </div>
                     `).join('')}
                 </div>
@@ -3409,7 +3434,10 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
             if ((m.rating || 5) <= 3) {
                 allErrors.push({
                     san: m.san, moveNum: m.moveNum || i+1, rating: m.rating,
-                    quality: m.quality, comment: m.comment, lossCp: m.lossCp, opponentBestReplyUci: m.opponentBestReplyUci, opponentBestReplyLine: m.opponentBestReplyLine || [], moveIndex: i
+                    quality: m.quality, comment: m.comment, lossCp: m.lossCp, opponentBestReplyUci: m.opponentBestReplyUci, opponentBestReplyLine: m.opponentBestReplyLine || [], moveIndex: i,
+                    sourceGameId: m.sourceGameId || '', ply: Number(m.ply) || null,
+                    correctionCategory: Number(m.lossCp) >= 200 || m.category === 'blunder' ? 'blunder'
+                        : Number(m.lossCp) >= 60 || m.category === 'mistake' || m.category === 'error' ? 'mistake' : 'inaccuracy'
                 });
             }
         }
@@ -3426,6 +3454,7 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
                 ${err.lossCp !== null && err.lossCp !== undefined ? `<p style="color:#aaa; font-size:0.85rem; margin-top:4px;">Perte mesurée par Stockfish : ${Math.round(err.lossCp)} cp</p>` : ''}
                 ${err.opponentBestReplyUci ? `<p style="color:#87ceeb; font-size:0.85rem; margin-top:4px;">Meilleure réponse adverse après ce coup : <strong>${err.opponentBestReplyUci}</strong>${err.opponentBestReplyLine.length > 1 ? ' · ligne ' + err.opponentBestReplyLine.join(' ') : ''}</p>` : '<p style="color:#888;font-size:.82rem;margin-top:4px;">La meilleure réponse adverse n’est pas enregistrée pour cette analyse. Relance une analyse PGN pour la calculer.</p>'}
                 ${err.comment ? `<p style="color:#aaa; font-size:0.85rem; margin-top:4px;">${err.comment.substring(0, 120)}</p>` : ''}
+                ${renderThinkingCorrectionLink(err)}
                 <div style="margin-top:8px; padding:8px; background:rgba(255,215,0,0.1); border-radius:6px; font-size:0.85rem;">
                     <strong style="color:#ffd700;">Rejouez mentalement:</strong>
                     <ol style="margin:4px 0 0 16px; color:#ccc;">
@@ -3444,11 +3473,11 @@ function renderThinkingTab(thinkingAnalysis, playerMovesByGame) {
 
 function installProfileCorrectionLinks() {
     const container = document.getElementById('training-exercises');
-    if (!container || container.dataset.correctionLinksInstalled) return;
-    container.dataset.correctionLinksInstalled = '1';
-    container.addEventListener('click', function(event) {
+    if (!container || document.documentElement.dataset.correctionLinksInstalled) return;
+    document.documentElement.dataset.correctionLinksInstalled = '1';
+    document.addEventListener('click', function(event) {
         const link = event.target.closest && event.target.closest('a[data-correction-game-id]');
-        if (!link || !container.contains(link)) return;
+        if (!link) return;
         const game = allGames.find(item => String(item.id || '') === link.dataset.correctionGameId);
         if (!game || !game.pgn) {
             event.preventDefault();
@@ -3575,7 +3604,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
-<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14883</footer>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14884</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

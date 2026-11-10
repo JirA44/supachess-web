@@ -220,6 +220,9 @@
             color: #ffd700;
             margin-bottom: 8px;
         }
+        .recommended-drill-link { display:block; padding:6px 8px; border-radius:6px; color:#b9eaff; text-decoration:underline; text-decoration-color:rgba(0,217,255,.45); text-underline-offset:3px; line-height:1.45; }
+        .recommended-drill-link:hover { color:#fff; background:rgba(0,217,255,.12); text-decoration-color:#00d9ff; }
+        .recommended-drill-link:focus-visible { outline:2px solid #00d9ff; outline-offset:2px; background:rgba(0,217,255,.14); }
         .tip-box {
             background: rgba(46,204,113,0.1);
             border: 1px solid rgba(46,204,113,0.3);
@@ -770,7 +773,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14882"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14883"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1828,6 +1831,42 @@ function getDrills(category) {
     return drills[category] || drills['Tactique'];
 }
 
+function getRecommendedDrillHref(category, index) {
+    const lessons = id => 'https://jira44.github.io/supachess/book-lessons.html?lesson=' + encodeURIComponent(id);
+    const routes = {
+        'Ouverture': [
+            'https://jira44.github.io/supachess-web/TRAINING_OPENINGS.html',
+            lessons('develop-before-attack'),
+            lessons('castle-safely')
+        ],
+        'Milieu de jeu': [
+            lessons('improve-piece'),
+            lessons('pattern-signals-isolated-pawn'),
+            lessons('pgn-carlsen-centralize-knight')
+        ],
+        'Finales': [
+            'https://jira44.github.io/supachess-web/TRAINING_ENDGAMES.html?endgame=kpk',
+            'https://jira44.github.io/supachess-web/TRAINING_ENDGAMES.html?endgame=lucena',
+            'https://jira44.github.io/supachess-web/TRAINING_ENDGAMES.html?endgame=pawnrace'
+        ],
+        'Tactique': [
+            'https://jira44.github.io/supachess-web/TRAINING_TACTICS.html?theme=all',
+            'https://jira44.github.io/supachess-web/TRAINING_TACTICS.html?theme=all',
+            lessons('precision-05-best-reply')
+        ],
+        'Positionnement': [
+            lessons('pgn-carlsen-centralize-knight'),
+            lessons('pattern-signals-open-file'),
+            lessons('precision-10-quiet-move')
+        ],
+        'Defense': [
+            lessons('pgn-ding-gukesh-defend-draw-repetition'),
+            'https://jira44.github.io/supachess-web/TACTICAL_DEFENSE.html',
+            lessons('precision-11-defense-first')
+        ]
+    };
+    return routes[category] && routes[category][index] || 'https://jira44.github.io/supachess-web/TRAINING_TACTICS.html?theme=all';
+}
 function getDoAndDont(category) {
     const rules = {
         'Ouverture': {
@@ -2751,7 +2790,7 @@ function renderTrainingTab(trainingProgram, swAnalysis) {
             <div class="exercise-box">
                 <div class="exercise-title">Exercices recommandes</div>
                 <ul style="list-style:none; padding:0;">
-                    ${ex.drills.map(d => `<li style="padding:4px 0; color:#ddd;">▸ ${d}</li>`).join('')}
+                    ${ex.drills.map((d, drillIndex) => `<li><a class="recommended-drill-link" href="${escapePlayerText(getRecommendedDrillHref(ex.category, drillIndex))}">▸ ${escapePlayerText(d)}</a></li>`).join('')}
                 </ul>
             </div>
 
@@ -3536,7 +3575,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
-<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14882</footer>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14883</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

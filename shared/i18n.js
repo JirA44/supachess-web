@@ -41,7 +41,7 @@
             callback();
             return;
         }
-        var url = basePath + '/translations/' + lang + '.json?v=supaengine-hub-20261104';
+        var url = basePath + '/translations/' + lang + '.json?v=supaengine-hub-20261110-defense-link';
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.onreadystatechange = function () {

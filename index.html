@@ -536,6 +536,14 @@
                 </div>
             </a>
 
+            <a href="TACTICAL_DEFENSE.html">
+                <div class="menu-card" data-section="training-tactical-defense" style="border: 2px solid #a78bfa; box-shadow: 0 0 20px rgba(167, 139, 250, 0.25);">
+                    <span class="icon">&#x1F6E1;</span>
+                    <h3 data-i18n="training_defense_title">Défense tactique</h3>
+                    <p data-i18n="training_defense_desc">Repérez les menaces, trouvez une défense active et entraînez-vous avec des exercices interactifs.</p>
+                    <span class="badge new" style="background: rgba(167, 139, 250, 0.22); border-color: rgba(167, 139, 250, 0.5);"><span data-i18n="training_defense_badge">EXERCICES INTERACTIFS</span></span>
+                </div>
+            </a>
             <a href="DAILY_CHALLENGE.html">
                 <div class="menu-card" data-section="daily-challenge" style="border: 2px solid #f97316; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);">
                     <span class="icon">&#x1F525;</span>
@@ -810,7 +818,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <link rel="stylesheet" href="shared/community.css?v=supaengine-hub-i18n-fix-20261101-v2">
-<script src="shared/i18n.js?v=language-sync-20261104"></script>
+<script src="shared/i18n.js?v=language-sync-20261110-defense-link"></script>
 <script src="shared/community-v1.13.14801.js?v=1.13.14801"></script>
 <script src="shared/profiles.js?v=global-site-search-20261031"></script>
 <script>document.addEventListener('DOMContentLoaded', function(){ if(window.SupaProfiles) SupaProfiles.initSearchBar(); if(window.SupaProfiles&&typeof firebase!=='undefined'&&firebase){ var a=firebase.auth(), d=firebase.firestore(); SupaProfiles.init(a,d); SupaProfiles.initRankingSection(); a.onAuthStateChanged(function(u){ if(u) SupaProfiles.ensureUserProfile(u); }); if(new URLSearchParams(location.search).get('openProfile')==='1'){a.onAuthStateChanged(function(u){history.replaceState(null,'',location.pathname+location.hash);if(!u){var login=document.getElementById('cn-auth-bar-login');if(login)login.click();return;}SupaProfiles.getProfile(u.uid).then(function(profile){if(profile)SupaProfiles.renderProfileModal(profile);else SupaProfiles.renderOwnProfileFallback(u);}).catch(function(){SupaProfiles.renderOwnProfileFallback(u);});});} }});</script>

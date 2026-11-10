@@ -363,6 +363,10 @@
         .move-distribution-legend { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:7px; margin-top:10px; }
         .move-distribution-legend-item { display:flex; align-items:center; gap:7px; color:#d8e2ea; font-size:.86rem; }
         .move-distribution-swatch { width:10px; height:10px; border-radius:50%; flex:0 0 10px; }
+        .error-type-table th, .error-type-table td { padding:7px 5px; border-bottom:1px solid rgba(255,255,255,.12); color:#e2eaf0; text-align:right; white-space:nowrap; }
+        .error-type-table thead th { color:#a9c9df; font-size:.78rem; }
+        .error-type-table th:first-child { text-align:left; }
+        .error-type-table td:nth-child(3) { color:#ffe08a; font-weight:800; }
         .activity-calendar-scroll { overflow-x:auto; padding:4px 0; }
         .activity-calendar-months { display:grid; grid-template-columns:repeat(53,12px); gap:3px; min-width:max-content; margin:0 0 5px 28px; color:#aab5c0; font-size:10px; }
         .activity-calendar-grid { display:flex; align-items:flex-start; gap:6px; }
@@ -522,8 +526,14 @@
         </div>
 
         <div class="card">
-            <h3>Types d'Erreurs</h3>
-            <canvas id="errorTypeChart" height="250"></canvas>
+            <h3>Types d’erreurs et causes détectées</h3>
+            <p id="error-type-summary" class="radar-note" aria-live="polite"></p>
+            <div class="grid-2" style="align-items:start;">
+                <div><canvas id="errorTypeChart" height="300" aria-label="Nombre et répartition des demi-coups classés comme erreurs, par cause détectée"></canvas></div>
+                <div id="error-type-details" style="overflow-x:auto;"></div>
+            </div>
+            <p id="error-type-phase-summary" class="radar-note" aria-live="polite"></p>
+            <p class="radar-note">Les causes sont attribuées seulement à partir des commentaires, marqueurs tactiques et phase enregistrés. « Cause non déterminée » évite d’inventer une explication quand ces indices manquent; les pourcentages portent sur les demi-coups classés comme imprécision, erreur ou gaffe.</p>
         </div>
         <div class="grid-2">
             <div class="card">
@@ -760,7 +770,7 @@
         </div>
     </div>
 
-<script src="shared/player-analysis-data.js?v=1.13.14881"></script>
+<script src="shared/player-analysis-data.js?v=1.13.14882"></script>
 <script>
 // ==========================================
 // DATA LOADING
@@ -1139,6 +1149,12 @@ function refreshSelectedPlayerAnalysis() {
             if (el) el.innerHTML = emptyMessage;
         });
         if (errorTypeChart) { errorTypeChart.destroy(); errorTypeChart = null; }
+        ['error-type-summary','error-type-phase-summary'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = '';
+        });
+        const errorDetails = document.getElementById('error-type-details');
+        if (errorDetails) errorDetails.innerHTML = emptyMessage;
         const thinkingSummary = document.getElementById('thinking-errors-list');
         if (thinkingSummary) thinkingSummary.innerHTML = emptyMessage;
         renderThinkingTab(null, []);
@@ -1606,41 +1622,77 @@ function analyzeStrengthsWeaknesses(playerMovesByGame, analysisResult) {
         scoreNormalized: Math.round(c.score)
     }));
 
-    // Error type analysis
-    const errorTypes = {
-        'Pieces en prise': 0,
-        'Tactiques manquees': 0,
-        'Mauvais echanges': 0,
-        'Securite du Roi': 0,
-        'Erreurs de plan': 0,
-        'Finales ratees': 0
+    // Error type analysis uses only classified inaccuracies, mistakes and blunders.
+    // Cause labels require an explicit text/tactical/phase signal; otherwise keep the move unattributed.
+    const errorDefinitions = [
+        { label: 'Pièces laissées en prise', color: 'rgba(231,76,60,0.78)' },
+        { label: 'Tactiques manquées', color: 'rgba(243,156,18,0.78)' },
+        { label: 'Échanges défavorables', color: 'rgba(52,152,219,0.78)' },
+        { label: 'Sécurité du roi', color: 'rgba(155,89,182,0.78)' },
+        { label: 'Erreur en finale · phase', color: 'rgba(230,126,34,0.78)' },
+        { label: 'Plan / stratégie · signal explicite', color: 'rgba(46,204,113,0.78)' },
+        { label: 'Cause non déterminée', color: 'rgba(149,165,166,0.78)' }
+    ];
+    const errorTypes = Object.fromEntries(errorDefinitions.map(item => [item.label, 0]));
+    const severityKeys = ['inaccuracy', 'mistake', 'blunder'];
+    const severityLabels = { inaccuracy: 'Imprécision', mistake: 'Erreur', blunder: 'Gaffe' };
+    const errorTypeSeverity = Object.fromEntries(errorDefinitions.map(item => [item.label, { inaccuracy: 0, mistake: 0, blunder: 0 }]));
+    const phaseCounts = { opening: 0, middle: 0, endgame: 0, unknown: 0 };
+    let totalRatedMoves = 0;
+    let totalErrors = 0;
+    const normalize = value => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const categoryForError = move => {
+        const category = String(move && move.category || '').toLowerCase();
+        if (category === 'error') return 'mistake';
+        return severityKeys.includes(category) ? category : null;
     };
 
     for (const moves of playerMovesByGame) {
-        for (let i = 0; i < moves.length; i++) {
-            const m = moves[i];
-            if ((m.rating || 5) > 4) continue; // Only errors
+        for (const m of moves) {
+            if (!m || !m.rated) continue;
+            totalRatedMoves++;
+            const severity = categoryForError(m);
+            if (!severity) continue;
+            totalErrors++;
 
-            const comment = (m.comment || '').toLowerCase();
-            const quality = (m.quality || '').toLowerCase();
-
-            if (comment.includes('prise') || comment.includes('pendu') || comment.includes('hanging')) {
-                errorTypes['Pieces en prise']++;
-            } else if (m.tactical && m.tactical.length > 0 || comment.includes('tactiq') || comment.includes('combinaison')) {
-                errorTypes['Tactiques manquees']++;
-            } else if (comment.includes('échange') || comment.includes('echange') || comment.includes('capture')) {
-                errorTypes['Mauvais echanges']++;
-            } else if (comment.includes('roi') || comment.includes('king') || comment.includes('roque') || comment.includes('castle')) {
-                errorTypes['Securite du Roi']++;
-            } else if (i >= 20) {
-                errorTypes['Finales ratees']++;
+            const evidence = normalize([
+                m.comment, m.quality, m.errorType, m.cause, m.explanation,
+                Array.isArray(m.diagnostics) ? m.diagnostics.map(item => item && (item.text || item.code)).join(' ') : m.diagnostics
+            ].filter(Boolean).join(' '));
+            const tacticalSignal = Array.isArray(m.tactical) ? m.tactical.length > 0 : !!m.tactical;
+            let cause;
+            if (/\b(prise|pendu|hanging|unprotected|undefended|piece en l'air|piece non protegee)\b/.test(evidence)) {
+                cause = 'Pièces laissées en prise';
+            } else if (tacticalSignal || /tactiq|combinaison|fourchette|clouage|enfilade|decouverte|intermediaire|sacrifice rate/.test(evidence)) {
+                cause = 'Tactiques manquées';
+            } else if (/echange|trade|simplification|mauvais fou|mauvaise piece echangee/.test(evidence)) {
+                cause = 'Échanges défavorables';
+            } else if (/roi|king|roque|castle|mat|exposition du roi|king safety/.test(evidence)) {
+                cause = 'Sécurité du roi';
+            } else if (m.phase === 'endgame' || m.phase === 'finale') {
+                cause = 'Erreur en finale · phase';
+            } else if (/plan|strategie|positionnel|structure|pion|case faible|piece mal placee|mauvais placement|colonne ouverte/.test(evidence)) {
+                cause = 'Plan / stratégie · signal explicite';
             } else {
-                errorTypes['Erreurs de plan']++;
+                cause = 'Cause non déterminée';
             }
+
+            errorTypes[cause]++;
+            errorTypeSeverity[cause][severity]++;
+            const phase = m.phase === 'middlegame' ? 'middle' : m.phase;
+            phaseCounts[Object.prototype.hasOwnProperty.call(phaseCounts, phase) ? phase : 'unknown']++;
         }
     }
 
-    return { strengths, weaknesses, errorTypes };
+    const errorTypeDetails = {
+        totalErrors,
+        totalRatedMoves,
+        errorTypes,
+        severity: errorTypeSeverity,
+        phaseCounts,
+        severityLabels
+    };
+    return { strengths, weaknesses, errorTypes, errorTypeDetails };
 }
 
 // ==========================================
@@ -2594,42 +2646,77 @@ function renderStrengthsTab(swAnalysis, result) {
         setPhaseBar('phase-endgame', phases.endgame);
     }
 
-    // Error type chart
-    const etCtx = document.getElementById('errorTypeChart').getContext('2d');
-    if (errorTypeChart) errorTypeChart.destroy();
-    const et = swAnalysis.errorTypes;
-    const labels = Object.keys(et);
-    const values = Object.values(et);
-    errorTypeChart = new Chart(etCtx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Nombre d\'erreurs',
-                data: values,
-                backgroundColor: [
-                    'rgba(231,76,60,0.6)',
-                    'rgba(243,156,18,0.6)',
-                    'rgba(52,152,219,0.6)',
-                    'rgba(155,89,182,0.6)',
-                    'rgba(230,126,34,0.6)',
-                    'rgba(149,165,166,0.6)'
-                ],
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            indexAxis: 'y',
-            scales: {
-                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } },
-                y: { grid: { display: false }, ticks: { color: '#ccc', font: { size: 12 } } }
+    // Error type chart and percentage/detail table
+    const etCanvas = document.getElementById('errorTypeChart');
+    const detailHost = document.getElementById('error-type-details');
+    const summaryHost = document.getElementById('error-type-summary');
+    const phaseSummaryHost = document.getElementById('error-type-phase-summary');
+    const etCtx = etCanvas && etCanvas.getContext('2d');
+    if (errorTypeChart) { errorTypeChart.destroy(); errorTypeChart = null; }
+    const detail = swAnalysis.errorTypeDetails || { totalErrors: 0, totalRatedMoves: 0, errorTypes: swAnalysis.errorTypes || {}, severity: {}, phaseCounts: {} };
+    const labels = Object.keys(detail.errorTypes || {});
+    const values = labels.map(label => Number(detail.errorTypes[label]) || 0);
+    const colors = [
+        'rgba(231,76,60,0.78)', 'rgba(243,156,18,0.78)', 'rgba(52,152,219,0.78)',
+        'rgba(155,89,182,0.78)', 'rgba(230,126,34,0.78)', 'rgba(46,204,113,0.78)',
+        'rgba(149,165,166,0.78)'
+    ];
+    const totalErrors = Number(detail.totalErrors) || 0;
+    const totalRatedMoves = Number(detail.totalRatedMoves) || 0;
+    const percent = value => totalErrors ? (100 * value / totalErrors).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : '0,0%';
+    if (summaryHost) {
+        const totalRate = totalRatedMoves ? (100 * totalErrors / totalRatedMoves).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '0,0';
+        summaryHost.textContent = totalErrors + ' demi-coup(s) classé(s) à retravailler sur ' + totalRatedMoves +
+            ' demi-coup(s) évalué(s) (' + totalRate + ' %). Chaque demi-coup est attribué à une seule cause détectée ou à « Cause non déterminée ».';
+    }
+    if (etCtx && typeof Chart !== 'undefined') {
+        errorTypeChart = new Chart(etCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Nombre de demi-coups',
+                    data: values,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderRadius: 6
+                }]
             },
-            plugins: {
-                legend: { display: false }
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, title: { display: true, text: 'Nombre de demi-coups classés', color: '#cbd5e1' }, ticks: { color: '#d7e2eb', precision: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                    y: { grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 12 } } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: context => context.label + ' : ' + context.parsed.x + ' demi-coup(s) · ' + percent(context.parsed.x) + ' des erreurs' } }
+                }
             }
-        }
-    });
+        });
+    }
+    if (detailHost) {
+        const severity = detail.severity || {};
+        const rows = labels.map((label, index) => {
+            const counts = severity[label] || {};
+            const value = values[index];
+            return '<tr><th scope="row" style="text-align:left;color:#e8f1f8;">' + escapePlayerText(label) + '</th>' +
+                '<td>' + value + '</td><td>' + percent(value) + '</td>' +
+                '<td>' + (Number(counts.inaccuracy) || 0) + '</td><td>' + (Number(counts.mistake) || 0) + '</td><td>' + (Number(counts.blunder) || 0) + '</td></tr>';
+        }).join('');
+        detailHost.innerHTML = '<table class="error-type-table" style="width:100%;border-collapse:collapse;font-size:.86rem;">' +
+            '<caption style="text-align:left;color:#cbd5e1;padding:0 0 8px;">Détail des causes · pourcentage sur les erreurs classées</caption>' +
+            '<thead><tr><th>Cause</th><th>Total</th><th>%</th><th>Impréc.</th><th>Erreurs</th><th>Gaffes</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table>';
+    }
+    if (phaseSummaryHost) {
+        const phaseCounts = detail.phaseCounts || {};
+        const phaseLabels = [['opening', 'Ouverture'], ['middle', 'Milieu'], ['endgame', 'Finale'], ['unknown', 'Phase inconnue']];
+        phaseSummaryHost.textContent = 'Phases des erreurs : ' + phaseLabels.map(([key, label]) => {
+            const count = Number(phaseCounts[key]) || 0;
+            return label + ' ' + count + ' (' + percent(count) + ')';
+        }).join(' · ') + '.';
+    }
 }
 
 function setPhaseBar(id, score) {
@@ -3449,7 +3536,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 </script>
-<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14881</footer>
+<footer class="site-version-footer" style="text-align:center;padding:16px 12px;font-size:.9rem;opacity:.8" aria-label="Version de SupaChess">Version SupaChess : 1.13.14882</footer>
 
 <!-- ChessNova Community -->
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>

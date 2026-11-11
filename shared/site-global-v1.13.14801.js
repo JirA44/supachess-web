@@ -682,7 +682,7 @@
     if (document.getElementById('supa-chessboard-protocol-loader')) return;
     var loader = document.createElement('script');
     loader.id = 'supa-chessboard-protocol-loader';
-    loader.src = new URL('shared/chessboard-protocol.js?v=1.1.1', root).href;
+    loader.src = new URL('shared/chessboard-protocol.js?v=1.1.2', root).href;
     loader.onload = function () {
       if (window.SupaChessBoardProtocol) window.SupaChessBoardProtocol.bootstrap(document);
     };

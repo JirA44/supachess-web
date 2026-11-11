@@ -1,9 +1,9 @@
 (function (global) {
   'use strict';
-  var VERSION = '1.1.1';
+  var VERSION = '1.1.2';
   var FILES = 'abcdefgh';
   var RANKS = '12345678';
-  var PIECES = { K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙', k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
+  var PIECES = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟︎', k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟︎' };
   var errors = { NONE:0, BAD_FEN:1, BAD_KING:2, BAD_PAWNS:3, BAD_CASTLING:4, BAD_EP:5, BAD_CLOCK:6, KING_CHECK:7, BOARD_SIZE:8, BOARD_SQUARES:9, DUPLICATE_SQUARE:10, BROKEN_PIECE:11, ZERO_SIZE:12, NO_BOARD:13 };
   function fail(code, message) { return { valid:false, code:code, errors:[message], fen:null, pieces:0 }; }
   function parseFen(fen) {
@@ -108,7 +108,7 @@
     if(!position.valid)throw new Error('Échiquier refusé : '+position.errors.join(' '));
     if(options.line){var lineCheck=validateLine(position.fen,options.line,options.Chess);if(!lineCheck.valid)throw new Error('Variante refusée : '+lineCheck.errors.join(' '));}
     var black=options.orientation==='b',root=document.createElement('div');
-    root.className='supa-board-grid';
+    root.className='supa-board-grid board';
     root.setAttribute('role','grid');
     root.setAttribute('aria-label',options.label||'Échiquier d’échecs validé');
     root.setAttribute('data-chessboard','true');
@@ -118,16 +118,18 @@
     var styleId='supa-board-protocol-style';
     if(!document.getElementById(styleId)){
       var style=document.createElement('style');style.id=styleId;
-      style.textContent='.supa-board-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));aspect-ratio:1;width:min(100%,640px);border:2px solid #26364d;box-sizing:border-box;touch-action:manipulation}.supa-board-square{display:grid;place-items:center;min-width:0;min-height:0;border:0;padding:0;font:clamp(1.25rem,6vw,3.5rem)/1 "Apple Symbols","Noto Sans Symbols 2","Segoe UI Symbol",serif;cursor:pointer;touch-action:manipulation}.supa-board-square.light{background:#f0d9b5}.supa-board-square.dark{background:#b58863}.supa-board-square:focus-visible{outline:3px solid #1685ff;outline-offset:-3px;z-index:1}.supa-board-square .supa-piece-white{color:#fff;-webkit-text-stroke:1px #172033;paint-order:stroke fill;text-shadow:0 1px 1px #172033}.supa-board-square .supa-piece-black{color:#171717;-webkit-text-stroke:1px #fff;paint-order:stroke fill;text-shadow:0 1px 1px #fff}';
+      style.textContent='.supa-board-grid.supa-board-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));aspect-ratio:1;width:min(100%,640px);border:3px solid #3a4060;border-radius:8px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.45);box-sizing:border-box;touch-action:manipulation;user-select:none}.supa-board-grid .supa-board-square{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;border:0;border-radius:0;padding:0;font:inherit;cursor:pointer;touch-action:none}.supa-board-grid .supa-board-square.light{background:#b8c0d8}.supa-board-grid .supa-board-square.dark{background:#5a6486}.supa-board-grid .supa-board-square:focus-visible{outline:3px solid #f0b35c;outline-offset:-3px;z-index:1}.supa-board-grid .supa-board-square .piece{font-family:"DejaVu Sans","Segoe UI Symbol",serif;font-variant-emoji:text;font-size:clamp(25px,9vw,58px);line-height:1;z-index:2;paint-order:stroke fill;pointer-events:none;-webkit-user-drag:none}.supa-board-grid .supa-board-square .piece.w{color:#fff;-webkit-text-fill-color:#fff;-webkit-text-stroke:2.8px #050608;text-shadow:0 1px 2px rgba(0,0,0,.72)}.supa-board-grid .supa-board-square .piece.b{color:#16181f;-webkit-text-fill-color:#16181f;-webkit-text-stroke:2.6px #fff;text-shadow:0 1px 1px rgba(0,0,0,.55)}.supa-board-grid .supa-board-square .coord{position:absolute;z-index:5;font-size:clamp(.82rem,1.7vw,1rem);font-weight:900;color:#111722;line-height:1;text-shadow:0 0 2px rgba(255,255,255,.95),0 1px 2px rgba(255,255,255,.9);pointer-events:none}.supa-board-grid .supa-board-square .coord.file{right:3px;bottom:2px}.supa-board-grid .supa-board-square .coord.rank{left:3px;top:2px}';
       document.head.appendChild(style);
     }
     var orderY=black?[0,1,2,3,4,5,6,7]:[7,6,5,4,3,2,1,0],orderX=black?[7,6,5,4,3,2,1,0]:[0,1,2,3,4,5,6,7];
     orderY.forEach(function(y,viewY){orderX.forEach(function(x,viewX){
-      var square=document.createElement('button'),name=algebraic(x,y),piece=position.board[y][x];
-      square.type='button';square.className='supa-board-square '+((x+y)%2===0?'dark':'light');square.dataset.square=name;
-      square.setAttribute('role','gridcell');square.setAttribute('aria-label',name+(piece?' · '+piece:' · vide'));
+      var square=document.createElement('button'),name=algebraic(x,y),piece=position.board[y][x],white=piece&&/[A-Z]/.test(piece);
+      square.type='button';square.className='supa-board-square sq '+((x+y)%2===0?'dark':'light');square.dataset.square=name;square.dataset.hasPiece=piece?'true':'false';
+      square.setAttribute('role','gridcell');square.setAttribute('aria-label',name+(piece?' · '+(white?'blanc ':'noir ')+piece:' · vide'));
       square.style.gridColumn=String(viewX+1);square.style.gridRow=String(viewY+1);
-      if(piece){var span=document.createElement('span');span.className=/[A-Z]/.test(piece)?'supa-piece-white':'supa-piece-black';span.textContent=PIECES[piece];span.setAttribute('aria-hidden','true');square.appendChild(span);}
+      if(piece){var span=document.createElement('span');span.className=(white?'supa-piece-white piece w':'supa-piece-black piece b');span.textContent=PIECES[piece];span.setAttribute('aria-hidden','true');square.appendChild(span);}
+      if(viewX===7){var rank=document.createElement('span');rank.className='coord rank';rank.textContent=String(8-y);rank.setAttribute('aria-hidden','true');square.appendChild(rank);}
+      if(viewY===7){var file=document.createElement('span');file.className='coord file';file.textContent=FILES[x];file.setAttribute('aria-hidden','true');square.appendChild(file);}
       square.addEventListener('click',function(){if(typeof options.onSquareClick==='function')options.onSquareClick(name,piece,position.fen);});
       root.appendChild(square);
     });});

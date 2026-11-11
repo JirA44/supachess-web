@@ -8,7 +8,7 @@
 <header class="panel"><h1>♟ Combinaisons longues : trouve chaque coup précis</h1><p>Joue la séquence sur l’échiquier. Après chaque coup correct, la réponse principale de la partie est jouée automatiquement. Une combinaison n’est validée qu’après toute la ligne.</p><p class="fine">Les Elo sont indicatifs et décrivent le calcul demandé. Les étiquettes « brillant » et « sacrifice » reprennent les annotations historiques, sans prétendre à une classification moteur actuelle.</p></header>
 <section class="panel"><h2>Choisis un défi</h2><div class="games"><button class="game-btn" id="kas" aria-pressed="false" onclick="choose('kas')">Kasparov–Topalov · 1999 · Elo ≈ 2 800+ · 4 coups clés</button><button class="game-btn" id="fish" aria-pressed="true" onclick="choose('fish')">Fischer–Byrne · 1956 · Elo ≈ 2 400+ · 7 coups clés</button></div></section>
 <section class="panel layout"><div><div class="row"><strong id="side"></strong><span class="tag" id="difficulty"></span></div><div class="board-window" id="boardWindow"><div class="board" id="board" data-supa-board-ignore="true" role="grid" aria-label="Chargement de l’échiquier"></div></div><div class="actions"><button class="action" onclick="reset()">↺ Recommencer</button><button class="action" onclick="showLine()">Voir la ligne complète</button></div></div><div><h2 id="title"></h2><p id="instruction"></p><p id="status" class="status" aria-live="polite"></p><h3>Coups trouvés</h3><div id="moves" class="moves"></div><div id="finish" class="good"></div><p class="fine" id="tip"></p></div></section>
-</main><footer class="fine" style="text-align:center;padding:16px">Version SupaChess : 1.13.14896 · Échiquier SupaChess</footer><script>
+</main><footer class="fine" style="text-align:center;padding:16px">Version SupaChess : 1.13.14897 · Échiquier SupaChess</footer><script>
 const DATA={
 kas:{title:"Le sacrifice de tour et l’attaque continue",fen:"b2r3r/k4p1p/p2q1np1/NppP4/3p1Q2/P4PPB/1PP4P/1K1RR3 w - - 1 24",user:"w",rating:"Position dense · ligne historique",tip:"24.Rxd4! sacrifie la tour. La suite exige de trouver plusieurs coups actifs, avec échec et gain de tempi.",line:[["w","e1","d4","Rxd4!"],["b","c5","d4","cxd4"],["w","d1","e7","Re7+"],["b","a7","b6","Kb6"],["w","f4","d4","Qxd4+"],["b","b6","a5","Kxa5"],["w","b2","b4","b4+"],["b","a5","a4","Ka4"]]},
 fish:{title:"Le sacrifice positionnel de Fischer",fen:"r3r1k1/pp3pbp/1qp3p1/2B5/2BP2b1/Q1n2N2/P4PPP/3R1K1R b - - 3 17",user:"b",rating:"Position dense · sacrifice de dame",tip:"17...Be6!! accepte l’échange de la dame contre un réseau d’échecs et d’attaques. Trouve les coups noirs précis jusqu’à la capture de la dame blanche.",line:[["b","g4","e6","Be6!!"],["w","c5","b6","Bxb6"],["b","e6","c4","Bxc4+"],["w","f1","g1","Kg1"],["b","c3","e2","Ne2+"],["w","g1","f1","Kf1"],["b","e2","d4","Nxd4+"],["w","f1","g1","Kg1"],["b","d4","e2","Ne2+"],["w","g1","f1","Kf1"],["b","e2","c3","Nc3+"],["w","f1","g1","Kg1"],["b","a7","b6","axb6"]]}
@@ -54,27 +54,35 @@ function fitBoardToWindow(){
  if(!availableWidth||!availableHeight)return;
  const railWidth=28;
  const boardSize=Math.max(120,Math.min(480,availableWidth-railWidth,availableHeight));
- wrapper.style.setProperty("display","block","important");
+ wrapper.style.setProperty("display","grid","important");
+ wrapper.style.setProperty("grid-template-columns",boardSize+"px "+railWidth+"px","important");
+ wrapper.style.setProperty("grid-template-rows",boardSize+"px","important");
+ wrapper.style.setProperty("gap","0","important");
+ wrapper.style.setProperty("align-items","stretch","important");
  wrapper.style.setProperty("position","relative","important");
  wrapper.style.setProperty("overflow","visible","important");
- wrapper.style.setProperty("width",boardSize+"px","important");
+ wrapper.style.setProperty("width",(boardSize+railWidth)+"px","important");
+ wrapper.style.setProperty("height",boardSize+"px","important");
  wrapper.style.setProperty("max-width","100%","important");
  wrapper.style.setProperty("margin","0","important");
  boardNode.style.setProperty("display","grid","important");
+ boardNode.style.setProperty("grid-column","1","important");
+ boardNode.style.setProperty("grid-row","1","important");
  boardNode.style.setProperty("width",boardSize+"px","important");
  boardNode.style.setProperty("max-width",boardSize+"px","important");
  boardNode.style.setProperty("min-width","0","important");
- boardNode.style.setProperty("height","auto","important");
+ boardNode.style.setProperty("height",boardSize+"px","important");
  boardNode.style.setProperty("aspect-ratio","1 / 1","important");
  const rail=wrapper.querySelector("[data-supa-evaluation-bar]");
  if(rail){
   const boardHeight=boardNode.getBoundingClientRect().height;
-  rail.style.setProperty("position","absolute","important");
-  rail.style.setProperty("left","100%","important");
-  rail.style.setProperty("top","0","important");
+  rail.style.setProperty("position","relative","important");
+  rail.style.setProperty("grid-column","2","important");
+  rail.style.setProperty("grid-row","1","important");
+  rail.style.setProperty("left","auto","important");
+  rail.style.setProperty("top","auto","important");
   rail.style.setProperty("display","flex","important");
   rail.style.setProperty("flex-direction","column","important");
-  rail.style.setProperty("flex","none","important");
   rail.style.setProperty("width",railWidth+"px","important");
   rail.style.setProperty("min-width",railWidth+"px","important");
   rail.style.setProperty("max-width",railWidth+"px","important");
@@ -166,4 +174,4 @@ function startAfterProtocol(){
  protocol=window.SupaChessBoardProtocol;reset();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",startAfterProtocol,{once:true});else startAfterProtocol();
-</script><script defer src="shared/site-global-v1.13.14801.js?v=board-piece-and-rail-fit-20261111-v6"></script></body></html>
+</script><script defer src="shared/site-global-v1.13.14801.js?v=board-piece-and-rail-fit-20261111-v7"></script></body></html>

@@ -74,7 +74,7 @@ function render(){
   boardNode.setAttribute("aria-label","Échiquier SupaChess · "+d.title);
   protocol.ensureEvaluationBar(boardNode);
   const wrapper=boardNode.closest(".supa-board-certified-layout");
-  if(wrapper){fitBoardToWindow();wrapper.style.margin="0 0 14px"}
+  if(wrapper){fitBoardToWindow();wrapper.style.margin="0"}
   const inspection=protocol.inspect(boardNode),certificate=protocol.certify(boardNode,inspection);
   if(!certificate.certified){
    boardNode.dataset.supaBoardStatus="rejected";boardNode.style.visibility="hidden";

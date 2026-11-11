@@ -10,7 +10,7 @@
 h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{font-size:1.6rem;margin:0 0 8px}h3{color:var(--gold);margin:0 0 8px}.eyebrow{color:var(--mint);font-weight:750;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem}.lead{color:var(--muted);font-size:1.1rem;max-width:780px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.tile{background:#101a29;border:1px solid var(--line);border-radius:15px;padding:18px}.tile p,.muted{color:var(--muted)}.tag{color:var(--mint);font-weight:700}.steps{padding-left:1.25em}.steps li{padding:4px 0}.question{border-top:1px solid var(--line);margin-top:18px;padding-top:18px}.options{display:grid;gap:9px;margin:12px 0}.option{background:#101a29;border:1px solid #42546c;border-radius:12px;color:var(--ink);padding:12px;text-align:left;cursor:pointer;font:inherit}.option:hover,.option:focus{border-color:var(--gold);outline:2px solid #e8bd6240}.feedback{min-height:30px;color:var(--mint);font-weight:700}.progress{background:#0b1220;border-radius:99px;height:10px;overflow:hidden;margin:12px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--gold));transition:width .3s}.foot{color:var(--muted);font-size:.9rem;text-align:center;padding:25px}.btn.primary{background:#725b2c;border-color:var(--gold)}.badge{border:1px solid var(--line);border-radius:30px;padding:5px 10px;color:var(--gold);font-size:.88rem}
 @media(max-width:600px){.wrap{padding:14px}.top{align-items:flex-start}.hero,.card{border-radius:15px}}
 </style>
-<style>.complex-board{display:grid;grid-template-columns:repeat(8,minmax(28px,48px));width:min(100%,384px);aspect-ratio:1;border:3px solid #d5bd8a;margin:14px auto;border-radius:4px;overflow:hidden}.complex-board span{display:grid;place-items:center;font-size:clamp(1.35rem,5vw,2.4rem);line-height:1}.complex-board .light{background:#f0d9b5}.complex-board .dark{background:#b58863}</style><style>.tile label{display:block;margin:12px 0 5px;color:#dce9f7;font-weight:650}.tile input:not([type=checkbox]),.tile select,.tile textarea{width:100%;padding:10px 12px;margin:3px 0 10px;border-radius:9px;border:1px solid #42546c;background:#101a29;color:#edf4ff;font:inherit}.tile textarea{resize:vertical}.tool-list{display:grid;gap:10px;margin-top:12px}.tool-entry{border:1px solid #42546c;border-radius:10px;padding:12px;background:#101a29}.tool-entry p{margin:6px 0;color:#c7d5e7;white-space:pre-wrap}.tool-entry .btn{padding:6px 10px;font-size:.85rem}#positionChecklist label{font-weight:400;display:flex;gap:9px;align-items:flex-start}.tool-entry b{color:#e8bd62}</style><style>.wide-tool{grid-column:1/-1}.analysis-board{display:grid;grid-template-columns:repeat(8,minmax(30px,48px));width:min(100%,384px);aspect-ratio:1;border:3px solid #d5bd8a;margin:14px auto;overflow:hidden}.analysis-square{border:0;border-radius:0;padding:0;display:grid;place-items:center;font-size:clamp(1.3rem,5vw,2.35rem);line-height:1;cursor:pointer}.analysis-square.light{background:#f0d9b5}.analysis-square.dark{background:#b58863}.analysis-square.selected{box-shadow:inset 0 0 0 4px #f5d547}.analysis-square.target{box-shadow:inset 0 0 0 4px #52dfa5}.board-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.board-controls input{max-width:150px}.diag-q[hidden]{display:none!important}.stockfish-learning{border-color:#527d83;background:linear-gradient(145deg,rgba(24,55,65,.9),rgba(22,33,51,.96))}.stockfish-explanation{margin:14px 0;padding:14px;border:1px solid #426978;border-radius:12px;background:#101a29}.stockfish-explanation h4{margin:0 0 8px;color:var(--mint)}.stockfish-explanation li{margin:4px 0}.stockfish-lesson-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;margin:14px 0}.stockfish-lesson-links a{display:block;padding:11px 13px;border:1px solid #426978;border-radius:10px;background:#101a29;color:#bcecff;text-decoration:underline;text-underline-offset:3px}.stockfish-lesson-links a:hover,.stockfish-lesson-links a:focus-visible{color:#fff;border-color:#77dfbd;outline:2px solid #77dfbd;outline-offset:2px}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" defer></script><script src="js/supachess_eval.js" defer></script></head>
+<style>.complex-board{display:grid;grid-template-columns:repeat(8,minmax(28px,48px));width:min(100%,384px);aspect-ratio:1;border:3px solid #d5bd8a;margin:14px auto;border-radius:4px;overflow:hidden}.complex-board span{display:grid;place-items:center;font-size:clamp(1.35rem,5vw,2.4rem);line-height:1}.complex-board .light{background:#f0d9b5}.complex-board .dark{background:#b58863}</style><style>.tile label{display:block;margin:12px 0 5px;color:#dce9f7;font-weight:650}.tile input:not([type=checkbox]),.tile select,.tile textarea{width:100%;padding:10px 12px;margin:3px 0 10px;border-radius:9px;border:1px solid #42546c;background:#101a29;color:#edf4ff;font:inherit}.tile textarea{resize:vertical}.tool-list{display:grid;gap:10px;margin-top:12px}.tool-entry{border:1px solid #42546c;border-radius:10px;padding:12px;background:#101a29}.tool-entry p{margin:6px 0;color:#c7d5e7;white-space:pre-wrap}.tool-entry .btn{padding:6px 10px;font-size:.85rem}#positionChecklist label{font-weight:400;display:flex;gap:9px;align-items:flex-start}.tool-entry b{color:#e8bd62}</style><style>.wide-tool{grid-column:1/-1}.analysis-board.supa-board-grid{width:min(100%,384px);margin:14px auto}.analysis-board .supa-board-square.selected{box-shadow:inset 0 0 0 4px #f5d547;position:relative;z-index:1}.analysis-board .supa-board-square.target{box-shadow:inset 0 0 0 4px #52dfa5;position:relative;z-index:1}.board-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}.board-controls input{max-width:150px}.diag-q[hidden]{display:none!important}.stockfish-learning{border-color:#527d83;background:linear-gradient(145deg,rgba(24,55,65,.9),rgba(22,33,51,.96))}.stockfish-explanation{margin:14px 0;padding:14px;border:1px solid #426978;border-radius:12px;background:#101a29}.stockfish-explanation h4{margin:0 0 8px;color:var(--mint)}.stockfish-explanation li{margin:4px 0}.stockfish-lesson-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px;margin:14px 0}.stockfish-lesson-links a{display:block;padding:11px 13px;border:1px solid #426978;border-radius:10px;background:#101a29;color:#bcecff;text-decoration:underline;text-underline-offset:3px}.stockfish-lesson-links a:hover,.stockfish-lesson-links a:focus-visible{color:#fff;border-color:#77dfbd;outline:2px solid #77dfbd;outline-offset:2px}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" defer></script><script src="js/supachess_eval.js" defer></script></head>
 <body><main class="wrap">
 <nav class="top"><a href="index.html">← Retour au hub SupaChess</a><a class="btn primary" href="TACTICAL_DEFENSE.html" aria-label="Ouvrir les exercices de défense tactique">🛡️ Exercices de défense tactique</a><span class="badge">Parcours progressif • 7 compétences</span></nav>
 <header class="hero">
@@ -141,7 +141,7 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
 <button class="btn" id="makeStudyPlan" type="button">Construire mon plan</button><ol id="studyPlan" class="steps"></ol></article>
 <article class="tile wide-tool"><h3>Échiquier d’analyse · FEN et PGN</h3><p>Charge une position, joue des coups légaux en cliquant les cases et suis la variante. Tu peux annuler, copier le FEN ou charger un PGN. L’outil vérifie la légalité des coups ; il ne calcule pas le meilleur coup et ne remplace pas une analyse moteur.</p>
 <div class="board-controls"><label for="fenInput">Position FEN</label><input id="fenInput" value="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"><button class="btn" id="loadFen" type="button">Charger la FEN</button><button class="btn" id="loadFork" type="button">Charger l’exercice de fourchette</button></div>
-<div id="analysisBoard" class="analysis-board" aria-label="Échiquier interactif"></div><p id="boardStatus" class="tag" aria-live="polite">Chargement de l’échiquier…</p>
+<div id="analysisBoard" class="analysis-board" data-supa-board-ignore="true" aria-label="Chargement de l’échiquier interactif"></div><p id="boardStatus" class="tag" aria-live="polite">Chargement de l’échiquier…</p>
 <div class="board-controls"><label for="moveFrom">De</label><input id="moveFrom" maxlength="2" placeholder="e2"><label for="moveTo">Vers</label><input id="moveTo" maxlength="2" placeholder="e4"><label for="promotion">Promotion</label><select id="promotion"><option value="q">Dame</option><option value="r">Tour</option><option value="b">Fou</option><option value="n">Cavalier</option></select><button class="btn" id="playMove" type="button">Jouer ce coup</button><button class="btn" id="undoMove" type="button">Annuler</button><button class="btn" id="resetBoard" type="button">Position initiale</button><button class="btn" id="copyFen" type="button">Copier le FEN actuel</button></div>
 <label for="pgnInput">Ou charger une partie PGN</label><textarea id="pgnInput" rows="3" placeholder='[Event "Exemple"]&#10;1. e4 e5 2. Nf3 Nc6'></textarea><button class="btn" id="loadPgn" type="button">Charger le PGN</button>
 <p><b>Coups joués :</b> <span id="boardMoves">—</span></p><div class="board-controls"><label for="engineDepth">Profondeur</label><select id="engineDepth"><option value="8">8</option><option value="12" selected>12</option><option value="16">16</option></select><button class="btn" id="analyzeEngine" type="button">Analyser avec Stockfish</button><button class="btn" id="stopEngine" type="button" disabled>Arrêter l’analyse</button></div><p id="engineStatus" class="muted" aria-live="polite">Analyse moteur à la demande. Le calcul s’arrête à la profondeur choisie ou après 8 secondes, selon ce qui arrive en premier.</p><section id="stockfishExplanation" class="stockfish-explanation" hidden aria-live="polite"><h4>Lecture vérifiable de la variante</h4><p id="stockfishExplanationSummary" class="muted"></p><ol id="stockfishExplanationMoves" class="steps"></ol><p class="muted">Les échecs, prises et promotions ci-dessus sont vérifiés en rejouant la ligne. Un coup calme doit être interprété en comparant les positions; cette lecture ne révèle pas une intention interne de Stockfish.</p></section><p class="muted">Pour jouer au clic : sélectionne une pièce de ton camp, puis une case légale en surbrillance. Pour les coups PGN, l’outil utilise la notation standard anglaise (N, B, R, Q, K).</p></article>
@@ -293,28 +293,104 @@ h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;margin:10px 0;color:#fff}h2{
  quiz.addEventListener('click',ev=>{const btn=ev.target.closest('.option');if(!btn||!session)return;const q=btn.closest('.diag-q');if(!q||q!==groups[session.index]||btn.disabled)return;const good=btn.dataset.correct==='true';if(good)session.score++;else session.wrong[q.dataset.domain]=(session.wrong[q.dataset.domain]||0)+1;q.querySelector('.feedback').textContent=good?'✓ Correct.':'À revoir : '+q.dataset.domain+'.';q.querySelectorAll('button').forEach(b=>b.disabled=true);setTimeout(()=>{q.hidden=true;session.index++;if(session.index<groups.length){groups[session.index].hidden=false;return}const ordered=Object.entries(session.wrong).sort((a,b)=>b[1]-a[1]);const focus=ordered.length?ordered.slice(0,2).map(([name])=>name):['calcul','positions complexes'];localStorage.setItem(diagnosticKey,JSON.stringify({score:session.score,date:new Date().toISOString(),focus}));result.replaceChildren();const summary=document.createElement('span');summary.textContent='Diagnostic : '+session.score+'/8. Priorités de travail : ';result.appendChild(summary);focus.forEach((name,i)=>{if(i)result.append(' · ');const a=document.createElement('a');a.href=links[name];a.textContent=name;result.appendChild(a)});result.append(document.createTextNode('. Le diagnostic oriente le travail sans bloquer les leçons.'));quiz.hidden=true;button.disabled=false;session=null},450)});
 })();
 (function(){
- const area=document.getElementById('analysisBoard'),status=document.getElementById('boardStatus'),fenInput=document.getElementById('fenInput'),historyEl=document.getElementById('boardMoves');
- const glyph={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟',K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟'};
- let game=null,selected=null;
- function report(text){status.textContent=text}
+ let area=document.getElementById('analysisBoard');
+ const status=document.getElementById('boardStatus'),fenInput=document.getElementById('fenInput'),historyEl=document.getElementById('boardMoves');
+ let game=null,selected=null,protocol=null,attempts=0;
+ const report=text=>{if(status)status.textContent=text};
  function render(){
-  if(!game)return;
-  area.replaceChildren();const rows=game.board(),legal=selected?game.moves({square:selected,verbose:true}).map(m=>m.to):[];
-  area.setAttribute('data-fen',game.fen());area.setAttribute('role','grid');
-  rows.forEach((row,ri)=>row.forEach((piece,fi)=>{const sq=String.fromCharCode(97+fi)+(8-ri),b=document.createElement('button');b.type='button';b.setAttribute('data-square',sq);b.setAttribute('role','gridcell');b.className='analysis-square '+((ri+fi)%2===0?'light':'dark')+(sq===selected?' selected':'')+(legal.includes(sq)?' target':'');b.textContent=piece?glyph[piece.color==='w'?piece.type.toUpperCase():piece.type]:'';b.setAttribute('aria-label',sq+(piece?' '+(piece.color==='w'?'blanc':'noir')+' '+piece.type:' vide'));b.addEventListener('click',()=>clickSquare(sq));area.appendChild(b)}));
-  fenInput.value=game.fen();const h=game.history();historyEl.textContent=h.length?h.join(' '):'—';report('Trait aux '+(game.turn()==='w'?'Blancs':'Noirs')+(game.is_check()?' · échec':'')+(game.is_checkmate()?' · mat':'')+(game.in_draw()?' · partie nulle':''));document.dispatchEvent(new Event('board-position-changed'));
+  if(!game||!protocol||!area)return;
+  try{
+   const board=protocol.create(game.fen(),{label:'Échiquier d’analyse SupaChess vérifié',onSquareClick:square=>clickSquare(square)});
+   board.id='analysisBoard';board.classList.add('analysis-board');
+   const targets=selected?game.moves({square:selected,verbose:true}).map(move=>move.to):[];
+   board.querySelectorAll('[data-square]').forEach(square=>{
+    if(square.dataset.square===selected)square.classList.add('selected');
+    if(targets.includes(square.dataset.square))square.classList.add('target');
+   });
+   area.replaceWith(board);area=board;
+   protocol.ensureEvaluationBar(area);
+   const wrapper=area.closest('.supa-board-certified-layout');
+   if(wrapper){wrapper.style.maxWidth='432px';wrapper.style.margin='14px auto'}
+   const check=protocol.inspect(area),certificate=protocol.certify(area,check);
+   if(!certificate.certified){area.dataset.supaBoardStatus='rejected';area.style.visibility='hidden';report('Échiquier refusé par le vérificateur SupaChess : '+(certificate.errors||[]).join(' '));return}
+   area.dataset.supaBoardStatus='ready';area.style.visibility='';
+   fenInput.value=game.fen();const history=game.history();historyEl.textContent=history.length?history.join(' '):'—';
+   report('Échiquier vérifié · trait aux '+(game.turn()==='w'?'Blancs':'Noirs')+(game.in_check()?' · échec':'')+(game.in_checkmate()?' · mat':'')+(game.in_draw()?' · partie nulle':''));
+   document.dispatchEvent(new Event('board-position-changed'));
+  }catch(error){report('Échiquier non certifié : '+(error&&error.message?error.message:'erreur de construction'))}
  }
- function clickSquare(sq){if(!game)return;const piece=game.get(sq);if(selected){const options=game.moves({square:selected,verbose:true});const m=options.find(x=>x.to===sq);if(m){try{const played=game.move({from:selected,to:sq,promotion:m.promotion?(document.getElementById('promotion').value||'q'):undefined});selected=null;render();if(played)document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:played.from+played.to+(played.promotion||'')}}));return}catch(_){}}if(piece&&piece.color===game.turn()){selected=sq;render();return}selected=null;render();return}if(piece&&piece.color===game.turn()){selected=sq;render()}}
- function loadFen(value){if(typeof Chess==='undefined'){report('Bibliothèque chess.js indisponible : recharge la page pour activer les coups légaux.');return}try{const next=new Chess();if(!next.load(value.trim()))throw new Error('FEN invalide');game=next;selected=null;render()}catch(_){report('FEN invalide : vérifie les 8 rangées, le trait et les champs de position.')}}
- window.SupaBoard={getFen:()=>game?game.fen():null,setFen:loadFen,play:(from,to,promotion='q')=>{if(!game)return null;const move=game.move({from,to,promotion});if(move){render();document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:move.from+move.to+(move.promotion||'')}}))}return move}};
+ function clickSquare(square){
+  if(!game)return;
+  const piece=game.get(square);
+  if(selected){
+   const move=game.moves({square:selected,verbose:true}).find(candidate=>candidate.to===square);
+   if(move){
+    try{
+     const played=game.move({from:selected,to:square,promotion:move.promotion?(document.getElementById('promotion').value||'q'):undefined});
+     selected=null;render();
+     if(played)document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:played.from+played.to+(played.promotion||'')}}));
+     return;
+    }catch(_){}
+   }
+   if(piece&&piece.color===game.turn()){selected=square;render();return}
+   selected=null;render();return;
+  }
+  if(piece&&piece.color===game.turn()){selected=square;render()}
+ }
+ function loadFen(value){
+  if(!protocol||typeof Chess==='undefined'){report('Règles et vérificateur SupaChess en cours de chargement.');return false}
+  try{
+   const fen=String(value||'').trim(),check=protocol.validateFen(fen);
+   if(!check.valid)throw new Error((check.errors||[]).join(' '));
+   const next=new Chess();if(!next.load(fen))throw new Error('FEN invalide');
+   game=next;selected=null;render();return true;
+  }catch(error){report('FEN refusée : '+(error&&error.message?error.message:'position invalide'));return false}
+ }
+ window.SupaBoard={
+  getFen:()=>game?game.fen():null,
+  setFen:loadFen,
+  play:(from,to,promotion='q')=>{
+   if(!game)return null;
+   try{
+    const move=game.move({from,to,promotion});
+    if(move){selected=null;render();document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:move.from+move.to+(move.promotion||'')}}))}
+    return move;
+   }catch(_){return null}
+  }
+ };
  document.getElementById('loadFen').addEventListener('click',()=>loadFen(fenInput.value));
  document.getElementById('loadFork').addEventListener('click',()=>loadFen('r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1'));
- document.getElementById('playMove').addEventListener('click',()=>{if(!game)return;try{const from=document.getElementById('moveFrom').value.trim().toLowerCase(),to=document.getElementById('moveTo').value.trim().toLowerCase(),p=document.getElementById('promotion').value;const m=game.move({from,to,promotion:p});if(!m)throw new Error();selected=null;render();document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:m.from+m.to+(m.promotion||'')}}))}catch(_){report('Coup illégal ou cases incorrectes. Vérifie le trait et les cases de départ/arrivée.')}});
+ document.getElementById('playMove').addEventListener('click',()=>{
+  if(!game)return;
+  try{
+   const from=document.getElementById('moveFrom').value.trim().toLowerCase(),to=document.getElementById('moveTo').value.trim().toLowerCase(),promotion=document.getElementById('promotion').value;
+   const move=game.move({from,to,promotion});if(!move)throw new Error();
+   selected=null;render();document.dispatchEvent(new CustomEvent('board-move',{detail:{uci:move.from+move.to+(move.promotion||'')}}));
+  }catch(_){report('Coup illégal ou cases incorrectes. Vérifie le trait et les cases de départ/arrivée.')}
+ });
  document.getElementById('undoMove').addEventListener('click',()=>{if(game&&game.undo()){selected=null;render()}});
- document.getElementById('resetBoard').addEventListener('click',()=>{if(typeof Chess==='undefined')return;game=new Chess();selected=null;render()});
- document.getElementById('loadPgn').addEventListener('click',()=>{if(typeof Chess==='undefined'){report('Bibliothèque chess.js indisponible.');return}try{const next=new Chess();if(!next.load_pgn(document.getElementById('pgnInput').value.trim()))throw new Error();game=next;selected=null;render()}catch(_){report('PGN non chargé : vérifie sa notation standard et les coups.')}});
- document.getElementById('copyFen').addEventListener('click',async()=>{if(!game)return;try{await navigator.clipboard.writeText(game.fen());report('FEN copié.')}catch(_){report('Copie non disponible dans ce navigateur.')}});
- document.addEventListener('DOMContentLoaded',()=>{if(typeof Chess==='undefined'){report('Échiquier affiché avec validation de coups indisponible : chess.js ne s’est pas chargé.');return}game=new Chess();render()});
+ document.getElementById('resetBoard').addEventListener('click',()=>{if(typeof Chess!=='undefined'){game=new Chess();selected=null;render()}});
+ document.getElementById('loadPgn').addEventListener('click',()=>{
+  if(typeof Chess==='undefined'||!protocol){report('Règles ou vérificateur d’échiquier indisponibles.');return}
+  try{
+   const next=new Chess();if(!next.load_pgn(document.getElementById('pgnInput').value.trim()))throw new Error('PGN illégal ou incomplet');
+   const check=protocol.validateFen(next.fen());if(!check.valid)throw new Error((check.errors||[]).join(' '));
+   game=next;selected=null;render();
+  }catch(error){report('PGN refusé : '+(error&&error.message?error.message:'notation ou coups illégaux'))}
+ });
+ document.getElementById('copyFen').addEventListener('click',async()=>{
+  if(!game)return;
+  try{await navigator.clipboard.writeText(game.fen());report('FEN copié.')}
+  catch(_){report('Copie non disponible dans ce navigateur.')}
+ });
+ function start(){
+  if(typeof Chess==='undefined'||!window.SupaChessBoardProtocol){
+   if(++attempts<80){setTimeout(start,50);return}
+   report('Échiquier indisponible : les règles ou le protocole SupaChess ne se sont pas chargés.');return;
+  }
+  protocol=window.SupaChessBoardProtocol;game=new Chess();render();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 (function(){
  const button=document.getElementById('analyzeEngine'),stop=document.getElementById('stopEngine'),status=document.getElementById('engineStatus'),depth=document.getElementById('engineDepth');
@@ -417,7 +493,7 @@ button.addEventListener('click',async()=>{const fen=window.SupaBoard&&window.Sup
  document.getElementById('importCourseData').addEventListener('change',ev=>{const file=ev.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.format!=='supachess-course-backup-v1'||!data.items)throw new Error();allowed.forEach(k=>{if(typeof data.items[k]==='string')localStorage.setItem(k,data.items[k])});document.getElementById('backupStatus').textContent='Données importées. Rechargement de la page…';setTimeout(()=>location.reload(),500)}catch(_){document.getElementById('backupStatus').textContent='Fichier non reconnu : importe une sauvegarde SupaChess JSON.'}};reader.readAsText(file)});
 })();
 </script>
-<footer class="foot">SupaChess · Entraînement pédagogique. Pour évaluer une position précise, ouvre-la sur un échiquier ou envoie son FEN/PGN au coach.<br>Version SupaChess : 1.13.14886</footer>
+<footer class="foot">SupaChess · Entraînement pédagogique. Pour évaluer une position précise, ouvre-la sur un échiquier ou envoie son FEN/PGN au coach.<br>Version SupaChess : 1.13.14887</footer>
 </main>
 <script>
 (function(){

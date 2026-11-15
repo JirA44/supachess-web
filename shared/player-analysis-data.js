@@ -117,6 +117,7 @@
   }
 
   function resolveUserColor(game, headers) {
+    if (game && game.selfPlayMode) return null;
     const explicit = normalizePlayerColor(game && (game.userColor || game.playerColor || game.color));
     if (explicit) return explicit;
     const tagged = normalizePlayerColor(headers.SupaChessUserColor);

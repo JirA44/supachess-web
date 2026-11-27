@@ -1,12 +1,150 @@
-# SupaChess — apprendre et progresser aux échecs
+# SupaChess — Learn and progress at chess
 
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange)](https://pages.cloudflare.com/)
-[![Version](https://img.shields.io/badge/version-2.0-blue)]()
-[![License](https://img.shields.io/badge/license-MIT-green)]()
+[![Live site](https://img.shields.io/badge/live-jira44.github.io%2Fsupachess--web-2ea44f)](https://jira44.github.io/supachess-web/)
+[![GitHub Pages](https://img.shields.io/badge/hosting-GitHub%20Pages-181717)](https://github.com/JirA44/supachess-web)
+[![Stack](https://img.shields.io/badge/stack-vanilla%20HTML%2FCSS%2FJS-0d6efd)](https://developer.mozilla.org/en-US/docs/Web)
+[![Engine](https://img.shields.io/badge/engine-Stockfish.js%20%2B%20WebAssembly-cd5c2b)](https://github.com/nmrugg/stockfish.js)
+[![Chess rules](https://img.shields.io/badge/chess.js-0.10.3-b58877)](https://github.com/jhlywa/chess.js)
+[![Tests](https://img.shields.io/badge/tests-Playwright%20%2B%20node%3Atest-4c1)](https://playwright.dev/)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen)](./LICENSE)
 
-SupaChess est un site d’apprentissage des échecs : il aide à jouer, revoir des parties et comprendre les décisions prises sur l’échiquier. L’objectif est de transformer une partie en entraînement utile : repérer les moments importants, comprendre les erreurs et choisir quoi travailler ensuite.
+**SupaChess** is a browser-based chess learning project: play a game, review it move by move, and turn recurring mistakes into focused training. Everything runs client-side — no build step, no bundler, no server requirement.
 
+- **Live site**: <https://jira44.github.io/supachess-web/>
+- **Repository**: <https://github.com/JirA44/supachess-web>
+- **Related projects**: [SupaChess](https://jira44.github.io/supachess/) · [Gematria Academy](https://gematria-academy.pages.dev/)
 
+---
+
+## What is SupaChess for?
+
+SupaChess turns a played game into a training session: spot the critical moments, understand the mistakes, and decide what to practise next.
+
+## Why use it?
+
+Knowing the best move is not enough to improve. You need to return to the position, compare the alternatives, and understand what actually changed. SupaChess gathers games, exercises and analysis tools into a single path that runs entirely in the browser.
+
+## Examples
+
+- **Play to train** — open a difficulty, play a game, then review the moves flagged as inaccuracies or mistakes.
+- **Study an annotated game** — walk through half-moves on the board and stop on the positions that raise questions.
+- **Train a weakness** — pick a recurring theme (pieces left hanging, missed tactics, a failing opening) and replay exercises on that theme.
+
+> Engine evaluations are analysis aids. They depend on the engine, its search depth and the position. They are not explanations by themselves, and they are never a substitute for human review.
+
+## The hub
+
+`index.html` is the single entry point. It groups every page into four sections, each split into sub-folders with live counters:
+
+| Section | Modules | Content |
+| --- | --- | --- |
+| **Jouer & Analyser** | 12 | Chess Coach, AI Coach, ChessNova, SupaEngine, generated puzzle lab, tactical generator, player analysis, annotated games |
+| **Académie & Entraînement** | 11 | Standalone training, openings, endgames, tactics, tactical defence, daily challenge, Fischer academy, variants course, rules & history, lessons |
+| **Bibliothèque des Parties Légendaires** | 17 | Human champions (Fischer, Kasparov, Tal, Karpov, Carlsen, AlphaZero), historical engines (Stockfish vs Komodo, Leela, Deep Blue), creative ChessNova games |
+| **Laboratoire IA & Dashboards** | 17 | Live tracking, ELO curves, tournaments, statistics, skill radar, learning reports, archives |
+
+### Global search
+
+The sticky search bar at the top of the hub searches every module in place:
+
+- `/` or `Ctrl+K` focuses the field from anywhere on the page.
+- Matching is accent-insensitive (`defense` finds `Défense`).
+- Non-matching sections and folders hide themselves while you type.
+- The autocomplete list shows up to five results with a category badge; `↑`/`↓`, `Enter`, `Escape` and `Tab` work as expected.
+- Recent searches and the most visited modules are stored locally under `supachess_hub_history` in `localStorage` (nothing leaves the browser).
+
+## Direct links
+
+| Page | What it does |
+| --- | --- |
+| [`index.html`](./index.html) | Hub with global search and the four sections |
+| [`CHESS_COACH.html`](./CHESS_COACH.html) | Interactive coaching and move-quality review |
+| [`GENERATEUR_PARTIES_BRILLANTES.html`](./GENERATEUR_PARTIES_BRILLANTES.html) | Generate 2800+ Elo candidate games with Stockfish, then convert positions into puzzles |
+| [`TACTICAL_DEFENSE.html`](./TACTICAL_DEFENSE.html) | Defence puzzle trainer with engine-computed lines |
+| [`TRAINING_TACTICS.html`](./TRAINING_TACTICS.html) | Tactics curriculum |
+| [`TRAINING_OPENINGS.html`](./TRAINING_OPENINGS.html) | Opening repertoire trainer |
+| [`TRAINING_ENDGAMES.html`](./TRAINING_ENDGAMES.html) | Endgame technique trainer |
+| [`DAILY_CHALLENGE.html`](./DAILY_CHALLENGE.html) | Daily puzzle set |
+| [`FISCHER_ACADEMY.html`](./FISCHER_ACADEMY.html) | Opening and decision-making academy |
+| [`web/legendary-games/`](./web/legendary-games/) | Annotated legendary games with a shared board protocol |
+| [`SUIVI_PARTIES_LIVE.html`](./SUIVI_PARTIES_LIVE.html) | Live game tracking |
+| [`TRAINING_DASHBOARD.html`](./TRAINING_DASHBOARD.html) | Training dashboard and statistics |
+
+## Tech stack
+
+| Layer | Choice | Notes |
+| --- | --- | --- |
+| Markup | HTML5 | Static pages, no templating at runtime |
+| Styles | Modern CSS | Custom properties, grid/flex layouts, `prefers-reduced-motion` support |
+| Logic | Vanilla JavaScript (ES modules + classic scripts) | No framework, no transpiler, no bundler |
+| Chess rules | [chess.js](https://github.com/jhlywa/chess.js) `0.10.3` | Move generation, legality, FEN/PGN |
+| Engine | [Stockfish.js](https://github.com/nmrugg/stockfish.js) `16`–`19` | Runs in a Web Worker |
+| **WebAssembly** | Stockfish `.wasm` build | The engine ships a **WebAssembly** core next to the JavaScript glue: the `.js` loader and the `.wasm` binary must come from the **same build** (Lite or Full). The generator verifies both file names and byte sizes before starting, and confirms the version from the engine's own `uci` answer |
+| Board | Custom SVG renderer + shared board protocol | Same board contract across the legendary-game pages |
+| Persistence | `localStorage` | Progress, ratings, generated libraries, search history |
+| Optional services | Firebase (compat SDK) | Community features only — every training page works without it |
+| i18n | `shared/i18n.js` + `shared/translations/` | French and English strings |
+| Tests | Playwright (e2e), `node --test` (unit), custom static checks | See `npm run` below |
+
+## Running it locally
+
+```bash
+# any static server works
+python -m http.server 8080
+# then open http://127.0.0.1:8080/index.html
+```
+
+Install the test dependencies with `npm ci` (Node 20+ recommended).
+
+## Tests
+
+```bash
+npm run test:site     # static coherence checks (links, ids, duplicated assets)
+npm run test:unit     # unit + syntax + i18n + keyboard navigation suites
+npm run test:e2e      # Playwright end-to-end scenarios
+node scripts/test_hub_search.mjs      # hub global search behaviour
+node scripts/test_generator_page.mjs  # generator tabs, chips, loader and engine contract
+python scripts/verify_hub_pages.py index.html js/hub-search.js GENERATEUR_PARTIES_BRILLANTES.html
+python scripts/build_sitemap.py       # regenerate sitemap.xml and robots.txt
+```
+
+## SEO
+
+- One canonical URL per page (`https://jira44.github.io/supachess-web/`), unique `<title>`, 130–155 character meta description, Open Graph and Twitter cards.
+- `sitemap.xml` lists the 90 public pages, `robots.txt` allows crawling and points to the sitemap. Both are generated by `scripts/build_sitemap.py`.
+- `hub.html` still lacks a canonical tag: it is a legacy alternative hub and should either be redirected to `index.html` or given its own canonical in a later cleanup.
+
+## Deployment
+
+The site is static. GitHub Pages serves `main` as-is; Cloudflare Pages can host the same folder.
+
+```bash
+npx wrangler pages deploy . --project-name=supachess-web   # Cloudflare Pages
+```
+
+`_headers` provides the security headers and caching policy, `_redirects` keeps the legacy URLs working.
+
+## Contributing
+
+1. Fork the repository and create a branch.
+2. Keep the no-build constraint: plain HTML, CSS and JavaScript that run from `file://` or any static server.
+3. Update the documentation in the same change as the code, and add or update the matching test.
+4. Open a pull request.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
+
+## Related projects
+
+- [SupaChess](https://jira44.github.io/supachess/) — the wider chess project.
+- [Gematria Academy](https://gematria-academy.pages.dev/) — the companion learning academy.
+
+---
+
+## Français
+
+La documentation d'origine en français est conservée ci-dessous.
 
 ## À quoi sert SupaChess ?
 
@@ -23,26 +161,6 @@ Connaître une bonne réponse ne suffit pas toujours pour progresser. Il faut po
 - **Travailler une faiblesse** : après plusieurs parties, choisir un thème récurrent — par exemple les pièces en prise ou les tactiques manquées — puis refaire des exercices sur ce thème.
 
 Les évaluations automatiques sont des aides à l’analyse. Elles dépendent du moteur, de sa profondeur et de la position ; elles ne remplacent pas une explication compréhensible ni une revue humaine.
-
-
-
-## English
-
-### What is SupaChess for?
-
-SupaChess is a browser-based chess learning project. It aims to help players review decisions, understand recurring mistakes, and turn them into focused practice.
-
-### Why use it?
-
-Progress requires more than knowing the best move: players need to revisit the position, compare choices, and understand what changed. SupaChess brings play and study tools together in one learning space.
-
-### Examples
-
-- Play a game at an available difficulty, then review moves marked as inaccuracies or mistakes.
-- Follow an annotated game on the board and pause at positions that are hard to understand.
-- Use recurring themes—such as leaving pieces en prise or missing tactics—to choose what to practice next.
-
-Engine evaluations depend on the engine and search depth. Treat them as analysis aids, not as explanations by themselves.
 
 
 ## 🚀 Améliorations Version 2.0

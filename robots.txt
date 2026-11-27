@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://supachess.pages.dev/sitemap.xml
+Sitemap: https://jira44.github.io/supachess-web/sitemap.xml

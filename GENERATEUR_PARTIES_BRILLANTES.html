@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Générateur de parties brillantes 2800+ — SupaChess</title>
-<meta name="description" content="Génère et vérifie des exercices avec Stockfish 16, 17, 18 et 19 : puzzles, tactiques, plans et défenses.">
+<title>Générateur de parties brillantes 2800+ — Puzzles et tactiques SupaChess</title>
+<meta name="description" content="Générateur SupaChess : fais jouer Stockfish 16 à 19, classe les parties à 2 800 Elo et transforme chaque position tactique en puzzle jouable.">
+<link rel="canonical" href="https://jira44.github.io/supachess-web/GENERATEUR_PARTIES_BRILLANTES.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="SupaChess">
+<meta property="og:title" content="Générateur de parties brillantes 2800+ — Puzzles et tactiques SupaChess">
+<meta property="og:description" content="Générateur SupaChess : fais jouer Stockfish 16 à 19, classe les parties à 2 800 Elo et transforme chaque position tactique en puzzle jouable.">
+<meta property="og:url" content="https://jira44.github.io/supachess-web/GENERATEUR_PARTIES_BRILLANTES.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Générateur de parties brillantes 2800+ — Puzzles et tactiques SupaChess">
+<meta name="twitter:description" content="Générateur SupaChess : fais jouer Stockfish 16 à 19, classe les parties à 2 800 Elo et transforme chaque position tactique en puzzle jouable.">
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#18263d;--text:#f5f7fb;--muted:#b6c2d4;--gold:#f4c95d;--green:#83e0ae;--line:rgba(255,255,255,.13);--red:#ff7d7d}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#18345a 0,#0b1220 42rem);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -13,6 +23,38 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 .status{padding:12px;border-radius:10px;background:#0d1728;border:1px solid var(--line);min-height:48px}.progress{height:8px;background:#29364a;border-radius:8px;overflow:hidden;margin:10px 0}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#66d79a,#f4c95d);transition:width .2s}.results{display:grid;gap:10px}.candidate{border:1px solid var(--line);border-radius:11px;background:var(--panel2);padding:12px}.candidate.selected{border-color:var(--gold)}.candidate button{width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;padding:0;cursor:pointer}.candidate strong{display:block}.candidate small{color:var(--muted)}
 .study-grid{display:grid;grid-template-columns:minmax(260px, min(66vw,620px)) minmax(220px,1fr);gap:16px}.board{width:100%;height:auto;aspect-ratio:1;display:block;border:3px solid #d7e0ef;border-radius:5px;overflow:hidden;background:#b58863}.board text{font-family:"DejaVu Sans","Segoe UI Symbol",serif;user-select:none}.moves{min-height:100px;max-height:300px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:9px;background:#0d1728;overflow-wrap:anywhere}.move-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.summary{font-size:.95rem}.hidden{display:none!important}
 @media(max-width:760px){.page{padding:12px}.hero,.panel{padding:15px}.study-grid{grid-template-columns:1fr}.board{max-width:min(100%,620px);margin:auto}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;border:1px solid var(--line);border-radius:14px;background:rgba(18,29,48,.85)}
+.tab{min-height:44px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:750;cursor:pointer}
+.tab[aria-selected="true"]{background:linear-gradient(90deg,#74561b,#a67c1f);border-color:var(--gold);color:#fff}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tabpanel:focus{outline:none}
+.engine-details{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:rgba(13,23,40,.7);padding:0 14px}
+.engine-details>summary{cursor:pointer;padding:12px 0;font-weight:750;color:var(--gold);list-style:none}
+.engine-details>summary::-webkit-details-marker{display:none}
+.engine-details>summary::before{content:"▸ ";color:var(--green)}
+.engine-details[open]>summary::before{content:"▾ "}
+.engine-details>div{padding-bottom:14px}
+.engine-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.chips-scroll{max-height:230px;overflow-y:auto;padding-right:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:7px 14px;border-radius:999px;border:1px solid #46586f;background:rgba(255,255,255,.05);color:var(--text);font:inherit;font-size:.92rem;cursor:pointer;transition:all .2s}
+.chip:hover{border-color:var(--green);background:rgba(131,224,174,.12)}
+.chip[aria-pressed="true"]{background:rgba(244,201,93,.18);border-color:var(--gold);color:#fff;font-weight:700}
+.chip .chip-count{opacity:.75;font-size:.85em}
+.bank-loading{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bank-loading[hidden],.bank-error[hidden]{display:none}
+.spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:var(--gold);animation:hub-spin .9s linear infinite;flex:0 0 auto}
+@keyframes hub-spin{to{transform:rotate(360deg)}}
+.skeleton{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));background-size:200% 100%;animation:hub-shimmer 1.4s linear infinite}
+@keyframes hub-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+.bank-error{margin-top:10px;padding:12px 14px;border-left:3px solid var(--red);background:rgba(255,125,125,.12);border-radius:8px;color:#ffd7d7}
+.generation-progress{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(13,23,40,.7)}
+.generation-progress[hidden]{display:none}
+.generation-progress-bar{height:10px;border-radius:999px;background:#29364a;overflow:hidden}
+.generation-progress-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#66d79a,#f4c95d);transition:width .2s}
+.generation-facts{list-style:none;display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:.95rem;color:var(--muted)}
+.generation-facts strong{color:var(--text)}
+@media(prefers-reduced-motion:reduce){.spinner,.skeleton{animation:none}}
 </style>
 </head>
 <body>
@@ -23,6 +65,11 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <p class="muted">Fais jouer Stockfish 19 contre Stockfish 19 à 2 800 Elo ou plus par camp. Classe les parties générées, puis transforme leurs positions tactiques en puzzles : trouve la défense, la contre-attaque et la suite calculée par le moteur.</p>
 <div class="notice"><strong>Réglage vérifiable :</strong> Stockfish reçoit le protocole UCI <code>UCI_LimitStrength=true</code> et un Elo réglé à au moins 2 800 pour chaque camp. La cote UCI est un réglage moteur, pas une performance mesurée dans un tournoi humain. Les sacrifices affichés sont des candidats détectés par une heuristique explicite, pas une étiquette officielle « brilliant » de Stockfish.</div>
 </section>
+<div class="tabs" role="tablist" aria-label="Onglets du générateur">
+<button class="tab" type="button" role="tab" id="tab-generator" data-tab="generator" aria-controls="panel-generator" aria-selected="true">Générateur de parties</button>
+<button class="tab" type="button" role="tab" id="tab-puzzles" data-tab="puzzles" aria-controls="panel-puzzles" aria-selected="false" tabindex="-1">Puzzles personnalisés</button>
+</div>
+<div id="panel-generator" role="tabpanel" aria-labelledby="tab-generator" tabindex="0">
 <section class="panel">
 <h2>Paramètres de génération</h2>
 <div class="controls">
@@ -33,8 +80,10 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="move-time">Temps de calcul par demi-coup</label><select id="move-time"><option value="120">120 ms · rapide</option><option value="250" selected>250 ms · équilibré</option><option value="500">500 ms · approfondi</option></select></div>
 <div class="field"><label for="max-plies">Longueur maximale</label><select id="max-plies"><option value="60">60 demi-coups</option><option value="80" selected>80 demi-coups</option><option value="120">120 demi-coups</option></select></div>
 </div>
-<div class="notice" id="engine-settings">
-<strong>Choix du moteur :</strong> choisis Stockfish 16, 17, 18 ou 19 et télécharge les fichiers proposés. SF16 utilise le build complet et nécessite JS, WASM et réseau NNUE; SF17 utilise le build Lite mono-thread. SF18/19 proposent Lite ou Full. Le réglage Elo UCI ne mesure pas indépendamment la force réelle du build.
+<details class="engine-details" id="engine-settings">
+<summary>Réglages avancés du moteur (fichiers locaux)</summary>
+<div>
+<p class="muted">Choix du moteur : choisis Stockfish 16, 17, 18 ou 19 et télécharge les fichiers proposés. SF16 utilise le build complet et nécessite JS, WASM et réseau NNUE; SF17 utilise le build Lite mono-thread. SF18/19 proposent Lite ou Full. Le réglage Elo UCI ne mesure pas indépendamment la force réelle du build.</p>
 <div class="controls" style="margin-top:10px">
 <div class="field"><label for="engine-version">Version Stockfish</label><select id="engine-version"><option value="19" selected>Stockfish 19</option><option value="18">Stockfish 18</option><option value="17">Stockfish 17</option><option value="16">Stockfish 16</option></select></div><div class="field"><label for="engine-build">Build</label><select id="engine-build"><option value="lite" selected>Lite mono-thread</option><option value="full">Full mono-thread</option></select></div>
 <div class="field"><label for="engine-js">Fichier JavaScript</label><a id="engine-js-link" href="https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/stockfish-19-lite-single.js" target="_blank" rel="noopener">Télécharger le fichier JS Lite</a><input id="engine-js" type="file" accept=".js,text/javascript"></div>
@@ -42,15 +91,38 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field hidden" id="engine-nnue-field"><label for="engine-nnue">Réseau NNUE (SF16)</label><a id="engine-nnue-link" target="_blank" rel="noopener">Télécharger le réseau NNUE SF16</a><input id="engine-nnue" type="file" accept=".nnue,application/octet-stream"></div>
 </div>
 <p class="muted">SF18/19 : sélectionne le JS et le WASM du même build, vérifiés par nom et taille. SF17 : sélectionne le JS et le WASM Lite téléchargés. SF16 : sélectionne aussi le réseau NNUE. Les noms des fichiers 16/17 peuvent varier; l’identifiant UCI est contrôlé au démarrage.</p>
+<div class="engine-actions">
+<button type="button" class="btn secondary" id="engine-auto-init">Initialiser le moteur par défaut (Stockfish 19 Lite)</button>
+<span class="muted" id="engine-auto-init-status">Téléchargement officiel (~1,8 Mo) vers le cache du navigateur, sans envoi de tes données. L’initialisation automatique au chargement reste désactivée par défaut : clique ici ou ajoute <code>?autoengine=1</code> à l’URL.</span>
 </div>
+</div>
+</details>
 <div class="actions"><button id="generate" class="btn">Générer parties et exercices</button><button id="cancel" class="btn secondary" disabled>Annuler après le demi-coup en cours</button></div><label class="muted" style="display:flex;align-items:center;gap:9px;margin:10px 0"><input id="auto-build-puzzles" type="checkbox" checked> Créer et enregistrer automatiquement des puzzles défensifs après les parties</label>
 <p id="status" class="status" role="status" aria-live="polite">Choisis SF16 à SF19. SF16 nécessite trois fichiers, dont le NNUE; SF17 nécessite le JS et le WASM Lite. L’identifiant UCI confirme la version au démarrage.</p>
 <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+<div class="generation-progress" id="generation-progress" hidden>
+<div class="generation-progress-bar"><span id="generation-progress-fill"></span></div>
+<ul class="generation-facts">
+<li>Partie en cours : <strong id="generation-fact-game">—</strong></li>
+<li>Demi-coup : <strong id="generation-fact-ply">—</strong></li>
+<li>Sacrifices détectés : <strong id="generation-fact-sacrifices">0</strong></li>
+<li>Avancement : <strong id="generation-fact-percent">0 %</strong></li>
+</ul>
+</div>
 </section>
 <section id="results-panel" class="panel hidden">
 <h2>Classement des parties générées</h2><p class="muted">Après la génération, crée aussi des puzzles défensifs calculés à partir des tactiques candidates.</p><p class="muted">Classement par nombre de sacrifices candidats, puis par longueur de la meilleure séquence rapprochée.</p>
 <div id="results" class="results"></div>
 </section>
+<section id="study-panel" class="panel hidden">
+<div class="study-grid">
+<div><h2 id="study-title" class="hidden"></h2><div id="board" class="board" role="grid" aria-label="Échiquier de la partie générée"></div></div>
+<div><p id="study-summary" class="summary"></p><p id="study-eval" class="muted"></p><div id="moves" class="moves" aria-label="Coups de la partie"></div>
+<div class="move-controls"><button id="prev" class="btn secondary">← Demi-coup précédent</button><button id="next" class="btn">Demi-coup suivant →</button><button id="download-pgn" class="btn secondary">Télécharger le PGN</button></div>
+</div></div>
+</section>
+</div>
+<div id="panel-puzzles" role="tabpanel" aria-labelledby="tab-puzzles" tabindex="0" hidden>
 <section id="defense-panel" class="panel">
 <h2>Problèmes, puzzles, plans, tactiques et défenses</h2>
 <p class="muted">Les parties et puzzles sont générés par la version Stockfish sélectionnée (Elo UCI réglé à 2 800 ou plus). Les lignes légales sont contrôlées et l’identifiant UCI de la version est vérifié. Tu joues le camp qui doit se défendre ; le moteur calcule une ligne de réponses et de contre-attaques avec les réglages Elo et le temps choisis. Ces lignes sont des recommandations du moteur pour cette analyse, pas des solutions universelles certifiées.</p>
@@ -63,30 +135,37 @@ a{color:#b9d5ff}.page{max-width:1200px;margin:auto;padding:20px}.back{display:in
 <div class="field"><label for="custom-elo-min">Elo minimum</label><input id="custom-elo-min" type="number" min="400" max="4000" step="50" value="400"></div>
 <div class="field"><label for="custom-elo-max">Elo maximum</label><input id="custom-elo-max" type="number" min="400" max="4000" step="50" value="3000"></div>
 </div>
-<strong>Thèmes</strong><p class="muted">Laisse tout décoché pour inclure tous les thèmes présents dans les exercices chargés.</p>
-<div id="custom-theme-options" class="theme-options"></div><strong>Phases de jeu</strong><p class="muted">Les phases suivent l’ordre ouverture → milieu de partie → finale. Coche une phase pour filtrer les exercices personnalisés.</p><div id="custom-phase-options" class="theme-options"></div>
+<strong>Thèmes</strong><p class="muted">Laisse tout désactivé pour inclure tous les thèmes présents dans les exercices chargés. Chaque pastille affiche le nombre d’exercices correspondants ; clique pour activer ou désactiver un filtre.</p>
+<div id="custom-theme-options" class="chips chips-scroll"></div><strong>Phases de jeu</strong><p class="muted">Les phases suivent l’ordre ouverture → milieu de partie → finale. Active une phase pour filtrer les exercices personnalisés.</p><div id="custom-phase-options" class="chips"></div>
 <div class="actions"><button id="start-custom-problem" class="btn">C’est parti !</button></div>
-<p id="custom-problem-status" class="status" role="status" aria-live="polite">Chargement de la banque de puzzles tactiques…</p></div>
-<div id="defense-play" class="study-grid hidden"><div><h3 id="defense-title"></h3><div id="defense-board" class="board" role="grid" aria-label="Échiquier du puzzle de défense"></div><div class="move-controls"><button id="defense-reset" class="btn secondary">Recommencer ce puzzle</button><button id="defense-next" class="btn">Puzzle suivant →</button></div></div><div><p id="defense-prompt" class="summary"></p><p id="defense-feedback" class="status" aria-live="polite"></p><div id="defense-moves" class="moves"></div></div></div>
+<div class="bank-loading" id="custom-bank-loading"><span class="spinner" aria-hidden="true"></span><span class="skeleton" style="width:150px" aria-hidden="true"></span><span class="skeleton" style="width:96px" aria-hidden="true"></span><span class="muted">Chargement de la banque de puzzles tactiques…</span></div>
+<div class="bank-error" id="custom-bank-error" hidden><strong>Chargement impossible.</strong> <span id="custom-bank-error-message">La banque de puzzles tactiques n’a pas pu être chargée.</span><div class="actions"><button type="button" class="btn secondary" id="custom-bank-retry">Réessayer</button></div></div>
+<p id="custom-problem-status" class="status" role="status" aria-live="polite"></p></div>
+<div id="defense-play" class="study-grid hidden"><div><h3 id="defense-title" class="hidden"></h3><div id="defense-board" class="board" role="grid" aria-label="Échiquier du puzzle de défense"></div><div class="move-controls"><button id="defense-reset" class="btn secondary">Recommencer ce puzzle</button><button id="defense-next" class="btn">Puzzle suivant →</button></div></div><div><p id="defense-prompt" class="summary"></p><p id="defense-feedback" class="status" aria-live="polite"></p><div id="defense-moves" class="moves"></div></div></div>
 </section>
-<section id="study-panel" class="panel hidden">
-<div class="study-grid">
-<div><h2 id="study-title"></h2><div id="board" class="board" role="grid" aria-label="Échiquier de la partie générée"></div></div>
-<div><p id="study-summary" class="summary"></p><p id="study-eval" class="muted"></p><div id="moves" class="moves" aria-label="Coups de la partie"></div>
-<div class="move-controls"><button id="prev" class="btn secondary">← Demi-coup précédent</button><button id="next" class="btn">Demi-coup suivant →</button><button id="download-pgn" class="btn secondary">Télécharger le PGN</button></div>
-</div></div>
-</section>
+</div>
 <p class="muted">Moteur : <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a> 16, 17, 18 ou 19, selon la version sélectionnée. Le réglage UCI Elo ne certifie pas la force réelle du build ; la page ne prétend pas que son score de sacrifices est une classification officielle.</p>
 </main>
 <script src="training_games/chess.0.10.3.js"></script>
 <script src="shared/puzzle-rating.js"></script>
 <script src="shared/generator-page-i18n.js?v=1.13.149"></script>
 <script>
-let worker=null, readyPromise=null, engineReady=false, activeEngineBuild="Lite mono-thread", activeEngineVersion="19", detectedEngineVersion=null, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0;
+let worker=null, readyPromise=null, engineReady=false, activeEngineBuild="Lite mono-thread", activeEngineVersion="19", detectedEngineVersion=null, uciWaiters=[], activeSearch=null, currentGames=[], selectedGame=0, replayIndex=0, cancelRequested=false, engineObjectUrls=[], runtimeReadyResolve=null, runtimeReadyReject=null, engineBootStatusTimer=null, engineBootTimeout=null, moveTimeSamples=[], searchStartedAt=0, autoPuzzleSelectionPending=false;
 const STARTING_PIECES={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
 function status(text){document.getElementById("status").textContent=text;}
 function formatDuration(seconds){seconds=Math.max(0,Math.ceil(seconds));return seconds>=60?seconds+" s (~"+Math.floor(seconds/60)+" min "+(seconds%60)+" s)":seconds+" s";}
 function setProgress(percent){document.getElementById("progress-fill").style.width=Math.max(0,Math.min(100,percent))+"%";}
+function updateGenerationProgress(details){
+ const block=document.getElementById("generation-progress");
+ if(!block)return;
+ const percent=Math.max(0,Math.min(100,Number(details.percent)||0));
+ block.hidden=false;
+ document.getElementById("generation-progress-fill").style.width=percent+"%";
+ document.getElementById("generation-fact-game").textContent=details.game!=null?String(details.game):"—";
+ document.getElementById("generation-fact-ply").textContent=details.ply!=null?String(details.ply):"—";
+ document.getElementById("generation-fact-sacrifices").textContent=String(details.sacrifices||0);
+ document.getElementById("generation-fact-percent").textContent=Math.round(percent)+" %";
+}
 const STOCKFISH_RELEASES={19:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v19.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-19-lite-single.js",wasmName:"stockfish-19-lite-single.wasm",jsBytes:21415,wasmBytes:1787571},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-19-single.js",wasmName:"stockfish-19-single.wasm",jsBytes:21315,wasmBytes:99102793}},18:{url:"https://github.com/nmrugg/stockfish.js/releases/download/v18.0.0/",lite:{id:"lite",label:"Lite mono-thread",jsName:"stockfish-18-lite-single.js",wasmName:"stockfish-18-lite-single.wasm",jsBytes:20670,wasmBytes:7295411},full:{id:"full",label:"Full mono-thread",jsName:"stockfish-18-single.js",wasmName:"stockfish-18-single.wasm",jsBytes:20569,wasmBytes:112992459}}};
 function selectedEngineVersion(){return document.getElementById("engine-version").value;}
 function selectedEngineBuild(){const version=selectedEngineVersion(),flavor=document.getElementById("engine-build").value;return (STOCKFISH_RELEASES[version]&&STOCKFISH_RELEASES[version][flavor])||{id:"custom",label:"Build local Stockfish "+version,version};}
@@ -227,7 +306,7 @@ function renderResults(){
  currentGames.forEach((record,index)=>{const item=document.createElement("div");item.className="candidate"+(index===selectedGame?" selected":"");const button=document.createElement("button");button.type="button";button.innerHTML="<strong>"+(index+1)+". "+record.candidateCount+" sacrifice(s) candidat(s) · séquence max "+record.bestChain+" demi-coups</strong><small>"+record.result+" · "+record.uci.length+" demi-coups générés · "+precisionSummary(record)+" · Stockfish "+record.engineVersion+" "+record.engineBuild+" · Elo demandés "+record.whiteElo+" / "+record.blackElo+" · "+record.opening+"</small>";button.addEventListener("click",()=>{selectedGame=index;replayIndex=0;renderResults();renderReplay();});item.appendChild(button);root.appendChild(item);});
  document.getElementById("study-panel").classList.remove("hidden");renderReplay();renderStudySummary();
 }
-function renderStudySummary(){const record=currentGames[selectedGame];if(!record)return;document.getElementById("study-title").textContent="Partie candidate "+(selectedGame+1);document.getElementById("study-summary").textContent=record.candidateCount+" sacrifices tactiques candidats détectés ; meilleure séquence rapprochée : "+record.bestChain+" demi-coups. Build "+record.engineBuild+" · Elo demandés : Blancs "+record.whiteElo+" · Noirs "+record.blackElo+" · "+precisionSummary(record)+".";document.getElementById("study-eval").textContent="Coups candidats : "+record.candidatePlies.map(p=>p+1).join(", ")||"Aucun sacrifice candidat détecté.";}
+function renderStudySummary(){const record=currentGames[selectedGame];if(!record)return;const studyTitle=document.getElementById("study-title");studyTitle.textContent="Partie candidate "+(selectedGame+1);studyTitle.classList.remove("hidden");document.getElementById("study-summary").textContent=record.candidateCount+" sacrifices tactiques candidats détectés ; meilleure séquence rapprochée : "+record.bestChain+" demi-coups. Build "+record.engineBuild+" · Elo demandés : Blancs "+record.whiteElo+" · Noirs "+record.blackElo+" · "+precisionSummary(record)+".";document.getElementById("study-eval").textContent="Coups candidats : "+record.candidatePlies.map(p=>p+1).join(", ")||"Aucun sacrifice candidat détecté.";}
 function pgnFor(record){
  const temp=new Chess();record.uci.forEach(u=>temp.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"}));
  const result=record.result;
@@ -251,7 +330,7 @@ async function generateCandidate(index,total,whiteElo,blackElo,movetime,maxPlies
   if(inspectSacrifice(game,move,movingType)){
    candidatePlies.push(ply);if(ply-lastCandidatePly<=3)chain+=1;else{chain=1;chainStart=ply;}bestChain=Math.max(bestChain,ply-chainStart+1);lastCandidatePly=ply;
   }
-  setProgress(((index+(ply+1)/maxPlies)/total)*100);
+  setProgress(((index+(ply+1)/maxPlies)/total)*100);updateGenerationProgress({game:index+1,ply:ply+1,sacrifices:candidatePlies.length,percent:(index+(ply+1)/maxPlies)/total*100});
   await new Promise(resolve=>setTimeout(resolve,0));
  }
  return {uci,san,candidatePlies,fensAfter,candidateCount:candidatePlies.length,bestChain,engineBuild:activeEngineBuild,engineVersion:activeEngineVersion,result:game.in_checkmate()?(game.turn()==="w"?"0-1":"1-0"):game.in_draw()?"1/2-1/2":"*",whiteElo,blackElo,opening,precisionMode,top1PliesP1:precisionMode==="p1"||precisionMode==="both"?Math.ceil(uci.length/2):null,top1PliesP2:precisionMode==="p2"||precisionMode==="both"?Math.floor(uci.length/2):null};
@@ -263,7 +342,7 @@ function restoreGeneratedGames(){try{const data=JSON.parse(localStorage.getItem(
 function addGeneratedGame(record){record.id=record.id||("sfgame-"+Date.now()+"-"+Math.random().toString(36).slice(2,8));record.createdAt=record.createdAt||new Date().toISOString();const signature=record.engineVersion+"|"+record.uci.join(",")+"|"+record.whiteElo+"|"+record.blackElo;if(!generatedGameLibrary.some(g=>g.signature===signature)){record.signature=signature;generatedGameLibrary.push(record);saveGeneratedGames();}}
 async function generate(){
  if(typeof Chess!=="function"){status("La bibliothèque d’échecs ne s’est pas chargée.");return;}
- const button=document.getElementById("generate");button.disabled=true;setEngineInputsDisabled(true);document.getElementById("cancel").disabled=false;cancelRequested=false;currentGames=[];document.getElementById("progress-fill").style.width="0%";
+ const button=document.getElementById("generate");button.disabled=true;setEngineInputsDisabled(true);document.getElementById("cancel").disabled=false;cancelRequested=false;currentGames=[];document.getElementById("progress-fill").style.width="0%";updateGenerationProgress({game:null,ply:null,sacrifices:0,percent:0});
  const total=Number(document.getElementById("game-count").value),whiteElo=clampElo("white-elo"),blackElo=clampElo("black-elo"),movetime=Number(document.getElementById("move-time").value),maxPlies=Number(document.getElementById("max-plies").value),precisionMode=document.getElementById("precision-player").value;
  try{
   await ensureEngine();
@@ -277,30 +356,31 @@ async function generate(){
    status(cancelRequested?"Génération interrompue après le demi-coup en cours. Les parties terminées restent enregistrées.":"Génération terminée : les parties sont classées et enregistrées. Coche l’option pour créer aussi des puzzles automatiquement.");
   }
  }catch(error){status("Erreur moteur : "+error.message);}
- finally{button.disabled=false;setEngineInputsDisabled(false);document.getElementById("cancel").disabled=true;}
+ finally{button.disabled=false;setEngineInputsDisabled(false);document.getElementById("cancel").disabled=true;updateGenerationProgress({game:total,ply:null,sacrifices:Number(document.getElementById("generation-fact-sacrifices").textContent)||0,percent:100});}
 }
 
 const DEFENSE_PUZZLE_STORAGE_KEY="supachess-generated-defense-puzzles-v1";
 let defensePuzzles=[],generatedDefensePuzzles=[],tacticalTrainingPuzzles=[],activeDefenseIndex=0,defenseGame=null,defenseSelected=null,defenseLineIndex=0,defensePlayed=[];
 function saveDefensePuzzles(){try{localStorage.setItem(DEFENSE_PUZZLE_STORAGE_KEY,JSON.stringify(generatedDefensePuzzles.map(p=>({id:p.id,fen:p.fen,line:p.line,userColor:p.userColor,gameIndex:p.gameIndex,ply:p.ply,rating:p.rating,engineElo:p.engineElo,themes:p.themes,solutionEngineVersion:p.solutionEngineVersion,phase:p.phase,ratingSource:p.ratingSource,record:{id:p.record.id,signature:p.record.signature,san:p.record.san,engineBuild:p.record.engineBuild,engineVersion:p.record.engineVersion,whiteElo:p.record.whiteElo,blackElo:p.record.blackElo}}))));}catch(_e){document.getElementById("custom-problem-status").textContent="Puzzles créés, mais le navigateur n’a pas pu les conserver localement.";}}
 const TACTICAL_THEME_LABELS={fork:"Fourchette",pin:"Clouage",skewer:"Enfilade",discovered:"Attaque à la découverte",backrank:"Mat du couloir",smothered:"Mat étouffé",doublecheck:"Échec double",xray:"Attaque aux rayons X",master:"Combinaison avancée","Défense tactique":"Défense tactique","Sacrifice candidat":"Sacrifice candidat","Combinaison multi-coups":"Combinaison multi-coups"};
-function customPuzzleThemeMatches(p){const selected=[...document.querySelectorAll("#custom-theme-options input:checked")].map(x=>x.value);return !selected.length||(p.themes||[]).some(tag=>selected.includes(tag));}
-function customPuzzlePhaseMatches(p){const selected=[...document.querySelectorAll("#custom-phase-options input:checked")].map(x=>x.value);return !selected.length||selected.includes(p.phase);}
+const customThemeSelection=new Set(),customPhaseSelection=new Set();
+function customPuzzleThemeMatches(p){const selected=[...customThemeSelection];return !selected.length||(p.themes||[]).some(tag=>selected.includes(tag));}
+function customPuzzlePhaseMatches(p){const selected=[...customPhaseSelection];return !selected.length||selected.includes(p.phase);}
 function customPuzzleMatches(p){const min=Math.max(400,Number(document.getElementById("custom-elo-min").value)||400),max=Math.min(4000,Number(document.getElementById("custom-elo-max").value)||4000),rating=Number(p.rating);return Number.isFinite(rating)&&min<=max&&rating>=min&&rating<=max&&customPuzzleThemeMatches(p)&&customPuzzlePhaseMatches(p);}
+function escapeHtml(value){const codes={"&":38,"<":60,">":62,'"':34,"'":39};return String(value).replace(/[&<>"']/g,char=>"&#"+codes[char]+";");}
 function renderCustomProblemOptions(){
  const root=document.getElementById("custom-theme-options"),phaseRoot=document.getElementById("custom-phase-options");
  if(!root||!phaseRoot)return;
- const selected=new Set([...root.querySelectorAll("input:checked")].map(x=>x.value)),selectedPhases=new Set([...phaseRoot.querySelectorAll("input:checked")].map(x=>x.value));
  const counts=new Map(),phaseCounts=new Map();
  defensePuzzles.forEach(p=>{(p.themes||[]).forEach(tag=>counts.set(tag,(counts.get(tag)||0)+1));if(p.phase)phaseCounts.set(p.phase,(phaseCounts.get(p.phase)||0)+1);});
- root.innerHTML=[...counts].sort((a,b)=>a[0].localeCompare(b[0],"fr")).map(([tag,count])=>'<label class="theme-option"><input type="checkbox" value="'+tag+'"'+(selected.has(tag)?" checked":"")+'> <span>'+(TACTICAL_THEME_LABELS[tag]||tag)+' <span class="muted">('+count+')</span></span></label>').join("")||"<em>Aucun thème chargé.</em>";
+ root.innerHTML=[...counts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"fr")).map(([tag,count])=>'<button type="button" class="chip" data-value="'+escapeHtml(tag)+'" aria-pressed="'+(customThemeSelection.has(tag)?"true":"false")+'">'+(escapeHtml(TACTICAL_THEME_LABELS[tag]||tag))+' <span class="chip-count">'+count+'</span></button>').join("")||"<em>Aucun thème chargé.</em>";
  const order=["opening","middlegame","endgame"],labels={opening:"Ouverture",middlegame:"Milieu de partie",endgame:"Finale"};
- phaseRoot.innerHTML=order.filter(phase=>phaseCounts.has(phase)).map(phase=>'<label class="theme-option"><input type="checkbox" value="'+phase+'"'+(selectedPhases.has(phase)?" checked":"")+'> <span>'+labels[phase]+' <span class="muted">('+phaseCounts.get(phase)+')</span></span></label>').join("")||"<em>Aucune phase disponible.</em>";
+ phaseRoot.innerHTML=order.filter(phase=>phaseCounts.has(phase)).map(phase=>'<button type="button" class="chip" data-value="'+phase+'" aria-pressed="'+(customPhaseSelection.has(phase)?"true":"false")+'">'+labels[phase]+' <span class="chip-count">'+phaseCounts.get(phase)+'</span></button>').join("")||"<em>Aucune phase disponible.</em>";
 }
 function filterCustomProblems(){const min=document.getElementById("custom-elo-min"),max=document.getElementById("custom-elo-max");customBankVisibleCount=12;if(min&&max&&Number(min.value)>Number(max.value)){document.getElementById("custom-problem-status").textContent="La cote minimum doit être inférieure ou égale à la cote maximum.";renderDefensePuzzleList();return;}renderCustomProblemOptions();renderDefensePuzzleList();const count=defensePuzzles.filter(p=>p.source==="training"&&customPuzzleMatches(p)).length,generated=defensePuzzles.filter(p=>p.source!=="training"&&customPuzzleThemeMatches(p)).length,ratings=tacticalTrainingPuzzles.map(p=>Number(p.rating)).filter(Number.isFinite),high=ratings.length?Math.max(...ratings):null;document.getElementById("custom-problem-status").textContent=count+" puzzle(s) de la banque correspondent aux filtres · "+generated+" puzzle(s) Stockfish généré(s) affichés séparément sans Elo de difficulté étalonné."+(high!==null?" Cote maximale enregistrée dans la banque : "+high+"; les cotes sont indicatives, pas un Elo FIDE.":"");}
 function customPhaseRank(phase){return ({opening:0,middlegame:1,endgame:2})[phase]??3;}
 function getOrderedCustomMatches(){return defensePuzzles.map((p,i)=>({p,i})).filter(x=>customPuzzleMatches(x.p)).sort((a,b)=>customPhaseRank(a.p.phase)-customPhaseRank(b.p.phase)||Number(a.p.rating)-Number(b.p.rating)||String(a.p.id).localeCompare(String(b.p.id)));}
-function showCustomPuzzle(chosen,prefix){const phase=window.SupaPuzzleRating.phaseLabel(chosen.p.phase);selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent=prefix+" · "+phase+" · Elo puzzle estimé "+chosen.p.rating+" (provisoire) · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
+function showCustomPuzzle(chosen,prefix,scroll=true){const phase=window.SupaPuzzleRating.phaseLabel(chosen.p.phase);selectDefensePuzzle(chosen.i);document.getElementById("custom-problem-status").textContent=prefix+" · "+phase+" · Elo puzzle estimé "+chosen.p.rating+" (provisoire) · "+chosen.p.themes.map(tag=>TACTICAL_THEME_LABELS[tag]||tag).join(" / ")+". Entraînement libre, classement inchangé.";if(scroll)document.getElementById("defense-play").scrollIntoView({behavior:"smooth",block:"center"});}
 function startCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}showCustomPuzzle(matches[0],"Première étape du parcours personnalisé");}
 function nextCustomProblem(){const matches=getOrderedCustomMatches();if(!matches.length){filterCustomProblems();return;}const currentId=defensePuzzles[activeDefenseIndex]&&defensePuzzles[activeDefenseIndex].id,index=matches.findIndex(x=>x.p.id===currentId),chosen=matches[(index+1+matches.length)%matches.length];showCustomPuzzle(chosen,"Étape suivante du parcours personnalisé");}
 function refreshCustomPuzzlePool(){defensePuzzles=[...tacticalTrainingPuzzles,...generatedDefensePuzzles];renderCustomProblemOptions();renderDefensePuzzleList();filterCustomProblems();}
@@ -316,7 +396,7 @@ function restoreDefensePuzzles(){
   if(generatedDefensePuzzles.length)document.getElementById("defense-status").textContent=generatedDefensePuzzles.length+" puzzle(s) restauré(s), avec Elo estimé, depuis cet appareil.";
  }catch(_e){}
 }
-async function loadTacticalPuzzleBank(){try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});}if(!line.length)return null;const rating=Number(p.rating)||400,phase=window.SupaPuzzleRating.classifyPhase(p.fen);return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,phase,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();document.getElementById("custom-problem-status").textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";}}
+async function loadTacticalPuzzleBank(){const loading=document.getElementById("custom-bank-loading"),errorBox=document.getElementById("custom-bank-error"),errorMessage=document.getElementById("custom-bank-error-message");if(loading)loading.hidden=false;if(errorBox)errorBox.hidden=true;try{const response=await fetch("training_games/tactical-training-puzzles.json",{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const data=await response.json();tacticalTrainingPuzzles=(Array.isArray(data.puzzles)?data.puzzles:[]).map((p,i)=>{const game=new Chess(p.fen),userColor=game.turn(),line=[];for(const san of [...(p.solution||[]),...(p.continuation||[])]){const move=game.move(san);if(!move)break;line.push({color:move.color,from:move.from,to:move.to,san:move.san,promotion:move.promotion||null});}if(!line.length)return null;const rating=Number(p.rating)||400,phase=window.SupaPuzzleRating.classifyPhase(p.fen);return{id:"custom-"+(p.id||i),source:"training",title:p.title||"Puzzle "+(i+1),description:p.description,explanation:"Solution : "+line.map(m=>m.san).join(" · "),hint:p.hint,fen:p.fen,line,userColor,gameIndex:-1,ply:0,rating,phase,themes:Array.isArray(p.themes)?p.themes:["Tactique"],record:{san:[],engineBuild:"Banque tactique SupaChess",whiteElo:rating,blackElo:rating}};}).filter(Boolean);refreshCustomPuzzlePool();if(loading)loading.hidden=true;if(autoPuzzleSelectionPending){autoPuzzleSelectionPending=false;const matches=getOrderedCustomMatches();if(matches.length)showCustomPuzzle(matches[0],"Puzzle chargé automatiquement",false);}document.getElementById("custom-problem-status").textContent=defensePuzzles.length+" problème(s) chargés · banque tactique SupaChess et puzzles Stockfish.";}catch(error){refreshCustomPuzzlePool();if(loading)loading.hidden=true;if(errorBox)errorBox.hidden=false;if(errorMessage)errorMessage.textContent="La banque tactique n’a pas pu charger ("+error.message+"). Les puzzles Stockfish déjà créés restent disponibles.";document.getElementById("custom-problem-status").textContent="Chargement de la banque tactique impossible : utilise Réessayer ou continue avec les puzzles Stockfish déjà présents.";}}
 function defenseStatus(text,tone=""){const el=document.getElementById("defense-feedback");el.textContent=text;el.className="status"+(tone?" "+tone:"");}
 async function buildDefensePuzzles(){
  const button=document.getElementById("build-defense"),statusEl=document.getElementById("defense-status");
@@ -396,7 +476,7 @@ function renderDefensePuzzleList(){
  if(!generated.length&&!bank.length){const note=document.createElement("p");note.className="muted";note.textContent="Aucun puzzle ne correspond aux thèmes et à la cote sélectionnés.";root.appendChild(note);}
 }
 function selectDefensePuzzle(i){activeDefenseIndex=i;const p=defensePuzzles[i];if(!p)return;defenseGame=new Chess(p.fen);defenseLineIndex=0;defensePlayed=[];defenseSelected=null;
- document.getElementById("defense-play").classList.remove("hidden");document.getElementById("defense-title").textContent=p.source==="training"?p.title:"Puzzle "+(i+1)+" · "+(p.userColor==="w"?"Blancs défendent":"Noirs défendent");
+ document.getElementById("defense-play").classList.remove("hidden");const defenseTitle=document.getElementById("defense-title");defenseTitle.textContent=(p.source==="training"?p.title:"Puzzle "+(i+1)+" · "+(p.userColor==="w"?"Blancs défendent":"Noirs défendent"))+(p.rating!=null?" · Elo puzzle estimé "+p.rating:"");defenseTitle.classList.remove("hidden");
  document.getElementById("defense-prompt").textContent=p.source==="training"?(p.description||"Trouve le meilleur coup de la position."):"Trouve une défense active ou une contre-attaque. La séquence continue sur plusieurs demi-coups ; les réponses Stockfish sont jouées automatiquement.";
  document.getElementById("defense-moves").textContent="—";defenseStatus("À toi : joue le meilleur coup défensif de la ligne calculée par Stockfish.");renderDefenseBoard();document.getElementById('defense-play').scrollIntoView({behavior:'smooth',block:'center'});}
 function renderDefenseBoard(){const p=defensePuzzles[activeDefenseIndex],root=document.getElementById("defense-board");if(!p||!defenseGame)return;const matrix=defenseGame.board();let html='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Échiquier SVG interactif du puzzle">';
@@ -415,8 +495,9 @@ function playDefenseSquare(square){const p=defensePuzzles[activeDefenseIndex];if
 }
 document.getElementById("custom-elo-min").addEventListener("change",filterCustomProblems);
 document.getElementById("custom-elo-max").addEventListener("change",filterCustomProblems);
-document.getElementById("custom-theme-options").addEventListener("change",filterCustomProblems);
-document.getElementById("custom-phase-options").addEventListener("change",filterCustomProblems);
+document.getElementById("custom-theme-options").addEventListener("click",event=>{const chip=event.target.closest(".chip");if(!chip)return;const value=chip.dataset.value;if(customThemeSelection.has(value))customThemeSelection.delete(value);else customThemeSelection.add(value);filterCustomProblems();});
+document.getElementById("custom-phase-options").addEventListener("click",event=>{const chip=event.target.closest(".chip");if(!chip)return;const value=chip.dataset.value;if(customPhaseSelection.has(value))customPhaseSelection.delete(value);else customPhaseSelection.add(value);filterCustomProblems();});
+document.getElementById("custom-bank-retry").addEventListener("click",()=>{loadTacticalPuzzleBank();});
 document.getElementById("start-custom-problem").addEventListener("click",startCustomProblem);
 restoreGeneratedGames();
 restoreDefensePuzzles();
@@ -464,7 +545,61 @@ async function downloadEngineAsset(url){
   window.open(url,"_blank","noopener");
  }
 }
-for(const id of ["engine-js-link","engine-wasm-link","engine-nnue-link"])document.getElementById(id).addEventListener("click",event=>{event.preventDefault();downloadEngineAsset(event.currentTarget.href);});
+ for(const id of ["engine-js-link","engine-wasm-link","engine-nnue-link"])document.getElementById(id).addEventListener("click",event=>{event.preventDefault();downloadEngineAsset(event.currentTarget.href);});
+ function activateGeneratorTab(name,options={}){
+  const tabs=[...document.querySelectorAll(".tab")],panels={generator:document.getElementById("panel-generator"),puzzles:document.getElementById("panel-puzzles")};
+  const target=panels[name]?name:"generator";
+  tabs.forEach(tab=>{const active=tab.dataset.tab===target;tab.setAttribute("aria-selected",active?"true":"false");tab.tabIndex=active?0:-1;});
+  Object.keys(panels).forEach(key=>{if(panels[key])panels[key].hidden=key!==target;});
+  if(options.focus){const activeTab=tabs.find(tab=>tab.dataset.tab===target);if(activeTab)activeTab.focus();}
+ }
+ document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>activateGeneratorTab(tab.dataset.tab));
+  tab.addEventListener("keydown",event=>{
+   const tabs=[...document.querySelectorAll(".tab")],index=tabs.indexOf(tab);
+   if(event.key==="ArrowRight"||event.key==="ArrowLeft"){event.preventDefault();const next=tabs[(index+(event.key==="ArrowRight"?1:tabs.length-1))%tabs.length];next.focus();activateGeneratorTab(next.dataset.tab);return;}
+   if(event.key==="Home"){event.preventDefault();tabs[0].focus();activateGeneratorTab(tabs[0].dataset.tab);return;}
+   if(event.key==="End"){event.preventDefault();tabs[tabs.length-1].focus();activateGeneratorTab(tabs[tabs.length-1].dataset.tab);}
+  });
+ });
+ if(location.hash==="#custom-problems"){
+  autoPuzzleSelectionPending=true;
+  activateGeneratorTab("puzzles");
+  if("scrollRestoration" in history)history.scrollRestoration="manual";
+  window.scrollTo(0,0);
+  setTimeout(()=>window.scrollTo(0,0),0);
+  setTimeout(()=>window.scrollTo(0,0),120);
+ }
+ function setEngineInputFiles(input,files){
+  if(!input)return;
+  try{
+   const transfer=new DataTransfer();
+   files.forEach(file=>transfer.items.add(file));
+   input.files=transfer.files;
+  }catch(_error){
+   Object.defineProperty(input,"files",{value:files,configurable:true});
+  }
+ }
+ async function autoInitDefaultEngine(){
+  const button=document.getElementById("engine-auto-init"),label=document.getElementById("engine-auto-init-status");
+  const version="19",release=STOCKFISH_RELEASES[version],build=release.lite;
+  if(button)button.disabled=true;
+  try{
+   if(label)label.textContent="Téléchargement du moteur Stockfish 19 Lite…";
+   const [jsResponse,wasmResponse]=await Promise.all([fetch(release.url+build.jsName,{mode:"cors",cache:"force-cache"}),fetch(release.url+build.wasmName,{mode:"cors",cache:"force-cache"})]);
+   if(!jsResponse.ok)throw new Error("JS HTTP "+jsResponse.status);
+   if(!wasmResponse.ok)throw new Error("WASM HTTP "+wasmResponse.status);
+   setEngineInputFiles(document.getElementById("engine-js"),[new File([await jsResponse.blob()],build.jsName,{type:"text/javascript"})]);
+   setEngineInputFiles(document.getElementById("engine-wasm"),[new File([await wasmResponse.blob()],build.wasmName,{type:"application/wasm"})]);
+   if(label)label.textContent="Fichiers officiels chargés, démarrage du moteur…";
+   await ensureEngine();
+   if(label)label.textContent="Moteur Stockfish 19 Lite initialisé : tu peux générer des parties.";
+  }catch(error){
+   if(label)label.textContent="Initialisation automatique impossible ("+error.message+"). Sélectionne les fichiers JS et WASM à la main.";
+  }finally{if(button)button.disabled=false;}
+ }
+ document.getElementById("engine-auto-init").addEventListener("click",autoInitDefaultEngine);
+ if(new URLSearchParams(location.search).get("autoengine")==="1")setTimeout(autoInitDefaultEngine,400);
  for(const id of ["engine-js","engine-wasm","engine-nnue"])document.getElementById(id).addEventListener("change",()=>{resetEngineForSelection();const js=document.getElementById("engine-js").files[0],wasm=document.getElementById("engine-wasm").files[0];if(!js||!wasm){status("Sélectionne les fichiers JS et WASM "+selectedEngineBuild().label+".");return;}try{const {build}=validateEngineFiles();status(STOCKFISH_RELEASES[selectedEngineVersion()]?"Fichiers officiels Stockfish "+selectedEngineVersion()+" "+build.label+" vérifiés par taille. Tu peux générer.":"Fichiers Stockfish "+selectedEngineVersion()+" sélectionnés; l’identifiant UCI sera contrôlé au démarrage.");}catch(error){status(error.message);}});
 </script>
 <script defer src="shared/site-global-v1.13.14801.js?v=1.13.14801"></script>

@@ -4,7 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="page_title">SupaChess — Académie des erreurs</title>
+    <title>SupaChess — Académie des erreurs : jouer, analyser, s'entraîner</title>
+    <meta name="description" content="SupaChess-Web : jouer, analyser et s'entraîner aux échecs avec parties légendaires commentées, coach IA, puzzles tactiques et tableaux de bord ELO.">
+    <link rel="canonical" href="https://jira44.github.io/supachess-web/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="SupaChess">
+    <meta property="og:title" content="SupaChess — Académie des erreurs : jouer, analyser, s'entraîner">
+    <meta property="og:description" content="Hub SupaChess-Web : parties légendaires commentées, coach IA, puzzles tactiques, entraînement et dashboards ELO en un seul lieu.">
+    <meta property="og:url" content="https://jira44.github.io/supachess-web/">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="SupaChess — Académie des erreurs : jouer, analyser, s'entraîner">
+    <meta name="twitter:description" content="Hub SupaChess-Web : parties légendaires commentées, coach IA, puzzles tactiques, entraînement et dashboards ELO.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SupaChess",
+      "alternateName": "SupaChess-Web",
+      "url": "https://jira44.github.io/supachess-web/",
+      "description": "Académie d'échecs en ligne : parties légendaires commentées, coach IA, puzzles tactiques, entraînements et tableaux de bord ELO.",
+      "inLanguage": "fr",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "featureList": [
+        "Recherche globale des modules",
+        "Parties légendaires avec échiquier interactif",
+        "Coach IA et analyse de partie",
+        "Puzzles tactiques et exercices",
+        "Tableaux de bord ELO et suivi live"
+      ],
+      "sameAs": [
+        "https://jira44.github.io/supachess/",
+        "https://gematria-academy.pages.dev/"
+      ]
+    }
+    </script>
     <style>
         * {
             margin: 0;
@@ -241,7 +283,7 @@
         .action-btn.danger {
             background: linear-gradient(90deg, #f44336, #da190b);
         }
-    
+
         .purpose-panel {
             background: rgba(8, 16, 38, 0.78);
             border: 1px solid rgba(120, 180, 255, 0.3);
@@ -278,16 +320,259 @@
         .purpose-note { margin: 18px auto 0; font-size: .9rem; }
         @media (max-width: 640px) { .purpose-panel { padding: 20px 16px; } }
 
+        .hub-skip {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: #0f1830;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 0 0 10px 0;
+            z-index: 2000;
+        }
+        .hub-skip:focus {
+            left: 0;
+        }
+
+        .hub-search-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin: -20px -20px 22px;
+            padding: 12px 20px;
+            background: rgba(8, 14, 32, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .hub-search-label {
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #9ce7ff;
+            white-space: nowrap;
+        }
+        .hub-search-field {
+            position: relative;
+            flex: 1 1 420px;
+            min-width: 240px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .hub-search-input {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font: inherit;
+            outline: none;
+        }
+        .hub-search-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+        }
+        .hub-search-count {
+            white-space: nowrap;
+            font-size: 0.85rem;
+            color: #b6c2d4;
+        }
+        .hub-search-suggestions {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 1300;
+            margin: 0;
+            padding: 6px;
+            list-style: none;
+            max-height: min(60vh, 420px);
+            overflow-y: auto;
+            background: #101827;
+            border: 1px solid #52617a;
+            border-radius: 12px;
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+        }
+        .hub-search-suggestions[hidden] { display: none; }
+        .hub-suggestion-group {
+            padding: 8px 12px 5px;
+            color: #fbbf24;
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .hub-suggestion {
+            border-radius: 9px;
+        }
+        .hub-suggestion.is-active,
+        .hub-suggestion:hover {
+            background: #243148;
+        }
+        .hub-suggestion-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px 12px;
+            color: #f5f7fb;
+        }
+        .hub-suggestion-title {
+            font-weight: 700;
+        }
+        .hub-suggestion-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: rgba(120, 180, 255, 0.16);
+            border: 1px solid rgba(120, 180, 255, 0.35);
+            color: #a8c7ff;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .hub-suggestion-count {
+            color: #fbbf24;
+        }
+        .hub-suggestion-empty {
+            padding: 12px;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .hub-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+        .hub-nav a {
+            padding: 11px 22px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            font-weight: 700;
+            transition: all 0.25s;
+        }
+        .hub-nav a:hover,
+        .hub-nav a:focus-visible {
+            background: rgba(76, 175, 80, 0.22);
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .hub-section {
+            margin-bottom: 34px;
+        }
+        .hub-folder {
+            background: rgba(8, 16, 38, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            padding: 16px 18px 6px;
+            margin-bottom: 22px;
+        }
+        .hub-folder > summary {
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #FFD700;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .hub-folder > summary::-webkit-details-marker { display: none; }
+        .hub-folder > summary::before {
+            content: '▸';
+            color: #4CAF50;
+            transition: transform 0.2s;
+        }
+        .hub-folder[open] > summary::before {
+            transform: rotate(90deg);
+        }
+        .hub-folder-count {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #9ce7ff;
+            background: rgba(156, 231, 255, 0.12);
+            border: 1px solid rgba(156, 231, 255, 0.3);
+            border-radius: 12px;
+            padding: 3px 10px;
+        }
+        .hub-section > .hub-folder > .hub-folder {
+            background: rgba(255, 255, 255, 0.04);
+            margin-top: 18px;
+        }
+        .hub-section > .hub-folder > .hub-folder > summary {
+            font-size: 1.15rem;
+            color: #8ddcff;
+        }
+        .hub-section > .hub-folder > .hub-folder .menu-grid {
+            margin-top: 18px;
+        }
+        .hub-card[hidden],
+        .hub-folder[hidden],
+        .hub-section[hidden] {
+            display: none !important;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin: 14px 0 10px;
+        }
+        .footer-links a {
+            color: #9ce7ff;
+            font-weight: 700;
+            border-bottom: 1px dotted rgba(156, 231, 255, 0.5);
+        }
+        .footer-links a:hover { color: #fff; }
+        .footer-meta {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <a class="hub-skip" href="#hub-main">Aller au contenu principal</a>
+
+    <div class="hub-search-bar" id="hub-search-bar" role="search" aria-label="Recherche globale dans le hub">
+        <label class="hub-search-label" for="hub-search-input">Recherche globale</label>
+        <div class="hub-search-field">
+            <input id="hub-search-input" class="hub-search-input" type="search" role="combobox"
+                aria-expanded="false" aria-controls="hub-search-suggestions" aria-autocomplete="list"
+                aria-label="Rechercher un module du hub SupaChess"
+                autocomplete="off" spellcheck="false"
+                placeholder="Rechercher un module, un exercice, une partie… (/ ou Ctrl+K)">
+            <span id="hub-search-count" class="hub-search-count" role="status" aria-live="polite">0 modules disponibles</span>
+            <ul id="hub-search-suggestions" class="hub-search-suggestions" role="listbox" aria-label="Suggestions de recherche" hidden></ul>
+        </div>
+    </div>
+
+    <div class="container" id="hub-main">
         <div class="header">
             <h1 data-i18n="header_title">SupaChess — Académie des erreurs</h1>
             <p class="subtitle" data-i18n="header_subtitle">Comprendre ses parties, apprendre de ses erreurs et savoir quoi travailler.</p>
+            <nav class="hub-nav" aria-label="Entrées principales du hub">
+                <a href="#section-jouer">Jouer</a>
+                <a href="#section-academie">Apprendre</a>
+                <a href="#section-legendaires">Parties légendaires</a>
+                <a href="#section-laboratoire">Stats IA</a>
+            </nav>
         </div>
 
-        
         <section class="purpose-panel" aria-labelledby="purpose-title">
             <h2 id="purpose-title" data-i18n="purpose_title">SupaChess : comprendre ses parties pour progresser</h2>
             <p class="purpose-lead" data-i18n="purpose_lead">Une académie d’échecs qui transforme les erreurs et les bons coups en leçons concrètes.</p>
@@ -319,494 +604,618 @@
             <p class="purpose-note" data-i18n="purpose_note">Les évaluations automatiques dépendent du moteur et de la profondeur de recherche. Elles doivent être accompagnées d’une explication et ne constituent pas, seules, une preuve de niveau ou de progrès.</p>
         </section>
 
-        <div class="quick-actions">
-            <button class="action-btn" data-section="fischer-academy" onclick="window.location.href='FISCHER_ACADEMY.html'" style="background: linear-gradient(90deg, #f4c95d, #d08c22);">♟️ <span data-i18n="action_fischer">Méthode Fischer</span></button>
-            <button class="action-btn" data-section="supaengine" onclick="window.location.href='SUPAENGINE.html'" style="background: linear-gradient(90deg, #37e0a1, #1687a7);">♟️ <span data-i18n="action_supaengine">SupaEngine</span></button>
-            <button class="action-btn" data-section="chess-coach" onclick="window.location.href='CHESS_COACH.html'" style="background: linear-gradient(90deg, #00d9ff, #667eea);">
-                &#x1F393; <span data-i18n="action_chess_coach">AI Coach · Game analysis</span>
-            </button>
-            <button class="action-btn" data-section="generated-puzzle-lab" onclick="window.location.href='GENERATEUR_PARTIES_BRILLANTES.html'" style="background: linear-gradient(90deg, #f093fb, #8b5cf6);">
-                🧩 <span data-i18n="action_generate_puzzles">Générer puzzles & parties</span>
-            </button>
-            <button class="action-btn secondary" data-section="generated-games-practice" onclick="window.location.href='PARTIES_BRILLANTES_ENTRAINEMENT.html'">
-                ♟️ <span data-i18n="action_solve_generated">Résoudre les parties générées</span>
-            </button>
-            <button class="action-btn" data-section="live-training" onclick="window.location.href='TRAINING_DASHBOARD.html'">
-                &#x1F534; <span data-i18n="action_live_training">LIVE Training</span>
-            </button>
-            <button class="action-btn" data-section="tournament-sim" onclick="window.location.href='TOURNAMENT_SIMULATOR.html'" style="background: linear-gradient(90deg, #ffd700, #ff8c00);">
-                &#x1F3C6; <span data-i18n="action_tournament">Tournoi Simule</span>
-            </button>
-            <button class="action-btn" data-section="tournament-stockfish" onclick="window.location.href='TOURNAMENT_STOCKFISH.html'" style="background: linear-gradient(90deg, #4facfe, #00f2fe);">
-                &#x1F41F; <span data-i18n="action_tournament_stockfish">Tournoi Stockfish</span>
-            </button>
-            <button class="action-btn danger" data-section="live-game" onclick="window.location.href='SUIVI_PARTIES_LIVE.html'">
-                &#x1F3AE; <span data-i18n="action_live_game">Partie EN COURS</span>
-            </button>
-            <button class="action-btn secondary" data-section="victories" onclick="window.location.href='VICTOIRES_TRACKER.html'">
-                &#x1F3C6; <span data-i18n="action_victories">Victoires</span>
-            </button>
-            <button class="action-btn secondary" data-section="gallery" onclick="window.location.href='PARTIES_CREATIVES.html'">
-                &#x1F3AE; <span data-i18n="action_gallery">Galerie Parties</span>
-            </button>
-            <button class="action-btn secondary" data-section="lessons" onclick="window.location.href='ENSEIGNEMENTS_ECHECS.html'">
-                &#x1F4DA; <span data-i18n="action_lessons">Enseignements</span>
-            </button>
-            <button class="action-btn secondary" data-section="variant-course" onclick="window.location.href='ENTRAINEMENT_VARIANTES_STRATEGIE.html'" style="background: linear-gradient(90deg, #3c8f79, #276b82);">
-                &#x265F; <span data-i18n="action_variant_course">Calcul, ouvertures & finales</span>
-            </button>
-            <button class="action-btn secondary" data-section="chess-history" onclick="window.location.href='HISTOIRE_REGLES_ECHECS.html'">
-                &#x265C; <span data-i18n="action_chess_history">Histoire des règles</span>
-            </button>
-            <button class="action-btn" data-section="style-analysis" onclick="window.location.href='PLAYER_ANALYSIS.html'" style="background: linear-gradient(90deg, #ff6b6b, #ee5a6f);">
-                &#x1F4CA; <span data-i18n="action_style_analysis">Analyse de Style</span>
-            </button>
-        </div>
+        <section class="hub-section" id="section-jouer" data-hub-section="Jouer & Analyser">
+            <details class="hub-folder" open data-hub-folder data-hub-category="Jouer & Analyser">
+                <summary>
+                    <span class="hub-folder-title">Jouer & Analyser</span>
+                    <span class="hub-folder-count" data-hub-folder-count>(12)</span>
+                    <span class="hub-folder-count" data-hub-section-count>12 modules</span>
+                </summary>
+                <div class="menu-grid">
+                    <a class="hub-card" href="CHESS_COACH.html" data-hub-module="chess-coach" data-keywords="coach, analyse, pgn, partie, erreurs, ia, chessnova, diagnostic">
+                        <div class="menu-card" data-section="chess-coach" style="border: 2px solid #00d9ff; box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);">
+                            <span class="icon">&#x1F393;</span>
+                            <h3 data-i18n="card_chess_coach_title">Coach IA · Analyse de partie</h3>
+                            <p data-i18n="card_chess_coach_desc">Analysez une partie ou chargez un PGN avec le Coach IA.</p>
+                            <span class="badge new" style="background: rgba(0, 217, 255, 0.3); border-color: rgba(0, 217, 255, 0.5); animation: pulse 1.5s infinite;">&#x1F393; NOUVEAU!</span>
+                        </div>
+                    </a>
 
-        <h2 style="text-align: center; margin: 40px 0 30px; font-size: 2rem;" data-i18n="section_hub">Hub de Visualisation</h2>
+                        <a class="hub-card" href="AI_COACH_ADVANCED.html" data-hub-module="ai-coach-advanced" data-keywords="coach, analyse approfondie, ia, pgn, erreurs, diagnostic">
+                        <div class="menu-card" data-section="ai-coach" style="border: 2px solid #9b59b6;">
+                            <span class="icon">&#x1F9D9;</span>
+                            <h3 data-i18n="card_ai_coach_title">Coach IA avancé</h3>
+                            <p data-i18n="card_ai_coach_desc">Coach IA avancé avec analyse approfondie.</p>
+                            <span class="badge new" style="background: rgba(155, 89, 182, 0.3); border-color: rgba(155, 89, 182, 0.5);">&#x1F9D9; NOUVEAU!</span>
+                        </div>
+                    </a>
 
-        <h2 style="text-align: center; margin: 60px 0 20px; font-size: 1.8rem; color: #FFD700;" data-i18n="section_legendary">
-            Bibliotheque des Parties Legendaires
-        </h2>
-        <p style="text-align: center; margin-bottom: 30px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;" data-i18n="section_legendary_desc">
-            Collection de parties historiques analysees et commentees avec echiquiers interactifs
-        </p>
+                    <a class="hub-card" href="CHESSNOVA.html" data-hub-module="chessnova-teacher" data-keywords="ia, moteur, chessnova, jouer, professeur, niveaux, pedagogique">
+                        <div class="menu-card" data-section="chessnova-teacher" style="border: 2px solid #4facfe;">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="card_teacher_title">ChessNova Teacher - Mode Pédagogique</h3>
+                            <p data-i18n="card_teacher_desc">Professeur IA gratuit : joue avec 6 niveaux, suggestions et explications naturelles.</p>
+                            <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x265F; JOUER</span>
+                        </div>
+                    </a>
 
-        <div class="menu-grid" id="legendary-games">
-            <a href="fischer_game_of_century_interactive_v2.html">
-                <div class="menu-card" data-section="fischer" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 152, 0, 0.1));">
-                    <span class="icon">&#x1F451;</span>
-                    <h3 data-i18n="card_fischer_title">Fischer - Game of the Century</h3>
-                    <p data-i18n="card_fischer_desc">Bobby Fischer (13 ans !) vs Donald Byrne - New York, 1956 | Defense Grunfeld. Sacrifice de Dame legendaire au coup 17 (Be6!!). 41 coups commentes.</p>
-                    <span class="badge" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x2B50; DISPONIBLE</span>
+                    <a class="hub-card" href="SUPAENGINE.html" data-hub-module="supaengine" data-keywords="ia, moteur, stockfish, chessnova, moteur de jeu, analyse">
+                        <div class="menu-card" data-section="supaengine" style="border: 2px solid #37e0a1; box-shadow: 0 0 25px rgba(55, 224, 161, 0.3);">
+                            <span class="icon">&#x1F916;</span>
+                            <h3 data-i18n="action_supaengine">SupaEngine</h3>
+                            <p>Moteur d’échecs maison de la famille ChessNova : évaluation, variantes et analyse de tes coups.</p>
+                            <span class="badge" style="background: rgba(55, 224, 161, 0.3); border-color: rgba(55, 224, 161, 0.5);">&#x1F916; MOTEUR</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="GENERATEUR_PARTIES_BRILLANTES.html" data-hub-module="generated-puzzle-lab" data-keywords="mat, tactique, puzzle, generateur, sacrifices, elo 2800, stockfish, exercice">
+                        <div class="menu-card" data-section="generated-puzzle-lab" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(139, 92, 246, 0.15));">
+                            <span class="icon">&#x1F9E9;</span>
+                            <h3 data-i18n="action_generate_puzzles">Générer puzzles & parties</h3>
+                            <p>Fabrique des parties à 2 800 Elo puis transforme les positions tactiques en puzzles solvable.</p>
+                            <span class="badge new" style="background: rgba(240, 147, 251, 0.3); border-color: rgba(240, 147, 251, 0.5);">&#x1F9E9; GÉNÉRATEUR</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="PARTIES_BRILLANTES_ENTRAINEMENT.html" data-hub-module="generated-games-practice" data-keywords="puzzle, tactique, mat, exercices, parties brillantes, resolution">
+                        <div class="menu-card" data-section="generated-games-practice">
+                            <span class="icon">&#x1F3AF;</span>
+                            <h3 data-i18n="action_solve_generated">Résoudre les parties générées</h3>
+                            <p>Rejoue les parties calculées par le moteur et trouve la défense à chaque position.</p>
+                            <span class="badge" style="background: rgba(33, 150, 243, 0.3); border-color: rgba(33, 150, 243, 0.5);">&#x1F3AF; ENTRAÎNEMENT</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="TACTICAL_PUZZLES_GENERATOR.html" data-hub-module="puzzles" data-keywords="puzzle, tactique, mat, position, exercice, fourchettes, clouages">
+                        <div class="menu-card" data-section="puzzles" style="border: 2px solid #f093fb;">
+                            <span class="icon">&#x1F9E9;</span>
+                            <h3 data-i18n="card_puzzles_title">Créer un puzzle depuis une position</h3>
+                            <p data-i18n="card_puzzles_desc">Prépare une position et transforme-la en exercice tactique personnalisé.</p>
+                            <span class="badge new" style="background: rgba(240, 147, 251, 0.3); border-color: rgba(240, 147, 251, 0.5);">&#x1F9E9; NOUVEAU!</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="PLAYER_ANALYSIS.html" data-hub-module="style-analysis" data-keywords="style, radar, joueur, preferences, analyse, profil">
+                        <div class="menu-card" data-section="style-analysis" style="background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(238, 90, 111, 0.15));">
+                            <span class="icon">&#x1F4CA;</span>
+                            <h3 data-i18n="action_style_analysis">Profil joueur · style</h3>
+                            <p>Radars et statistiques sur ton jeu : risques, thèmes faibles et points de progression.</p>
+                            <span class="badge new" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5);">&#x1F4CA; ANALYSE</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="partie_1_analysee.html" data-hub-module="partie-1" data-keywords="partie, analyse, commentaires, echiquier, replay">
+                        <div class="menu-card" data-section="partie-1">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="card_partie1_title">Partie #1 Analysée</h3>
+                            <p data-i18n="card_partie1_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
+                            <span class="badge">&#x1F4CA; Analyse</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="partie_2_analysee.html" data-hub-module="partie-2" data-keywords="partie, analyse, commentaires, echiquier, replay">
+                        <div class="menu-card" data-section="partie-2">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="card_partie2_title">Partie #2 Analysée</h3>
+                            <p data-i18n="card_partie2_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
+                            <span class="badge">&#x1F4CA; Analyse</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="partie_3_analysee.html" data-hub-module="partie-3" data-keywords="partie, analyse, commentaires, echiquier, replay">
+                        <div class="menu-card" data-section="partie-3">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="card_partie3_title">Partie #3 Analysée</h3>
+                            <p data-i18n="card_partie3_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
+                            <span class="badge">&#x1F4CA; Analyse</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="HUMAN_TRAINING_STANDALONE.html" data-hub-module="standalone-training" data-keywords="entrainement, humain, autonome, tableau de bord, suivi">
+                        <div class="menu-card" data-section="standalone-training">
+                            <span class="icon">&#x1F3AE;</span>
+                            <h3>Entraînement humain autonome</h3>
+                            <p>Version autonome du système d'entraînement. Interface épurée.</p>
+                            <span class="badge">&#x1F3AE; Training</span>
+                        </div>
+                    </a>
                 </div>
-            </a>
+            </details>
+        </section>
 
-            <a href="kasparov_immortal_1999.html">
-                <div class="menu-card" data-section="kasparov" style="border: 2px solid #ff6b6b; background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 111, 0.1));">
-                    <span class="icon">&#x1F525;</span>
-                    <h3 data-i18n="card_kasparov_title">Kasparov - Immortal Game</h3>
-                    <p data-i18n="card_kasparov_desc">Garry Kasparov vs Veselin Topalov - Wijk aan Zee, 1999 | Defense Pirc. Combinaison spectaculaire avec sacrifice de tour.</p>
-                    <span class="badge" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5);">&#x2B50; DISPONIBLE</span>
+        <section class="hub-section" id="section-academie" data-hub-section="Académie & Entraînement">
+            <details class="hub-folder" open data-hub-folder data-hub-category="Académie & Entraînement">
+                <summary>
+                    <span class="hub-folder-title">Académie & Entraînement</span>
+                    <span class="hub-folder-count" data-hub-folder-count>(11)</span>
+                    <span class="hub-folder-count" data-hub-section-count>11 modules</span>
+                </summary>
+                <div class="menu-grid">
+                    <a class="hub-card" href="https://jira44.github.io/supachess/" target="_blank" rel="noopener" data-hub-module="supachess-trainer" data-keywords="coach, ia, entrainement, stockfish, pgn, analyse de partie">
+                        <div class="menu-card" data-section="supachess-trainer" style="border: 2px solid #4ade80; box-shadow: 0 0 25px rgba(74, 222, 128, 0.3);">
+                            <span class="icon">&#x1F9D9;</span>
+                            <h3 data-i18n="training_coach_title">SupaChess Coach IA - Entraineur d'echecs</h3>
+                            <p data-i18n="training_coach_desc">Jouez contre Stockfish avec un coach IA pedagogique : suggestions, interceptions, analyse PGN et statistiques.</p>
+                            <span class="badge new" style="background: rgba(74, 222, 128, 0.3); border-color: rgba(74, 222, 128, 0.5);">&#x1F525; <span data-i18n="training_coach_badge">COACH IA</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="TRAINING_OPENINGS.html" data-hub-module="training-openings" data-keywords="ouverture, debut, sicilienne, ruy lopez, gambit, preparation">
+                        <div class="menu-card" data-section="training-openings" style="border: 2px solid #4facfe; box-shadow: 0 0 20px rgba(79, 172, 254, 0.2);">
+                            <span class="icon">&#x1F4D6;</span>
+                            <h3 data-i18n="training_openings_title">Entrainement Ouvertures</h3>
+                            <p data-i18n="training_openings_desc">Apprenez 8 ouvertures essentielles coup par coup. Sicilienne, Ruy Lopez, Gambit Dame et plus!</p>
+                            <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x1F4D6; <span data-i18n="training_openings_badge">INTERACTIF</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="TRAINING_ENDGAMES.html" data-hub-module="training-endgames" data-keywords="finale, lucena, philidor, mat, pions, roque">
+                        <div class="menu-card" data-section="training-endgames" style="border: 2px solid #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);">
+                            <span class="icon">&#x265A;</span>
+                            <h3 data-i18n="training_endgames_title">Drills de Finales</h3>
+                            <p data-i18n="training_endgames_desc">10 positions essentielles: Lucena, Philidor, mat tour+roi, finales de pions et plus.</p>
+                            <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x265A; <span data-i18n="training_endgames_badge">PRATIQUE</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="TRAINING_TACTICS.html" data-hub-module="training-tactics" data-keywords="mat, tactique, puzzle, fourchette, clouage, enfilade, sacrifice, theme">
+                        <div class="menu-card" data-section="training-tactics" style="border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
+                            <span class="icon">&#x1F3AF;</span>
+                            <h3 data-i18n="training_tactics_title">Patterns Tactiques</h3>
+                            <p data-i18n="training_tactics_desc">40 puzzles organises par theme: fourchettes, clouages, enfilades, sacrifices et plus!</p>
+                            <span class="badge new" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);">&#x1F3AF; <span data-i18n="training_tactics_badge">8 THEMES</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="TACTICAL_DEFENSE.html" data-hub-module="training-tactical-defense" data-keywords="defense, tactique, exercices, mat, contre-attaque">
+                        <div class="menu-card" data-section="training-tactical-defense" style="border: 2px solid #a78bfa; box-shadow: 0 0 20px rgba(167, 139, 250, 0.25);">
+                            <span class="icon">&#x1F6E1;</span>
+                            <h3 data-i18n="training_defense_title">Défense tactique</h3>
+                            <p data-i18n="training_defense_desc">Repérez les menaces, trouvez une défense active et entraînez-vous avec des exercices interactifs.</p>
+                            <span class="badge new" style="background: rgba(167, 139, 250, 0.22); border-color: rgba(167, 139, 250, 0.5);"><span data-i18n="training_defense_badge">EXERCICES INTERACTIFS</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="DAILY_CHALLENGE.html" data-hub-module="daily-challenge" data-keywords="defi, quotidien, streak, puzzle, tactique, classement">
+                        <div class="menu-card" data-section="daily-challenge" style="border: 2px solid #f97316; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);">
+                            <span class="icon">&#x1F525;</span>
+                            <h3 data-i18n="training_daily_title">Defi du Jour</h3>
+                            <p data-i18n="training_daily_desc">Un nouveau defi chaque jour! Maintenez votre streak et grimpez les niveaux.</p>
+                            <span class="badge new" style="background: rgba(249, 115, 22, 0.3); border-color: rgba(249, 115, 22, 0.5); animation: pulse 1.5s infinite;">&#x1F525; <span data-i18n="training_daily_badge">QUOTIDIEN</span></span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="FISCHER_ACADEMY.html" data-hub-module="fischer-academy" data-keywords="fischer, academie, methodologie, principes, echecs, historique">
+                        <div class="menu-card" data-section="fischer-academy" style="border: 2px solid #f4c95d; box-shadow: 0 0 20px rgba(244, 201, 93, 0.25);">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="action_fischer">Méthode Fischer</h3>
+                            <p>La méthode d’entraînement de Bobby Fischer : mesurer, décider, puis configurer des séances courtes et intensives.</p>
+                            <span class="badge" style="background: rgba(244, 201, 93, 0.3); border-color: rgba(244, 201, 93, 0.5);">&#x265F; ACADÉMIE</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="ENTRAINEMENT_VARIANTES_STRATEGIE.html" data-hub-module="variant-course" data-keywords="variantes, strategie, calcul, ouverture, finale, alternatives">
+                        <div class="menu-card" data-section="variant-course" style="border: 2px solid #3c8f79; box-shadow: 0 0 20px rgba(60, 143, 121, 0.25);">
+                            <span class="icon">&#x265F;</span>
+                            <h3 data-i18n="action_variant_course">Calcul, ouvertures & finales</h3>
+                            <p>Entraînement ciblé : variantes, calculs longs, ouvertures et finales dans un parcours guidé.</p>
+                            <span class="badge" style="background: rgba(60, 143, 121, 0.3); border-color: rgba(60, 143, 121, 0.5);">&#x265F; VARIANTES</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="HISTOIRE_REGLES_ECHECS.html" data-hub-module="chess-history" data-keywords="histoire, regles, notation, aveugle, blind, pieces, origine">
+                        <div class="menu-card" data-section="chess-history" style="border: 2px solid #9aa7bd; box-shadow: 0 0 20px rgba(154, 167, 189, 0.22);">
+                            <span class="icon">&#x265C;</span>
+                            <h3 data-i18n="action_chess_history">Histoire des règles</h3>
+                            <p>D’où viennent les règles, la notation et les pièces : l’histoire du jeu et ses règles actuelles.</p>
+                            <span class="badge" style="background: rgba(154, 167, 189, 0.25); border-color: rgba(154, 167, 189, 0.5);">&#x265C; HISTOIRE</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="ENSEIGNEMENTS_V2.html" data-hub-module="lessons-v2" data-keywords="lecons, tactiques, parties, conseils, strategy, 131 parties">
+                        <div class="menu-card" data-section="lessons-v2">
+                            <span class="icon">&#x1F393;</span>
+                            <h3 data-i18n="card_lessons_v2_title">Enseignements v2 - 131 parties</h3>
+                            <p data-i18n="card_lessons_v2_desc">7 nouvelles lecons tirees de 131 parties et 813 tactiques.</p>
+                            <span class="badge new">&#x2728; NOUVEAU</span>
+                        </div>
+                    </a>
+
+                    <a class="hub-card" href="ENSEIGNEMENTS_ECHECS.html" data-hub-module="lessons-v1" data-keywords="lecons, debuts, ouvertures, debutants, archives">
+                        <div class="menu-card" data-section="lessons-v1">
+                            <span class="icon">&#x1F4D6;</span>
+                            <h3 data-i18n="card_lessons_v1_title">Enseignements v1 - Les debuts</h3>
+                            <p data-i18n="card_lessons_v1_desc">Les premieres lecons apres 4 parties.</p>
+                            <span class="badge">&#x1F4D6; Archive</span>
+                        </div>
+                    </a>
                 </div>
-            </a>
+            </details>
+        </section>
 
-            <a href="tal_masterpiece_1958.html">
-                <div class="menu-card" data-section="tal" style="border: 2px solid #9b59b6; background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(142, 68, 173, 0.1));">
-                    <span class="icon">&#x1F3AF;</span>
-                    <h3 data-i18n="card_tal_title">Tal - Masterpiece</h3>
-                    <p data-i18n="card_tal_desc">Mikhail Tal vs Vasiukov - Championnat URSS, 1958 | Sicilienne. Le Magicien de Riga demontre son art du sacrifice.</p>
-                    <span class="badge" style="background: rgba(155, 89, 182, 0.3); border-color: rgba(155, 89, 182, 0.5);">&#x2B50; DISPONIBLE</span>
+        <section class="hub-section" id="section-legendaires" data-hub-section="Bibliothèque des Parties Légendaires">
+            <details class="hub-folder" open data-hub-folder data-hub-category="Bibliothèque des Parties Légendaires">
+                <summary>
+                    <span class="hub-folder-title">Bibliothèque des Parties Légendaires</span>
+                    <span class="hub-folder-count" data-hub-folder-count>(17)</span>
+                    <span class="hub-folder-count" data-hub-section-count>17 modules</span>
+                </summary>
+                <p style="text-align: center; margin-bottom: 24px; opacity: 0.9; max-width: 800px; margin-left: auto; margin-right: auto;" data-i18n="section_legendary_desc">
+                    Collection de parties historiques analysees et commentees avec echiquiers interactifs
+                </p>
+
+                <details class="hub-folder" open data-hub-folder data-hub-category="Champions humains">
+                    <summary>
+                        <span class="hub-folder-title">Champions humains</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(5)</span>
+                    </summary>
+                    <div class="menu-grid" id="legendary-games">
+                        <a class="hub-card" href="fischer_game_of_century_interactive_v2.html" data-hub-module="fischer" data-keywords="fischer, game of the century, donald byrne, 1956, grunfeld, sacrifice de dame, champion">
+                            <div class="menu-card" data-section="fischer" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 152, 0, 0.1));">
+                                <span class="icon">&#x1F451;</span>
+                                <h3 data-i18n="card_fischer_title">Fischer - Game of the Century</h3>
+                                <p data-i18n="card_fischer_desc">Bobby Fischer (13 ans !) vs Donald Byrne - New York, 1956 | Defense Grunfeld. Sacrifice de Dame legendaire au coup 17 (Be6!!). 41 coups commentes.</p>
+                                <span class="badge" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x2B50; DISPONIBLE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="kasparov_immortal_1999.html" data-hub-module="kasparov" data-keywords="kasparov, topalov, wijk aan zee, 1999, pirc, sacrifice de tour, immortel">
+                            <div class="menu-card" data-section="kasparov" style="border: 2px solid #ff6b6b; background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 111, 0.1));">
+                                <span class="icon">&#x1F525;</span>
+                                <h3 data-i18n="card_kasparov_title">Kasparov - Immortal Game</h3>
+                                <p data-i18n="card_kasparov_desc">Garry Kasparov vs Veselin Topalov - Wijk aan Zee, 1999 | Defense Pirc. Combinaison spectaculaire avec sacrifice de tour.</p>
+                                <span class="badge" style="background: rgba(255, 107, 107, 0.3); border-color: rgba(255, 107, 107, 0.5);">&#x2B50; DISPONIBLE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="tal_masterpiece_1958.html" data-hub-module="tal" data-keywords="tal, vasiukov, 1958, sicilienne, sacrifice, magicien de riga">
+                            <div class="menu-card" data-section="tal" style="border: 2px solid #9b59b6; background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(142, 68, 173, 0.1));">
+                                <span class="icon">&#x1F3AF;</span>
+                                <h3 data-i18n="card_tal_title">Tal - Masterpiece</h3>
+                                <p data-i18n="card_tal_desc">Mikhail Tal vs Vasiukov - Championnat URSS, 1958 | Sicilienne. Le Magicien de Riga demontre son art du sacrifice.</p>
+                                <span class="badge" style="background: rgba(155, 89, 182, 0.3); border-color: rgba(155, 89, 182, 0.5);">&#x2B50; DISPONIBLE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="karpov_positional_1978.html" data-hub-module="karpov" data-keywords="karpov, korchnoi, 1978, positionnel, champion du monde">
+                            <div class="menu-card" data-section="karpov" style="border: 2px solid #3498db; background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));">
+                                <span class="icon">&#x1F3F0;</span>
+                                <h3 data-i18n="card_karpov_title">Karpov - Positional Masterpiece</h3>
+                                <p data-i18n="card_karpov_desc">Anatoly Karpov vs Viktor Korchnoi - Championnat du Monde, 1978. Chef-d'oeuvre positionnel du 12e Champion du Monde.</p>
+                                <span class="badge" style="background: rgba(52, 152, 219, 0.3); border-color: rgba(52, 152, 219, 0.5);">&#x2B50; DISPONIBLE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="carlsen_brilliancy_2013.html" data-hub-module="carlsen" data-keywords="carlsen, anand, 2013, finale technique, brillance, champion">
+                            <div class="menu-card" data-section="carlsen" style="border: 2px solid #2ecc71; background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));">
+                                <span class="icon">&#x26A1;</span>
+                                <h3 data-i18n="card_carlsen_title">Carlsen - Modern Brilliancy</h3>
+                                <p data-i18n="card_carlsen_desc">Magnus Carlsen vs Viswanathan Anand - Championnat du Monde, 2013. Finale technique parfaite.</p>
+                                <span class="badge" style="background: rgba(46, 204, 113, 0.3); border-color: rgba(46, 204, 113, 0.5);">&#x2B50; DISPONIBLE</span>
+                            </div>
+                        </a>
+                    </div>
+                </details>
+
+                <details class="hub-folder" open data-hub-folder data-hub-category="IA & moteurs historiques">
+                    <summary>
+                        <span class="hub-folder-title">IA & moteurs historiques</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(8)</span>
+                    </summary>
+                    <div class="menu-grid">
+                        <a class="hub-card" href="alphazero_vs_stockfish.html" data-hub-module="alphazero" data-keywords="alphazero, deepmind, stockfish 8, 2017, english opening, ia">
+                            <div class="menu-card" data-section="alphazero" style="border: 2px solid #00ffff; background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 0, 0.1));">
+                                <span class="icon">&#x1F916;</span>
+                                <h3 data-i18n="card_alphazero_title">AlphaZero vs Stockfish - Game 10</h3>
+                                <p data-i18n="card_alphazero_desc">AlphaZero (DeepMind) vs Stockfish 8 - Londres, 2017 | English Opening. La revolution de l'IA !</p>
+                                <span class="badge new" style="background: rgba(0, 255, 255, 0.3); border-color: rgba(0, 255, 255, 0.5);">&#x1F916; NOUVEAU</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="zup_victory_detailed.html" data-hub-module="zup-victory" data-keywords="zup ultimate, stockfish max, 3600 elo, victoire, 91 coups, ia">
+                            <div class="menu-card" data-section="zup-victory" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 152, 0, 0.15)); box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="card_zup_title">ZUP ULTIMATE vs Stockfish MAX</h3>
+                                <p data-i18n="card_zup_desc">ZUP ULTIMATE (8 AI) vs Stockfish MAX (3600 ELO) - 2025. VICTOIRE HISTORIQUE ! 91 coups commentes.</p>
+                                <span class="badge new" style="background: rgba(255, 215, 0, 0.4); border-color: rgba(255, 215, 0, 0.7); animation: pulse 1.5s infinite;">&#x1F525; NOUVEAU - VICTOIRE!</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="supaengine_vs_stockfish_report.html" data-hub-module="supaengine-report" data-keywords="supaengine, stockfish 3550, match nul, analyse elo, 30 janvier 2026">
+                            <div class="menu-card" data-section="supaengine-report" style="border: 2px solid #4ade80; background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.15)); box-shadow: 0 0 25px rgba(74, 222, 128, 0.3);">
+                                <span class="icon">&#x1F916;</span>
+                                <h3 data-i18n="card_supaengine_report_title">SupaEngine vs Stockfish 3550</h3>
+                                <p data-i18n="card_supaengine_report_desc">SupaEngine v1.3 vs Stockfish Skill 20 - 30 Janvier 2026. MATCH NUL historique !</p>
+                                <span class="badge new" style="background: rgba(74, 222, 128, 0.4); border-color: rgba(74, 222, 128, 0.7); animation: pulse 1.5s infinite;">&#x1F4CA; NOUVEAU - ANALYSE ELO</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="leela_vs_stockfish_2019.html" data-hub-module="leela" data-keywords="leela chess zero, stockfish 11, tcec 2019, sicilienne, ia vs ia">
+                            <div class="menu-card" data-section="leela" style="border: 2px solid #00ff88; background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));">
+                                <span class="icon">&#x1F9E0;</span>
+                                <h3 data-i18n="card_leela_title">Leela Chess Zero vs Stockfish 11</h3>
+                                <p data-i18n="card_leela_desc">TCEC Season 16, 2019 | Sicilienne. Guerre des titans modernes !</p>
+                                <span class="badge new" style="background: rgba(0, 255, 136, 0.3); border-color: rgba(0, 255, 136, 0.5);">&#x1F916; IA vs IA</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="deep_blue_kasparov_1997.html" data-hub-module="deepblue" data-keywords="deep blue, ibm, kasparov, 1997, premiere victoire ia, champion du monde">
+                            <div class="menu-card" data-section="deepblue" style="border: 2px solid #0088ff; background: linear-gradient(135deg, rgba(0, 136, 255, 0.1), rgba(0, 100, 200, 0.1));">
+                                <span class="icon">&#x1F5A5;</span>
+                                <h3 data-i18n="card_deepblue_title">Deep Blue vs Kasparov - Game 6</h3>
+                                <p data-i18n="card_deepblue_desc">Deep Blue (IBM) vs Garry Kasparov - New York, 1997. Premiere victoire d'une IA contre un Champion du Monde !</p>
+                                <span class="badge" style="background: rgba(0, 136, 255, 0.3); border-color: rgba(0, 136, 255, 0.5);">&#x1F3C6; HISTORIQUE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="alphazero_vs_stockfish_game2.html" data-hub-module="alphazero2" data-keywords="alphazero, stockfish 8, 2017, ruy lopez, sacrifice de pion">
+                            <div class="menu-card" data-section="alphazero2" style="border: 2px solid #ff00ff; background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(200, 0, 200, 0.1));">
+                                <span class="icon">&#x269B;</span>
+                                <h3 data-i18n="card_alphazero2_title">AlphaZero vs Stockfish - Game 2</h3>
+                                <p data-i18n="card_alphazero2_desc">AlphaZero vs Stockfish 8 - 2017 | Ruy Lopez. Sacrifice de pion positionnel spectaculaire !</p>
+                                <span class="badge new" style="background: rgba(255, 0, 255, 0.3); border-color: rgba(255, 0, 255, 0.5);">&#x1F916; SACRIFICES</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="stockfish_vs_komodo_2018.html" data-hub-module="stockfish-komodo" data-keywords="stockfish 9, komodo mcts, tcec 2018, finale tcec, moteurs">
+                            <div class="menu-card" data-section="stockfish-komodo" style="border: 2px solid #ffaa00; background: linear-gradient(135deg, rgba(255, 170, 0, 0.1), rgba(255, 140, 0, 0.1));">
+                                <span class="icon">&#x2694;</span>
+                                <h3 data-i18n="card_stockfish_komodo_title">Stockfish vs Komodo - TCEC Final</h3>
+                                <p data-i18n="card_stockfish_komodo_desc">Stockfish 9 vs Komodo MCTS - TCEC Season 13, 2018. Bataille epique des meilleurs moteurs !</p>
+                                <span class="badge" style="background: rgba(255, 170, 0, 0.3); border-color: rgba(255, 170, 0, 0.5);">&#x2694; TCEC</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="alphazero_sacrificial_masterpiece.html" data-hub-module="alphazero-sacrificial" data-keywords="alphazero, stockfish 8, italian game, triple sacrifice, chef-d'oeuvre">
+                            <div class="menu-card" data-section="alphazero-sacrificial" style="border: 2px solid #ff0088; background: linear-gradient(135deg, rgba(255, 0, 136, 0.1), rgba(200, 0, 100, 0.1));">
+                                <span class="icon">&#x1F48E;</span>
+                                <h3 data-i18n="card_alphazero_sacrificial_title">AlphaZero - Sacrificial Masterpiece</h3>
+                                <p data-i18n="card_alphazero_sacrificial_desc">AlphaZero vs Stockfish 8 - 2017 | Italian Game. Triple sacrifice de pieces !</p>
+                                <span class="badge new" style="background: rgba(255, 0, 136, 0.3); border-color: rgba(255, 0, 136, 0.5);">&#x1F48E; CHEF-D'OEUVRE</span>
+                            </div>
+                        </a>
+                    </div>
+                </details>
+
+                <details class="hub-folder" open data-hub-folder data-hub-category="Parties créatives ChessNova">
+                    <summary>
+                        <span class="hub-folder-title">Parties créatives ChessNova</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(3)</span>
+                    </summary>
+                    <div class="menu-grid">
+                        <a class="hub-card" href="PARTIES_CREATIVES.html" data-hub-module="creative-games" data-keywords="galerie, parties creatives, chessnova, echiquier interactif, coups creatifs">
+                            <div class="menu-card" data-section="creative-games">
+                                <span class="icon">&#x1F3AE;</span>
+                                <h3 data-i18n="card_gallery_title">Galerie des Parties Creatives</h3>
+                                <p data-i18n="card_gallery_desc">Explorez TOUTES les parties avec echiquiers interactifs ! Coups creatifs mis en evidence.</p>
+                                <span class="badge new">&#x2728; 3 PARTIES</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="victoire_vs_sf20.html" data-hub-module="victory-sf20" data-keywords="victoire, stockfish skill 20, replay, 83 coups, mat, historique">
+                            <div class="menu-card" data-section="victory-sf20">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="card_victory_sf20_title">Victoire vs Stockfish Skill 20</h3>
+                                <p data-i18n="card_victory_sf20_desc">Replay interactif de la victoire historique : 83 coups, mat en Qg7#.</p>
+                                <span class="badge new">&#x2728; HISTORIQUE</span>
+                            </div>
+                        </a>
+
+                        <a class="hub-card" href="VICTOIRE_HISTORIQUE_ZUP.html" data-hub-module="zup-celebration" data-keywords="victoire, zup ultimate, stockfish max, celebration, 15 aout 2026">
+                            <div class="menu-card" data-section="zup-celebration" style="border: 2px solid #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="card_zup_victory_title">Victoire Historique ZUP !</h3>
+                                <p data-i18n="card_zup_victory_desc">Celebration de la victoire de ZUP ULTIMATE contre Stockfish MAX !</p>
+                                <span class="badge new">&#x1F3C6; VICTOIRE!</span>
+                            </div>
+                        </a>
+                    </div>
+                </details>
+
+                <div class="menu-grid">
+                    <button type="button" class="menu-card hub-card" data-section="propose-game" data-hub-module="propose-game" data-keywords="proposer, suggestion, pgn, partie legendaire, contribution" style="background: rgba(76, 175, 80, 0.15); cursor: pointer; width:100%; text-align:left; font:inherit;" onclick="openSuggestGame()" aria-haspopup="dialog" aria-controls="suggest-game-dialog">
+                        <span class="icon">&#x2795;</span>
+                        <h3 data-i18n="card_propose_title">Suggérer une partie</h3>
+                        <p data-i18n="card_propose_desc">Suggérez une partie légendaire : partagez ses informations et collez son PGN.</p>
+                        <span class="badge" data-i18n="card_propose_badge">Ouvrir le formulaire</span>
+                    </button>
                 </div>
-            </a>
+            </details>
+        </section>
 
-            <a href="karpov_positional_1978.html">
-                <div class="menu-card" data-section="karpov" style="border: 2px solid #3498db; background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));">
-                    <span class="icon">&#x1F3F0;</span>
-                    <h3 data-i18n="card_karpov_title">Karpov - Positional Masterpiece</h3>
-                    <p data-i18n="card_karpov_desc">Anatoly Karpov vs Viktor Korchnoi - Championnat du Monde, 1978. Chef-d'oeuvre positionnel du 12e Champion du Monde.</p>
-                    <span class="badge" style="background: rgba(52, 152, 219, 0.3); border-color: rgba(52, 152, 219, 0.5);">&#x2B50; DISPONIBLE</span>
-                </div>
-            </a>
+        <section class="hub-section" id="section-laboratoire" data-hub-section="Laboratoire IA & Dashboards">
+            <details class="hub-folder" open data-hub-folder data-hub-category="Laboratoire IA & Dashboards">
+                <summary>
+                    <span class="hub-folder-title">Laboratoire IA & Dashboards</span>
+                    <span class="hub-folder-count" data-hub-folder-count>(17)</span>
+                    <span class="hub-folder-count" data-hub-section-count>17 modules</span>
+                </summary>
 
-            <a href="carlsen_brilliancy_2013.html">
-                <div class="menu-card" data-section="carlsen" style="border: 2px solid #2ecc71; background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.1));">
-                    <span class="icon">&#x26A1;</span>
-                    <h3 data-i18n="card_carlsen_title">Carlsen - Modern Brilliancy</h3>
-                    <p data-i18n="card_carlsen_desc">Magnus Carlsen vs Viswanathan Anand - Championnat du Monde, 2013. Finale technique parfaite.</p>
-                    <span class="badge" style="background: rgba(46, 204, 113, 0.3); border-color: rgba(46, 204, 113, 0.5);">&#x2B50; DISPONIBLE</span>
-                </div>
-            </a>
+                <details class="hub-folder" open data-hub-folder data-hub-category="Suivi LIVE">
+                    <summary>
+                        <span class="hub-folder-title">Suivi LIVE</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(3)</span>
+                    </summary>
+                    <div class="menu-grid">
+                        <a class="hub-card" href="TRAINING_DASHBOARD.html" data-hub-module="training-dashboard" data-keywords="live, tableau de bord, entrainement, temps reel, suivi">
+                            <div class="menu-card" data-section="training-dashboard">
+                                <span class="icon">&#x1F4FA;</span>
+                                <h3 data-i18n="card_training_dashboard_title">Training Dashboard LIVE</h3>
+                                <p data-i18n="card_training_dashboard_desc">Suivi en temps reel de l'entrainement. Rafraichissement auto toutes les 30s.</p>
+                                <span class="badge live">&#x1F534; LIVE</span>
+                            </div>
+                        </a>
 
-            <a href="alphazero_vs_stockfish.html">
-                <div class="menu-card" data-section="alphazero" style="border: 2px solid #00ffff; background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 0, 0.1));">
-                    <span class="icon">&#x1F916;</span>
-                    <h3 data-i18n="card_alphazero_title">AlphaZero vs Stockfish - Game 10</h3>
-                    <p data-i18n="card_alphazero_desc">AlphaZero (DeepMind) vs Stockfish 8 - Londres, 2017 | English Opening. La revolution de l'IA !</p>
-                    <span class="badge new" style="background: rgba(0, 255, 255, 0.3); border-color: rgba(0, 255, 255, 0.5);">&#x1F916; NOUVEAU</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="SUIVI_PARTIES_LIVE.html" data-hub-module="live-tracking" data-keywords="live, partie en cours, echiquier, position, suivi temps reel">
+                            <div class="menu-card" data-section="live-tracking">
+                                <span class="icon">&#x1F3AE;</span>
+                                <h3 data-i18n="card_live_game_title">Suivi Parties LIVE</h3>
+                                <p data-i18n="card_live_game_desc">Suivez la partie en cours EN TEMPS REEL ! Echiquier interactif, position actuelle.</p>
+                                <span class="badge live">&#x1F525; EN COURS</span>
+                            </div>
+                        </a>
 
-            <a href="zup_victory_detailed.html">
-                <div class="menu-card" data-section="zup-victory" style="border: 2px solid #ffd700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 152, 0, 0.15)); box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
-                    <span class="icon">&#x1F3C6;</span>
-                    <h3 data-i18n="card_zup_title">ZUP ULTIMATE vs Stockfish MAX</h3>
-                    <p data-i18n="card_zup_desc">ZUP ULTIMATE (8 AI) vs Stockfish MAX (3600 ELO) - 2025. VICTOIRE HISTORIQUE ! 91 coups commentes.</p>
-                    <span class="badge new" style="background: rgba(255, 215, 0, 0.4); border-color: rgba(255, 215, 0, 0.7); animation: pulse 1.5s infinite;">&#x1F525; NOUVEAU - VICTOIRE!</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="COMPTEURS_LIVE.html" data-hub-module="live-counters" data-keywords="compteurs, live, metriques, statistiques, temps reel">
+                            <div class="menu-card" data-section="live-counters">
+                                <span class="icon">&#x23F1;</span>
+                                <h3 data-i18n="card_counters_title">Compteurs en Direct</h3>
+                                <p data-i18n="card_counters_desc">Compteurs live de toutes les metriques.</p>
+                                <span class="badge live">&#x1F534; LIVE</span>
+                            </div>
+                        </a>
+                    </div>
+                </details>
 
-            <a href="supaengine_vs_stockfish_report.html">
-                <div class="menu-card" data-section="supaengine-report" style="border: 2px solid #4ade80; background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.15)); box-shadow: 0 0 25px rgba(74, 222, 128, 0.3);">
-                    <span class="icon">&#x1F916;</span>
-                    <h3 data-i18n="card_supaengine_report_title">SupaEngine vs Stockfish 3550</h3>
-                    <p data-i18n="card_supaengine_report_desc">SupaEngine v1.3 vs Stockfish Skill 20 - 30 Janvier 2026. MATCH NUL historique !</p>
-                    <span class="badge new" style="background: rgba(74, 222, 128, 0.4); border-color: rgba(74, 222, 128, 0.7); animation: pulse 1.5s infinite;">&#x1F4CA; NOUVEAU - ANALYSE ELO</span>
-                </div>
-            </a>
+                <details class="hub-folder" open data-hub-folder data-hub-category="Courbes ELO & tournois">
+                    <summary>
+                        <span class="hub-folder-title">Courbes ELO & tournois</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(7)</span>
+                    </summary>
+                    <div class="menu-grid">
+                        <a class="hub-card" href="EVOLUTION_ELO.html" data-hub-module="elo-evolution" data-keywords="elo, evolution, courbes, graphiques, progression">
+                            <div class="menu-card" data-section="elo-evolution">
+                                <span class="icon">&#x1F4C8;</span>
+                                <h3 data-i18n="card_elo_evolution_title">Evolution ELO</h3>
+                                <p data-i18n="card_elo_evolution_desc">Graphiques interactifs d'evolution ELO !</p>
+                                <span class="badge new">&#x2728; NOUVEAU</span>
+                            </div>
+                        </a>
 
-            <a href="leela_vs_stockfish_2019.html">
-                <div class="menu-card" data-section="leela" style="border: 2px solid #00ff88; background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));">
-                    <span class="icon">&#x1F9E0;</span>
-                    <h3 data-i18n="card_leela_title">Leela Chess Zero vs Stockfish 11</h3>
-                    <p data-i18n="card_leela_desc">TCEC Season 16, 2019 | Sicilienne. Guerre des titans modernes !</p>
-                    <span class="badge new" style="background: rgba(0, 255, 136, 0.3); border-color: rgba(0, 255, 136, 0.5);">&#x1F916; IA vs IA</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="ELO_PROGRESS_DASHBOARD.html" data-hub-module="elo-progress" data-keywords="elo, dashboard, courbes, progression, partie par partie">
+                            <div class="menu-card" data-section="elo-progress" style="border: 2px solid #4facfe;">
+                                <span class="icon">&#x1F4C8;</span>
+                                <h3 data-i18n="card_elo_progress_title">ELO Progress Dashboard</h3>
+                                <p data-i18n="card_elo_progress_desc">Graphiques interactifs d'evolution ELO partie par partie.</p>
+                                <span class="badge new">&#x1F4C8; NOUVEAU!</span>
+                            </div>
+                        </a>
 
-            <a href="deep_blue_kasparov_1997.html">
-                <div class="menu-card" data-section="deepblue" style="border: 2px solid #0088ff; background: linear-gradient(135deg, rgba(0, 136, 255, 0.1), rgba(0, 100, 200, 0.1));">
-                    <span class="icon">&#x1F5A5;</span>
-                    <h3 data-i18n="card_deepblue_title">Deep Blue vs Kasparov - Game 6</h3>
-                    <p data-i18n="card_deepblue_desc">Deep Blue (IBM) vs Garry Kasparov - New York, 1997. Premiere victoire d'une IA contre un Champion du Monde !</p>
-                    <span class="badge" style="background: rgba(0, 136, 255, 0.3); border-color: rgba(0, 136, 255, 0.5);">&#x1F3C6; HISTORIQUE</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="TOURNAMENT_DASHBOARD.html" data-hub-module="tournament-dashboard" data-keywords="tournoi, classement elo, dashboard, bareme, resultats">
+                            <div class="menu-card" data-section="tournament-dashboard" style="border: 2px solid #ff6b6b;">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="card_tournament_title">Tournament Dashboard ELO</h3>
+                                <p data-i18n="card_tournament_desc">Dashboard complet des tournois avec classement ELO.</p>
+                                <span class="badge new">&#x1F3C6; NOUVEAU!</span>
+                            </div>
+                        </a>
 
-            <a href="alphazero_vs_stockfish_game2.html">
-                <div class="menu-card" data-section="alphazero2" style="border: 2px solid #ff00ff; background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(200, 0, 200, 0.1));">
-                    <span class="icon">&#x269B;</span>
-                    <h3 data-i18n="card_alphazero2_title">AlphaZero vs Stockfish - Game 2</h3>
-                    <p data-i18n="card_alphazero2_desc">AlphaZero vs Stockfish 8 - 2017 | Ruy Lopez. Sacrifice de pion positionnel spectaculaire !</p>
-                    <span class="badge new" style="background: rgba(255, 0, 255, 0.3); border-color: rgba(255, 0, 255, 0.5);">&#x1F916; SACRIFICES</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="TOURNAMENT_SIMULATOR.html" data-hub-module="tournament-sim" data-keywords="tournoi simule, simulation,elo, classement, barème">
+                            <div class="menu-card" data-section="tournament-sim" style="border: 2px solid #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="action_tournament">Tournoi Simulé</h3>
+                                <p>Simule un tournoi avec barème, appariements et classement Elo instantané.</p>
+                                <span class="badge" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x1F3C6; SIMULATION</span>
+                            </div>
+                        </a>
 
-            <a href="stockfish_vs_komodo_2018.html">
-                <div class="menu-card" data-section="stockfish-komodo" style="border: 2px solid #ffaa00; background: linear-gradient(135deg, rgba(255, 170, 0, 0.1), rgba(255, 140, 0, 0.1));">
-                    <span class="icon">&#x2694;</span>
-                    <h3 data-i18n="card_stockfish_komodo_title">Stockfish vs Komodo - TCEC Final</h3>
-                    <p data-i18n="card_stockfish_komodo_desc">Stockfish 9 vs Komodo MCTS - TCEC Season 13, 2018. Bataille epique des meilleurs moteurs !</p>
-                    <span class="badge" style="background: rgba(255, 170, 0, 0.3); border-color: rgba(255, 170, 0, 0.5);">&#x2694; TCEC</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="TOURNAMENT_STOCKFISH.html" data-hub-module="tournament-stockfish" data-keywords="tournoi stockfish, moteur, appariements, classement, elo">
+                            <div class="menu-card" data-section="tournament-stockfish" style="border: 2px solid #4facfe; box-shadow: 0 0 20px rgba(79, 172, 254, 0.2);">
+                                <span class="icon">&#x1F41F;</span>
+                                <h3 data-i18n="action_tournament_stockfish">Tournoi Stockfish</h3>
+                                <p>Tournoi contre Stockfish : appariements, scores et classement Elo automatisés.</p>
+                                <span class="badge" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x1F41F; STOCKFISH</span>
+                            </div>
+                        </a>
 
-            <a href="alphazero_sacrificial_masterpiece.html">
-                <div class="menu-card" data-section="alphazero-sacrificial" style="border: 2px solid #ff0088; background: linear-gradient(135deg, rgba(255, 0, 136, 0.1), rgba(200, 0, 100, 0.1));">
-                    <span class="icon">&#x1F48E;</span>
-                    <h3 data-i18n="card_alphazero_sacrificial_title">AlphaZero - Sacrificial Masterpiece</h3>
-                    <p data-i18n="card_alphazero_sacrificial_desc">AlphaZero vs Stockfish 8 - 2017 | Italian Game. Triple sacrifice de pieces !</p>
-                    <span class="badge new" style="background: rgba(255, 0, 136, 0.3); border-color: rgba(255, 0, 136, 0.5);">&#x1F48E; CHEF-D'OEUVRE</span>
-                </div>
-            </a>
+                        <a class="hub-card" href="VICTOIRES_TRACKER.html" data-hub-module="victories-tracker" data-keywords="victoires, tracker, chessnova, stockfish full, historique">
+                            <div class="menu-card" data-section="victories-tracker">
+                                <span class="icon">&#x1F3C6;</span>
+                                <h3 data-i18n="card_victories_tracker_title">Tracker de Victoires</h3>
+                                <p data-i18n="card_victories_tracker_desc">Suivez les victoires de ChessNova contre Stockfish FULL !</p>
+                                <span class="badge new">&#x2728; NOUVEAU</span>
+                            </div>
+                        </a>
 
-            <button type="button" class="menu-card" data-section="propose-game" style="background: rgba(76, 175, 80, 0.15); cursor: pointer; width:100%; text-align:left; font:inherit;" onclick="openSuggestGame()" aria-haspopup="dialog" aria-controls="suggest-game-dialog">
-                <span class="icon">&#x2795;</span>
-                <h3 data-i18n="card_propose_title">Suggest a Game</h3>
-                <p data-i18n="card_propose_desc">Suggest a legendary game: share details and paste the PGN.</p>
-                <span class="badge" data-i18n="card_propose_badge">Open the form</span>
-            </button>
-        </div>
+                        <a class="hub-card" href="CHAMPIONS_2800.html" data-hub-module="champions-2800" data-keywords="acpl, precision, classement, elo, champions, records, 2800">
+                            <div class="menu-card" data-section="champions-2800" style="border: 2px solid #c9a227; box-shadow: 0 0 20px rgba(201, 162, 39, 0.25);">
+                                <span class="icon">&#x1F451;</span>
+                                <h3>Le club des 2 800+</h3>
+                                <p>Paliers Elo des meilleurs joueurs de l’histoire : précision, records et trajectoires de classement.</p>
+                                <span class="badge" style="background: rgba(201, 162, 39, 0.3); border-color: rgba(201, 162, 39, 0.5);">&#x1F451; CLASSEMENT</span>
+                            </div>
+                        </a>
+                    </div>
+                </details>
 
-        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_training">Programmes d'Entrainement</h2>
+                <details class="hub-folder" open data-hub-folder data-hub-category="Architecture, style & archives">
+                    <summary>
+                        <span class="hub-folder-title">Architecture, style & archives</span>
+                        <span class="hub-folder-count" data-hub-folder-count>(7)</span>
+                    </summary>
+                    <div class="menu-grid">
+                        <a class="hub-card" href="web/STYLE_ChessNova.html" data-hub-module="style-chessnova" data-keywords="style, chessnova, agressif, creatif, radar, analyse">
+                            <div class="menu-card" data-section="style-chessnova" style="border: 2px solid #ffd700;">
+                                <span class="icon">&#x1F3A8;</span>
+                                <h3 data-i18n="card_style_title">Le Style de ChessNova</h3>
+                                <p data-i18n="card_style_desc">ULTRA-AGRESSIF et CREATIF ! Analyse complete avec graphiques radar.</p>
+                                <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x1F31F; GENIAL!</span>
+                            </div>
+                        </a>
 
-        <div class="menu-grid">
-            <a href="https://jira44.github.io/supachess/" target="_blank" rel="noopener">
-                <div class="menu-card" data-section="supachess-trainer" style="border: 2px solid #4ade80; box-shadow: 0 0 25px rgba(74, 222, 128, 0.3);">
-                    <span class="icon">&#x1F9D9;</span>
-                    <h3 data-i18n="training_coach_title">SupaChess Coach IA - Entraineur d'echecs</h3>
-                    <p data-i18n="training_coach_desc">Jouez contre Stockfish avec un coach IA pedagogique : suggestions, interceptions, analyse PGN et statistiques.</p>
-                    <span class="badge new" style="background: rgba(74, 222, 128, 0.3); border-color: rgba(74, 222, 128, 0.5);">&#x1F525; <span data-i18n="training_coach_badge">COACH IA</span></span>
-                </div>
-            </a>
-            <a href="TRAINING_OPENINGS.html">
-                <div class="menu-card" data-section="training-openings" style="border: 2px solid #4facfe; box-shadow: 0 0 20px rgba(79, 172, 254, 0.2);">
-                    <span class="icon">&#x1F4D6;</span>
-                    <h3 data-i18n="training_openings_title">Entrainement Ouvertures</h3>
-                    <p data-i18n="training_openings_desc">Apprenez 8 ouvertures essentielles coup par coup. Sicilienne, Ruy Lopez, Gambit Dame et plus!</p>
-                    <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x1F4D6; <span data-i18n="training_openings_badge">INTERACTIF</span></span>
-                </div>
-            </a>
+                        <a class="hub-card" href="CARTE_CAPACITES_RADAR.html" data-hub-module="radar" data-keywords="radar, capacites, comparaison, analyse, visualisation">
+                            <div class="menu-card" data-section="radar" style="border: 2px solid #00f2fe;">
+                                <span class="icon">&#x1F3AF;</span>
+                                <h3 data-i18n="card_radar_title">Carte Radar des Capacites</h3>
+                                <p data-i18n="card_radar_desc">Analyse Comparative Ultime ! Visualisation radar interactive.</p>
+                                <span class="badge new" style="background: rgba(0, 242, 254, 0.3); border-color: rgba(0, 242, 254, 0.5);">&#x1F3AF; NOUVEAU!</span>
+                            </div>
+                        </a>
 
-            <a href="TRAINING_ENDGAMES.html">
-                <div class="menu-card" data-section="training-endgames" style="border: 2px solid #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);">
-                    <span class="icon">&#x265A;</span>
-                    <h3 data-i18n="training_endgames_title">Drills de Finales</h3>
-                    <p data-i18n="training_endgames_desc">10 positions essentielles: Lucena, Philidor, mat tour+roi, finales de pions et plus.</p>
-                    <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x265A; <span data-i18n="training_endgames_badge">PRATIQUE</span></span>
-                </div>
-            </a>
+                        <a class="hub-card" href="ARCHITECTURE_chessnova.html" data-hub-module="architecture" data-keywords="architecture, multi-ia, hybride, systeme, chessnova">
+                            <div class="menu-card" data-section="architecture">
+                                <span class="icon">&#x1F3D7;</span>
+                                <h3 data-i18n="card_architecture_title">Architecture de ChessNova</h3>
+                                <p data-i18n="card_architecture_desc">Decouvrez comment ChessNova est compose ! Systeme Multi-IA Hybride.</p>
+                                <span class="badge new">&#x2728; NOUVEAU</span>
+                            </div>
+                        </a>
 
-            <a href="TRAINING_TACTICS.html">
-                <div class="menu-card" data-section="training-tactics" style="border: 2px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);">
-                    <span class="icon">&#x1F3AF;</span>
-                    <h3 data-i18n="training_tactics_title">Patterns Tactiques</h3>
-                    <p data-i18n="training_tactics_desc">40 puzzles organises par theme: fourchettes, clouages, enfilades, sacrifices et plus!</p>
-                    <span class="badge new" style="background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5);">&#x1F3AF; <span data-i18n="training_tactics_badge">8 THEMES</span></span>
-                </div>
-            </a>
+                        <a class="hub-card" href="STATS_SESSION.html" data-hub-module="stats-session" data-keywords="statistiques, sessions, analytics, donnees, suivi">
+                            <div class="menu-card" data-section="stats-session">
+                                <span class="icon">&#x1F4CA;</span>
+                                <h3 data-i18n="card_stats_title">Statistiques Completes</h3>
+                                <p data-i18n="card_stats_desc">Statistiques detaillees de toutes les sessions.</p>
+                                <span class="badge">&#x1F4C8; Analytics</span>
+                            </div>
+                        </a>
 
-            <a href="TACTICAL_DEFENSE.html">
-                <div class="menu-card" data-section="training-tactical-defense" style="border: 2px solid #a78bfa; box-shadow: 0 0 20px rgba(167, 139, 250, 0.25);">
-                    <span class="icon">&#x1F6E1;</span>
-                    <h3 data-i18n="training_defense_title">Défense tactique</h3>
-                    <p data-i18n="training_defense_desc">Repérez les menaces, trouvez une défense active et entraînez-vous avec des exercices interactifs.</p>
-                    <span class="badge new" style="background: rgba(167, 139, 250, 0.22); border-color: rgba(167, 139, 250, 0.5);"><span data-i18n="training_defense_badge">EXERCICES INTERACTIFS</span></span>
-                </div>
-            </a>
-            <a href="DAILY_CHALLENGE.html">
-                <div class="menu-card" data-section="daily-challenge" style="border: 2px solid #f97316; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);">
-                    <span class="icon">&#x1F525;</span>
-                    <h3 data-i18n="training_daily_title">Defi du Jour</h3>
-                    <p data-i18n="training_daily_desc">Un nouveau defi chaque jour! Maintenez votre streak et grimpez les niveaux.</p>
-                    <span class="badge new" style="background: rgba(249, 115, 22, 0.3); border-color: rgba(249, 115, 22, 0.5); animation: pulse 1.5s infinite;">&#x1F525; <span data-i18n="training_daily_badge">QUOTIDIEN</span></span>
-                </div>
-            </a>
-        </div>
+                        <a class="hub-card" href="RAPPORT_APPRENTISSAGE_ACTUEL.html" data-hub-module="learning-report" data-keywords="rapport, apprentissage, evolution, chessnova, analyse">
+                            <div class="menu-card" data-section="learning-report">
+                                <span class="icon">&#x1F4DD;</span>
+                                <h3 data-i18n="card_report_title">Rapport d'Apprentissage</h3>
+                                <p data-i18n="card_report_desc">Rapport complet sur l'evolution de ChessNova.</p>
+                                <span class="badge">&#x1F9E0; Analyse</span>
+                            </div>
+                        </a>
 
-        <h2 style="text-align: center; margin: 60px 0 30px; font-size: 2rem;" data-i18n="section_dashboards">Dashboards & Analytics</h2>
+                        <a class="hub-card" href="data/rapport_apprentissage.html" data-hub-module="archives" data-keywords="archives, donnees, pgn, rapports, historique">
+                            <div class="menu-card" data-section="archives" style="border-color: rgba(255, 255, 255, 0.1);">
+                                <span class="icon">&#x1F4C2;</span>
+                                <h3 data-i18n="card_archives_title">Archives de Donnees</h3>
+                                <p data-i18n="card_archives_desc">Rapports d'apprentissage archives et fichiers PGN.</p>
+                                <span class="badge">&#x1F5C4; Archives</span>
+                            </div>
+                        </a>
 
-        <div class="menu-grid">
-            <a href="CHESS_COACH.html">
-                <div class="menu-card" data-section="chess-coach" style="border: 2px solid #00d9ff; box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);">
-                    <span class="icon">&#x1F393;</span>
-                    <h3 data-i18n="card_chess_coach_title">AI Coach · Game analysis</h3>
-                    <p data-i18n="card_chess_coach_desc">Analyze a game or load a PGN with the AI Coach.</p>
-                    <span class="badge new" style="background: rgba(0, 217, 255, 0.3); border-color: rgba(0, 217, 255, 0.5); animation: pulse 1.5s infinite;">&#x1F393; NOUVEAU!</span>
-                </div>
-            </a>
+                        <div class="menu-card hub-card" data-hub-module="bientot" data-keywords="avenir, bientot, ouvertures, comparaison, export, integration" style="background: rgba(76, 175, 80, 0.15); cursor: default;">
+                            <span class="icon">&#x1F680;</span>
+                            <h3 data-i18n="card_coming_soon_title">A Venir Prochainement</h3>
+                            <p data-i18n="card_coming_soon_desc">Bibliotheque d'ouvertures, comparaison de parties, export & partage, integration IA.</p>
+                            <span class="badge">&#x1F52E; Futur</span>
+                        </div>
+                    </div>
+                </details>
+            </details>
+        </section>
 
-            <a href="CHESSNOVA.html">
-                <div class="menu-card" data-section="chessnova-teacher" style="border: 2px solid #4facfe;">
-                    <span class="icon">&#x265F;</span>
-                    <h3 data-i18n="card_teacher_title">ChessNova Teacher - Mode Pedagogique</h3>
-                    <p data-i18n="card_teacher_desc">Professeur IA Gratuit ! Jouez avec 6 niveaux. Suggestions et explications naturelles.</p>
-                    <span class="badge new" style="background: rgba(79, 172, 254, 0.3); border-color: rgba(79, 172, 254, 0.5);">&#x265F; JOUER</span>
-                </div>
-            </a>
-
-            <a href="TACTICAL_PUZZLES_GENERATOR.html">
-                <div class="menu-card" data-section="puzzles" style="border: 2px solid #f093fb;">
-                    <span class="icon">&#x1F9E9;</span>
-                    <h3 data-i18n="card_puzzles_title">Créer un puzzle depuis une position</h3>
-                    <p data-i18n="card_puzzles_desc">Prépare une position et transforme-la en exercice tactique personnalisé.</p>
-                    <span class="badge new" style="background: rgba(240, 147, 251, 0.3); border-color: rgba(240, 147, 251, 0.5);">&#x1F9E9; NOUVEAU!</span>
-                </div>
-            </a>
-
-            <a href="TRAINING_DASHBOARD.html">
-                <div class="menu-card" data-section="training-dashboard">
-                    <span class="icon">&#x1F4FA;</span>
-                    <h3 data-i18n="card_training_dashboard_title">Training Dashboard LIVE</h3>
-                    <p data-i18n="card_training_dashboard_desc">Suivi en temps reel de l'entrainement. Rafraichissement auto toutes les 30s.</p>
-                    <span class="badge live">&#x1F534; LIVE</span>
-                </div>
-            </a>
-
-            <a href="SUIVI_PARTIES_LIVE.html">
-                <div class="menu-card" data-section="live-tracking">
-                    <span class="icon">&#x1F3AE;</span>
-                    <h3 data-i18n="card_live_game_title">Suivi Parties LIVE</h3>
-                    <p data-i18n="card_live_game_desc">Suivez la partie en cours EN TEMPS REEL ! Echiquier interactif, position actuelle.</p>
-                    <span class="badge live">&#x1F525; EN COURS</span>
-                </div>
-            </a>
-
-            <a href="PARTIES_CREATIVES.html">
-                <div class="menu-card" data-section="creative-games">
-                    <span class="icon">&#x1F3AE;</span>
-                    <h3 data-i18n="card_gallery_title">Galerie des Parties Creatives</h3>
-                    <p data-i18n="card_gallery_desc">Explorez TOUTES les parties avec echiquiers interactifs ! Coups creatifs mis en evidence.</p>
-                    <span class="badge new">&#x2728; 3 PARTIES</span>
-                </div>
-            </a>
-
-            <a href="victoire_vs_sf20.html">
-                <div class="menu-card" data-section="victory-sf20">
-                    <span class="icon">&#x1F3C6;</span>
-                    <h3 data-i18n="card_victory_sf20_title">Victoire vs Stockfish Skill 20</h3>
-                    <p data-i18n="card_victory_sf20_desc">Replay interactif de la victoire historique : 83 coups, mat en Qg7#.</p>
-                    <span class="badge new">&#x2728; HISTORIQUE</span>
-                </div>
-            </a>
-
-            <a href="web/STYLE_ChessNova.html">
-                <div class="menu-card" data-section="style-chessnova" style="border: 2px solid #ffd700;">
-                    <span class="icon">&#x1F3A8;</span>
-                    <h3 data-i18n="card_style_title">Le Style de ChessNova</h3>
-                    <p data-i18n="card_style_desc">ULTRA-AGRESSIF et CREATIF ! Analyse complete avec graphiques radar.</p>
-                    <span class="badge new" style="background: rgba(255, 215, 0, 0.3); border-color: rgba(255, 215, 0, 0.5);">&#x1F31F; GENIAL!</span>
-                </div>
-            </a>
-
-            <a href="CARTE_CAPACITES_RADAR.html">
-                <div class="menu-card" data-section="radar" style="border: 2px solid #00f2fe;">
-                    <span class="icon">&#x1F3AF;</span>
-                    <h3 data-i18n="card_radar_title">Carte Radar des Capacites</h3>
-                    <p data-i18n="card_radar_desc">Analyse Comparative Ultime ! Visualisation radar interactive.</p>
-                    <span class="badge new" style="background: rgba(0, 242, 254, 0.3); border-color: rgba(0, 242, 254, 0.5);">&#x1F3AF; NOUVEAU!</span>
-                </div>
-            </a>
-
-            <a href="ENSEIGNEMENTS_V2.html">
-                <div class="menu-card" data-section="lessons-v2">
-                    <span class="icon">&#x1F393;</span>
-                    <h3 data-i18n="card_lessons_v2_title">Enseignements v2 - 131 parties</h3>
-                    <p data-i18n="card_lessons_v2_desc">7 nouvelles lecons tirees de 131 parties et 813 tactiques.</p>
-                    <span class="badge new">&#x2728; NOUVEAU</span>
-                </div>
-            </a>
-
-            <a href="ENSEIGNEMENTS_ECHECS.html">
-                <div class="menu-card" data-section="lessons-v1">
-                    <span class="icon">&#x1F4D6;</span>
-                    <h3 data-i18n="card_lessons_v1_title">Enseignements v1 - Les debuts</h3>
-                    <p data-i18n="card_lessons_v1_desc">Les premieres lecons apres 4 parties.</p>
-                    <span class="badge">&#x1F4D6; Archive</span>
-                </div>
-            </a>
-
-            <a href="STATS_SESSION.html">
-                <div class="menu-card" data-section="stats-session">
-                    <span class="icon">&#x1F4CA;</span>
-                    <h3 data-i18n="card_stats_title">Statistiques Completes</h3>
-                    <p data-i18n="card_stats_desc">Statistiques detaillees de toutes les sessions.</p>
-                    <span class="badge">&#x1F4C8; Analytics</span>
-                </div>
-            </a>
-
-            <a href="RAPPORT_APPRENTISSAGE_ACTUEL.html">
-                <div class="menu-card" data-section="learning-report">
-                    <span class="icon">&#x1F4DD;</span>
-                    <h3 data-i18n="card_report_title">Rapport d'Apprentissage</h3>
-                    <p data-i18n="card_report_desc">Rapport complet sur l'evolution de ChessNova.</p>
-                    <span class="badge">&#x1F9E0; Analyse</span>
-                </div>
-            </a>
-
-            <a href="ARCHITECTURE_chessnova.html">
-                <div class="menu-card" data-section="architecture">
-                    <span class="icon">&#x1F3D7;</span>
-                    <h3 data-i18n="card_architecture_title">Architecture de ChessNova</h3>
-                    <p data-i18n="card_architecture_desc">Decouvrez comment ChessNova est compose ! Systeme Multi-IA Hybride.</p>
-                    <span class="badge new">&#x2728; NOUVEAU</span>
-                </div>
-            </a>
-
-            <a href="VICTOIRES_TRACKER.html">
-                <div class="menu-card" data-section="victories-tracker">
-                    <span class="icon">&#x1F3C6;</span>
-                    <h3 data-i18n="card_victories_tracker_title">Tracker de Victoires</h3>
-                    <p data-i18n="card_victories_tracker_desc">Suivez les victoires de ChessNova contre Stockfish FULL !</p>
-                    <span class="badge new">&#x2728; NOUVEAU</span>
-                </div>
-            </a>
-
-            <a href="EVOLUTION_ELO.html">
-                <div class="menu-card" data-section="elo-evolution">
-                    <span class="icon">&#x1F4C8;</span>
-                    <h3 data-i18n="card_elo_evolution_title">Evolution ELO</h3>
-                    <p data-i18n="card_elo_evolution_desc">Graphiques interactifs d'evolution ELO !</p>
-                    <span class="badge new">&#x2728; NOUVEAU</span>
-                </div>
-            </a>
-
-            <a href="COMPTEURS_LIVE.html">
-                <div class="menu-card" data-section="live-counters">
-                    <span class="icon">&#x23F1;</span>
-                    <h3 data-i18n="card_counters_title">Compteurs en Direct</h3>
-                    <p data-i18n="card_counters_desc">Compteurs live de toutes les metriques.</p>
-                    <span class="badge live">&#x1F534; LIVE</span>
-                </div>
-            </a>
-
-            <a href="TOURNAMENT_DASHBOARD.html">
-                <div class="menu-card" data-section="tournament-dashboard" style="border: 2px solid #ff6b6b;">
-                    <span class="icon">&#x1F3C6;</span>
-                    <h3 data-i18n="card_tournament_title">Tournament Dashboard ELO</h3>
-                    <p data-i18n="card_tournament_desc">Dashboard complet des tournois avec classement ELO.</p>
-                    <span class="badge new">&#x1F3C6; NOUVEAU!</span>
-                </div>
-            </a>
-
-            <a href="ELO_PROGRESS_DASHBOARD.html">
-                <div class="menu-card" data-section="elo-progress" style="border: 2px solid #4facfe;">
-                    <span class="icon">&#x1F4C8;</span>
-                    <h3 data-i18n="card_elo_progress_title">ELO Progress Dashboard</h3>
-                    <p data-i18n="card_elo_progress_desc">Graphiques interactifs d'evolution ELO partie par partie.</p>
-                    <span class="badge new">&#x1F4C8; NOUVEAU!</span>
-                </div>
-            </a>
-
-            <a href="AI_COACH_ADVANCED.html">
-                <div class="menu-card" data-section="ai-coach" style="border: 2px solid #9b59b6;">
-                    <span class="icon">&#x1F9D9;</span>
-                    <h3 data-i18n="card_ai_coach_title">AI Coach Advanced</h3>
-                    <p data-i18n="card_ai_coach_desc">Coach IA avance avec analyse approfondie.</p>
-                    <span class="badge new">&#x1F9D9; NOUVEAU!</span>
-                </div>
-            </a>
-
-            <a href="partie_1_analysee.html">
-                <div class="menu-card" data-section="partie-1">
-                    <span class="icon">&#x265F;</span>
-                    <h3 data-i18n="card_partie1_title">Partie #1 Analysee</h3>
-                    <p data-i18n="card_partie1_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
-                    <span class="badge">&#x1F4CA; Analyse</span>
-                </div>
-            </a>
-
-            <a href="partie_2_analysee.html">
-                <div class="menu-card" data-section="partie-2">
-                    <span class="icon">&#x265F;</span>
-                    <h3 data-i18n="card_partie2_title">Partie #2 Analysee</h3>
-                    <p data-i18n="card_partie2_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
-                    <span class="badge">&#x1F4CA; Analyse</span>
-                </div>
-            </a>
-
-            <a href="partie_3_analysee.html">
-                <div class="menu-card" data-section="partie-3">
-                    <span class="icon">&#x265F;</span>
-                    <h3 data-i18n="card_partie3_title">Partie #3 Analysee</h3>
-                    <p data-i18n="card_partie3_desc">Analyse complete avec echiquier interactif et coups commentes.</p>
-                    <span class="badge">&#x1F4CA; Analyse</span>
-                </div>
-            </a>
-
-            <a href="HUMAN_TRAINING_STANDALONE.html">
-                <div class="menu-card" data-section="standalone-training">
-                    <span class="icon">&#x1F3AE;</span>
-                    <h3 data-i18n="card_standalone_title">Human Training Standalone</h3>
-                    <p data-i18n="card_standalone_desc">Version autonome du systeme d'entrainement. Interface epuree.</p>
-                    <span class="badge">&#x1F3AE; Training</span>
-                </div>
-            </a>
-
-            <a href="VICTOIRE_HISTORIQUE_ZUP.html">
-                <div class="menu-card" data-section="zup-celebration" style="border: 2px solid #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
-                    <span class="icon">&#x1F3C6;</span>
-                    <h3 data-i18n="card_zup_victory_title">Victoire Historique ZUP !</h3>
-                    <p data-i18n="card_zup_victory_desc">Celebration de la victoire de ZUP ULTIMATE contre Stockfish MAX !</p>
-                    <span class="badge new">&#x1F3C6; VICTOIRE!</span>
-                </div>
-            </a>
-
-            <a href="data/rapport_apprentissage.html" style="opacity: 0.7;">
-                <div class="menu-card" data-section="archives" style="border-color: rgba(255, 255, 255, 0.1);">
-                    <span class="icon">&#x1F4C2;</span>
-                    <h3 data-i18n="card_archives_title">Archives de Donnees</h3>
-                    <p data-i18n="card_archives_desc">Rapports d'apprentissage archives et fichiers PGN.</p>
-                    <span class="badge">&#x1F5C4; Archives</span>
-                </div>
-            </a>
-
-            <div class="menu-card" style="background: rgba(76, 175, 80, 0.15); cursor: default;">
-                <span class="icon">&#x1F680;</span>
-                <h3 data-i18n="card_coming_soon_title">A Venir Prochainement</h3>
-                <p data-i18n="card_coming_soon_desc">Bibliotheque d'ouvertures, comparaison de parties, export & partage, integration IA.</p>
-                <span class="badge">&#x1F52E; Futur</span>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p><strong data-i18n="footer_engine_name">ChessNova Chess Engine</strong> - <span data-i18n="footer_engine_desc">Hybrid Intelligence System</span></p>
-            <p data-i18n="footer_tech">Parties commentées, entraînement et explications</p>
-            
-            <p style="margin-top: 10px; opacity: 0.6; font-size: 0.85rem;">
-                <span data-i18n="footer_last_update">Derniere mise a jour :</span> <span id="lastUpdate"></span>
-            </p>
-        </div>
+        <footer class="footer">
+            <p><strong data-i18n="footer_engine_name">SupaChess</strong> — <span data-i18n="footer_engine_desc">Académie des erreurs</span> · <span data-i18n="footer_tech">Parties commentées, entraînement et explications</span></p>
+            <nav class="footer-links" aria-label="Projets SupaChess liés">
+                <a href="https://jira44.github.io/supachess/" target="_blank" rel="noopener">SupaChess</a>
+                <a href="https://gematria-academy.pages.dev/" target="_blank" rel="noopener">Gematria Academy</a>
+            </nav>
+            <p class="footer-meta"><span data-i18n="footer_last_update">Derniere mise a jour :</span> <span id="lastUpdate"></span></p>
+        </footer>
     </div>
 
     <script>
@@ -828,17 +1237,19 @@
 <script src="supa-style-engine.js"></script>
 <script src="supa-quick-solve.js"></script>
     <script src="js/decision_audit.js"></script>
+    <script src="js/hub-search.js?v=hub-search-20261127"></script>
     <script defer src="shared/site-global-v1.13.14801.js?v=1.13.14801"></script>
+<span id="suggest-game" hidden></span>
 <dialog id="suggest-game-dialog" aria-labelledby="suggest-game-title" style="max-width:min(640px,calc(100vw - 24px));width:100%;border:1px solid #4b6b86;border-radius:16px;padding:0;background:#101827;color:#f8fafc">
 <form id="suggest-game-form" style="padding:22px">
-<header style="display:flex;justify-content:space-between;gap:16px;align-items:center"><h2 id="suggest-game-title" data-i18n="suggest_game_title">Suggest a legendary game</h2><button type="button" onclick="closeSuggestGame()" aria-label="Close" data-i18n="close" data-i18n-attr="aria-label">×</button></header>
-<p data-i18n="suggest_game_help" style="color:#cbd5e1;margin:10px 0 16px">Add a title and context, then paste the PGN and/or a source. Your suggestion will be sent for review.</p>
-<label for="suggest-game-name" data-i18n="suggest_game_name">Game title</label><input id="suggest-game-name" required maxlength="160" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
-<label for="suggest-game-context" data-i18n="suggest_game_context">Historical or tactical context</label><textarea id="suggest-game-context" maxlength="2000" rows="3" style="display:block;width:100%;padding:10px;margin:5px 0 12px"></textarea>
-<label for="suggest-game-source" data-i18n="suggest_game_source">Source link</label><input id="suggest-game-source" type="url" maxlength="1000" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
-<label for="suggest-game-pgn" data-i18n="suggest_game_pgn">Game PGN</label><textarea id="suggest-game-pgn" maxlength="100000" rows="8" style="display:block;width:100%;padding:10px;margin:5px 0 12px;font-family:monospace"></textarea>
+<header style="display:flex;justify-content:space-between;gap:16px;align-items:center"><h2 id="suggest-game-title" data-i18n="suggest_game_title">Suggérer une partie légendaire</h2><button type="button" onclick="closeSuggestGame()" aria-label="Close" data-i18n="close" data-i18n-attr="aria-label">×</button></header>
+<p data-i18n="suggest_game_help" style="color:#cbd5e1;margin:10px 0 16px">Ajoute un titre et un contexte, puis colle le PGN et/ou une source. Ta suggestion sera envoyée pour relecture.</p>
+<label for="suggest-game-name" data-i18n="suggest_game_name">Titre de la partie</label><input id="suggest-game-name" required maxlength="160" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
+<label for="suggest-game-context" data-i18n="suggest_game_context">Contexte historique ou tactique</label><textarea id="suggest-game-context" maxlength="2000" rows="3" style="display:block;width:100%;padding:10px;margin:5px 0 12px"></textarea>
+<label for="suggest-game-source" data-i18n="suggest_game_source">Lien source</label><input id="suggest-game-source" type="url" maxlength="1000" style="display:block;width:100%;padding:10px;margin:5px 0 12px">
+<label for="suggest-game-pgn" data-i18n="suggest_game_pgn">PGN de la partie</label><textarea id="suggest-game-pgn" maxlength="100000" rows="8" style="display:block;width:100%;padding:10px;margin:5px 0 12px;font-family:monospace"></textarea>
 <p id="suggest-game-status" role="status" aria-live="polite" style="min-height:1.5em;color:#fbbf24"></p>
-<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap"><button type="button" onclick="closeSuggestGame()" data-i18n="suggest_game_cancel">Cancel</button><button type="submit" id="suggest-game-submit" data-i18n="suggest_game_submit">Send suggestion</button></div>
+<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap"><button type="button" onclick="closeSuggestGame()" data-i18n="suggest_game_cancel">Annuler</button><button type="submit" id="suggest-game-submit" data-i18n="suggest_game_submit">Envoyer la suggestion</button></div>
 </form></dialog>
 <script>
 function openSuggestGame() { const dialog=document.getElementById('suggest-game-dialog'); if(dialog&&dialog.showModal)dialog.showModal(); }
